@@ -1,9 +1,11 @@
 package com.box3lab.command;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.box3lab.block.BarrierVoxelBlock;
+import com.box3lab.register.VoxelExport;
 import com.box3lab.register.VoxelImport;
 import com.box3lab.util.Box3ImportFiles;
 import com.mojang.brigadier.arguments.BoolArgumentType;
@@ -16,13 +18,20 @@ import net.minecraft.commands.CommandSourceStack;
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.Block;
 
 public final class ModCommands {
         private ModCommands() {
         }
+
+        private static final String DEFAULT_EXPORT_MARKER_BLOCK = "minecraft:redstone_block";
+        private static final int MAX_MARKER_SCAN_RADIUS = 1024;
+        private static final int MARKER_Y_TOLERANCE = 512;
 
         private static final SuggestionProvider<CommandSourceStack> BOX3_FILE_SUGGESTIONS = (context, builder) -> {
                 try {
@@ -125,6 +134,16 @@ public final class ModCommands {
                                                                         .then(literal("toggle")
                                                                                         .executes(context -> toggleBarrierVisible(
                                                                                                         context.getSource())))));
+
+                        dispatcher.register(
+                                        literal("box3export")
+                                                        .executes(context -> showBox3ExportUsage(context.getSource()))
+                                                        .then(argument("fileName", StringArgumentType.word())
+                                                                        .executes(context -> executeBox3ExportByMarkers(
+                                                                                        context.getSource(),
+                                                                                        StringArgumentType.getString(
+                                                                                                        context,
+                                                                                                        "fileName")))));
                 });
         }
 
@@ -156,6 +175,11 @@ public final class ModCommands {
                 }
 
                 return 1;
+        }
+
+        private static int showBox3ExportUsage(CommandSourceStack source) {
+                source.sendFailure(Component.translatable("command.box3.box3export.usage"));
+                return 0;
         }
 
         private static String resolveMapName(String fileName) {
@@ -220,5 +244,144 @@ public final class ModCommands {
                                                 String.valueOf(next)),
                                 false);
                 return 1;
+        }
+
+        private static int executeBox3Export(CommandSourceStack source, String fileName,
+                        int x1, int y1, int z1, int x2, int y2, int z2) {
+                ServerLevel level = source.getLevel();
+                BlockPos from = new BlockPos(x1, y1, z1);
+                BlockPos to = new BlockPos(x2, y2, z2);
+
+                try {
+                        VoxelExport.ExportResult result = VoxelExport.exportRegion(level, from, to, fileName);
+                        source.sendSuccess(
+                                        () -> Component.translatable(
+                                                        "command.box3.box3export.success",
+                                                        result.output().toString(),
+                                                        result.scannedBlocks(),
+                                                        result.exportedBlocks()),
+                                        false);
+                } catch (Exception e) {
+                        source.sendFailure(
+                                        Component.translatable("command.box3.box3export.failure", e.getMessage()));
+                }
+                return 1;
+        }
+
+        private static int executeBox3ExportByMarkers(CommandSourceStack source, String fileName) {
+                ServerPlayer player = source.getPlayer();
+                if (player == null) {
+                        source.sendFailure(Component.translatable("command.box3.box3export.player_only"));
+                        return 0;
+                }
+
+                Block markerBlock = resolveMarkerBlock(DEFAULT_EXPORT_MARKER_BLOCK);
+                if (markerBlock == null) {
+                        source.sendFailure(Component.translatable("command.box3.box3export.marker_invalid",
+                                        DEFAULT_EXPORT_MARKER_BLOCK));
+                        return 0;
+                }
+
+                List<BlockPos> positions = findMarkerPositions(source.getLevel(), player.blockPosition(), markerBlock,
+                                MAX_MARKER_SCAN_RADIUS, MARKER_Y_TOLERANCE, 2);
+                if (positions.size() < 2) {
+                        source.sendFailure(Component.translatable(
+                                        "command.box3.box3export.marker_count_invalid",
+                                        MAX_MARKER_SCAN_RADIUS,
+                                        positions.size(),
+                                        BuiltInRegistries.BLOCK.getKey(markerBlock).toString()));
+                        return 0;
+                }
+
+                BlockPos p1 = positions.get(0);
+                BlockPos p2 = positions.get(1);
+                return executeBox3Export(source, fileName, p1.getX(), p1.getY(), p1.getZ(), p2.getX(), p2.getY(),
+                                p2.getZ());
+        }
+
+        private static Block resolveMarkerBlock(String blockId) {
+                Identifier id = Identifier.tryParse(blockId);
+                if (id == null) {
+                        return null;
+                }
+                if (!BuiltInRegistries.BLOCK.containsKey(id)) {
+                        return null;
+                }
+                return BuiltInRegistries.BLOCK.get(id).map(holder -> holder.value()).orElse(null);
+        }
+
+        private static List<BlockPos> findMarkerPositions(ServerLevel level, BlockPos center, Block markerBlock,
+                        int maxRadius, int yTolerance, int maxResults) {
+                List<BlockPos> positions = new ArrayList<>();
+                BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+                int cx = center.getX();
+                int cy = center.getY();
+                int cz = center.getZ();
+
+                for (int radius = 0; radius <= maxRadius; radius++) {
+                        int minX = cx - radius;
+                        int maxX = cx + radius;
+                        int minZ = cz - radius;
+                        int maxZ = cz + radius;
+
+                        if (radius == 0) {
+                                if (scanMarkerColumn(level, markerBlock, cy, yTolerance, cx, cz, cursor, positions,
+                                                maxResults)) {
+                                        return positions;
+                                }
+                                continue;
+                        }
+
+                        for (int x = minX; x <= maxX; x++) {
+                                if (scanMarkerColumn(level, markerBlock, cy, yTolerance, x, minZ, cursor, positions,
+                                                maxResults)) {
+                                        return positions;
+                                }
+                                if (scanMarkerColumn(level, markerBlock, cy, yTolerance, x, maxZ, cursor, positions,
+                                                maxResults)) {
+                                        return positions;
+                                }
+                        }
+
+                        for (int z = minZ + 1; z <= maxZ - 1; z++) {
+                                if (scanMarkerColumn(level, markerBlock, cy, yTolerance, minX, z, cursor, positions,
+                                                maxResults)) {
+                                        return positions;
+                                }
+                                if (scanMarkerColumn(level, markerBlock, cy, yTolerance, maxX, z, cursor, positions,
+                                                maxResults)) {
+                                        return positions;
+                                }
+                        }
+                }
+                return positions;
+        }
+
+        private static boolean scanMarkerColumn(ServerLevel level, Block markerBlock, int centerY, int yTolerance, int x, int z,
+                        BlockPos.MutableBlockPos cursor, List<BlockPos> positions, int maxResults) {
+                for (int dy = 0; dy <= yTolerance; dy++) {
+                        int y1 = centerY + dy;
+                        cursor.set(x, y1, z);
+                        if (level.hasChunkAt(cursor) && level.getBlockState(cursor).getBlock() == markerBlock) {
+                                positions.add(cursor.immutable());
+                                if (positions.size() >= maxResults) {
+                                        return true;
+                                }
+                        }
+
+                        if (dy == 0) {
+                                continue;
+                        }
+
+                        int y2 = centerY - dy;
+                        cursor.set(x, y2, z);
+                        if (level.hasChunkAt(cursor) && level.getBlockState(cursor).getBlock() == markerBlock) {
+                                positions.add(cursor.immutable());
+                                if (positions.size() >= maxResults) {
+                                        return true;
+                                }
+                        }
+                }
+                return false;
         }
 }

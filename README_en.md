@@ -42,6 +42,15 @@ You can also migrate structures from Box3 directly into your Minecraft world, pr
   - `/box3import <fileName> <offsetY> <ignoreBarrier> <ignoreWater>`  
     When `ignoreWater = true`, all fluids are uniformly replaced with air.
 
+### 📤 Exporting Minecraft Regions to Box3
+
+- **Export commands**:
+  - `/box3export <fileName>`  
+    Automatically search for the two nearest `Redstone Block` markers (`minecraft:redstone_block`) around the player,
+    treat them as opposite corners of the export region, and export that region to `config/box3/<fileName>.gz`.
+  - **Search rules**: chunks are scanned from near to far until two marker blocks are found, then the search stops.  
+    The maximum search radius is `1024` blocks.
+
 ### 🧩 Importing Box3 Model Items
 
 - **Resource file import**: Supports importing resource packs from the `resourcepacks/` directory.
