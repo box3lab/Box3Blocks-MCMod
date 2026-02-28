@@ -30,7 +30,8 @@ public final class ModCommands {
         }
 
         private static final String DEFAULT_EXPORT_MARKER_BLOCK = "minecraft:redstone_block";
-        private static final int MARKER_SCAN_RADIUS = 64;
+        private static final int MAX_MARKER_SCAN_RADIUS = 1024;
+        private static final int MARKER_Y_TOLERANCE = 512;
 
         private static final SuggestionProvider<CommandSourceStack> BOX3_FILE_SUGGESTIONS = (context, builder) -> {
                 try {
@@ -136,93 +137,13 @@ public final class ModCommands {
 
                         dispatcher.register(
                                         literal("box3export")
-                                                        .then(literal("marker")
-                                                                        .then(argument("fileName", StringArgumentType.word())
-                                                                                        .executes(context -> executeBox3ExportByMarkers(
-                                                                                                        context.getSource(),
-                                                                                                        StringArgumentType
-                                                                                                                        .getString(
-                                                                                                                                        context,
-                                                                                                                                        "fileName"),
-                                                                                                        DEFAULT_EXPORT_MARKER_BLOCK))
-                                                                                        .then(argument("markerBlock",
-                                                                                                        StringArgumentType.word())
-                                                                                                        .executes(context -> executeBox3ExportByMarkers(
-                                                                                                                        context.getSource(),
-                                                                                                                        StringArgumentType
-                                                                                                                                        .getString(
-                                                                                                                                                        context,
-                                                                                                                                                        "fileName"),
-                                                                                                                        StringArgumentType
-                                                                                                                                        .getString(
-                                                                                                                                                        context,
-                                                                                                                                                        "markerBlock"))))))
-                                                        .then(literal("pos1")
-                                                                        .executes(context -> setExportPosFromPlayer(
-                                                                                        context.getSource(),
-                                                                                        true))
-                                                                        .then(argument("x", IntegerArgumentType.integer())
-                                                                                        .then(argument("y",
-                                                                                                        IntegerArgumentType.integer())
-                                                                                                        .then(argument("z",
-                                                                                                                        IntegerArgumentType.integer())
-                                                                                                                        .executes(context -> setExportPos(
-                                                                                                                                        context.getSource(),
-                                                                                                                                        true,
-                                                                                                                                        IntegerArgumentType.getInteger(
-                                                                                                                                                        context,
-                                                                                                                                                        "x"),
-                                                                                                                                        IntegerArgumentType.getInteger(
-                                                                                                                                                        context,
-                                                                                                                                                        "y"),
-                                                                                                                                        IntegerArgumentType.getInteger(
-                                                                                                                                                        context,
-                                                                                                                                                        "z")))))))
-                                                        .then(literal("pos2")
-                                                                        .executes(context -> setExportPosFromPlayer(
-                                                                                        context.getSource(),
-                                                                                        false))
-                                                                        .then(argument("x", IntegerArgumentType.integer())
-                                                                                        .then(argument("y",
-                                                                                                        IntegerArgumentType.integer())
-                                                                                                        .then(argument("z",
-                                                                                                                        IntegerArgumentType.integer())
-                                                                                                                        .executes(context -> setExportPos(
-                                                                                                                                        context.getSource(),
-                                                                                                                                        false,
-                                                                                                                                        IntegerArgumentType.getInteger(
-                                                                                                                                                        context,
-                                                                                                                                                        "x"),
-                                                                                                                                        IntegerArgumentType.getInteger(
-                                                                                                                                                        context,
-                                                                                                                                                        "y"),
-                                                                                                                                        IntegerArgumentType.getInteger(
-                                                                                                                                                        context,
-                                                                                                                                                        "z")))))))
-                                                        .then(literal("clear")
-                                                                        .executes(context -> clearExportSelection(
-                                                                                        context.getSource())))
+                                                        .executes(context -> showBox3ExportUsage(context.getSource()))
                                                         .then(argument("fileName", StringArgumentType.word())
-                                                                        .executes(context -> executeBox3ExportBySelection(
+                                                                        .executes(context -> executeBox3ExportByMarkers(
                                                                                         context.getSource(),
                                                                                         StringArgumentType.getString(
                                                                                                         context,
-                                                                                                        "fileName")))
-                                                                        .then(argument("x1", IntegerArgumentType.integer())
-                                                                                        .then(argument("y1", IntegerArgumentType.integer())
-                                                                                                        .then(argument("z1", IntegerArgumentType.integer())
-                                                                                                                        .then(argument("x2", IntegerArgumentType.integer())
-                                                                                                                                        .then(argument("y2", IntegerArgumentType.integer())
-                                                                                                                                                        .then(argument("z2", IntegerArgumentType.integer())
-                                                                                                                                                                        .executes(context -> executeBox3Export(
-                                                                                                                                                                                        context.getSource(),
-                                                                                                                                                                                        StringArgumentType.getString(context, "fileName"),
-                                                                                                                                                                                        IntegerArgumentType.getInteger(context, "x1"),
-                                                                                                                                                                                        IntegerArgumentType.getInteger(context, "y1"),
-                                                                                                                                                                                        IntegerArgumentType.getInteger(context, "z1"),
-                                                                                                                                                                                        IntegerArgumentType.getInteger(context, "x2"),
-                                                                                                                                                                                        IntegerArgumentType.getInteger(context, "y2"),
-                                                                                                                                                                                        IntegerArgumentType.getInteger(context, "z2")))))))))));
+                                                                                                        "fileName")))));
                 });
         }
 
@@ -254,6 +175,11 @@ public final class ModCommands {
                 }
 
                 return 1;
+        }
+
+        private static int showBox3ExportUsage(CommandSourceStack source) {
+                source.sendFailure(Component.translatable("command.box3.box3export.usage"));
+                return 0;
         }
 
         private static String resolveMapName(String fileName) {
@@ -342,93 +268,26 @@ public final class ModCommands {
                 return 1;
         }
 
-        private static int executeBox3ExportBySelection(CommandSourceStack source, String fileName) {
+        private static int executeBox3ExportByMarkers(CommandSourceStack source, String fileName) {
                 ServerPlayer player = source.getPlayer();
                 if (player == null) {
                         source.sendFailure(Component.translatable("command.box3.box3export.player_only"));
                         return 0;
                 }
 
-                var selection = Box3ExportSelectionStore.get(player.getUUID());
-                if (selection == null || !selection.complete()) {
-                        source.sendFailure(Component.translatable("command.box3.box3export.selection_incomplete"));
-                        return 0;
-                }
-
-                return executeBox3Export(
-                                source,
-                                fileName,
-                                selection.pos1().getX(),
-                                selection.pos1().getY(),
-                                selection.pos1().getZ(),
-                                selection.pos2().getX(),
-                                selection.pos2().getY(),
-                                selection.pos2().getZ());
-        }
-
-        private static int setExportPosFromPlayer(CommandSourceStack source, boolean firstPos) {
-                ServerPlayer player = source.getPlayer();
-                if (player == null) {
-                        source.sendFailure(Component.translatable("command.box3.box3export.player_only"));
-                        return 0;
-                }
-                BlockPos pos = player.blockPosition();
-                return setExportPos(source, firstPos, pos.getX(), pos.getY(), pos.getZ());
-        }
-
-        private static int setExportPos(CommandSourceStack source, boolean firstPos, int x, int y, int z) {
-                ServerPlayer player = source.getPlayer();
-                if (player == null) {
-                        source.sendFailure(Component.translatable("command.box3.box3export.player_only"));
-                        return 0;
-                }
-
-                BlockPos pos = new BlockPos(x, y, z);
-                if (firstPos) {
-                        Box3ExportSelectionStore.setPos1(player.getUUID(), pos);
-                        source.sendSuccess(
-                                        () -> Component.translatable("command.box3.box3export.pos_set", "pos1", x, y, z),
-                                        false);
-                } else {
-                        Box3ExportSelectionStore.setPos2(player.getUUID(), pos);
-                        source.sendSuccess(
-                                        () -> Component.translatable("command.box3.box3export.pos_set", "pos2", x, y, z),
-                                        false);
-                }
-                return 1;
-        }
-
-        private static int clearExportSelection(CommandSourceStack source) {
-                ServerPlayer player = source.getPlayer();
-                if (player == null) {
-                        source.sendFailure(Component.translatable("command.box3.box3export.player_only"));
-                        return 0;
-                }
-
-                Box3ExportSelectionStore.clear(player.getUUID());
-                source.sendSuccess(() -> Component.translatable("command.box3.box3export.selection_cleared"), false);
-                return 1;
-        }
-
-        private static int executeBox3ExportByMarkers(CommandSourceStack source, String fileName, String markerBlockId) {
-                ServerPlayer player = source.getPlayer();
-                if (player == null) {
-                        source.sendFailure(Component.translatable("command.box3.box3export.player_only"));
-                        return 0;
-                }
-
-                Block markerBlock = resolveMarkerBlock(markerBlockId);
+                Block markerBlock = resolveMarkerBlock(DEFAULT_EXPORT_MARKER_BLOCK);
                 if (markerBlock == null) {
-                        source.sendFailure(Component.translatable("command.box3.box3export.marker_invalid", markerBlockId));
+                        source.sendFailure(Component.translatable("command.box3.box3export.marker_invalid",
+                                        DEFAULT_EXPORT_MARKER_BLOCK));
                         return 0;
                 }
 
                 List<BlockPos> positions = findMarkerPositions(source.getLevel(), player.blockPosition(), markerBlock,
-                                MARKER_SCAN_RADIUS, 3);
-                if (positions.size() != 2) {
+                                MAX_MARKER_SCAN_RADIUS, MARKER_Y_TOLERANCE, 2);
+                if (positions.size() < 2) {
                         source.sendFailure(Component.translatable(
                                         "command.box3.box3export.marker_count_invalid",
-                                        MARKER_SCAN_RADIUS,
+                                        MAX_MARKER_SCAN_RADIUS,
                                         positions.size(),
                                         BuiltInRegistries.BLOCK.getKey(markerBlock).toString()));
                         return 0;
@@ -436,7 +295,8 @@ public final class ModCommands {
 
                 BlockPos p1 = positions.get(0);
                 BlockPos p2 = positions.get(1);
-                return executeBox3Export(source, fileName, p1.getX(), p1.getY(), p1.getZ(), p2.getX(), p2.getY(), p2.getZ());
+                return executeBox3Export(source, fileName, p1.getX(), p1.getY(), p1.getZ(), p2.getX(), p2.getY(),
+                                p2.getZ());
         }
 
         private static Block resolveMarkerBlock(String blockId) {
@@ -450,30 +310,78 @@ public final class ModCommands {
                 return BuiltInRegistries.BLOCK.get(id).map(holder -> holder.value()).orElse(null);
         }
 
-        private static List<BlockPos> findMarkerPositions(ServerLevel level, BlockPos center, Block markerBlock, int radius,
-                        int maxResults) {
+        private static List<BlockPos> findMarkerPositions(ServerLevel level, BlockPos center, Block markerBlock,
+                        int maxRadius, int yTolerance, int maxResults) {
                 List<BlockPos> positions = new ArrayList<>();
-                int minX = center.getX() - radius;
-                int maxX = center.getX() + radius;
-                int minY = center.getY() - radius;
-                int maxY = center.getY() + radius;
-                int minZ = center.getZ() - radius;
-                int maxZ = center.getZ() + radius;
                 BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+                int cx = center.getX();
+                int cy = center.getY();
+                int cz = center.getZ();
 
-                for (int y = minY; y <= maxY; y++) {
+                for (int radius = 0; radius <= maxRadius; radius++) {
+                        int minX = cx - radius;
+                        int maxX = cx + radius;
+                        int minZ = cz - radius;
+                        int maxZ = cz + radius;
+
+                        if (radius == 0) {
+                                if (scanMarkerColumn(level, markerBlock, cy, yTolerance, cx, cz, cursor, positions,
+                                                maxResults)) {
+                                        return positions;
+                                }
+                                continue;
+                        }
+
                         for (int x = minX; x <= maxX; x++) {
-                                for (int z = minZ; z <= maxZ; z++) {
-                                        cursor.set(x, y, z);
-                                        if (level.getBlockState(cursor).getBlock() == markerBlock) {
-                                                positions.add(cursor.immutable());
-                                                if (positions.size() >= maxResults) {
-                                                        return positions;
-                                                }
-                                        }
+                                if (scanMarkerColumn(level, markerBlock, cy, yTolerance, x, minZ, cursor, positions,
+                                                maxResults)) {
+                                        return positions;
+                                }
+                                if (scanMarkerColumn(level, markerBlock, cy, yTolerance, x, maxZ, cursor, positions,
+                                                maxResults)) {
+                                        return positions;
+                                }
+                        }
+
+                        for (int z = minZ + 1; z <= maxZ - 1; z++) {
+                                if (scanMarkerColumn(level, markerBlock, cy, yTolerance, minX, z, cursor, positions,
+                                                maxResults)) {
+                                        return positions;
+                                }
+                                if (scanMarkerColumn(level, markerBlock, cy, yTolerance, maxX, z, cursor, positions,
+                                                maxResults)) {
+                                        return positions;
                                 }
                         }
                 }
                 return positions;
+        }
+
+        private static boolean scanMarkerColumn(ServerLevel level, Block markerBlock, int centerY, int yTolerance, int x, int z,
+                        BlockPos.MutableBlockPos cursor, List<BlockPos> positions, int maxResults) {
+                for (int dy = 0; dy <= yTolerance; dy++) {
+                        int y1 = centerY + dy;
+                        cursor.set(x, y1, z);
+                        if (level.hasChunkAt(cursor) && level.getBlockState(cursor).getBlock() == markerBlock) {
+                                positions.add(cursor.immutable());
+                                if (positions.size() >= maxResults) {
+                                        return true;
+                                }
+                        }
+
+                        if (dy == 0) {
+                                continue;
+                        }
+
+                        int y2 = centerY - dy;
+                        cursor.set(x, y2, z);
+                        if (level.hasChunkAt(cursor) && level.getBlockState(cursor).getBlock() == markerBlock) {
+                                positions.add(cursor.immutable());
+                                if (positions.size() >= maxResults) {
+                                        return true;
+                                }
+                        }
+                }
+                return false;
         }
 }
