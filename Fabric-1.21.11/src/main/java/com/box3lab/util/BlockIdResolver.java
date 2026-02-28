@@ -3,12 +3,15 @@ package com.box3lab.util;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 import com.box3lab.register.ModBlocks;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -16,6 +19,7 @@ import net.minecraft.world.level.block.Blocks;
 public final class BlockIdResolver {
 
     private static JsonObject blockIdMapping = null;
+    private static Map<String, Integer> blockToIdMapping = null;
 
     private BlockIdResolver() {
     }
@@ -39,6 +43,20 @@ public final class BlockIdResolver {
                     Component.translatable("command.box3.block_id.read_failed").getString(),
                     e);
         }
+    }
+
+    private static void loadReverseMapping() {
+        loadBlockIdMapping();
+        if (blockToIdMapping != null) {
+            return;
+        }
+
+        Map<String, Integer> reverse = new HashMap<>();
+        for (var entry : blockIdMapping.entrySet()) {
+            String registryKey = entry.getValue().getAsString().toLowerCase(Locale.ROOT);
+            reverse.putIfAbsent(registryKey, Integer.parseInt(entry.getKey()));
+        }
+        blockToIdMapping = reverse;
     }
 
     public static Block getBlockById(int id) {
@@ -98,5 +116,20 @@ public final class BlockIdResolver {
         }
         String registryKey = blockIdMapping.get(idStr).getAsString();
         return "barrier".equalsIgnoreCase(registryKey);
+    }
+
+    public static int getIdByBlock(Block block) {
+        loadReverseMapping();
+        String key = BuiltInRegistries.BLOCK.getKey(block).getPath().toLowerCase(Locale.ROOT);
+        Integer id = blockToIdMapping.get(key);
+        if (id != null) {
+            return id;
+        }
+
+        if (block == Blocks.WATER) {
+            return 364;
+        }
+
+        return 0;
     }
 }
