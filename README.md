@@ -39,6 +39,10 @@
     当 `ignoreBarrier = true` 时，跳过屏障方块（不会在世界中放置这些方块）。
   - `/box3import <fileName> <offsetY> <ignoreBarrier> <ignoreWater>`  
     当 `ignoreWater = true` 时，所有流体统一替换为空气。
+- **导出指令**：
+  - `/box3export <fileName>`  
+    自动搜索附近最近的两个 `红石块`（`minecraft:redstone_block`）作为导出区域对角点，并导出到 `config/box3/<fileName>.gz`。
+  - 搜索规则：从近到远扫描，找到两个标记点就停止；最大搜索半径为 `1024`。
 
 ### 🧩 导入神奇代码岛的模型物品
 
