@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "box3:block/windygrass_top",
+    "down": "box3:block/windygrass_bottom",
+    "north": "box3:block/windygrass_front",
+    "south": "box3:block/windygrass_back",
+    "west": "box3:block/windygrass_left",
+    "east": "box3:block/windygrass_right",
+    "particle": "box3:block/windygrass_bottom"
+  }
+}

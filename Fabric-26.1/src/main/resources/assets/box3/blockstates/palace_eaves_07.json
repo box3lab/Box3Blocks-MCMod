@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "box3:block/palace_eaves_07"
+    },
+    "facing=east": {
+      "model": "box3:block/palace_eaves_07",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "box3:block/palace_eaves_07",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "box3:block/palace_eaves_07",
+      "y": 270
+    }
+  }
+}

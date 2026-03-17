@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "box3:block/navajo_white_top",
+    "down": "box3:block/navajo_white_bottom",
+    "north": "box3:block/navajo_white_front",
+    "south": "box3:block/navajo_white_back",
+    "west": "box3:block/navajo_white_left",
+    "east": "box3:block/navajo_white_right",
+    "particle": "box3:block/navajo_white_bottom"
+  }
+}

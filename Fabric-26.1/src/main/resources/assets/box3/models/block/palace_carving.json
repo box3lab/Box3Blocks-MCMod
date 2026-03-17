@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "box3:block/palace_carving_top",
+    "down": "box3:block/palace_carving_bottom",
+    "north": "box3:block/palace_carving_front",
+    "south": "box3:block/palace_carving_back",
+    "west": "box3:block/palace_carving_left",
+    "east": "box3:block/palace_carving_right",
+    "particle": "box3:block/palace_carving_bottom"
+  }
+}

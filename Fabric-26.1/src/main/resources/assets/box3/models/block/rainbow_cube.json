@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "box3:block/rainbow_cube_top",
+    "down": "box3:block/rainbow_cube_bottom",
+    "north": "box3:block/rainbow_cube_front",
+    "south": "box3:block/rainbow_cube_back",
+    "west": "box3:block/rainbow_cube_left",
+    "east": "box3:block/rainbow_cube_right",
+    "particle": "box3:block/rainbow_cube_bottom"
+  }
+}

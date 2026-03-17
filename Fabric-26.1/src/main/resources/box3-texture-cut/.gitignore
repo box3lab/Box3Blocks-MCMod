@@ -1,0 +1,6 @@
+/node_modules
+/out
+/out-mc
+/dist
+package-lock.json
+*.rar

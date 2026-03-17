@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "box3:block/cross_window"
+    },
+    "facing=east": {
+      "model": "box3:block/cross_window",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "box3:block/cross_window",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "box3:block/cross_window",
+      "y": 270
+    }
+  }
+}
