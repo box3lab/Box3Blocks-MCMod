@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "box3",
+  "version": "${version}",
+  "name": "Box3Blocks（神岛材质包）",
+  "description": "Box3 方块模组为 Minecraft 添加 373 款独特装饰方块，涵盖字母、符号、色块与发光方块，并统一整理至创造模式标签页。同时支持将神奇代码岛中的建筑/模型一键迁移到 Minecraft 中。",
+  "authors": ["神岛实验室"],
+  "contact": {
+    "homepage": "https://box3lab.com/",
+    "sources": "https://github.com/box3lab/Fabric-mcMod"
+  },
+  "license": "Apache License 2.0",
+  "icon": "assets/box3/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.box3lab.Box3"
+    ],
+    "client": [
+      "com.box3lab.Box3Client"
+    ]
+  },
+  "mixins": [
+    "box3.mixins.json",
+    {
+      "config": "box3.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=0.18.4",
+    "minecraft": "~26.1",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}
