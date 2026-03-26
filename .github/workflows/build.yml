@@ -84,3 +84,29 @@ jobs:
         with:
           name: Fabric-1.20.1-artifacts
           path: Fabric-1.20.1/build/libs/
+
+  build-fabric-26-1:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+      - name: validate gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+      - name: setup jdk
+        uses: actions/setup-java@v4
+        with:
+          java-version: "25"
+          distribution: "microsoft"
+      - name: make gradle wrapper executable
+        working-directory: ./Fabric-26.1
+        run: chmod +x ./gradlew
+
+      - name: build Fabric 26.1
+        working-directory: ./Fabric-26.1
+        run: ./gradlew build
+
+      - name: upload artifacts Fabric 26.1
+        uses: actions/upload-artifact@v4
+        with:
+          name: Fabric-26.1-artifact
+          path: Fabric-26.1/build/libs/
