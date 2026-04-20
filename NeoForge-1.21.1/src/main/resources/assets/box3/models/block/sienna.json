@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "box3:block/sienna_top",
+    "down": "box3:block/sienna_bottom",
+    "north": "box3:block/sienna_front",
+    "south": "box3:block/sienna_back",
+    "west": "box3:block/sienna_left",
+    "east": "box3:block/sienna_right",
+    "particle": "box3:block/sienna_bottom"
+  }
+}

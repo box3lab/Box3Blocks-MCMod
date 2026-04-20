@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "box3:block/dark_surface"
+    },
+    "facing=east": {
+      "model": "box3:block/dark_surface",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "box3:block/dark_surface",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "box3:block/dark_surface",
+      "y": 270
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "display": "box3:grass",
+  "settings": {
+    "biome": "minecraft:plains",
+    "lakes": false,
+    "features": false,
+    "layers": [
+      { "block": "box3:stone", "height": 1 },
+      { "block": "box3:dirt", "height": 6 },
+      { "block": "box3:grass", "height": 1 }
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "box3:block/bear_footprint"
+    },
+    "facing=east": {
+      "model": "box3:block/bear_footprint",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "box3:block/bear_footprint",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "box3:block/bear_footprint",
+      "y": 270
+    }
+  }
+}

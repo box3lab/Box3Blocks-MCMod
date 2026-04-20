@@ -80,7 +80,14 @@ You can also migrate structures from Box3 directly into your Minecraft world, pr
     Quickly toggle barrier visibility.  
     The state is saved to a local config file and will be applied automatically next time you enter the world.
 
-📋 **Full block list**: see [block_id.md](block_id.md) for all block IDs, registry keys, and Chinese–English name mapping.
+### 🔒 Command Permission Management
+
+- `/box3import`, `/box3barrier`, and `/box3export` require different permission levels depending on configuration (default level `0`).
+- Server owners can use `/box3perm` to view or adjust the required level:
+  - `/box3perm` – show the current required permission level. Valid values range from `0-4`, matching Minecraft op levels.
+  - `/box3perm <level>` – set the `requireOpForCommands` level to the specified value (`0-4`).
+
+�📋 **Full block list**: see [block_id.md](block_id.md) for all block IDs, registry keys, and Chinese–English name mapping.
 
 ## 📄 License
 
@@ -90,6 +97,7 @@ This project is licensed under the [Apache License 2.0](LICENSE).
 
 - Blocks provided by Box3, and the mod developed by Box3Lab
 - FabricMC team for the Fabric mod loader
+- NeoForged team for the NeoForge mod loader
 
 ## Star History
 

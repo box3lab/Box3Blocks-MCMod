@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "box3:block/dollar_top",
+    "down": "box3:block/dollar_bottom",
+    "north": "box3:block/dollar_front",
+    "south": "box3:block/dollar_back",
+    "west": "box3:block/dollar_left",
+    "east": "box3:block/dollar_right",
+    "particle": "box3:block/dollar_bottom"
+  }
+}
