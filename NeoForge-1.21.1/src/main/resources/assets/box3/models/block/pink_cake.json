@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "box3:block/pink_cake_top",
+    "down": "box3:block/pink_cake_bottom",
+    "north": "box3:block/pink_cake_front",
+    "south": "box3:block/pink_cake_back",
+    "west": "box3:block/pink_cake_left",
+    "east": "box3:block/pink_cake_right",
+    "particle": "box3:block/pink_cake_bottom"
+  }
+}

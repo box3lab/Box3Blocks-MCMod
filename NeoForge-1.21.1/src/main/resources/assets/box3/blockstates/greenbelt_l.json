@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "box3:block/greenbelt_l"
+    },
+    "facing=east": {
+      "model": "box3:block/greenbelt_l",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "box3:block/greenbelt_l",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "box3:block/greenbelt_l",
+      "y": 270
+    }
+  }
+}

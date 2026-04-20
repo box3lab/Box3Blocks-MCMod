@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "box3:block/comma"
+    },
+    "facing=east": {
+      "model": "box3:block/comma",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "box3:block/comma",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "box3:block/comma",
+      "y": 270
+    }
+  }
+}

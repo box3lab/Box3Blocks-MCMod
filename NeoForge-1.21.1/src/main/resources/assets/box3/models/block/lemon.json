@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "box3:block/lemon_top",
+    "down": "box3:block/lemon_bottom",
+    "north": "box3:block/lemon_front",
+    "south": "box3:block/lemon_back",
+    "west": "box3:block/lemon_left",
+    "east": "box3:block/lemon_right",
+    "particle": "box3:block/lemon_bottom"
+  }
+}

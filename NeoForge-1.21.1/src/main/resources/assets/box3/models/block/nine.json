@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "box3:block/nine_top",
+    "down": "box3:block/nine_bottom",
+    "north": "box3:block/nine_front",
+    "south": "box3:block/nine_back",
+    "west": "box3:block/nine_left",
+    "east": "box3:block/nine_right",
+    "particle": "box3:block/nine_bottom"
+  }
+}

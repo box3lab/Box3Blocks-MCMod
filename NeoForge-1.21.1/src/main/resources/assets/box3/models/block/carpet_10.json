@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "box3:block/carpet_10_top",
+    "down": "box3:block/carpet_10_bottom",
+    "north": "box3:block/carpet_10_front",
+    "south": "box3:block/carpet_10_back",
+    "west": "box3:block/carpet_10_left",
+    "east": "box3:block/carpet_10_right",
+    "particle": "box3:block/carpet_10_bottom"
+  }
+}

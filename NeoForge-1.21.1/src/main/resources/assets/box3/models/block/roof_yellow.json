@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "box3:block/roof_yellow_top",
+    "down": "box3:block/roof_yellow_bottom",
+    "north": "box3:block/roof_yellow_front",
+    "south": "box3:block/roof_yellow_back",
+    "west": "box3:block/roof_yellow_left",
+    "east": "box3:block/roof_yellow_right",
+    "particle": "box3:block/roof_yellow_bottom"
+  }
+}
