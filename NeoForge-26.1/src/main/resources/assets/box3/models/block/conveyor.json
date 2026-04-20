@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "box3:block/conveyor_top",
+    "down": "box3:block/conveyor_bottom",
+    "north": "box3:block/conveyor_front",
+    "south": "box3:block/conveyor_back",
+    "west": "box3:block/conveyor_left",
+    "east": "box3:block/conveyor_right",
+    "particle": "box3:block/conveyor_bottom"
+  }
+}

@@ -136,3 +136,29 @@ jobs:
         with:
           name: NeoForge-1.21.1-artifacts
           path: NeoForge-1.21.1/build/libs/
+
+  build-neoforge-26-1:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+      - name: validate gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+      - name: setup jdk
+        uses: actions/setup-java@v4
+        with:
+          java-version: "25"
+          distribution: "microsoft"
+      - name: make gradle wrapper executable
+        working-directory: ./NeoForge-26.1
+        run: chmod +x ./gradlew
+
+      - name: build NeoForge 26.1
+        working-directory: ./NeoForge-26.1
+        run: ./gradlew build
+
+      - name: upload artifacts NeoForge 26.1
+        uses: actions/upload-artifact@v4
+        with:
+          name: NeoForge-26.1-artifacts
+          path: NeoForge-26.1/build/libs/

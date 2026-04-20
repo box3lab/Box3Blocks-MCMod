@@ -1,0 +1,40 @@
+package com.box3lab.box3.block;
+
+import com.mojang.serialization.MapCodec;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+
+public class SpiderWebBlock extends VoxelBlock {
+    public static final MapCodec<SpiderWebBlock> CODEC = simpleCodec(SpiderWebBlock::new);
+
+    public SpiderWebBlock(BlockBehaviour.Properties properties) {
+        super(properties);
+    }
+
+    @Override
+    protected MapCodec<? extends Block> codec() {
+        return CODEC;
+    }
+
+    @Override
+    public void stepOn(Level level, BlockPos pos, BlockState state, Entity entity) {
+        super.stepOn(level, pos, state, entity);
+
+        if (!(entity instanceof LivingEntity living)) {
+            return;
+        }
+
+        if (living.isSprinting()) {
+            Vec3 movement = living.getDeltaMovement();
+            living.setDeltaMovement(movement.multiply(0.15, 1.0, 0.15));
+        } else {
+            living.setDeltaMovement(Vec3.ZERO);
+        }
+    }
+}

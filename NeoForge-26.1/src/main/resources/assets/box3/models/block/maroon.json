@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "box3:block/maroon_top",
+    "down": "box3:block/maroon_bottom",
+    "north": "box3:block/maroon_front",
+    "south": "box3:block/maroon_back",
+    "west": "box3:block/maroon_left",
+    "east": "box3:block/maroon_right",
+    "particle": "box3:block/maroon_bottom"
+  }
+}

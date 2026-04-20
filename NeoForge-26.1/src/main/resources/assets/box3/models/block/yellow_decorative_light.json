@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "box3:block/yellow_decorative_light_top",
+    "down": "box3:block/yellow_decorative_light_bottom",
+    "north": "box3:block/yellow_decorative_light_front",
+    "south": "box3:block/yellow_decorative_light_back",
+    "west": "box3:block/yellow_decorative_light_left",
+    "east": "box3:block/yellow_decorative_light_right",
+    "particle": "box3:block/yellow_decorative_light_bottom"
+  }
+}

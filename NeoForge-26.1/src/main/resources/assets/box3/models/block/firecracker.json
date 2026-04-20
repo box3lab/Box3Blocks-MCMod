@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "box3:block/firecracker_top",
+    "down": "box3:block/firecracker_bottom",
+    "north": "box3:block/firecracker_front",
+    "south": "box3:block/firecracker_back",
+    "west": "box3:block/firecracker_left",
+    "east": "box3:block/firecracker_right",
+    "particle": "box3:block/firecracker_bottom"
+  }
+}
