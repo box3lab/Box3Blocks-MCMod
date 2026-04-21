@@ -86,6 +86,7 @@
 - 神奇代码岛提供的方块，神岛实验室开发模组
 - FabricMC 团队提供的 Fabric 模组加载器
 - NeoForged 团队提供的 NeoForge 模组加载器
+- MinecraftForge 团队提供的 Forge 模组加载器
 
 ## 星历史
 

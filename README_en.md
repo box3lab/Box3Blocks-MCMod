@@ -98,6 +98,7 @@ This project is licensed under the [Apache License 2.0](LICENSE).
 - Blocks provided by Box3, and the mod developed by Box3Lab
 - FabricMC team for the Fabric mod loader
 - NeoForged team for the NeoForge mod loader
+- MinecraftForge team for the Forge mod loader
 
 ## Star History
 
