@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "box3:block/seven"
+    },
+    "facing=east": {
+      "model": "box3:block/seven",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "box3:block/seven",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "box3:block/seven",
+      "y": 270
+    }
+  }
+}

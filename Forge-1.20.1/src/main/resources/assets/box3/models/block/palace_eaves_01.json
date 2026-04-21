@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "box3:block/palace_eaves_01_top",
+    "down": "box3:block/palace_eaves_01_bottom",
+    "north": "box3:block/palace_eaves_01_front",
+    "south": "box3:block/palace_eaves_01_back",
+    "west": "box3:block/palace_eaves_01_left",
+    "east": "box3:block/palace_eaves_01_right",
+    "particle": "box3:block/palace_eaves_01_bottom"
+  }
+}

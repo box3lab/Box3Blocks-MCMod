@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "box3:block/pumpkin_lantern_top",
+    "down": "box3:block/pumpkin_lantern_bottom",
+    "north": "box3:block/pumpkin_lantern_front",
+    "south": "box3:block/pumpkin_lantern_back",
+    "west": "box3:block/pumpkin_lantern_left",
+    "east": "box3:block/pumpkin_lantern_right",
+    "particle": "box3:block/pumpkin_lantern_bottom"
+  }
+}

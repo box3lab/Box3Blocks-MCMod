@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "box3:block/polar_region_top",
+    "down": "box3:block/polar_region_bottom",
+    "north": "box3:block/polar_region_front",
+    "south": "box3:block/polar_region_back",
+    "west": "box3:block/polar_region_left",
+    "east": "box3:block/polar_region_right",
+    "particle": "box3:block/polar_region_bottom"
+  }
+}
