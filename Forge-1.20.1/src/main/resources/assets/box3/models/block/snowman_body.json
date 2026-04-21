@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "box3:block/snowman_body_top",
+    "down": "box3:block/snowman_body_bottom",
+    "north": "box3:block/snowman_body_front",
+    "south": "box3:block/snowman_body_back",
+    "west": "box3:block/snowman_body_left",
+    "east": "box3:block/snowman_body_right",
+    "particle": "box3:block/snowman_body_bottom"
+  }
+}

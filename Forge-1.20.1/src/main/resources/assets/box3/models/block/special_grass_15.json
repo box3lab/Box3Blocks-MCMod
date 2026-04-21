@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "box3:block/special_grass_15_top",
+    "down": "box3:block/special_grass_15_bottom",
+    "north": "box3:block/special_grass_15_front",
+    "south": "box3:block/special_grass_15_back",
+    "west": "box3:block/special_grass_15_left",
+    "east": "box3:block/special_grass_15_right",
+    "particle": "box3:block/special_grass_15_bottom"
+  }
+}

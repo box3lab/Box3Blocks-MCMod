@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "box3:block/dark_salmon_top",
+    "down": "box3:block/dark_salmon_bottom",
+    "north": "box3:block/dark_salmon_front",
+    "south": "box3:block/dark_salmon_back",
+    "west": "box3:block/dark_salmon_left",
+    "east": "box3:block/dark_salmon_right",
+    "particle": "box3:block/dark_salmon_bottom"
+  }
+}

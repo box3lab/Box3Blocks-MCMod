@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "box3:block/coffee_gray_top",
+    "down": "box3:block/coffee_gray_bottom",
+    "north": "box3:block/coffee_gray_front",
+    "south": "box3:block/coffee_gray_back",
+    "west": "box3:block/coffee_gray_left",
+    "east": "box3:block/coffee_gray_right",
+    "particle": "box3:block/coffee_gray_bottom"
+  }
+}
