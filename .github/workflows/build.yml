@@ -147,7 +147,7 @@ jobs:
       - name: setup jdk
         uses: actions/setup-java@v4
         with:
-          java-version: "25"
+          java-version: "17"
           distribution: "microsoft"
       - name: make gradle wrapper executable
         working-directory: ./Forge-1.20.1
