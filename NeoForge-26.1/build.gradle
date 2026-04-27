@@ -22,6 +22,8 @@ sourceSets.main.resources {
     srcDir('src/generated/resources')
     // Shared resources from project root
     srcDir('../shared-resources')
+    // Forge/NeoForge shared resources
+    srcDir('../shared-resources-forge')
 
     // Exclude common development only resources from finalized outputs
     exclude("**/*.bbmodel") // BlockBench project files

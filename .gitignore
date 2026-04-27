@@ -36,6 +36,16 @@ run/
 
 TEMPLATE_LICENSE.txt
 
+# eclipse
+
+.eclipse/
+
+# texture-cut tool outputs
+
+tools/box3-texture-cut/out/
+tools/box3-texture-cut/out-mc/
+tools/box3-texture-cut/node_modules/
+tools/box3-texture-cut/dist/
 
 # java
 
