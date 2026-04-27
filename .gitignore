@@ -32,6 +32,14 @@ bin/
 
 run/
 
+# mod template artifacts
+
+TEMPLATE_LICENSE.txt
+
+# python tools in resources
+
+**/src/main/resources/*.py
+
 # java
 
 hs_err_*.log
