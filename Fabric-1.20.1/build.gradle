@@ -42,11 +42,14 @@ dependencies {
 }
 
 processResources {
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 	inputs.property "version", project.version
 
 	filesMatching("fabric.mod.json") {
 		expand "version": inputs.properties.version
 	}
+	from(file("../shared-resources"))
+	from(file("../shared-resources-fabric"))
 }
 
 tasks.withType(JavaCompile).configureEach {
