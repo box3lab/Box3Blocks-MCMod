@@ -36,13 +36,6 @@ run/
 
 TEMPLATE_LICENSE.txt
 
-# python tools in resources
-
-**/src/main/resources/*.py
-
-# texture tools in resources (belong in root tools/)
-
-**/src/main/resources/box3-texture-cut/
 
 # java
 
