@@ -47,7 +47,6 @@ export function getSoildBlockTexturePositionById(blockId: number): {
     throw new Error(`Error: Block ${blockId} isn't fluid!`);
   }
   const basePtr = index * 6;
-  console.log(basePtr);
   const faceNameTable = {
     0: "left",
     1: "right",
