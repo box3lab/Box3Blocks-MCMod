@@ -46,7 +46,7 @@ authors="神岛实验室"
 
 # The description text for the mod (multi line!) (#mandatory)
 description='''
-Box3 方块模组为 Minecraft 添加 373 款独特装饰方块，涵盖字母、符号、色块与发光方块，并统一整理至创造模式标签页。同时支持将神奇代码岛中的建筑/模型一键迁移到 Minecraft 中。
+Box3 方块模组为 Minecraft 添加 372 款独特装饰方块，涵盖字母、符号、色块与发光方块，并统一整理至创造模式标签页。同时支持将神奇代码岛中的建筑/模型一键迁移到 Minecraft 中。
 '''
 
 # The [[mixins]] block allows you to declare your mixin config to FML so that it gets loaded.

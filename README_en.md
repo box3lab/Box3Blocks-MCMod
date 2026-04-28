@@ -5,14 +5,14 @@
 
 [简体中文](README.md) | [English](README_en.md)
 
-Import 373 blocks from the Box3 (Magic Code Island) platform into Minecraft, so you can build with the same familiar blocks inside MC.  
+Import 372 blocks from the Box3 (Magic Code Island) platform into Minecraft, so you can build with the same familiar blocks inside MC.  
 You can also migrate structures from Box3 directly into your Minecraft world, preserving the original building style.
 
 ## 🌟 Features
 
 ### 🎨 Rich Block Library
 
-- **373 blocks**: including letters, numbers, symbols, colors, elements, etc.
+- **372 blocks**: including letters, numbers, symbols, colors, elements, etc.
 - **9 creative tabs**: organized for easy search and use
   - Box3: Letters – A-Z letter blocks
   - Box3: Numbers – 0-9 number blocks
