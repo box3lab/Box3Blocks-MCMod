@@ -1,0 +1,13 @@
+{
+  "itemGroup.box3js": "Example Mod Tab",
+  "block.box3js.example_block": "Example Block",
+  "item.box3js.example_item": "Example Item",
+
+  "box3js.configuration.title": "Box3JS Configs",
+  "box3js.configuration.section.box3js.common.toml": "Box3JS Configs",
+  "box3js.configuration.section.box3js.common.toml.title": "Box3JS Configs",
+  "box3js.configuration.items": "Item List",
+  "box3js.configuration.logDirtBlock": "Log Dirt Block",
+  "box3js.configuration.magicNumberIntroduction": "Magic Number Text",
+  "box3js.configuration.magicNumber": "Magic Number"
+}
