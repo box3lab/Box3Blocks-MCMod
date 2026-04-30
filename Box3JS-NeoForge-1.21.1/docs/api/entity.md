@@ -1,0 +1,419 @@
+# entity — 实体 API
+
+`entity` 代表 Minecraft 世界中的任意实体（怪物、动物、掉落物、玩家）。通过 `world.spawnEntity()`、`world.querySelector()`、`world.entitiesInRadius()` 或事件回调参数获取。
+
+通过 `entity.player` 可获取该实体对应的 `player` 对象（仅当是玩家时有效）。
+
+---
+
+## 基本属性
+
+### entity.id
+
+✅ Box3 API | 只读。实体的 UUID 字符串。
+
+### entity.isPlayer()
+
+✅ Box3 API | 返回 `true` 表示该实体是玩家。
+
+### entity.entityType
+
+✅ Box3 API | 只读。返回实体的命名空间 ID 字符串。
+
+```js
+var all = world.querySelectorAll("*");
+for (var i = 0; i < all.length; i++) {
+    var e = all[i];
+    console.log(e.id + " -> " + e.entityType + " -> isPlayer: " + e.isPlayer());
+}
+```
+
+---
+
+## 位置与移动
+
+### entity.position
+
+✅ Box3 API | 只读 `GameVector3`。注意：这是一个 LiveVec3，调用 `.set(x,y,z)` 可直接传送实体。
+
+```js
+var pos = entity.position;
+console.log(pos.x, pos.y, pos.z);
+
+// 传送
+entity.position.set(0, 100, 0);
+```
+
+### entity.velocity
+
+✅ Box3 API | 只读 `GameVector3`。LiveVec3，`.set(x,y,z)` 可直接修改速度。
+
+```js
+entity.velocity.set(0, 1, 0); // 向上的速度
+```
+
+### entity.bounds
+
+✅ Box3 API | 只读 `GameVector3`。实体的包围盒半尺寸（half-size）。
+
+### entity.onGround
+
+⬆ MC 扩展 | 只读。实体是否在地面上。
+
+```js
+if (entity.onGround) {
+    // 在地面
+}
+```
+
+### entity.eyePosition
+
+⬆ MC 扩展 | 只读 `GameVector3`。实体视线高度位置。
+
+```js
+var eye = entity.eyePosition;
+```
+
+---
+
+## 生命值
+
+### entity.hp
+
+✅ Box3 API | 获取/设置当前生命值（仅 LivingEntity 有效）。
+
+### entity.maxHp
+
+✅ Box3 API | 获取/设置最大生命值（仅 LivingEntity 有效）。
+
+```js
+var zombie = world.spawnEntity("minecraft:zombie", new GameVector3(0, 100, 0));
+zombie.maxHp = 100;
+zombie.hp = 100;
+```
+
+### entity.hurt(amount)
+
+✅ Box3 API | 对实体造成 `amount` 点伤害（触发伤害事件）。
+
+### entity.heal(amount)
+
+✅ Box3 API | 治疗实体 `amount` 点生命值（不超过 maxHp）。
+
+```js
+zombie.hurt(10);  // 造成 10 点伤害
+zombie.heal(5);   // 治疗 5 点
+```
+
+### entity.isInvulnerable()
+
+⬆ MC 扩展 | 实体是否无敌。
+
+### entity.setInvulnerable(v)
+
+⬆ MC 扩展 | 设置实体无敌状态。
+
+```js
+entity.setInvulnerable(true);  // 不受伤害
+```
+
+---
+
+## 外观
+
+### entity.meshInvisible
+
+✅ Box3 API | 控制实体是否不可见。
+
+```js
+entity.meshInvisible = true;  // 隐身
+```
+
+### entity.isGlowing()
+
+⬆ MC 扩展 | 获取发光状态。
+
+### entity.setGlowing(v)
+
+⬆ MC 扩展 | 设置发光效果（类似光灵箭效果）。
+
+```js
+entity.setGlowing(true);  // 实体发光
+```
+
+### entity.nameTag
+
+⬆ MC 扩展 | 获取/设置实体的自定义名称（头上显示的名字）。
+
+```js
+entity.nameTag = "§cBoss 怪物";
+console.log(entity.nameTag);
+```
+
+---
+
+## 标签系统
+
+全部 ✅ Box3 API。标签是附加在实体上的字符串标记，用于分类和查询。
+
+### entity.addTag(tag)
+
+添加标签。
+
+### entity.hasTag(tag)
+
+检查是否有指定标签。
+
+### entity.removeTag(tag)
+
+移除标签。
+
+```js
+entity.addTag("boss");
+entity.addTag("red_team");
+
+if (entity.hasTag("boss")) {
+    entity.maxHp = 200;
+}
+
+// 通过标签查询
+var bosses = world.querySelectorAll(".boss");
+```
+
+---
+
+## 火焰
+
+### entity.setFire(ticks)
+
+⬆ MC 扩展 | 点燃实体指定 tick 数。20 ticks = 1 秒。
+
+### entity.clearFire()
+
+⬆ MC 扩展 | 扑灭实体火焰。
+
+```js
+entity.setFire(100); // 点燃 5 秒
+entity.clearFire();  // 立即扑灭
+```
+
+---
+
+## AI 与导航
+
+### entity.setAI(enabled)
+
+⬆ MC 扩展 | 启用/禁用实体 AI（仅 Mob 有效）。禁用后实体不会移动或攻击。
+
+```js
+entity.setAI(false); // 冻结实体
+```
+
+### entity.setTarget(entity)
+
+⬆ MC 扩展 | 设置怪物攻击目标（仅 Mob 有效）。
+
+### entity.getTarget()
+
+⬆ MC 扩展 | 获取当前攻击目标，返回 `Box3JSEntity` 或 null。
+
+### entity.clearTarget()
+
+⬆ MC 扩展 | 清除攻击目标。
+
+```js
+var boss = world.spawnEntity("minecraft:skeleton", new GameVector3(0, 100, 0));
+var target = world.querySelectorAll("*")[0];
+boss.setTarget(target);
+```
+
+### entity.navigateTo(x, y, z, speed)
+
+⬆ MC 扩展 | 让实体寻路到目标坐标（仅 PathfinderMob 有效）。
+
+### entity.navigateTo(pos, speed)
+
+⬆ GameVector3 重载。
+
+```js
+entity.navigateTo(10, 100, 10, 1.0); // 以 1.0 速度走过去
+entity.navigateTo(target.position, 1.0);
+```
+
+### entity.lookAt(x, y, z)
+
+⬆ MC 扩展 | 实体面朝目标坐标。
+
+### entity.lookAt(pos)
+
+⬆ GameVector3 重载。
+
+```js
+entity.lookAt(0, 100, -10);
+entity.lookAt(target.position);
+```
+
+---
+
+## 药水效果
+
+全部 ⬆ MC 扩展。
+
+### entity.addEffect(effectId, duration, amplifier)
+
+添加药水效果。`duration` 单位为 tick，`amplifier` 从 0 开始。
+
+### entity.addEffect(effectId, duration, amplifier, hideParticles)
+
+添加效果并可选隐藏粒子。
+
+```js
+entity.addEffect("minecraft:speed", 600, 2);           // 速度 III，30 秒
+entity.addEffect("minecraft:strength", 99999, 1, true); // 永久力量 II，不显示粒子
+entity.addEffect("minecraft:glowing", 200, 0);          // 发光 10 秒
+
+// 常用效果:
+// minecraft:speed, minecraft:slowness, minecraft:strength
+// minecraft:weakness, minecraft:regeneration, minecraft:poison
+// minecraft:jump_boost, minecraft:slow_falling, minecraft:invisibility
+// minecraft:glowing, minecraft:levitation, minecraft:fire_resistance
+```
+
+---
+
+## 装备
+
+全部 ⬆ MC 扩展。
+
+### entity.setEquipment(slot, itemId)
+
+给生物穿戴装备。
+
+**slot 值：** `"mainhand"`、`"offhand"`、`"head"`（头盔）、`"chest"`（胸甲）、`"legs"`（护腿）、`"feet"`（靴子）
+
+```js
+entity.setEquipment("mainhand", "minecraft:diamond_sword");
+entity.setEquipment("head", "minecraft:iron_helmet");
+entity.setEquipment("chest", "minecraft:iron_chestplate");
+entity.setEquipment("feet", "minecraft:leather_boots");
+```
+
+### entity.setDropChance(slot, chance)
+
+设置装备槽物品的掉落概率，0.0–1.0。`slot` 设为 `"all"` 可一次性设置所有槽位。
+
+```js
+entity.setDropChance("mainhand", 0.5); // 50% 概率掉落主手物品
+entity.setDropChance("all", 0);        // 不掉落任何装备
+```
+
+---
+
+## 属性
+
+全部 ⬆ MC 扩展。
+
+### entity.getAttribute(attributeId)
+
+获取实体属性当前值。
+
+### entity.setAttribute(attributeId, value)
+
+设置实体属性基值。
+
+```js
+var attack = entity.getAttribute("minecraft:generic.attack_damage");
+entity.setAttribute("minecraft:generic.attack_damage", 10);
+entity.setAttribute("minecraft:generic.max_health", 100);
+entity.setAttribute("minecraft:generic.movement_speed", 0.5);
+entity.setAttribute("minecraft:generic.knockback_resistance", 1.0);
+entity.setAttribute("minecraft:generic.armor", 10);
+```
+
+> 注意：`maxHp` / `walkSpeed` / `jumpPower` 等 Box3 便捷属性内部也使用这些 attribute，推荐优先使用便捷属性，仅当需要访问未封装的属性时才用 `setAttribute`。
+
+---
+
+## 生命周期
+
+### entity.destroy()
+
+✅ Box3 API | 销毁实体。如果设置了 `onDestroy` 回调，会触发它。
+
+### entity.remove()
+
+⬆ MC 扩展 | 直接移除实体，**不触发** `onDestroy` 回调。
+
+### entity.setOnDestroy(handler)
+
+✅ Box3 API | 设置销毁回调。`handler` 接收一个参数 `(entity)`。
+
+### entity.destroyed
+
+✅ Box3 API | 只读。实体是否已被移除。
+
+### entity.setPersistent(v)
+
+⬆ MC 扩展 | 设为 `true` 时生物不会因远离玩家而自然消失（仅 Mob 有效）。
+
+```js
+var boss = world.spawnEntity("minecraft:wither_skeleton", new GameVector3(0, 100, 0));
+boss.setPersistent(true); // 不会消失
+boss.setOnDestroy((e) => {
+    world.say("Boss 被击败了！");
+});
+```
+
+---
+
+## 自定义属性
+
+✅ Box3 API | 可以直接在 entity 上存储任意 JS 数据，存活期等于实体生命周期。
+
+```js
+entity.myCustomField = "hello";
+entity.spawnTick = world.currentTick();
+entity.killCount = 0;
+
+console.log(entity.myCustomField);
+```
+
+---
+
+## Box3 API 列表
+
+| API | 类型 |
+|---|---|
+| `id` | ✅ Box3 |
+| `isPlayer()` | ✅ Box3 |
+| `entityType` | ✅ Box3 |
+| `position` | ✅ Box3 |
+| `velocity` | ✅ Box3 |
+| `bounds` | ✅ Box3 |
+| `meshInvisible` | ✅ Box3 |
+| `addTag()` / `hasTag()` / `removeTag()` | ✅ Box3 |
+| `hp` / `maxHp` | ✅ Box3 |
+| `hurt()` / `heal()` | ✅ Box3 |
+| `destroy()` / `destroyed` | ✅ Box3 |
+| `setOnDestroy()` | ✅ Box3 |
+
+## MC 扩展列表
+
+| API | 类型 |
+|---|---|
+| `onGround` | ⬆ MC |
+| `eyePosition` | ⬆ MC |
+| `isInvulnerable()` / `setInvulnerable()` | ⬆ MC |
+| `isGlowing()` / `setGlowing()` | ⬆ MC |
+| `nameTag` | ⬆ MC |
+| `setFire()` / `clearFire()` | ⬆ MC |
+| `setAI()` | ⬆ MC |
+| `setTarget()` / `getTarget()` / `clearTarget()` | ⬆ MC |
+| `navigateTo()` | ⬆ MC |
+| `lookAt()` | ⬆ MC |
+| `addEffect()` | ⬆ MC |
+| `setEquipment()` | ⬆ MC |
+| `setDropChance()` | ⬆ MC |
+| `getAttribute()` / `setAttribute()` | ⬆ MC |
+| `remove()` | ⬆ MC |
+| `setPersistent()` | ⬆ MC |

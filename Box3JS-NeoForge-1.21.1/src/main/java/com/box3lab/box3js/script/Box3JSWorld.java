@@ -493,6 +493,9 @@ public class Box3JSWorld {
         level.addFreshEntity(bolt);
         return true;
     }
+    public boolean strikeLightning(GameVector3 pos) {
+        return strikeLightning(pos.x, pos.y, pos.z);
+    }
     public boolean strikeLightning(double x, double y, double z, double damage) {
         ServerLevel level = server.overworld();
         LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(level);
@@ -502,6 +505,9 @@ public class Box3JSWorld {
         bolt.setVisualOnly(false);
         level.addFreshEntity(bolt);
         return true;
+    }
+    public boolean strikeLightning(GameVector3 pos, double damage) {
+        return strikeLightning(pos.x, pos.y, pos.z, damage);
     }
 
     // ---- Projectile (MC extension) ----
@@ -529,6 +535,9 @@ public class Box3JSWorld {
 
         level.addFreshEntity(entity);
         return new Box3JSEntity(entity, server, engine);
+    }
+    public Box3JSEntity launchProjectile(String type, GameVector3 pos, GameVector3 target, double speed) {
+        return launchProjectile(type, pos.x, pos.y, pos.z, target.x, target.y, target.z, speed);
     }
 
     // ---- Firework ----
@@ -564,6 +573,9 @@ public class Box3JSWorld {
         var entity = new net.minecraft.world.entity.projectile.FireworkRocketEntity(level, x, y, z, rocket);
         level.addFreshEntity(entity);
     }
+    public void launchFirework(GameVector3 pos, String color, String shape) {
+        launchFirework(pos.x, pos.y, pos.z, color, shape);
+    }
 
     // ---- Particle ----
 
@@ -572,6 +584,9 @@ public class Box3JSWorld {
         if (particle != null) {
             server.overworld().sendParticles(particle, x, y, z, count, dx, dy, dz, speed);
         }
+    }
+    public void spawnParticle(String type, GameVector3 pos, int count, double dx, double dy, double dz, double speed) {
+        spawnParticle(type, pos.x, pos.y, pos.z, count, dx, dy, dz, speed);
     }
     public void spawnParticleCircle(double x, double y, double z, double radius, String type, int count) {
         var particle = resolveParticle(type);
@@ -583,6 +598,9 @@ public class Box3JSWorld {
             double pz = z + Math.sin(angle) * radius;
             level.sendParticles(particle, px, y, pz, 1, 0, 0, 0, 0);
         }
+    }
+    public void spawnParticleCircle(GameVector3 pos, double radius, String type, int count) {
+        spawnParticleCircle(pos.x, pos.y, pos.z, radius, type, count);
     }
     private ParticleOptions resolveParticle(String type) {
         ResourceLocation rl = ResourceLocation.tryParse(type);
@@ -605,6 +623,9 @@ public class Box3JSWorld {
         ItemStack stack = new ItemStack(item, Math.max(1, count));
         ItemEntity itemEntity = new ItemEntity(level, x, y, z, stack);
         level.addFreshEntity(itemEntity);
+    }
+    public void dropItem(GameVector3 pos, String itemId, int count) {
+        dropItem(pos.x, pos.y, pos.z, itemId, count);
     }
 
     // ---- Query ----
@@ -683,10 +704,25 @@ public class Box3JSWorld {
         return result;
     }
 
+    public List<Box3JSEntity> entitiesInRadius(double x, double y, double z, double radius) {
+        AABB aabb = new AABB(x - radius, y - radius, z - radius, x + radius, y + radius, z + radius);
+        List<Box3JSEntity> result = new ArrayList<>();
+        for (Entity e : server.overworld().getEntities((Entity) null, aabb, e -> true)) {
+            result.add(new Box3JSEntity(e, server, engine));
+        }
+        return result;
+    }
+    public List<Box3JSEntity> entitiesInRadius(GameVector3 pos, double radius) {
+        return entitiesInRadius(pos.x, pos.y, pos.z, radius);
+    }
+
     public String getBiome(int x, int y, int z) {
         Holder<Biome> biome = server.overworld().getBiome(new BlockPos(x, y, z));
         var key = biome.unwrapKey();
         return key.map(k -> k.location().toString()).orElse("unknown");
+    }
+    public String getBiome(GameVector3 pos) {
+        return getBiome((int) pos.x, (int) pos.y, (int) pos.z);
     }
 
     // ---- Explode ----
@@ -694,9 +730,14 @@ public class Box3JSWorld {
     public void explode(double x, double y, double z, double power) {
         explode(x, y, z, power, false);
     }
-
+    public void explode(GameVector3 pos, double power) {
+        explode(pos.x, pos.y, pos.z, power, false);
+    }
     public void explode(double x, double y, double z, double power, boolean fire) {
         server.overworld().explode(null, x, y, z, (float) power, fire, Level.ExplosionInteraction.BLOCK);
+    }
+    public void explode(GameVector3 pos, double power, boolean fire) {
+        explode(pos.x, pos.y, pos.z, power, fire);
     }
 
     // ---- Sound ----
@@ -710,6 +751,9 @@ public class Box3JSWorld {
         for (ServerPlayer sp : server.getPlayerList().getPlayers()) {
             sp.connection.send(packet);
         }
+    }
+    public void playSound(String path, GameVector3 pos, double volume, double pitch) {
+        playSound(path, pos.x, pos.y, pos.z, volume, pitch);
     }
 
     // ---- Message ----

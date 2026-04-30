@@ -90,6 +90,25 @@ public class Box3JSPlayer {
         player.onUpdateAbilities();
     }
 
+    public boolean getFlying() { return player.getAbilities().flying; }
+    public void setFlying(boolean v) {
+        player.getAbilities().flying = v;
+        player.onUpdateAbilities();
+    }
+
+    public boolean getCollision() {
+        var team = server.getScoreboard().getPlayersTeam(player.getScoreboardName());
+        return team == null || team.getCollisionRule() != net.minecraft.world.scores.Team.CollisionRule.NEVER;
+    }
+    public void setCollision(boolean enabled) {
+        var team = server.getScoreboard().getPlayersTeam(player.getScoreboardName());
+        if (team != null) {
+            team.setCollisionRule(enabled
+                ? net.minecraft.world.scores.Team.CollisionRule.ALWAYS
+                : net.minecraft.world.scores.Team.CollisionRule.NEVER);
+        }
+    }
+
     public boolean getSpectator() { return player.isSpectator(); }
 
     public double getFlySpeed() { return player.getAbilities().getFlyingSpeed(); }
@@ -260,6 +279,20 @@ public class Box3JSPlayer {
         player.sendSystemMessage(comp);
     }
 
+    // ---- Tab list (MC extension) ----
+
+    public void setPlayerListName(String name) {
+        try {
+            java.lang.reflect.Field f = net.minecraft.world.entity.player.Player.class.getDeclaredField("displayName");
+            f.setAccessible(true);
+            f.set(player, Component.literal(name));
+            server.getPlayerList().broadcastAll(
+                new net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket(
+                    java.util.EnumSet.of(net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME),
+                    java.util.List.of(player)));
+        } catch (Exception ignored) {}
+    }
+
     // ---- Look at (MC extension) ----
 
     public void lookAt(double x, double y, double z) {
@@ -269,6 +302,9 @@ public class Box3JSPlayer {
         double hd = Math.sqrt(dx * dx + dz * dz);
         player.setYRot((float) (Math.toDegrees(Math.atan2(dz, dx)) - 90.0));
         player.setXRot((float) (-Math.toDegrees(Math.atan2(dy, hd))));
+    }
+    public void lookAt(GameVector3 pos) {
+        lookAt(pos.x, pos.y, pos.z);
     }
 
     // ---- Command ----
@@ -282,6 +318,10 @@ public class Box3JSPlayer {
 
     public int getXp() { return player.experienceLevel; }
     public void setXp(int v) { player.experienceLevel = v; }
+
+    public void addExperienceLevels(int levels) {
+        player.experienceLevel += levels;
+    }
 
     public int getFood() { return player.getFoodData().getFoodLevel(); }
     public void setFood(int v) { player.getFoodData().setFoodLevel(v); }

@@ -6,8 +6,14 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.state.BlockState;
 import org.mozilla.javascript.*;
+import org.mozilla.javascript.commonjs.module.ModuleScriptProvider;
+import org.mozilla.javascript.commonjs.module.Require;
+import org.mozilla.javascript.commonjs.module.RequireBuilder;
+import org.mozilla.javascript.commonjs.module.provider.StrongCachingModuleScriptProvider;
+import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -48,6 +54,7 @@ public class Box3ScriptEngine {
     private final Set<String> entityContactPairs = ConcurrentHashMap.newKeySet();
     private final Map<UUID, Function> playerChatHandlers = new ConcurrentHashMap<>();
     private final Map<UUID, Map<String, Object>> entityCustomProps = new HashMap<>();
+    private final Map<String, Require> projectRequires = new HashMap<>();
     private final List<TimerEntry> timers = new ArrayList<>();
     private int timerIdCounter;
 
@@ -83,7 +90,7 @@ public class Box3ScriptEngine {
                     if (Files.exists(appJs) && config.isEnabled(name)) {
                         try {
                             setCurrentProject(name);
-                            eval(Files.readString(appJs));
+                            eval("require('./app')");
                             Box3JS.LOGGER.info("Auto-loaded project: {}", name);
                         } catch (Exception e) {
                             Box3JS.LOGGER.error("Failed to auto-load: {}", appJs, e);
@@ -433,6 +440,7 @@ public class Box3ScriptEngine {
         entityCustomProps.clear();
         timers.clear();
         timerIdCounter = 0;
+        projectRequires.clear();
         this.worldBinding = new Box3JSWorld(server, this);
         this.voxelsBinding = new Box3JSVoxels(server);
         this.storageBinding = new Box3JSStorage(server.getServerDirectory().resolve("config"), this);
@@ -463,6 +471,36 @@ public class Box3ScriptEngine {
                 "  }" +
                 "};",
                 "console-init", 1, null);
+            ScriptableObject.putProperty(scope, "require", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+                    String moduleId = args[0].toString();
+                    String project = currentProject;
+                    if (project == null) {
+                        throw ScriptRuntime.throwError(cx, scope, "require() called outside a project context");
+                    }
+                    Path projectDir = Box3ScriptConfig.get().getScriptDir(server).resolve(project);
+                    Require req = projectRequires.computeIfAbsent(project, p -> {
+                        try {
+                            ModuleScriptProvider provider = new StrongCachingModuleScriptProvider(
+                                new UrlModuleSourceProvider(
+                                    Collections.singletonList(projectDir.toUri()), null) {
+                                    @Override
+                                    protected String getCharacterEncoding(java.net.URLConnection c) {
+                                        return "utf-8";
+                                    }
+                                });
+                            return new RequireBuilder()
+                                .setModuleScriptProvider(provider)
+                                .setSandboxed(false)
+                                .createRequire(cx, Box3ScriptEngine.this.scope);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                    return req.requireMain(cx, moduleId);
+                }
+            });
             ScriptableObject.putProperty(scope, "sleep", new BaseFunction() {
                 @Override
                 public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {

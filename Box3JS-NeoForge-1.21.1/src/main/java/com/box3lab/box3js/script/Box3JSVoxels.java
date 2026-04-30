@@ -107,6 +107,10 @@ public class Box3JSVoxels {
     public int setVoxel(int x, int y, int z, Object voxel) {
         return setVoxel(x, y, z, voxel, 0);
     }
+    /** setVoxel(pos, voxel): number */
+    public int setVoxel(GameVector3 pos, Object voxel) {
+        return setVoxel((int) pos.x, (int) pos.y, (int) pos.z, voxel, 0);
+    }
 
     /** setVoxel(x, y, z, voxel: number|string, rotation?: number|string): number */
     public int setVoxel(int x, int y, int z, Object voxel, Object rotation) {
@@ -131,6 +135,10 @@ public class Box3JSVoxels {
         Integer baseId = blockToId.get(block);
         return baseId != null ? rot * ROTATION_MULTIPLIER + baseId : 0;
     }
+    /** setVoxel(pos, voxel, rotation): number */
+    public int setVoxel(GameVector3 pos, Object voxel, Object rotation) {
+        return setVoxel((int) pos.x, (int) pos.y, (int) pos.z, voxel, rotation);
+    }
 
     /** fillVoxel(x1, y1, z1, x2, y2, z2, voxel): void — fill a region */
     public void fillVoxel(int x1, int y1, int z1, int x2, int y2, int z2, Object voxel) {
@@ -144,6 +152,10 @@ public class Box3JSVoxels {
                 }
             }
         }
+    }
+    /** fillVoxel(pos1, pos2, voxel): void */
+    public void fillVoxel(GameVector3 pos1, GameVector3 pos2, Object voxel) {
+        fillVoxel((int) pos1.x, (int) pos1.y, (int) pos1.z, (int) pos2.x, (int) pos2.y, (int) pos2.z, voxel);
     }
 
     /** countVoxel(x1, y1, z1, x2, y2, z2, voxel): number — count matching blocks in region */
@@ -167,6 +179,10 @@ public class Box3JSVoxels {
         }
         return count;
     }
+    /** countVoxel(pos1, pos2, voxel): number */
+    public int countVoxel(GameVector3 pos1, GameVector3 pos2, Object voxel) {
+        return countVoxel((int) pos1.x, (int) pos1.y, (int) pos1.z, (int) pos2.x, (int) pos2.y, (int) pos2.z, voxel);
+    }
 
     /** setVoxelId(x, y, z, voxel: number): number — rotation already encoded in the ID */
     public int setVoxelId(int x, int y, int z, int voxel) {
@@ -188,6 +204,10 @@ public class Box3JSVoxels {
         level.setBlock(pos, state, 3);
         return voxel;
     }
+    /** setVoxelId(pos, voxel): number */
+    public int setVoxelId(GameVector3 pos, int voxel) {
+        return setVoxelId((int) pos.x, (int) pos.y, (int) pos.z, voxel);
+    }
 
     // ---- Read ----
 
@@ -198,6 +218,10 @@ public class Box3JSVoxels {
         if (state.isAir()) return 0;
         Integer id = blockToId.get(state.getBlock());
         return id != null ? id : 0;
+    }
+    /** getVoxel(pos): number */
+    public int getVoxel(GameVector3 pos) {
+        return getVoxel((int) pos.x, (int) pos.y, (int) pos.z);
     }
 
     /** getVoxelId(x, y, z): number — full ID with rotation encoded */
@@ -211,6 +235,10 @@ public class Box3JSVoxels {
         int rot = extractRotation(state);
         return rot * ROTATION_MULTIPLIER + baseId;
     }
+    /** getVoxelId(pos): number */
+    public int getVoxelId(GameVector3 pos) {
+        return getVoxelId((int) pos.x, (int) pos.y, (int) pos.z);
+    }
 
     /** getVoxelName(x, y, z): string — returns ResourceLocation name of block at position (e.g. "minecraft:stone"). */
     public String getVoxelName(int x, int y, int z) {
@@ -223,6 +251,10 @@ public class Box3JSVoxels {
             if (n != null) return n;
         }
         return BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
+    }
+    /** getVoxelName(pos): string */
+    public String getVoxelName(GameVector3 pos) {
+        return getVoxelName((int) pos.x, (int) pos.y, (int) pos.z);
     }
 
     /** setSpawner(x, y, z, entityType) */
@@ -239,12 +271,19 @@ public class Box3JSVoxels {
 
         spawnerBe.setEntityId(opt.get(), level.getRandom());
     }
+    public void setSpawner(GameVector3 pos, String entityType) {
+        setSpawner((int) pos.x, (int) pos.y, (int) pos.z, entityType);
+    }
 
     /** getVoxelRotation(x, y, z): number — 0, 1, 2, 3 */
     public int getVoxelRotation(int x, int y, int z) {
         ServerLevel level = server.overworld();
         BlockState state = level.getBlockState(new BlockPos(x, y, z));
         return extractRotation(state);
+    }
+    /** getVoxelRotation(pos): number */
+    public int getVoxelRotation(GameVector3 pos) {
+        return getVoxelRotation((int) pos.x, (int) pos.y, (int) pos.z);
     }
 
     /** Resolve Box3 numeric ID from a BlockState. Returns 0 for non-Box3/air blocks. */

@@ -198,15 +198,20 @@ public class Box3JSEntity {
         entity.setYRot(yaw);
         entity.setXRot(pitch);
     }
+    public void lookAt(GameVector3 pos) {
+        lookAt(pos.x, pos.y, pos.z);
+    }
 
     // ---- Navigation (MC extension) ----
 
-    /** Pathfinding-based movement to a target position. Returns true if a path was found. */
     public boolean navigateTo(double x, double y, double z, double speed) {
         if (entity instanceof PathfinderMob mob) {
             return mob.getNavigation().moveTo(x, y, z, speed);
         }
         return false;
+    }
+    public boolean navigateTo(GameVector3 pos, double speed) {
+        return navigateTo(pos.x, pos.y, pos.z, speed);
     }
 
     /** Set the mob's attack target. The mob will pathfind to and attack the target. */

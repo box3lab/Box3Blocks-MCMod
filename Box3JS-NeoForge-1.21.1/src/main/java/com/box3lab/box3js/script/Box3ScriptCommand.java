@@ -56,6 +56,13 @@ public class Box3ScriptCommand {
                                             }
                                             try {
                                                 Box3ScriptEngine.get().init(server);
+                                                // Detect project name for require() support
+                                                Path scriptDir = server.getServerDirectory().resolve("config/box3/script");
+                                                Path relative = null;
+                                                try { relative = scriptDir.relativize(filePath.toAbsolutePath()); } catch (Exception ignored) {}
+                                                if (relative != null && relative.getNameCount() > 1) {
+                                                    Box3ScriptEngine.get().setCurrentProject(relative.getName(0).toString());
+                                                }
                                                 Box3ScriptEngine.get().eval(Files.readString(filePath));
                                                 src.sendSuccess(
                                                         () -> Component.translatable(I + "file.executed", filePath.getFileName()), false);
@@ -196,11 +203,10 @@ public class Box3ScriptCommand {
                                             }
                                             try {
                                                 Box3ScriptEngine.get().init(server);
-                                                Box3ScriptEngine.get().eval(Files.readString(appJs));
+                                                Box3ScriptEngine.get().setCurrentProject(project);
+                                                Box3ScriptEngine.get().eval("require('./app')");
                                                 src.sendSuccess(
                                                         () -> Component.translatable(I + "run.executed", project), false);
-                                            } catch (IOException e) {
-                                                src.sendFailure(Component.translatable(I + "run.read_error", e.getMessage()));
                                             } catch (Exception e) {
                                                 src.sendFailure(Component.translatable(I + "error", e.getMessage()));
                                                 e.printStackTrace();
