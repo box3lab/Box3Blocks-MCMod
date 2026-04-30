@@ -145,7 +145,8 @@ a.divEq(b);  // 原地除法
 a.blendEq(b); // 混合
 
 a.set(0.5, 0.5, 0.5, 1);   // 设置分量
-var copy = a.copy();         // 浅拷贝
+var result = new GameRGBAColor(0, 0, 0, 0);
+result.copy(a);            // 浅拷贝 a
 var clone = a.clone();       // 深拷贝
 
 var lerped = a.lerp(b, 0.5); // 插值

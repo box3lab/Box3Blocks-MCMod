@@ -6,20 +6,20 @@
 
 ## 世界属性
 
-### world.projectName
+### world.projectName()
 
 ⬆ MC 扩展 | 只读。服务端 MOTD 字符串。
 
 ```js
-console.log(world.projectName); // "A Minecraft Server"
+console.log(world.projectName()); // "A Minecraft Server"
 ```
 
-### world.currentTick
+### world.currentTick()
 
 ✅ Box3 API | 只读。服务器自启动以来的总 tick 数。
 
 ```js
-var uptime = world.currentTick;
+var uptime = world.currentTick();
 world.say("服务器已运行 " + Math.floor(uptime / 20 / 60) + " 分钟");
 ```
 
@@ -684,7 +684,7 @@ world.runCommand("weather clear");
 
 | API | 类型 |
 |---|---|
-| `currentTick` | ✅ Box3 |
+| `currentTick()` | ✅ Box3 |
 | `rainDensity` | ✅ Box3 |
 | `time` / `setTime()` | ✅ Box3 |
 | `timeScale` | ✅ Box3 |

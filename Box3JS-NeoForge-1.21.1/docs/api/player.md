@@ -253,6 +253,18 @@ player.kick("你已被移出游戏");
 
 ⬆ MC 扩展 | 完全参数的标题。`fadeIn`/`stay`/`fadeOut` 单位均为 tick。
 
+### player.dialog(config)
+
+✅ Box3 API | 弹出对话框。传入 `{content, options}` 配置，返回 `{index, value}`。目前 MC 中发送系统消息作为简化实现。
+
+```js
+var result = player.dialog({
+    content: "选择你的道路",
+    options: ["战士", "法师", "弓箭手"]
+});
+player.directMessage("你选择了: " + result.value);
+```
+
 ### player.link(href)
 
 ✅ Box3 API | 向玩家发送可点击链接。
@@ -443,6 +455,7 @@ player.setPlayerListName(player.name);
 | `teleport()` | ✅ Box3 |
 | `directMessage()` / `actionBar()` | ✅ Box3 |
 | `title()` (2 参) | ✅ Box3 |
+| `dialog()` | ✅ Box3 |
 | `link()` | ✅ Box3 |
 | `onChat()` (player-level) | ✅ Box3 |
 
