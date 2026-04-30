@@ -3,6 +3,7 @@ package com.box3lab.box3js.script;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 import java.io.IOException;
@@ -13,8 +14,6 @@ import static net.minecraft.commands.Commands.literal;
 import static net.minecraft.commands.Commands.argument;
 
 public class Box3ScriptCommand {
-
-    private static Path scriptDir;
 
     public static void register(RegisterCommandsEvent event) {
         var dispatcher = event.getDispatcher();
@@ -47,7 +46,7 @@ public class Box3ScriptCommand {
                                             String input = StringArgumentType.getString(ctx, "path");
                                             CommandSourceStack src = ctx.getSource();
                                             var server = src.getServer();
-                                            Path filePath = resolve(input);
+                                            Path filePath = resolve(input, server);
                                             if (!Files.exists(filePath)) {
                                                 src.sendFailure(Component.literal("File not found: " + filePath));
                                                 return 0;
@@ -62,6 +61,35 @@ public class Box3ScriptCommand {
                                             } catch (Exception e) {
                                                 src.sendFailure(Component.literal("Script error: " + e.getMessage()));
                                                 e.printStackTrace();
+                                            }
+                                            return 1;
+                                        })))
+                        // --- create ---
+                        .then(literal("create")
+                                .then(argument("name", StringArgumentType.word())
+                                        .executes(ctx -> {
+                                            String name = StringArgumentType.getString(ctx, "name");
+                                            Path projectDir = resolve(name, ctx.getSource().getServer());
+                                            if (Files.exists(projectDir)) {
+                                                ctx.getSource().sendFailure(
+                                                        Component.literal("Project already exists: " + name));
+                                                return 0;
+                                            }
+                                            try {
+                                                Files.createDirectories(projectDir);
+                                                String template = "// " + name + " — Box3JS project\n"
+                                                        + "world.onTick(() => {\n"
+                                                        + "    // 每 tick 执行\n"
+                                                        + "});\n"
+                                                        + "\n"
+                                                        + "console.log('" + name + " loaded');\n";
+                                                Files.writeString(projectDir.resolve("app.js"), template);
+                                                ctx.getSource().sendSuccess(
+                                                        () -> Component.literal("Project created: " + name
+                                                                + "\nUse /box3script on " + name + " to enable it."),
+                                                        false);
+                                            } catch (IOException e) {
+                                                ctx.getSource().sendFailure(Component.literal("Failed to create: " + e.getMessage()));
                                             }
                                             return 1;
                                         })))
@@ -137,7 +165,7 @@ public class Box3ScriptCommand {
                                             String project = StringArgumentType.getString(ctx, "project");
                                             CommandSourceStack src = ctx.getSource();
                                             var server = src.getServer();
-                                            Path appJs = resolve(project).resolve("app.js");
+                                            Path appJs = resolve(project, server).resolve("app.js");
                                             if (!Files.exists(appJs)) {
                                                 src.sendFailure(Component.literal("app.js not found: " + appJs));
                                                 return 0;
@@ -158,12 +186,9 @@ public class Box3ScriptCommand {
         );
     }
 
-    private static Path resolve(String input) {
+    private static Path resolve(String input, MinecraftServer server) {
         Path p = Path.of(input);
         if (p.isAbsolute()) return p;
-        if (scriptDir == null) {
-            scriptDir = Path.of("config", "box3", "script").toAbsolutePath();
-        }
-        return scriptDir.resolve(input).normalize();
+        return Box3ScriptConfig.get().getScriptDir(server).resolve(input).normalize();
     }
 }

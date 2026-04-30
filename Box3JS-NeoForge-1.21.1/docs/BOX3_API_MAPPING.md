@@ -6,7 +6,6 @@
 
 - **✅ Box3 API** — Box3 原有 API，已接入 MC
 - **⬆ MC 扩展** — 非 Box3 原有，利用 MC 特性新增
-- **🚫 不适用** — 无 MC 对应概念
 
 ### 运行时
 
@@ -15,6 +14,23 @@
 | 引擎 | Mozilla Rhino 1.7.14 |
 | 作用域 | 服务端脚本（S- 脚本） |
 | Tick | `ServerTickEvent.Post` |
+
+### console (⬆ MC 扩展)
+
+| API | 说明 |
+|---|---|
+| `console.log(...args)` | 标准日志输出 `[Box3JS] [项目名] msg` |
+| `console.debug(...args)` | 调试日志 `[Box3JS][DEBUG] [项目名] msg` |
+| `console.warn(...args)` | 警告日志 `[Box3JS][WARN] [项目名] msg` |
+| `console.error(...args)` | 错误日志（stderr）`[Box3JS][ERROR] [项目名] msg` |
+| `console.assert(assertion, ...args)` | 断言失败时调用 `error()` |
+| `console.clear()` | 清空控制台 |
+
+### sleep (⬆ MC 扩展)
+
+| API | 说明 |
+|---|---|
+| `sleep(ms)` | 阻塞当前线程指定毫秒数 |
 
 ---
 
@@ -90,18 +106,25 @@
 | `world.clearTimeout(id)` | ⬆ | 取消 timeout |
 | `world.clearInterval(id)` | ⬆ | 取消 interval |
 
+### 项目间消息传递（⬆ MC 扩展）
+
+| API | 类型 | 说明 |
+|---|---|---|
+| `world.message.send(target, data)` | ⬆ | 精确路由到目标项目；`"*"` 广播给所有其他项目 |
+| `world.message.on(handler)` | ⬆ | 接收其他项目发来的消息；`handler(from, data)` |
+
 ### 命令 / 查询（⬆ MC 扩展）
 
 | API | 类型 | 说明 |
 |---|---|---|
 | `world.runCommand(cmd)` | ⬆ | 以服务器身份执行命令 |
-| `world.getEntitiesInArea(pos1, pos2)` | ⬆ | 返回 AABB 区域内所有实体 |
-| `world.raycast(origin, dir)` | ⬆ | 射线检测，默认 5 格 |
-| `world.raycast(origin, dir, dist)` | ⬆ | 射线检测，自定义距离；返回 `{hit, x, y, z, voxel, entity, normalX/Y/Z, distance}` |
-| `world.explode(x, y, z, power)` | ⬆ | 创建爆炸 |
-| `world.explode(x, y, z, power, fire)` | ⬆ | 创建爆炸（可引火） |
-| `world.playSoundAll(path, x, y, z, vol, pitch)` | ⬆ | 在坐标播放音效给所有玩家 |
-| `world.getBiome(x, y, z)` | ⬆ | 获取生物群系命名空间 ID |
+| `world.query.raycast(origin, dir)` | ⬆ | 射线检测，默认 5 格 |
+| `world.query.raycast(origin, dir, dist)` | ⬆ | 射线检测，自定义距离 |
+| `world.query.entitiesInArea(pos1, pos2)` | ⬆ | 返回 AABB 区域内所有实体 |
+| `world.query.biome(x, y, z)` | ⬆ | 获取生物群系命名空间 ID |
+| `world.effect.explode(x, y, z, power)` | ⬆ | 创建爆炸 |
+| `world.effect.explode(x, y, z, power, fire)` | ⬆ | 创建爆炸（可引火） |
+| `world.sound.playAll(path, x, y, z, vol, pitch)` | ⬆ | 在坐标播放音效给所有玩家 |
 ---
 
 ## entity (GameEntity)
@@ -132,8 +155,8 @@
 | `.lookAt(x, y, z)` | ⬆ | 实体面朝指定坐标 |
 | `.navigateTo(x, y, z, speed)` | ⬆ | 寻路步行到目标（PathfinderMob） |
 | `.setAI(enabled)` | ⬆ | 开关实体 AI |
-| `.setEquipment(slot, itemId)` | ⬆ | 给生物穿装备；slot: mainhand/offhand/head/chest/legs/feet |
-| `.addEffect(effectId, dur, amp)` | ⬆ | 给任意 LivingEntity 添加药水效果 |
+| `.equipment.set(slot, itemId)` | ⬆ | 给生物穿装备；slot: mainhand/offhand/head/chest/legs/feet |
+| `.effect.add(effectId, dur, amp)` | ⬆ | 给任意 LivingEntity 添加药水效果 |
 | `.setTarget(entity)` | ⬆ | 设置怪物攻击目标（Mob.setTarget） |
 | `.getTarget()` | ⬆ | 获取怪物当前攻击目标 |
 | `.clearTarget()` | ⬆ | 清除攻击目标 |
@@ -219,9 +242,9 @@
 
 | API | 类型 | 说明 |
 |---|---|---|
-| `.giveItem(itemId, count)` | ⬆ | 命名空间 ID |
-| `.addEffect(effectId, dur, amp)` | ⬆ | 命名空间 ID；duration 为 tick |
-| `.clearEffects()` | ⬆ | `removeAllEffects()` |
+| `.inventory.give(itemId, count)` | ⬆ | 命名空间 ID |
+| `.effect.add(effectId, dur, amp)` | ⬆ | 命名空间 ID；duration 为 tick |
+| `.effect.clear()` | ⬆ | `removeAllEffects()` |
 | `.xp` | ⬆ | 经验等级 get/set |
 | `.food` | ⬆ | 饱食度 get/set |
 | `.saturation` | ⬆ | 饱和度 get/set |
@@ -231,15 +254,15 @@
 | API | 类型 | 说明 |
 |---|---|---|
 | `.sound(path)` | ✅ | 固定 NOTE_BLOCK_PLING |
-| `.playSound(path, vol, pitch)` | ⬆ | 播放任意 MC 音效 |
+| `.sound.play(path, vol, pitch)` | ⬆ | 播放任意 MC 音效 |
 
 ### 维度 / 物品（⬆ MC 扩展）
 
 | API | 类型 | 说明 |
 |---|---|---|
 | `.dimension` | ⬆ | 维度 ID，get/set（set 可跨维度传送） |
-| `.getHeldItem()` | ⬆ | 主手物品 `{id, count}` |
-| `.clearInventory()` | ⬆ | 清空背包 |
+| `.inventory.held()` | ⬆ | 主手物品 `{id, count}` |
+| `.inventory.clear()` | ⬆ | 清空背包 |
 
 ### 命令（⬆ MC 扩展）
 
@@ -289,6 +312,7 @@
 | `storage.key` | 空字符串 |
 | `storage.getDataStorage(name)` / `getGroupStorage(name)` | 返回 GameDataStorage |
 | `store.set(key, value)` / `store.get(key)` | 读写 JSON |
+| `store.keys()` | 返回所有 key |
 | `store.update(key, handler)` | 回调更新 |
 | `store.remove(key)` / `store.increment(key, delta?)` | 删除/递加 |
 | `store.list(options)` | 分页排序过滤 |
@@ -307,7 +331,8 @@
 | `/box3script on <project>` | 启用项目 |
 | `/box3script off <project>` | 禁用项目 |
 | `/box3script reload` | 重载所有启用项目 |
-| `/box3script stop` | 停止所有脚本，清空回调
+| `/box3script stop` | 停止所有脚本，清空回调 |
+| `/box3script create <name>` | 创建新项目目录及 `app.js` 模板 |
 
 ---
 
@@ -325,9 +350,9 @@
 
 ---
 
-## 命名空间 API (v2)
+## 命名空间 API (v2) — 全部为 ⬆ MC 扩展
 
-`world.*` 下部分功能按分组组织为命名空间调用方式。
+以下 `world.*` / `player.*` / `entity.*` 命名空间 API 均为 MC 原生扩展，非 Box3 原有。
 
 ### world.scoreboard
 
@@ -403,7 +428,6 @@
 | 状态 | 数量 |
 |---|---|
 | ✅ Box3 API | ~100 |
-| ⬆ MC 扩展 | ~72 |
-| 🚫 不适用 | ~80 |
+| ⬆ MC 扩展 | ~83 |
 
-> 最后更新：2026-04-29
+> 最后更新：2026-04-30

@@ -19,8 +19,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.NativeObject;
+import org.mozilla.javascript.ScriptableObject;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class Box3JSPlayer {
@@ -33,7 +33,14 @@ public class Box3JSPlayer {
         this.player = player;
         this.server = server;
         this.engine = engine;
+        this.inventory = new InventoryNS(player);
+        this.effect = new EffectNS(player);
+        this.sound = new SoundNS(player);
     }
+
+    public final InventoryNS inventory;
+    public final EffectNS effect;
+    public final SoundNS sound;
 
     // ---- Info ----
 
@@ -237,9 +244,9 @@ public class Box3JSPlayer {
 
         player.sendSystemMessage(Component.literal(content));
 
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("index", 0);
-        result.put("value", opts[0]);
+        NativeObject result = new NativeObject();
+        ScriptableObject.putProperty(result, "index", 0);
+        ScriptableObject.putProperty(result, "value", opts[0]);
         return result;
     }
 
@@ -260,23 +267,6 @@ public class Box3JSPlayer {
         player.sendSystemMessage(comp);
     }
 
-    // ---- Sound ----
-
-    public void sound(String path) {
-        player.playNotifySound(
-                net.minecraft.sounds.SoundEvents.NOTE_BLOCK_PLING.value(),
-                net.minecraft.sounds.SoundSource.PLAYERS, 1.0f, 1.0f);
-    }
-
-    public void playSound(String path, float volume, float pitch) {
-        ResourceLocation rl = ResourceLocation.tryParse(path);
-        if (rl == null) return;
-        var sound = net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.getOptional(rl);
-        if (sound.isPresent()) {
-            player.playNotifySound(sound.get(), net.minecraft.sounds.SoundSource.PLAYERS, volume, pitch);
-        }
-    }
-
     // ---- Look at (MC extension) ----
 
     public void lookAt(double x, double y, double z) {
@@ -293,51 +283,6 @@ public class Box3JSPlayer {
     public void runCommand(String cmd) {
         net.minecraft.commands.CommandSourceStack source = player.createCommandSourceStack();
         server.getCommands().performPrefixedCommand(source, cmd);
-    }
-
-    // ---- Inventory ----
-
-    public void giveItem(String itemId, int count) {
-        ResourceLocation rl = ResourceLocation.tryParse(itemId);
-        if (rl == null) return;
-        var item = BuiltInRegistries.ITEM.getOptional(rl);
-        if (item.isPresent()) {
-            ItemStack stack = new ItemStack(item.get(), Math.max(1, Math.min(count, 64)));
-            player.getInventory().add(stack);
-        }
-    }
-
-    public void clearInventory() {
-        player.getInventory().clearContent();
-    }
-
-    public Object getHeldItem() {
-        ItemStack stack = player.getMainHandItem();
-        Map<String, Object> result = new LinkedHashMap<>();
-        if (stack.isEmpty()) {
-            result.put("id", "minecraft:air");
-            result.put("count", 0);
-            return result;
-        }
-        ResourceLocation key = BuiltInRegistries.ITEM.getKey(stack.getItem());
-        result.put("id", key.toString());
-        result.put("count", stack.getCount());
-        return result;
-    }
-
-    // ---- Effects ----
-
-    public void addEffect(String effectId, int duration, int amplifier) {
-        ResourceLocation rl = ResourceLocation.tryParse(effectId);
-        if (rl == null) return;
-        var effect = BuiltInRegistries.MOB_EFFECT.getHolder(rl);
-        if (effect.isPresent()) {
-            player.addEffect(new MobEffectInstance(effect.get(), duration, amplifier));
-        }
-    }
-
-    public void clearEffects() {
-        player.removeAllEffects();
     }
 
     // ---- XP / Food ----
@@ -365,5 +310,72 @@ public class Box3JSPlayer {
 
     private void setProp(String key, Object value) {
         props().put(key, value);
+    }
+
+    // ---- Namespace classes ----
+
+    public static class InventoryNS {
+        private final ServerPlayer player;
+        InventoryNS(ServerPlayer player) { this.player = player; }
+
+        public void give(String itemId, int count) {
+            ResourceLocation rl = ResourceLocation.tryParse(itemId);
+            if (rl == null) return;
+            var item = BuiltInRegistries.ITEM.getOptional(rl);
+            if (item.isPresent()) {
+                ItemStack stack = new ItemStack(item.get(), Math.max(1, Math.min(count, 64)));
+                player.getInventory().add(stack);
+            }
+        }
+
+        public Object held() {
+            ItemStack stack = player.getMainHandItem();
+            NativeObject result = new NativeObject();
+            if (stack.isEmpty()) {
+                ScriptableObject.putProperty(result, "id", "minecraft:air");
+                ScriptableObject.putProperty(result, "count", 0);
+                return result;
+            }
+            ResourceLocation key = BuiltInRegistries.ITEM.getKey(stack.getItem());
+            ScriptableObject.putProperty(result, "id", key.toString());
+            ScriptableObject.putProperty(result, "count", stack.getCount());
+            return result;
+        }
+
+        public void clear() {
+            player.getInventory().clearContent();
+        }
+    }
+
+    public static class EffectNS {
+        private final ServerPlayer player;
+        EffectNS(ServerPlayer player) { this.player = player; }
+
+        public void add(String effectId, int duration, int amplifier) {
+            ResourceLocation rl = ResourceLocation.tryParse(effectId);
+            if (rl == null) return;
+            var effect = BuiltInRegistries.MOB_EFFECT.getHolder(rl);
+            if (effect.isPresent()) {
+                player.addEffect(new MobEffectInstance(effect.get(), duration, amplifier));
+            }
+        }
+
+        public void clear() {
+            player.removeAllEffects();
+        }
+    }
+
+    public static class SoundNS {
+        private final ServerPlayer player;
+        SoundNS(ServerPlayer player) { this.player = player; }
+
+        public void play(String path, double volume, double pitch) {
+            ResourceLocation rl = ResourceLocation.tryParse(path);
+            if (rl == null) return;
+            var sound = net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.getOptional(rl);
+            if (sound.isPresent()) {
+                player.playNotifySound(sound.get(), net.minecraft.sounds.SoundSource.PLAYERS, (float) volume, (float) pitch);
+            }
+        }
     }
 }

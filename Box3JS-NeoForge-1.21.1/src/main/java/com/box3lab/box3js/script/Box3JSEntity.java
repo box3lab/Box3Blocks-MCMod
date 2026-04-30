@@ -30,6 +30,9 @@ public class Box3JSEntity {
     private Function _onDestroyHandler;
     private final GameVector3 _position, _velocity, _bounds;
 
+    public final EffectNS effect;
+    public final EquipmentNS equipment;
+
     public Box3JSEntity(Entity entity, MinecraftServer server, Box3ScriptEngine engine) {
         this.entity = entity;
         this.server = server;
@@ -37,6 +40,8 @@ public class Box3JSEntity {
         this._position = new LiveVec3(v -> entity.teleportTo(v.x, v.y, v.z));
         this._velocity = new LiveVec3(v -> entity.setDeltaMovement(v.x, v.y, v.z));
         this._bounds = new GameVector3();
+        this.effect = new EffectNS(entity);
+        this.equipment = new EquipmentNS(entity);
     }
 
     public Entity getEntity() { return entity; }
@@ -103,16 +108,6 @@ public class Box3JSEntity {
 
     public void removeTag(String tag) {
         entity.removeTag(tag);
-    }
-
-    // ---- Sound ----
-
-    public void sound(String path) {
-        if (entity instanceof ServerPlayer sp) {
-            sp.playNotifySound(
-                    net.minecraft.sounds.SoundEvents.NOTE_BLOCK_PLING.value(),
-                    SoundSource.PLAYERS, 1.0f, 1.0f);
-        }
     }
 
     // ---- Glowing (MC extension) ----
@@ -195,38 +190,6 @@ public class Box3JSEntity {
 
     public void clearFire() {
         entity.setRemainingFireTicks(0);
-    }
-
-    // ---- Equipment & Effects (MC extension) ----
-
-    /** Set equipment slot for a mob. slot: mainhand/offhand/head/chest/legs/feet */
-    public void setEquipment(String slot, String itemId) {
-        if (!(entity instanceof Mob mob)) return;
-        EquipmentSlot equipmentSlot = switch (slot.toLowerCase()) {
-            case "mainhand" -> EquipmentSlot.MAINHAND;
-            case "offhand" -> EquipmentSlot.OFFHAND;
-            case "head", "helmet", "helm" -> EquipmentSlot.HEAD;
-            case "chest", "chestplate" -> EquipmentSlot.CHEST;
-            case "legs", "leggings" -> EquipmentSlot.LEGS;
-            case "feet", "boots" -> EquipmentSlot.FEET;
-            default -> null;
-        };
-        if (equipmentSlot == null) return;
-        ResourceLocation rl = ResourceLocation.tryParse(itemId);
-        if (rl == null) return;
-        Item item = BuiltInRegistries.ITEM.getOptional(rl).orElse(null);
-        if (item == null) return;
-        mob.setItemSlot(equipmentSlot, new ItemStack(item));
-    }
-
-    /** Add a potion effect to a LivingEntity. Works on all entities, not just players. */
-    public void addEffect(String effectId, int duration, int amplifier) {
-        if (!(entity instanceof LivingEntity le)) return;
-        ResourceLocation rl = ResourceLocation.tryParse(effectId);
-        if (rl == null) return;
-        Holder<MobEffect> effect = BuiltInRegistries.MOB_EFFECT.getHolder(rl).orElse(null);
-        if (effect == null) return;
-        le.addEffect(new MobEffectInstance(effect, duration, amplifier));
     }
 
     // ---- Look at (MC extension) ----
@@ -329,6 +292,46 @@ public class Box3JSEntity {
             this.x = x; this.y = y; this.z = z;
             onSet.accept(this);
             return this;
+        }
+    }
+
+    // ---- Namespace classes ----
+
+    public static class EffectNS {
+        private final Entity entity;
+        EffectNS(Entity entity) { this.entity = entity; }
+
+        public void add(String effectId, int duration, int amplifier) {
+            if (!(entity instanceof LivingEntity le)) return;
+            ResourceLocation rl = ResourceLocation.tryParse(effectId);
+            if (rl == null) return;
+            Holder<MobEffect> effect = BuiltInRegistries.MOB_EFFECT.getHolder(rl).orElse(null);
+            if (effect == null) return;
+            le.addEffect(new MobEffectInstance(effect, duration, amplifier));
+        }
+    }
+
+    public static class EquipmentNS {
+        private final Entity entity;
+        EquipmentNS(Entity entity) { this.entity = entity; }
+
+        public void set(String slot, String itemId) {
+            if (!(entity instanceof Mob mob)) return;
+            EquipmentSlot equipmentSlot = switch (slot.toLowerCase()) {
+                case "mainhand" -> EquipmentSlot.MAINHAND;
+                case "offhand" -> EquipmentSlot.OFFHAND;
+                case "head", "helmet", "helm" -> EquipmentSlot.HEAD;
+                case "chest", "chestplate" -> EquipmentSlot.CHEST;
+                case "legs", "leggings" -> EquipmentSlot.LEGS;
+                case "feet", "boots" -> EquipmentSlot.FEET;
+                default -> null;
+            };
+            if (equipmentSlot == null) return;
+            ResourceLocation rl = ResourceLocation.tryParse(itemId);
+            if (rl == null) return;
+            Item item = BuiltInRegistries.ITEM.getOptional(rl).orElse(null);
+            if (item == null) return;
+            mob.setItemSlot(equipmentSlot, new ItemStack(item));
         }
     }
 }

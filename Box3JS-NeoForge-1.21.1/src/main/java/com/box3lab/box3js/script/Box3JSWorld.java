@@ -1,5 +1,8 @@
 package com.box3lab.box3js.script;
 
+import org.mozilla.javascript.NativeObject;
+import org.mozilla.javascript.ScriptableObject;
+
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -53,22 +56,40 @@ public class Box3JSWorld {
 
     private final MinecraftServer server;
     private final Box3ScriptEngine engine;
+    private String projectName;
     private final Map<String, ServerBossEvent> bossBars = new HashMap<>();
+
+    public final ScoreboardNS scoreboard;
+    public final BossBarNS bossbar;
+    public final TeamNS team;
+    public final BorderNS border;
+    public final LightningNS lightning;
+    public final FireworkNS firework;
+    public final ParticleNS particle;
+    public final DropNS drop;
+    public final QueryNS query;
+    public final EffectNS effect;
+    public final SoundNS sound;
+    public final MessageNS message;
 
     public Box3JSWorld(MinecraftServer server, Box3ScriptEngine engine) {
         this.server = server;
         this.engine = engine;
+        this.scoreboard = new ScoreboardNS(server);
+        this.bossbar = new BossBarNS(server, bossBars);
+        this.team = new TeamNS(server);
+        this.border = new BorderNS(server);
+        this.lightning = new LightningNS(server);
+        this.firework = new FireworkNS(server);
+        this.particle = new ParticleNS(server);
+        this.drop = new DropNS(server);
+        this.query = new QueryNS(server, engine);
+        this.effect = new EffectNS(server);
+        this.sound = new SoundNS(server);
+        this.message = new MessageNS(engine);
     }
 
-    // ---- Namespace fields ----
-    public final ScoreboardNS scoreboard = new ScoreboardNS();
-    public final BossBarNS bossbar = new BossBarNS();
-    public final TeamNS team = new TeamNS();
-    public final BorderNS border = new BorderNS();
-    public final LightningNS lightning = new LightningNS();
-    public final FireworkNS firework = new FireworkNS();
-    public final ParticleNS particle = new ParticleNS();
-    public final DropNS drop = new DropNS();
+    public void setProjectName(String name) { this.projectName = name; }
 
     // ---- World properties ----
 
@@ -287,125 +308,11 @@ public class Box3JSWorld {
         server.getCommands().performPrefixedCommand(source, cmd);
     }
 
-    private String resolveScoreName(Object entityOrName) {
+    private static String resolveScoreName(Object entityOrName) {
         if (entityOrName instanceof String s) return s;
         if (entityOrName instanceof Box3JSEntity e) return e.getEntity().getScoreboardName();
         if (entityOrName instanceof ServerPlayer sp) return sp.getScoreboardName();
         return null;
-    }
-
-    // ---- Entity query (MC extension) ----
-
-    public List<Box3JSEntity> getEntitiesInArea(GameVector3 pos1, GameVector3 pos2) {
-        AABB aabb = new AABB(pos1.x, pos1.y, pos1.z, pos2.x, pos2.y, pos2.z);
-        List<Box3JSEntity> result = new ArrayList<>();
-        for (Entity e : server.overworld().getEntities((Entity) null, aabb, e -> true)) {
-            result.add(new Box3JSEntity(e, server, engine));
-        }
-        return result;
-    }
-
-    // ---- Raycast (MC extension) ----
-
-    public Object raycast(GameVector3 origin, GameVector3 direction) {
-        return raycast(origin, direction, 5.0);
-    }
-
-    public Object raycast(GameVector3 origin, GameVector3 direction, double maxDistance) {
-        ServerLevel level = server.overworld();
-        Vec3 start = new Vec3(origin.x, origin.y, origin.z);
-        double len = Math.sqrt(direction.x * direction.x + direction.y * direction.y + direction.z * direction.z);
-        if (len < 0.0001) {
-            Map<String, Object> result = new LinkedHashMap<>();
-            result.put("hit", false);
-            return result;
-        }
-        Vec3 dir = new Vec3(direction.x / len, direction.y / len, direction.z / len);
-        Vec3 end = start.add(dir.scale(maxDistance));
-
-        // Block raycast
-        ClipContext ctx = new ClipContext(start, end, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, CollisionContext.empty());
-        BlockHitResult blockHit = level.clip(ctx);
-
-        // Entity raycast
-        AABB searchBox = new AABB(start, end).inflate(1.0);
-        Entity closestEntity = null;
-        Vec3 entityHitPos = null;
-        double closestEntDistSqr = maxDistance * maxDistance;
-
-        for (Entity e : level.getEntities((Entity) null, searchBox, e -> true)) {
-            var hit = e.getBoundingBox().clip(start, end);
-            if (hit.isPresent()) {
-                double dSqr = start.distanceToSqr(hit.get());
-                if (dSqr < closestEntDistSqr) {
-                    closestEntDistSqr = dSqr;
-                    closestEntity = e;
-                    entityHitPos = hit.get();
-                }
-            }
-        }
-
-        double blockDistSqr = blockHit.getType() != HitResult.Type.MISS
-            ? start.distanceToSqr(blockHit.getLocation()) : Double.MAX_VALUE;
-
-        Map<String, Object> result = new LinkedHashMap<>();
-        if (closestEntity != null && closestEntDistSqr < blockDistSqr) {
-            result.put("hit", true);
-            result.put("x", entityHitPos.x);
-            result.put("y", entityHitPos.y);
-            result.put("z", entityHitPos.z);
-            result.put("normalX", 0);
-            result.put("normalY", 0);
-            result.put("normalZ", 0);
-            result.put("distance", Math.sqrt(closestEntDistSqr));
-            result.put("entity", new Box3JSEntity(closestEntity, server, engine));
-        } else if (blockHit.getType() != HitResult.Type.MISS) {
-            Vec3 pos = blockHit.getLocation();
-            result.put("hit", true);
-            result.put("x", pos.x);
-            result.put("y", pos.y);
-            result.put("z", pos.z);
-            Direction face = blockHit.getDirection();
-            result.put("normalX", face.getStepX());
-            result.put("normalY", face.getStepY());
-            result.put("normalZ", face.getStepZ());
-            result.put("distance", Math.sqrt(blockDistSqr));
-            result.put("entity", null);
-            BlockPos bp = blockHit.getBlockPos();
-            result.put("voxel", engine.getVoxelsBinding().getId(level.getBlockState(bp)));
-        } else {
-            result.put("hit", false);
-        }
-        return result;
-    }
-
-    // ---- Explosion (MC extension) ----
-
-    public void explode(double x, double y, double z, float power) {
-        explode(x, y, z, power, false);
-    }
-
-    public void explode(double x, double y, double z, float power, boolean fire) {
-        server.overworld().explode(null, x, y, z, power, fire, Level.ExplosionInteraction.BLOCK);
-    }
-
-    // ---- Sound / Biome (MC extension) ----
-
-    public void playSoundAll(String path, double x, double y, double z, float volume, float pitch) {
-        ResourceLocation rl = ResourceLocation.tryParse(path);
-        if (rl == null) return;
-        var sound = BuiltInRegistries.SOUND_EVENT.getHolder(rl);
-        if (sound.isEmpty()) return;
-        var packet = new ClientboundSoundPacket(sound.get(), SoundSource.PLAYERS, x, y, z, volume, pitch, server.overworld().getRandom().nextLong());
-        for (ServerPlayer sp : server.getPlayerList().getPlayers()) {
-            sp.connection.send(packet);
-        }
-    }
-
-    public String getBiome(int x, int y, int z) {
-        Holder<Biome> biome = server.overworld().getBiome(new BlockPos(x, y, z));
-        var key = biome.unwrapKey();
-        return key.map(k -> k.location().toString()).orElse("unknown");
     }
 
     // ---- Callback interfaces ----
@@ -485,9 +392,17 @@ public class Box3JSWorld {
         void onDamage(Box3JSEntity entity, double amount, String source, Box3JSEntity attacker, long tick);
     }
 
+    @FunctionalInterface
+    public interface MessageCallback {
+        void onMessage(String from, Object data);
+    }
+
     // ---- Namespace inner classes ----
 
-    public class ScoreboardNS {
+    public static class ScoreboardNS {
+        private final MinecraftServer server;
+        ScoreboardNS(MinecraftServer server) { this.server = server; }
+
         public void add(String name) { add(name, "dummy"); }
         public void add(String name, String criteria) {
             Scoreboard sb = server.getScoreboard();
@@ -538,23 +453,27 @@ public class Box3JSWorld {
             Objective obj = sb.getObjective(name);
             if (obj != null) sb.removeObjective(obj);
         }
-        public java.util.List<java.util.Map<String, Object>> list(String objectiveName) {
-            java.util.List<java.util.Map<String, Object>> result = new ArrayList<>();
+        public java.util.List<NativeObject> list(String objectiveName) {
+            java.util.List<NativeObject> result = new ArrayList<>();
             Scoreboard sb = server.getScoreboard();
             Objective obj = sb.getObjective(objectiveName);
             if (obj == null) return result;
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
                 int s = sb.getOrCreatePlayerScore(ScoreHolder.forNameOnly(player.getScoreboardName()), obj).get();
-                Map<String, Object> m = new LinkedHashMap<>();
-                m.put("name", player.getScoreboardName());
-                m.put("value", s);
+                NativeObject m = new NativeObject();
+                ScriptableObject.putProperty(m, "name", player.getScoreboardName());
+                ScriptableObject.putProperty(m, "value", s);
                 result.add(m);
             }
             return result;
         }
     }
 
-    public class BossBarNS {
+    public static class BossBarNS {
+        private final MinecraftServer server;
+        private final Map<String, ServerBossEvent> bossBars;
+        BossBarNS(MinecraftServer server, Map<String, ServerBossEvent> bossBars) { this.server = server; this.bossBars = bossBars; }
+
         public void show(String name, String text, double progress, String colorName) {
             ServerBossEvent bar = bossBars.get(name);
             if (bar == null) {
@@ -590,7 +509,10 @@ public class Box3JSWorld {
         }
     }
 
-    public class TeamNS {
+    public static class TeamNS {
+        private final MinecraftServer server;
+        TeamNS(MinecraftServer server) { this.server = server; }
+
         public void create(String name, String colorName) {
             Scoreboard sb = server.getScoreboard();
             if (sb.getPlayerTeam(name) != null) return;
@@ -627,7 +549,10 @@ public class Box3JSWorld {
         }
     }
 
-    public class BorderNS {
+    public static class BorderNS {
+        private final MinecraftServer server;
+        BorderNS(MinecraftServer server) { this.server = server; }
+
         public double size() { return server.overworld().getWorldBorder().getSize(); }
         public void center(double x, double z) { server.overworld().getWorldBorder().setCenter(x, z); }
         public void set(double size) { server.overworld().getWorldBorder().setSize(size); }
@@ -639,7 +564,10 @@ public class Box3JSWorld {
         public void warning(int blocks) { server.overworld().getWorldBorder().setWarningBlocks(blocks); }
     }
 
-    public class LightningNS {
+    public static class LightningNS {
+        private final MinecraftServer server;
+        LightningNS(MinecraftServer server) { this.server = server; }
+
         public boolean strike(double x, double y, double z) {
             ServerLevel level = server.overworld();
             LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(level);
@@ -661,7 +589,10 @@ public class Box3JSWorld {
         }
     }
 
-    public class FireworkNS {
+    public static class FireworkNS {
+        private final MinecraftServer server;
+        FireworkNS(MinecraftServer server) { this.server = server; }
+
         public void launch(double x, double y, double z, String color, String shape) {
             ServerLevel level = server.overworld();
             int colorInt = switch (color != null ? color.toLowerCase(Locale.ROOT) : "") {
@@ -695,7 +626,10 @@ public class Box3JSWorld {
         }
     }
 
-    public class ParticleNS {
+    public static class ParticleNS {
+        private final MinecraftServer server;
+        ParticleNS(MinecraftServer server) { this.server = server; }
+
         public void spawn(String type, double x, double y, double z, int count, double dx, double dy, double dz, double speed) {
             var particle = resolveParticle(type);
             if (particle != null) {
@@ -724,7 +658,10 @@ public class Box3JSWorld {
         }
     }
 
-    public class DropNS {
+    public static class DropNS {
+        private final MinecraftServer server;
+        DropNS(MinecraftServer server) { this.server = server; }
+
         public void item(double x, double y, double z, String itemId, int count) {
             ServerLevel level = server.overworld();
             ResourceLocation rl = ResourceLocation.tryParse(itemId);
@@ -734,6 +671,137 @@ public class Box3JSWorld {
             ItemStack stack = new ItemStack(item, Math.max(1, count));
             ItemEntity itemEntity = new ItemEntity(level, x, y, z, stack);
             level.addFreshEntity(itemEntity);
+        }
+    }
+
+    public static class QueryNS {
+        private final MinecraftServer server;
+        private final Box3ScriptEngine engine;
+        QueryNS(MinecraftServer server, Box3ScriptEngine engine) { this.server = server; this.engine = engine; }
+
+        public Object raycast(GameVector3 origin, GameVector3 direction) {
+            return raycast(origin, direction, 5.0);
+        }
+
+        public Object raycast(GameVector3 origin, GameVector3 direction, double maxDistance) {
+            ServerLevel level = server.overworld();
+            Vec3 start = new Vec3(origin.x, origin.y, origin.z);
+            double len = Math.sqrt(direction.x * direction.x + direction.y * direction.y + direction.z * direction.z);
+            if (len < 0.0001) {
+                NativeObject result = new NativeObject();
+                ScriptableObject.putProperty(result, "hit", false);
+                return result;
+            }
+            Vec3 dir = new Vec3(direction.x / len, direction.y / len, direction.z / len);
+            Vec3 end = start.add(dir.scale(maxDistance));
+            ClipContext ctx = new ClipContext(start, end, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, CollisionContext.empty());
+            BlockHitResult blockHit = level.clip(ctx);
+            AABB searchBox = new AABB(start, end).inflate(1.0);
+            Entity closestEntity = null;
+            Vec3 entityHitPos = null;
+            double closestEntDistSqr = maxDistance * maxDistance;
+            for (Entity e : level.getEntities((Entity) null, searchBox, e -> true)) {
+                var hit = e.getBoundingBox().clip(start, end);
+                if (hit.isPresent()) {
+                    double dSqr = start.distanceToSqr(hit.get());
+                    if (dSqr < closestEntDistSqr) {
+                        closestEntDistSqr = dSqr;
+                        closestEntity = e;
+                        entityHitPos = hit.get();
+                    }
+                }
+            }
+            double blockDistSqr = blockHit.getType() != HitResult.Type.MISS
+                ? start.distanceToSqr(blockHit.getLocation()) : Double.MAX_VALUE;
+            NativeObject result = new NativeObject();
+            if (closestEntity != null && closestEntDistSqr < blockDistSqr) {
+                ScriptableObject.putProperty(result, "hit", true);
+                ScriptableObject.putProperty(result, "x", entityHitPos.x);
+                ScriptableObject.putProperty(result, "y", entityHitPos.y);
+                ScriptableObject.putProperty(result, "z", entityHitPos.z);
+                ScriptableObject.putProperty(result, "normalX", 0);
+                ScriptableObject.putProperty(result, "normalY", 0);
+                ScriptableObject.putProperty(result, "normalZ", 0);
+                ScriptableObject.putProperty(result, "distance", Math.sqrt(closestEntDistSqr));
+                ScriptableObject.putProperty(result, "entity", new Box3JSEntity(closestEntity, server, engine));
+            } else if (blockHit.getType() != HitResult.Type.MISS) {
+                Vec3 pos = blockHit.getLocation();
+                ScriptableObject.putProperty(result, "hit", true);
+                ScriptableObject.putProperty(result, "x", pos.x);
+                ScriptableObject.putProperty(result, "y", pos.y);
+                ScriptableObject.putProperty(result, "z", pos.z);
+                Direction face = blockHit.getDirection();
+                ScriptableObject.putProperty(result, "normalX", face.getStepX());
+                ScriptableObject.putProperty(result, "normalY", face.getStepY());
+                ScriptableObject.putProperty(result, "normalZ", face.getStepZ());
+                ScriptableObject.putProperty(result, "distance", Math.sqrt(blockDistSqr));
+                ScriptableObject.putProperty(result, "entity", null);
+                BlockPos bp = blockHit.getBlockPos();
+                ScriptableObject.putProperty(result, "voxel", engine.getVoxelsBinding().getId(level.getBlockState(bp)));
+            } else {
+                ScriptableObject.putProperty(result, "hit", false);
+            }
+            return result;
+        }
+
+        public List<Box3JSEntity> entitiesInArea(GameVector3 pos1, GameVector3 pos2) {
+            AABB aabb = new AABB(pos1.x, pos1.y, pos1.z, pos2.x, pos2.y, pos2.z);
+            List<Box3JSEntity> result = new ArrayList<>();
+            for (Entity e : server.overworld().getEntities((Entity) null, aabb, e -> true)) {
+                result.add(new Box3JSEntity(e, server, engine));
+            }
+            return result;
+        }
+
+        public String biome(int x, int y, int z) {
+            Holder<Biome> biome = server.overworld().getBiome(new BlockPos(x, y, z));
+            var key = biome.unwrapKey();
+            return key.map(k -> k.location().toString()).orElse("unknown");
+        }
+    }
+
+    public static class EffectNS {
+        private final MinecraftServer server;
+        EffectNS(MinecraftServer server) { this.server = server; }
+
+        public void explode(double x, double y, double z, double power) {
+            explode(x, y, z, power, false);
+        }
+
+        public void explode(double x, double y, double z, double power, boolean fire) {
+            server.overworld().explode(null, x, y, z, (float) power, fire, Level.ExplosionInteraction.BLOCK);
+        }
+    }
+
+    public static class SoundNS {
+        private final MinecraftServer server;
+        SoundNS(MinecraftServer server) { this.server = server; }
+
+        public void playAll(String path, double x, double y, double z, double volume, double pitch) {
+            ResourceLocation rl = ResourceLocation.tryParse(path);
+            if (rl == null) return;
+            var sound = BuiltInRegistries.SOUND_EVENT.getHolder(rl);
+            if (sound.isEmpty()) return;
+            var packet = new ClientboundSoundPacket(sound.get(), SoundSource.PLAYERS, x, y, z, (float) volume, (float) pitch, server.overworld().getRandom().nextLong());
+            for (ServerPlayer sp : server.getPlayerList().getPlayers()) {
+                sp.connection.send(packet);
+            }
+        }
+    }
+
+    public static class MessageNS {
+        private final Box3ScriptEngine engine;
+        MessageNS(Box3ScriptEngine engine) { this.engine = engine; }
+
+        public void send(String target, Object data) {
+            engine.fireMessage(engine.getCurrentProject(), target, data);
+        }
+
+        public void on(Function handler) {
+            String project = engine.getCurrentProject();
+            if (project != null) {
+                engine.addMessageCallback(project, (from, d) -> engine.callFunction(handler, from, d));
+            }
         }
     }
 }

@@ -174,6 +174,11 @@ public class Box3JSStorage {
             return entry != null ? entry.value : null;
         }
 
+        /** keys(): string[] — returns all keys in this storage */
+        public String[] keys() {
+            return read().keySet().toArray(new String[0]);
+        }
+
         /** update(key: string, handler: function(prevValue): value): void */
         public void update(String key, Function handler) {
             if (key == null || handler == null) return;
@@ -311,7 +316,6 @@ public class Box3JSStorage {
 
         /** destroy(): void — delete this data storage space */
         public void destroy() {
-            try { Files.deleteIfExists(path); } catch (IOException ignored) {}
             synchronized (this) {
                 try { Files.deleteIfExists(path); } catch (IOException ignored) {}
             }

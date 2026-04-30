@@ -46,7 +46,7 @@ authors="神岛实验室"
 
 # The description text for the mod (multi line!) (#mandatory)
 description='''
-Box3JS 模组为服务端引入 JavaScript 运行时，支持约 100 项 Box3 风格 API 与 Minecraft 原生扩展的补充，无需 Java 基础即可入门。
+Box3JS 为 Minecraft 服务端引入 JavaScript 脚本运行时，支持约 100 项 Box3 API 与 80 余项 Minecraft 扩展 API。无需 Java 基础即可编写服务端脚本。
 '''
 
 # The [[mixins]] block allows you to declare your mixin config to FML so that it gets loaded.

@@ -41,6 +41,8 @@ public class Box3ScriptEngine {
     private final List<Box3JSWorld.PlayerRespawnCallback> respawnCallbacks = new CopyOnWriteArrayList<>();
     private final List<Box3JSWorld.BlockActivateCallback> blockActivateCallbacks = new CopyOnWriteArrayList<>();
     private final List<Box3JSWorld.EntityDamageCallback> entityDamageCallbacks = new CopyOnWriteArrayList<>();
+    private final Map<String, List<Box3JSWorld.MessageCallback>> messageCallbacks = new ConcurrentHashMap<>();
+    private String currentProject;
     private final Map<UUID, BlockPos> voxelContactTracked = new ConcurrentHashMap<>();
     private final Map<UUID, String> fluidStateTracked = new ConcurrentHashMap<>();
     private final Set<String> entityContactPairs = ConcurrentHashMap.newKeySet();
@@ -59,50 +61,7 @@ public class Box3ScriptEngine {
         this.worldBinding = new Box3JSWorld(server, this);
         this.voxelsBinding = new Box3JSVoxels(server);
         this.storageBinding = new Box3JSStorage(server.getServerDirectory().resolve("config"), this);
-
-        Context cx = Context.enter();
-        try {
-            scope = cx.initStandardObjects();
-
-            // World and console bindings
-            ScriptableObject.putProperty(scope, "world", Context.javaToJS(worldBinding, scope));
-            ScriptableObject.putProperty(scope, "voxels", Context.javaToJS(voxelsBinding, scope));
-            ScriptableObject.putProperty(scope, "storage", Context.javaToJS(storageBinding, scope));
-            ScriptableObject.putProperty(scope, "console", Context.javaToJS(new Box3JSConsole(), scope));
-
-            // sleep(ms) function
-            ScriptableObject.putProperty(scope, "sleep", new BaseFunction() {
-                @Override
-                public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-                    int ms = ((Number) args[0]).intValue();
-                    try { Thread.sleep(ms); } catch (InterruptedException ignored) {}
-                    return Undefined.instance;
-                }
-            });
-
-            // Math types — NativeJavaClass wraps so `new GameVector3(x,y,z)` works
-            ScriptableObject.putProperty(scope, "GameVector3", new NativeJavaClass(scope, GameVector3.class));
-            ScriptableObject.putProperty(scope, "GameBounds3", new NativeJavaClass(scope, GameBounds3.class));
-            ScriptableObject.putProperty(scope, "GameRGBColor", new NativeJavaClass(scope, GameRGBColor.class));
-            ScriptableObject.putProperty(scope, "GameRGBAColor", new NativeJavaClass(scope, GameRGBAColor.class));
-            ScriptableObject.putProperty(scope, "GameQuaternion", new NativeJavaClass(scope, GameQuaternion.class));
-
-            // Enums
-            cx.evaluateString(scope,
-                "GameDialogType = { TEXT: 'TEXT', INPUT: 'INPUT', SELECT: 'SELECT' }; " +
-                "GameButtonType = { WALK: 'WALK', RUN: 'RUN', CROUCH: 'CROUCH', JUMP: 'JUMP', " +
-                "  DOUBLE_JUMP: 'DOUBLE_JUMP', FLY: 'FLY', ACTION0: 'ACTION0', ACTION1: 'ACTION1' }; " +
-                "GameInputDirection = { NONE: 0, VERTICAL: 1, HORIZONTAL: 2, BOTH: 3 }; " +
-                "GameCameraMode = { FIXED: 'FIXED', FOLLOW: 'FOLLOW', FPS: 'FPS', RELATIVE: 'RELATIVE' }; " +
-                "GamePlayerMoveState = { FLYING: 'FLYING', GROUND: 'GROUND', SWIM: 'SWIM', FALL: 'FALL', " +
-                "  JUMP: 'JUMP', DOUBLE_JUMP: 'DOUBLE_JUMP' }; " +
-                "GamePlayerWalkState = { NONE: 'NONE', CROUCH: 'CROUCH', WALK: 'WALK', RUN: 'RUN' };",
-                "enums", 1, null);
-
-        } finally {
-            Context.exit();
-        }
-
+        setupScope();
         initialized = true;
     }
 
@@ -123,10 +82,13 @@ public class Box3ScriptEngine {
                     Path appJs = project.resolve("app.js");
                     if (Files.exists(appJs) && config.isEnabled(name)) {
                         try {
+                            setCurrentProject(name);
                             eval(Files.readString(appJs));
                             Box3JS.LOGGER.info("Auto-loaded project: {}", name);
                         } catch (Exception e) {
                             Box3JS.LOGGER.error("Failed to auto-load: {}", appJs, e);
+                        } finally {
+                            setCurrentProject(null);
                         }
                     }
                 });
@@ -143,8 +105,15 @@ public class Box3ScriptEngine {
         }
     }
 
-    /** Tick callback from Box3JSWorld */
-    public void addTickCallback(Runnable cb) { tickCallbacks.add(cb); }
+    /** Tick callback from Box3JSWorld — wraps to restore project context */
+    public void addTickCallback(Runnable cb) {
+        String project = currentProject;
+        tickCallbacks.add(() -> {
+            String prev = currentProject;
+            setCurrentProject(project);
+            try { cb.run(); } finally { setCurrentProject(prev); }
+        });
+    }
     public void addJoinCallback(Box3JSWorld.PlayerJoinCallback cb) { joinCallbacks.add(cb); }
     public void addLeaveCallback(Box3JSWorld.PlayerLeaveCallback cb) { leaveCallbacks.add(cb); }
     public void addVoxelDestroyCallback(Box3JSWorld.VoxelDestroyCallback cb) { voxelDestroyCallbacks.add(cb); }
@@ -160,17 +129,49 @@ public class Box3ScriptEngine {
     public void addRespawnCallback(Box3JSWorld.PlayerRespawnCallback cb) { respawnCallbacks.add(cb); }
     public void addBlockActivateCallback(Box3JSWorld.BlockActivateCallback cb) { blockActivateCallbacks.add(cb); }
     public void addEntityDamageCallback(Box3JSWorld.EntityDamageCallback cb) { entityDamageCallbacks.add(cb); }
+    public void addMessageCallback(String project, Box3JSWorld.MessageCallback cb) {
+        messageCallbacks.computeIfAbsent(project, k -> new CopyOnWriteArrayList<>()).add(cb);
+    }
     public void setPlayerChatHandler(UUID uuid, Function handler) { playerChatHandlers.put(uuid, handler); }
+
+    public void setCurrentProject(String name) {
+        currentProject = name;
+        worldBinding.setProjectName(name);
+    }
+    public String getCurrentProject() { return currentProject; }
+
+    public void fireMessage(String sender, String target, Object data) {
+        if ("*".equals(target)) {
+            for (var entry : messageCallbacks.entrySet()) {
+                if (!entry.getKey().equals(sender)) {
+                    for (var cb : entry.getValue()) {
+                        String prev = currentProject;
+                        setCurrentProject(entry.getKey());
+                        try { cb.onMessage(sender, data); } finally { setCurrentProject(prev); }
+                    }
+                }
+            }
+        } else {
+            List<Box3JSWorld.MessageCallback> cbs = messageCallbacks.get(target);
+            if (cbs != null) {
+                for (var cb : cbs) {
+                    String prev = currentProject;
+                    setCurrentProject(target);
+                    try { cb.onMessage(sender, data); } finally { setCurrentProject(prev); }
+                }
+            }
+        }
+    }
 
     public int scheduleTimeout(Function handler, int ticks) {
         int id = ++timerIdCounter;
-        timers.add(new TimerEntry(id, handler, ticks, 0));
+        timers.add(new TimerEntry(id, handler, ticks, 0, currentProject));
         return id;
     }
 
     public int scheduleInterval(Function handler, int ticks) {
         int id = ++timerIdCounter;
-        timers.add(new TimerEntry(id, handler, ticks, ticks));
+        timers.add(new TimerEntry(id, handler, ticks, ticks, currentProject));
         return id;
     }
 
@@ -193,7 +194,9 @@ public class Box3ScriptEngine {
         }
         timers.removeAll(toRemove);
         for (var t : toFire) {
-            callFunction(t.handler);
+            String prev = currentProject;
+            setCurrentProject(t.project);
+            try { callFunction(t.handler); } finally { setCurrentProject(prev); }
         }
     }
 
@@ -422,6 +425,7 @@ public class Box3ScriptEngine {
         respawnCallbacks.clear();
         blockActivateCallbacks.clear();
         entityDamageCallbacks.clear();
+        messageCallbacks.clear();
         voxelContactTracked.clear();
         fluidStateTracked.clear();
         entityContactPairs.clear();
@@ -429,19 +433,36 @@ public class Box3ScriptEngine {
         entityCustomProps.clear();
         timers.clear();
         timerIdCounter = 0;
-        Box3JSWorld freshWorld = new Box3JSWorld(server, this);
-        this.worldBinding = freshWorld;
-        Box3JSVoxels freshVoxels = new Box3JSVoxels(server);
-        this.voxelsBinding = freshVoxels;
-        Box3JSStorage freshStorage = new Box3JSStorage(server.getServerDirectory().resolve("config"), this);
-        this.storageBinding = freshStorage;
+        this.worldBinding = new Box3JSWorld(server, this);
+        this.voxelsBinding = new Box3JSVoxels(server);
+        this.storageBinding = new Box3JSStorage(server.getServerDirectory().resolve("config"), this);
+        setupScope();
+    }
+
+    private void setupScope() {
         Context cx = Context.enter();
         try {
             scope = cx.initStandardObjects();
-            ScriptableObject.putProperty(scope, "world", Context.javaToJS(freshWorld, scope));
-            ScriptableObject.putProperty(scope, "voxels", Context.javaToJS(freshVoxels, scope));
-            ScriptableObject.putProperty(scope, "storage", Context.javaToJS(freshStorage, scope));
-            ScriptableObject.putProperty(scope, "console", Context.javaToJS(new Box3JSConsole(), scope));
+            ScriptableObject.putProperty(scope, "world", Context.javaToJS(worldBinding, scope));
+            ScriptableObject.putProperty(scope, "voxels", Context.javaToJS(voxelsBinding, scope));
+            ScriptableObject.putProperty(scope, "storage", Context.javaToJS(storageBinding, scope));
+            ScriptableObject.putProperty(scope, "_jConsole", Context.javaToJS(new Box3JSConsole(), scope));
+            cx.evaluateString(scope,
+                "console = {" +
+                "  log: function() { return _jConsole.log.apply(_jConsole, arguments); }," +
+                "  debug: function() { return _jConsole.debug.apply(_jConsole, arguments); }," +
+                "  warn: function() { return _jConsole.warn.apply(_jConsole, arguments); }," +
+                "  error: function() { return _jConsole.error.apply(_jConsole, arguments); }," +
+                "  clear: function() { return _jConsole.clear.apply(_jConsole, arguments); }," +
+                "  assert: function(a) {" +
+                "    if (!a) {" +
+                "      var b = [];" +
+                "      for (var i = 1; i < arguments.length; i++) b.push(arguments[i]);" +
+                "      _jConsole.error(b.length ? b : ['Assertion failed']);" +
+                "    }" +
+                "  }" +
+                "};",
+                "console-init", 1, null);
             ScriptableObject.putProperty(scope, "sleep", new BaseFunction() {
                 @Override
                 public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
@@ -474,12 +495,27 @@ public class Box3ScriptEngine {
     public Box3JSWorld getWorldBinding() { return worldBinding; }
     public Box3JSVoxels getVoxelsBinding() { return voxelsBinding; }
 
-    public static class Box3JSConsole {
-        public void log(Object... args) {
+    public class Box3JSConsole {
+        private void print(String level, Object... args) {
             StringBuilder sb = new StringBuilder();
+            String proj = currentProject;
+            if (proj != null) sb.append('[').append(proj).append("] ");
             for (Object a : args) sb.append(a).append(' ');
-            System.out.println("[Box3JS] " + sb.toString().trim());
+            System.out.println("[Box3JS]" + level + " " + sb.toString().trim());
         }
+
+        public void log(Object... args) { print("", args); }
+        public void debug(Object... args) { print("[DEBUG]", args); }
+        public void warn(Object... args) { print("[WARN]", args); }
+
+        public void error(Object... args) {
+            StringBuilder sb = new StringBuilder();
+            String proj = currentProject;
+            if (proj != null) sb.append('[').append(proj).append("] ");
+            for (Object a : args) sb.append(a).append(' ');
+            System.err.println("[Box3JS][ERROR] " + sb.toString().trim());
+        }
+
         public void clear() {
             System.out.print("\033[H\033[2J");
             System.out.flush();
@@ -491,12 +527,14 @@ public class Box3ScriptEngine {
         final Function handler;
         int remaining;
         final int interval;
+        final String project;
 
-        TimerEntry(int id, Function handler, int remaining, int interval) {
+        TimerEntry(int id, Function handler, int remaining, int interval, String project) {
             this.id = id;
             this.handler = handler;
             this.remaining = remaining;
             this.interval = interval;
+            this.project = project;
         }
     }
 }
