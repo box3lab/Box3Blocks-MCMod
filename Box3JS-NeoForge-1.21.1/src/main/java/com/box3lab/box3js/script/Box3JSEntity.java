@@ -5,7 +5,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
@@ -30,9 +29,6 @@ public class Box3JSEntity {
     private Function _onDestroyHandler;
     private final GameVector3 _position, _velocity, _bounds;
 
-    public final EffectNS effect;
-    public final EquipmentNS equipment;
-
     public Box3JSEntity(Entity entity, MinecraftServer server, Box3ScriptEngine engine) {
         this.entity = entity;
         this.server = server;
@@ -40,8 +36,6 @@ public class Box3JSEntity {
         this._position = new LiveVec3(v -> entity.teleportTo(v.x, v.y, v.z));
         this._velocity = new LiveVec3(v -> entity.setDeltaMovement(v.x, v.y, v.z));
         this._bounds = new GameVector3();
-        this.effect = new EffectNS(entity);
-        this.equipment = new EquipmentNS(entity);
     }
 
     public Entity getEntity() { return entity; }
@@ -245,6 +239,77 @@ public class Box3JSEntity {
         }
     }
 
+    // ---- Effects (MC extension) ----
+
+    public void addEffect(String effectId, int duration, int amplifier) {
+        addEffect(effectId, duration, amplifier, false);
+    }
+
+    public void addEffect(String effectId, int duration, int amplifier, boolean hideParticles) {
+        if (!(entity instanceof LivingEntity le)) return;
+        ResourceLocation rl = ResourceLocation.tryParse(effectId);
+        if (rl == null) return;
+        Holder<MobEffect> effect = BuiltInRegistries.MOB_EFFECT.getHolder(rl).orElse(null);
+        if (effect == null) return;
+        le.addEffect(new MobEffectInstance(effect, duration, amplifier, false, !hideParticles, true));
+    }
+
+    // ---- Equipment (MC extension) ----
+
+    public void setEquipment(String slot, String itemId) {
+        if (!(entity instanceof Mob mob)) return;
+        EquipmentSlot equipmentSlot = parseEquipmentSlot(slot);
+        if (equipmentSlot == null) return;
+        ResourceLocation rl = ResourceLocation.tryParse(itemId);
+        if (rl == null) return;
+        Item item = BuiltInRegistries.ITEM.getOptional(rl).orElse(null);
+        if (item == null) return;
+        mob.setItemSlot(equipmentSlot, new ItemStack(item));
+    }
+
+    // ---- Drop chances (MC extension) ----
+
+    public void setDropChance(String slot, double chance) {
+        if (!(entity instanceof Mob mob)) return;
+        float f = (float) Math.max(0, Math.min(1, chance));
+        if ("all".equalsIgnoreCase(slot)) {
+            for (EquipmentSlot es : EquipmentSlot.values()) {
+                mob.setDropChance(es, f);
+            }
+            return;
+        }
+        EquipmentSlot es = parseEquipmentSlot(slot);
+        if (es != null) mob.setDropChance(es, f);
+    }
+
+    // ---- Persistence (MC extension) ----
+
+    public void setPersistent(boolean v) {
+        if (entity instanceof Mob mob && v) mob.setPersistenceRequired();
+    }
+
+    // ---- Attributes (MC extension) ----
+
+    public double getAttribute(String attributeId) {
+        if (!(entity instanceof LivingEntity le)) return 0;
+        ResourceLocation rl = ResourceLocation.tryParse(attributeId);
+        if (rl == null) return 0;
+        var holder = BuiltInRegistries.ATTRIBUTE.getHolder(rl);
+        if (holder.isPresent()) return le.getAttributeValue(holder.get());
+        return 0;
+    }
+
+    public void setAttribute(String attributeId, double value) {
+        if (!(entity instanceof LivingEntity le)) return;
+        ResourceLocation rl = ResourceLocation.tryParse(attributeId);
+        if (rl == null) return;
+        var holder = BuiltInRegistries.ATTRIBUTE.getHolder(rl);
+        if (holder.isPresent()) {
+            var instance = le.getAttribute(holder.get());
+            if (instance != null) instance.setBaseValue(value);
+        }
+    }
+
     // ---- Lifecycle ----
 
     public void destroy() {
@@ -281,6 +346,18 @@ public class Box3JSEntity {
         props().put(key, value);
     }
 
+    private static EquipmentSlot parseEquipmentSlot(String slot) {
+        return switch (slot.toLowerCase()) {
+            case "mainhand" -> EquipmentSlot.MAINHAND;
+            case "offhand" -> EquipmentSlot.OFFHAND;
+            case "head", "helmet", "helm" -> EquipmentSlot.HEAD;
+            case "chest", "chestplate" -> EquipmentSlot.CHEST;
+            case "legs", "leggings" -> EquipmentSlot.LEGS;
+            case "feet", "boots" -> EquipmentSlot.FEET;
+            default -> null;
+        };
+    }
+
     /** Vector whose set() call syncs back to the MC entity */
     private static class LiveVec3 extends GameVector3 {
         private final Consumer<GameVector3> onSet;
@@ -292,46 +369,6 @@ public class Box3JSEntity {
             this.x = x; this.y = y; this.z = z;
             onSet.accept(this);
             return this;
-        }
-    }
-
-    // ---- Namespace classes ----
-
-    public static class EffectNS {
-        private final Entity entity;
-        EffectNS(Entity entity) { this.entity = entity; }
-
-        public void add(String effectId, int duration, int amplifier) {
-            if (!(entity instanceof LivingEntity le)) return;
-            ResourceLocation rl = ResourceLocation.tryParse(effectId);
-            if (rl == null) return;
-            Holder<MobEffect> effect = BuiltInRegistries.MOB_EFFECT.getHolder(rl).orElse(null);
-            if (effect == null) return;
-            le.addEffect(new MobEffectInstance(effect, duration, amplifier));
-        }
-    }
-
-    public static class EquipmentNS {
-        private final Entity entity;
-        EquipmentNS(Entity entity) { this.entity = entity; }
-
-        public void set(String slot, String itemId) {
-            if (!(entity instanceof Mob mob)) return;
-            EquipmentSlot equipmentSlot = switch (slot.toLowerCase()) {
-                case "mainhand" -> EquipmentSlot.MAINHAND;
-                case "offhand" -> EquipmentSlot.OFFHAND;
-                case "head", "helmet", "helm" -> EquipmentSlot.HEAD;
-                case "chest", "chestplate" -> EquipmentSlot.CHEST;
-                case "legs", "leggings" -> EquipmentSlot.LEGS;
-                case "feet", "boots" -> EquipmentSlot.FEET;
-                default -> null;
-            };
-            if (equipmentSlot == null) return;
-            ResourceLocation rl = ResourceLocation.tryParse(itemId);
-            if (rl == null) return;
-            Item item = BuiltInRegistries.ITEM.getOptional(rl).orElse(null);
-            if (item == null) return;
-            mob.setItemSlot(equipmentSlot, new ItemStack(item));
         }
     }
 }

@@ -62,6 +62,13 @@
 | `world.spawnPoint` | ⬆ | `ServerLevel.getSharedSpawnPos()` | 只读 GameVector3 |
 | `world.setWorldSpawn(pos)` | ⬆ | `ServerLevel.setDefaultSpawnPos()` | |
 
+### 游戏规则
+
+| API | 类型 | MC 映射 | 说明 |
+|---|---|---|---|
+| `world.getGameRule(name)` | ⬆ | `GameRules.getBoolean()` / `getInt()` | 支持规则名：doDaylightCycle, doWeatherCycle, keepInventory, doMobSpawning, doFireTick, mobGriefing, doImmediateRespawn |
+| `world.setGameRule(name, value)` | ⬆ | `GameRule.set()` | value 为布尔值或数字字符串 |
+
 ### 实体生成
 
 | API | 类型 | MC 映射 | 说明 |
@@ -88,6 +95,7 @@
 | `world.onPlayerRespawn(handler)` | ⬆ | `(entity)` |
 | `world.onBlockActivate(handler)` | ⬆ | `(entity, x, y, z, voxel, tick)` |
 | `world.onEntityDamage(handler)` | ⬆ | `(entity, amount, source, attacker, tick)` |
+| `world.onMessage(handler)` | ⬆ | `(from, data)` — 接收跨脚本消息 |
 
 ### 查询 / 聊天
 
@@ -106,25 +114,83 @@
 | `world.clearTimeout(id)` | ⬆ | 取消 timeout |
 | `world.clearInterval(id)` | ⬆ | 取消 interval |
 
-### 项目间消息传递（⬆ MC 扩展）
+### 记分板（⬆ MC 扩展）
 
-| API | 类型 | 说明 |
-|---|---|---|
-| `world.message.send(target, data)` | ⬆ | 精确路由到目标项目；`"*"` 广播给所有其他项目 |
-| `world.message.on(handler)` | ⬆ | 接收其他项目发来的消息；`handler(from, data)` |
+| API | 说明 |
+|---|---|
+| `world.addScoreboard(name)` | 创建 dummy 记分项 |
+| `world.addScoreboard(name, criteria)` | 创建指定标准记分项 |
+| `world.removeScoreboard(name)` | 删除记分项 |
+| `world.setScore(entityOrName, obj, value)` | 设置分数 |
+| `world.getScore(entityOrName, obj)` | 获取分数 |
+| `world.showScoreboard(slot, obj)` | 显示记分板（slot: sidebar/list/belowname） |
+| `world.hideScoreboard(slot)` | 清除显示槽位 |
+| `world.listScores(obj)` | 获取所有分数条目 `[{name, value}]` |
 
-### 命令 / 查询（⬆ MC 扩展）
+### Boss 血条（⬆ MC 扩展）
 
-| API | 类型 | 说明 |
-|---|---|---|
-| `world.runCommand(cmd)` | ⬆ | 以服务器身份执行命令 |
-| `world.query.raycast(origin, dir)` | ⬆ | 射线检测，默认 5 格 |
-| `world.query.raycast(origin, dir, dist)` | ⬆ | 射线检测，自定义距离 |
-| `world.query.entitiesInArea(pos1, pos2)` | ⬆ | 返回 AABB 区域内所有实体 |
-| `world.query.biome(x, y, z)` | ⬆ | 获取生物群系命名空间 ID |
-| `world.effect.explode(x, y, z, power)` | ⬆ | 创建爆炸 |
-| `world.effect.explode(x, y, z, power, fire)` | ⬆ | 创建爆炸（可引火） |
-| `world.sound.playAll(path, x, y, z, vol, pitch)` | ⬆ | 在坐标播放音效给所有玩家 |
+| API | 说明 |
+|---|---|
+| `world.showBossbar(name, text, progress, color)` | 显示/更新 Boss 血条 |
+| `world.removeBossbar(name)` | 移除 Boss 血条 |
+
+### 队伍（⬆ MC 扩展）
+
+| API | 说明 |
+|---|---|
+| `world.createTeam(name, color)` | 创建队伍 |
+| `world.removeTeam(name)` | 删除队伍 |
+| `world.joinTeam(entity, teamName)` | 加入队伍 |
+| `world.leaveTeam(entity)` | 移出队伍 |
+| `world.getTeamOf(entity)` | 获取队伍名称 |
+
+### 世界边界（⬆ MC 扩展）
+
+| API | 说明 |
+|---|---|
+| `world.getBorderSize()` | 获取边界大小 |
+| `world.setBorderCenter(x, z)` | 设置边界中心 |
+| `world.setBorderSize(size)` | 立即设置边界大小 |
+| `world.shrinkBorder(target, sec)` | 平滑缩圈 |
+| `world.setBorderDamage(d)` | 边界外伤害 |
+| `world.setBorderWarning(blocks)` | 警告距离 |
+
+### 闪电 / 烟花 / 粒子 / 掉落物（⬆ MC 扩展）
+
+| API | 说明 |
+|---|---|
+| `world.strikeLightning(x, y, z)` | 召唤闪电 |
+| `world.strikeLightning(x, y, z, damage)` | 召唤闪电（自定义伤害） |
+| `world.launchFirework(x, y, z, color, shape)` | 发射烟花 |
+| `world.spawnParticle(type, x, y, z, count, dx, dy, dz, speed)` | 生成粒子 |
+| `world.spawnParticleCircle(x, y, z, radius, type, count)` | 圆形粒子圈 |
+| `world.dropItem(x, y, z, itemId, count)` | 掉落物品 |
+| `world.launchProjectile(type, x, y, z, tx, ty, tz, speed)` | 发射抛射物（火球、箭等） |
+
+### 爆炸 / 音效（⬆ MC 扩展）
+
+| API | 说明 |
+|---|---|
+| `world.explode(x, y, z, power)` | 创建爆炸 |
+| `world.explode(x, y, z, power, fire)` | 创建爆炸（可引火） |
+| `world.playSound(path, x, y, z, vol, pitch)` | 在坐标播放音效给所有玩家 |
+
+### 射线 / 查询（⬆ MC 扩展）
+
+| API | 说明 |
+|---|---|
+| `world.raycast(origin, dir)` | 射线检测，默认 5 格，返回 `{hit, x, y, z, normalX, normalY, normalZ, distance, entity, voxel}` |
+| `world.raycast(origin, dir, maxDist)` | 射线检测，自定义距离 |
+| `world.entitiesInArea(pos1, pos2)` | 返回 AABB 区域内所有实体 |
+| `world.getBiome(x, y, z)` | 获取生物群系命名空间 ID |
+
+### 消息 / 命令（⬆ MC 扩展）
+
+| API | 说明 |
+|---|---|
+| `world.sendMessage(target, data)` | 精确路由到目标项目；`"*"` 广播给所有其他项目 |
+| `world.runCommand(cmd)` | 以服务器身份执行命令 |
+
 ---
 
 ## entity (GameEntity)
@@ -141,7 +207,6 @@
 | `.addTag(tag)` | ✅ | |
 | `.hasTag(tag)` | ✅ | |
 | `.removeTag(tag)` | ✅ | |
-| `.sound(path)` | ✅ | 固定 NOTE_BLOCK_PLING |
 | `.hp` | ✅ | LivingEntity 同步 |
 | `.maxHp` | ✅ | LivingEntity 同步 |
 | `.destroyed` | ✅ | `Entity.isRemoved()`，只读 |
@@ -155,11 +220,16 @@
 | `.lookAt(x, y, z)` | ⬆ | 实体面朝指定坐标 |
 | `.navigateTo(x, y, z, speed)` | ⬆ | 寻路步行到目标（PathfinderMob） |
 | `.setAI(enabled)` | ⬆ | 开关实体 AI |
-| `.equipment.set(slot, itemId)` | ⬆ | 给生物穿装备；slot: mainhand/offhand/head/chest/legs/feet |
-| `.effect.add(effectId, dur, amp)` | ⬆ | 给任意 LivingEntity 添加药水效果 |
+| `.addEffect(id, dur, amp)` | ⬆ | 添加药水效果 |
+| `.addEffect(id, dur, amp, hideParticles)` | ⬆ | 添加药水效果（可隐藏粒子） |
+| `.setEquipment(slot, itemId)` | ⬆ | 给生物穿装备；slot: mainhand/offhand/head/chest/legs/feet |
 | `.setTarget(entity)` | ⬆ | 设置怪物攻击目标（Mob.setTarget） |
 | `.getTarget()` | ⬆ | 获取怪物当前攻击目标 |
 | `.clearTarget()` | ⬆ | 清除攻击目标 |
+| `.setDropChance(slot, chance)` | ⬆ | 设置装备掉落率 0-1；slot 可为 "all" |
+| `.getAttribute(id)` | ⬆ | 获取实体属性值，如 `minecraft:generic.attack_damage` |
+| `.setAttribute(id, value)` | ⬆ | 设置实体属性基值 |
+| `.setPersistent(v)` | ⬆ | 设为 true 时生物不会自然消失 |
 | `.isGlowing()` / `.setGlowing(v)` | ⬆ | 发光效果 |
 | `.getNameTag()` / `.setNameTag(n)` | ⬆ | 自定义名称 |
 | `.getOnGround()` | ⬆ | 是否在地面 |
@@ -238,37 +308,35 @@
 | `.link(href)` | ✅ | 可点击链接 |
 | `.onChat(handler)` | ✅ | 玩家级聊天回调 |
 
-### 物品 / 效果 / 属性
+### 物品（⬆ MC 扩展）
 
-| API | 类型 | 说明 |
-|---|---|---|
-| `.inventory.give(itemId, count)` | ⬆ | 命名空间 ID |
-| `.effect.add(effectId, dur, amp)` | ⬆ | 命名空间 ID；duration 为 tick |
-| `.effect.clear()` | ⬆ | `removeAllEffects()` |
-| `.xp` | ⬆ | 经验等级 get/set |
-| `.food` | ⬆ | 饱食度 get/set |
-| `.saturation` | ⬆ | 饱和度 get/set |
+| API | 说明 |
+|---|---|
+| `.giveItem(itemId, count)` | 给予物品，命名空间 ID |
+| `.giveEnchantedItem(itemId, count, enchants)` | 给予附魔物品；enchants 为 `{enchant_id: level}` 对象 |
+| `.giveNamedItem(itemId, count, name, lore)` | 给予带名称/描述的物品；lore 为字符串数组 |
+| `.getHeldItem()` | 主手物品，返回 `{id, count}` |
+| `.clearInventory()` | 清空背包 |
 
-### 音效
+### 效果 / 属性（⬆ MC 扩展）
 
-| API | 类型 | 说明 |
-|---|---|---|
-| `.sound(path)` | ✅ | 固定 NOTE_BLOCK_PLING |
-| `.sound.play(path, vol, pitch)` | ⬆ | 播放任意 MC 音效 |
+| API | 说明 |
+|---|---|
+| `.addEffect(effectId, dur, amp)` | 添加药水效果，命名空间 ID；duration 为 tick |
+| `.addEffect(effectId, dur, amp, hideParticles)` | 添加药水效果（可隐藏粒子） |
+| `.clearEffects()` | 移除所有效果 |
+| `.xp` | 经验等级 get/set |
+| `.food` | 饱食度 get/set |
+| `.saturation` | 饱和度 get/set |
 
-### 维度 / 物品（⬆ MC 扩展）
+### 音效 / 维度（⬆ MC 扩展）
 
-| API | 类型 | 说明 |
-|---|---|---|
-| `.dimension` | ⬆ | 维度 ID，get/set（set 可跨维度传送） |
-| `.inventory.held()` | ⬆ | 主手物品 `{id, count}` |
-| `.inventory.clear()` | ⬆ | 清空背包 |
-
-### 命令（⬆ MC 扩展）
-
-| API | 类型 | 说明 |
-|---|---|---|
-| `.runCommand(cmd)` | ⬆ | 以玩家身份执行命令 |
+| API | 说明 |
+|---|---|
+| `.playSound(path, vol, pitch)` | 播放任意 MC 音效给该玩家 |
+| `.dimension` | 维度 ID，get/set（set 可跨维度传送） |
+| `.lookAt(x, y, z)` | 玩家面朝指定坐标 |
+| `.runCommand(cmd)` | 以玩家身份执行命令 |
 
 ---
 
@@ -302,6 +370,7 @@
 | `voxels.getVoxelRotation(x,y,z)` | 0-3 |
 | `voxels.fillVoxel(x1,y1,z1, x2,y2,z2, voxel)` | ⬆ 填充矩形区域 |
 | `voxels.countVoxel(x1,y1,z1, x2,y2,z2, voxel)` | ⬆ 统计区域内匹配方块数量 |
+| `voxels.setSpawner(x, y, z, entityType)` | ⬆ 设置刷怪笼刷出类型 |
 
 ---
 
@@ -350,84 +419,11 @@
 
 ---
 
-## 命名空间 API (v2) — 全部为 ⬆ MC 扩展
-
-以下 `world.*` / `player.*` / `entity.*` 命名空间 API 均为 MC 原生扩展，非 Box3 原有。
-
-### world.scoreboard
-
-| API | 说明 |
-|---|---|
-| `world.scoreboard.add(name)` | 创建 dummy 记分项 |
-| `world.scoreboard.add(name, criteria)` | 创建指定标准记分项 |
-| `world.scoreboard.setScore(entityOrName, obj, value)` | 设置分数 |
-| `world.scoreboard.getScore(entityOrName, obj)` | 获取分数 |
-| `world.scoreboard.show(slot, obj)` | 显示记分板 |
-| `world.scoreboard.hide(slot)` | 清除显示槽位 |
-| `world.scoreboard.remove(name)` | 删除记分项 |
-| `world.scoreboard.list(name)` | 获取所有分数条目 |
-
-### world.bossbar
-
-| API | 说明 |
-|---|---|
-| `world.bossbar.show(name, text, progress, color)` | 显示/更新 Boss 血条 |
-| `world.bossbar.remove(name)` | 移除 Boss 血条 |
-
-### world.team
-
-| API | 说明 |
-|---|---|
-| `world.team.create(name, color)` | 创建队伍 |
-| `world.team.join(entity, teamName)` | 加入队伍 |
-| `world.team.leave(entity)` | 移出队伍 |
-| `world.team.remove(name)` | 删除队伍 |
-| `world.team.of(entity)` | 获取队伍名称 |
-
-### world.border
-
-| API | 说明 |
-|---|---|
-| `world.border.size()` | 获取边界大小 |
-| `world.border.center(x, z)` | 设置边界中心 |
-| `world.border.set(size)` | 立即设置边界大小 |
-| `world.border.shrink(target, sec)` | 平滑缩圈 |
-| `world.border.damage(d)` | 边界外伤害 |
-| `world.border.warning(blocks)` | 警告距离 |
-
-### world.lightning
-
-| API | 说明 |
-|---|---|
-| `world.lightning.strike(x, y, z)` | 召唤闪电 |
-| `world.lightning.strike(x, y, z, damage)` | 召唤闪电（自定义伤害） |
-
-### world.firework
-
-| API | 说明 |
-|---|---|
-| `world.firework.launch(x, y, z, color, shape)` | 发射烟花 |
-
-### world.particle
-
-| API | 说明 |
-|---|---|
-| `world.particle.spawn(type, x, y, z, ct, dx, dy, dz, spd)` | 生成粒子 |
-| `world.particle.circle(x, y, z, radius, type, count)` | 圆形粒子圈 |
-
-### world.drop
-
-| API | 说明 |
-|---|---|
-| `world.drop.item(x, y, z, itemId, count)` | 掉落物品 |
-
----
-
 ## 统计
 
 | 状态 | 数量 |
 |---|---|
 | ✅ Box3 API | ~100 |
-| ⬆ MC 扩展 | ~83 |
+| ⬆ MC 扩展 | ~92 |
 
 > 最后更新：2026-04-30

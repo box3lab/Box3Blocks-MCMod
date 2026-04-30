@@ -59,34 +59,9 @@ public class Box3JSWorld {
     private String projectName;
     private final Map<String, ServerBossEvent> bossBars = new HashMap<>();
 
-    public final ScoreboardNS scoreboard;
-    public final BossBarNS bossbar;
-    public final TeamNS team;
-    public final BorderNS border;
-    public final LightningNS lightning;
-    public final FireworkNS firework;
-    public final ParticleNS particle;
-    public final DropNS drop;
-    public final QueryNS query;
-    public final EffectNS effect;
-    public final SoundNS sound;
-    public final MessageNS message;
-
     public Box3JSWorld(MinecraftServer server, Box3ScriptEngine engine) {
         this.server = server;
         this.engine = engine;
-        this.scoreboard = new ScoreboardNS(server);
-        this.bossbar = new BossBarNS(server, bossBars);
-        this.team = new TeamNS(server);
-        this.border = new BorderNS(server);
-        this.lightning = new LightningNS(server);
-        this.firework = new FireworkNS(server);
-        this.particle = new ParticleNS(server);
-        this.drop = new DropNS(server);
-        this.query = new QueryNS(server, engine);
-        this.effect = new EffectNS(server);
-        this.sound = new SoundNS(server);
-        this.message = new MessageNS(engine);
     }
 
     public void setProjectName(String name) { this.projectName = name; }
@@ -142,6 +117,46 @@ public class Box3JSWorld {
             diff = Difficulty.byName(v.toString());
         }
         if (diff != null) server.setDifficulty(diff, true);
+    }
+
+    // ---- Game Rules (MC extension) ----
+
+    public Object getGameRule(String name) {
+        GameRules rules = server.overworld().getGameRules();
+        switch (name) {
+            case "doDaylightCycle": return rules.getBoolean(GameRules.RULE_DAYLIGHT);
+            case "doWeatherCycle": return rules.getBoolean(GameRules.RULE_WEATHER_CYCLE);
+            case "keepInventory": return rules.getBoolean(GameRules.RULE_KEEPINVENTORY);
+            case "doMobSpawning": return rules.getBoolean(GameRules.RULE_DOMOBSPAWNING);
+            case "doFireTick": return rules.getBoolean(GameRules.RULE_DOFIRETICK);
+            case "mobGriefing": return rules.getBoolean(GameRules.RULE_MOBGRIEFING);
+            case "doImmediateRespawn": return rules.getBoolean(GameRules.RULE_DO_IMMEDIATE_RESPAWN);
+            default: return null;
+        }
+    }
+
+    public void setGameRule(String name, Object value) {
+        GameRules rules = server.overworld().getGameRules();
+        switch (name) {
+            case "doDaylightCycle":
+                rules.getRule(GameRules.RULE_DAYLIGHT).set(coerceBool(value), server); break;
+            case "doWeatherCycle":
+                rules.getRule(GameRules.RULE_WEATHER_CYCLE).set(coerceBool(value), server); break;
+            case "keepInventory":
+                rules.getRule(GameRules.RULE_KEEPINVENTORY).set(coerceBool(value), server); break;
+            case "doMobSpawning":
+                rules.getRule(GameRules.RULE_DOMOBSPAWNING).set(coerceBool(value), server); break;
+            case "doFireTick":
+                rules.getRule(GameRules.RULE_DOFIRETICK).set(coerceBool(value), server); break;
+            case "mobGriefing":
+                rules.getRule(GameRules.RULE_MOBGRIEFING).set(coerceBool(value), server); break;
+            case "doImmediateRespawn":
+                rules.getRule(GameRules.RULE_DO_IMMEDIATE_RESPAWN).set(coerceBool(value), server); break;
+        }
+    }
+
+    private static boolean coerceBool(Object v) {
+        return v instanceof Boolean b ? b : Boolean.parseBoolean(v.toString());
     }
 
     // ---- Spawn ----
@@ -247,6 +262,13 @@ public class Box3JSWorld {
             engine.callFunction(handler, entity, amount, source, attacker, tick));
     }
 
+    public void onMessage(Function handler) {
+        String project = engine.getCurrentProject();
+        if (project != null) {
+            engine.addMessageCallback(project, (from, d) -> engine.callFunction(handler, from, d));
+        }
+    }
+
     // ---- Entity Query ----
 
     public List<Box3JSEntity> querySelectorAll(String selector) {
@@ -307,6 +329,396 @@ public class Box3JSWorld {
         CommandSourceStack source = server.createCommandSourceStack();
         server.getCommands().performPrefixedCommand(source, cmd);
     }
+
+    // ---- Scoreboard ----
+
+    public void addScoreboard(String name) { addScoreboard(name, "dummy"); }
+    public void addScoreboard(String name, String criteria) {
+        Scoreboard sb = server.getScoreboard();
+        if (sb.getObjective(name) != null) return;
+        ObjectiveCriteria crit = "dummy".equals(criteria) || criteria == null
+            ? ObjectiveCriteria.DUMMY
+            : ObjectiveCriteria.byName(criteria).orElse(ObjectiveCriteria.DUMMY);
+        sb.addObjective(name, crit, Component.literal(name), ObjectiveCriteria.RenderType.INTEGER, false, null);
+    }
+    public void removeScoreboard(String name) {
+        Scoreboard sb = server.getScoreboard();
+        Objective obj = sb.getObjective(name);
+        if (obj != null) sb.removeObjective(obj);
+    }
+    public void setScore(Object entityOrName, String objectiveName, int value) {
+        Scoreboard sb = server.getScoreboard();
+        Objective obj = sb.getObjective(objectiveName);
+        if (obj == null) return;
+        String name = resolveScoreName(entityOrName);
+        if (name == null) return;
+        sb.getOrCreatePlayerScore(ScoreHolder.forNameOnly(name), obj).set(value);
+    }
+    public int getScore(Object entityOrName, String objectiveName) {
+        Scoreboard sb = server.getScoreboard();
+        Objective obj = sb.getObjective(objectiveName);
+        if (obj == null) return 0;
+        String name = resolveScoreName(entityOrName);
+        if (name == null) return 0;
+        ScoreAccess access = sb.getOrCreatePlayerScore(ScoreHolder.forNameOnly(name), obj);
+        return access.get();
+    }
+    public void showScoreboard(String slot, String objectiveName) {
+        Scoreboard sb = server.getScoreboard();
+        DisplaySlot displaySlot = switch (slot.toLowerCase()) {
+            case "list" -> DisplaySlot.LIST;
+            case "belowname", "below_name" -> DisplaySlot.BELOW_NAME;
+            default -> DisplaySlot.SIDEBAR;
+        };
+        Objective obj = sb.getObjective(objectiveName);
+        sb.setDisplayObjective(displaySlot, obj);
+    }
+    public void hideScoreboard(String slot) {
+        Scoreboard sb = server.getScoreboard();
+        DisplaySlot displaySlot = switch (slot.toLowerCase()) {
+            case "list" -> DisplaySlot.LIST;
+            case "belowname", "below_name" -> DisplaySlot.BELOW_NAME;
+            default -> DisplaySlot.SIDEBAR;
+        };
+        sb.setDisplayObjective(displaySlot, null);
+    }
+    public java.util.List<NativeObject> listScores(String objectiveName) {
+        java.util.List<NativeObject> result = new ArrayList<>();
+        Scoreboard sb = server.getScoreboard();
+        Objective obj = sb.getObjective(objectiveName);
+        if (obj == null) return result;
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            int s = sb.getOrCreatePlayerScore(ScoreHolder.forNameOnly(player.getScoreboardName()), obj).get();
+            NativeObject m = new NativeObject();
+            ScriptableObject.putProperty(m, "name", player.getScoreboardName());
+            ScriptableObject.putProperty(m, "value", s);
+            result.add(m);
+        }
+        return result;
+    }
+
+    // ---- Boss Bar ----
+
+    public void showBossbar(String name, String text, double progress, String colorName) {
+        ServerBossEvent bar = bossBars.get(name);
+        if (bar == null) {
+            BossBarColor color = colorName == null ? BossBarColor.WHITE : switch (colorName.toLowerCase(Locale.ROOT)) {
+                case "red" -> BossBarColor.RED;
+                case "blue" -> BossBarColor.BLUE;
+                case "green" -> BossBarColor.GREEN;
+                case "yellow" -> BossBarColor.YELLOW;
+                case "purple" -> BossBarColor.PURPLE;
+                case "pink" -> BossBarColor.PINK;
+                default -> BossBarColor.WHITE;
+            };
+            bar = new ServerBossEvent(Component.literal(text), color, BossBarOverlay.PROGRESS);
+            bossBars.put(name, bar);
+        } else {
+            bar.setName(Component.literal(text));
+            if (colorName != null) bar.setColor(switch (colorName.toLowerCase(Locale.ROOT)) {
+                case "red" -> BossBarColor.RED;
+                case "blue" -> BossBarColor.BLUE;
+                case "green" -> BossBarColor.GREEN;
+                case "yellow" -> BossBarColor.YELLOW;
+                case "purple" -> BossBarColor.PURPLE;
+                case "pink" -> BossBarColor.PINK;
+                default -> BossBarColor.WHITE;
+            });
+        }
+        bar.setProgress((float) Math.max(0, Math.min(1, progress)));
+        for (ServerPlayer sp : server.getPlayerList().getPlayers()) bar.addPlayer(sp);
+    }
+    public void removeBossbar(String name) {
+        ServerBossEvent bar = bossBars.remove(name);
+        if (bar != null) bar.removeAllPlayers();
+    }
+
+    // ---- Team ----
+
+    public void createTeam(String name, String colorName) {
+        Scoreboard sb = server.getScoreboard();
+        if (sb.getPlayerTeam(name) != null) return;
+        PlayerTeam team = sb.addPlayerTeam(name);
+        ChatFormatting fmt = ChatFormatting.getByName(colorName);
+        if (fmt != null) {
+            team.setColor(fmt);
+            team.setDisplayName(Component.literal(name));
+        }
+    }
+    public void removeTeam(String name) {
+        Scoreboard sb = server.getScoreboard();
+        PlayerTeam team = sb.getPlayerTeam(name);
+        if (team != null) sb.removePlayerTeam(team);
+    }
+    public void joinTeam(Object entityOrName, String teamName) {
+        Scoreboard sb = server.getScoreboard();
+        PlayerTeam team = sb.getPlayerTeam(teamName);
+        if (team == null) return;
+        String name = resolveScoreName(entityOrName);
+        if (name != null) sb.addPlayerToTeam(name, team);
+    }
+    public void leaveTeam(Object entityOrName) {
+        Scoreboard sb = server.getScoreboard();
+        String name = resolveScoreName(entityOrName);
+        if (name != null) sb.removePlayerFromTeam(name);
+    }
+    public String getTeamOf(Object entityOrName) {
+        Scoreboard sb = server.getScoreboard();
+        String name = resolveScoreName(entityOrName);
+        if (name == null) return null;
+        PlayerTeam team = sb.getPlayersTeam(name);
+        return team != null ? team.getName() : null;
+    }
+
+    // ---- World Border ----
+
+    public double getBorderSize() { return server.overworld().getWorldBorder().getSize(); }
+    public void setBorderCenter(double x, double z) { server.overworld().getWorldBorder().setCenter(x, z); }
+    public void setBorderSize(double size) { server.overworld().getWorldBorder().setSize(size); }
+    public void shrinkBorder(double targetSize, double seconds) {
+        WorldBorder border = server.overworld().getWorldBorder();
+        border.lerpSizeBetween(border.getSize(), targetSize, (long)(seconds * 1000));
+    }
+    public void setBorderDamage(double damage) { server.overworld().getWorldBorder().setDamagePerBlock(damage); }
+    public void setBorderWarning(int blocks) { server.overworld().getWorldBorder().setWarningBlocks(blocks); }
+
+    // ---- Lightning ----
+
+    public boolean strikeLightning(double x, double y, double z) {
+        ServerLevel level = server.overworld();
+        LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(level);
+        if (bolt == null) return false;
+        bolt.moveTo(x, y, z);
+        bolt.setVisualOnly(false);
+        level.addFreshEntity(bolt);
+        return true;
+    }
+    public boolean strikeLightning(double x, double y, double z, double damage) {
+        ServerLevel level = server.overworld();
+        LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(level);
+        if (bolt == null) return false;
+        bolt.moveTo(x, y, z);
+        bolt.setDamage((float) damage);
+        bolt.setVisualOnly(false);
+        level.addFreshEntity(bolt);
+        return true;
+    }
+
+    // ---- Projectile (MC extension) ----
+
+    public Box3JSEntity launchProjectile(String type, double x, double y, double z,
+                                          double tx, double ty, double tz, double speed) {
+        ServerLevel level = server.overworld();
+        ResourceLocation rl = ResourceLocation.tryParse(type);
+        if (rl == null) return null;
+        var opt = BuiltInRegistries.ENTITY_TYPE.getOptional(rl);
+        if (opt.isEmpty()) return null;
+        Entity entity = opt.get().create(level);
+        if (entity == null) return null;
+        entity.moveTo(x, y, z);
+
+        double dx = tx - x, dy = ty - y, dz = tz - z;
+        double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (dist > 0.001) {
+            double s = speed / dist;
+            entity.setDeltaMovement(dx * s, dy * s, dz * s);
+        }
+        if (entity instanceof net.minecraft.world.entity.projectile.Projectile proj) {
+            proj.shoot(dx, dy, dz, (float) speed, 0);
+        }
+
+        level.addFreshEntity(entity);
+        return new Box3JSEntity(entity, server, engine);
+    }
+
+    // ---- Firework ----
+
+    public void launchFirework(double x, double y, double z, String color, String shape) {
+        ServerLevel level = server.overworld();
+        int colorInt = switch (color != null ? color.toLowerCase(Locale.ROOT) : "") {
+            case "red" -> 0xFF0000;
+            case "blue" -> 0x0000FF;
+            case "green", "lime" -> 0x00FF00;
+            case "yellow" -> 0xFFFF00;
+            case "gold", "orange" -> 0xFFAA00;
+            case "white" -> 0xFFFFFF;
+            case "aqua", "cyan" -> 0x00FFFF;
+            case "pink", "magenta" -> 0xFF00FF;
+            case "purple" -> 0xAA00FF;
+            default -> 0xFFFFFF;
+        };
+        FireworkExplosion.Shape fireworkShape = switch (shape != null ? shape.toLowerCase() : "ball") {
+            case "large_ball" -> FireworkExplosion.Shape.LARGE_BALL;
+            case "star" -> FireworkExplosion.Shape.STAR;
+            case "creeper" -> FireworkExplosion.Shape.CREEPER;
+            case "burst" -> FireworkExplosion.Shape.BURST;
+            default -> FireworkExplosion.Shape.SMALL_BALL;
+        };
+        var explosion = new FireworkExplosion(fireworkShape,
+            new it.unimi.dsi.fastutil.ints.IntArrayList(new int[]{colorInt}),
+            new it.unimi.dsi.fastutil.ints.IntArrayList(new int[]{colorInt}),
+            false, true);
+        var fireworks = new Fireworks(1, java.util.List.of(explosion));
+        ItemStack rocket = new ItemStack(Items.FIREWORK_ROCKET);
+        rocket.set(DataComponents.FIREWORKS, fireworks);
+        var entity = new net.minecraft.world.entity.projectile.FireworkRocketEntity(level, x, y, z, rocket);
+        level.addFreshEntity(entity);
+    }
+
+    // ---- Particle ----
+
+    public void spawnParticle(String type, double x, double y, double z, int count, double dx, double dy, double dz, double speed) {
+        var particle = resolveParticle(type);
+        if (particle != null) {
+            server.overworld().sendParticles(particle, x, y, z, count, dx, dy, dz, speed);
+        }
+    }
+    public void spawnParticleCircle(double x, double y, double z, double radius, String type, int count) {
+        var particle = resolveParticle(type);
+        if (particle == null) return;
+        ServerLevel level = server.overworld();
+        for (int i = 0; i < count; i++) {
+            double angle = (2.0 * Math.PI * i) / count;
+            double px = x + Math.cos(angle) * radius;
+            double pz = z + Math.sin(angle) * radius;
+            level.sendParticles(particle, px, y, pz, 1, 0, 0, 0, 0);
+        }
+    }
+    private ParticleOptions resolveParticle(String type) {
+        ResourceLocation rl = ResourceLocation.tryParse(type);
+        if (rl == null) return null;
+        var particle = BuiltInRegistries.PARTICLE_TYPE.getOptional(rl);
+        if (particle.isEmpty()) return null;
+        var p = particle.get();
+        if (p instanceof ParticleOptions options) return options;
+        return null;
+    }
+
+    // ---- Drop Item ----
+
+    public void dropItem(double x, double y, double z, String itemId, int count) {
+        ServerLevel level = server.overworld();
+        ResourceLocation rl = ResourceLocation.tryParse(itemId);
+        if (rl == null) return;
+        var item = BuiltInRegistries.ITEM.getOptional(rl).orElse(null);
+        if (item == null) return;
+        ItemStack stack = new ItemStack(item, Math.max(1, count));
+        ItemEntity itemEntity = new ItemEntity(level, x, y, z, stack);
+        level.addFreshEntity(itemEntity);
+    }
+
+    // ---- Query ----
+
+    public Object raycast(GameVector3 origin, GameVector3 direction) {
+        return raycast(origin, direction, 5.0);
+    }
+
+    public Object raycast(GameVector3 origin, GameVector3 direction, double maxDistance) {
+        ServerLevel level = server.overworld();
+        Vec3 start = new Vec3(origin.x, origin.y, origin.z);
+        double len = Math.sqrt(direction.x * direction.x + direction.y * direction.y + direction.z * direction.z);
+        if (len < 0.0001) {
+            NativeObject result = new NativeObject();
+            ScriptableObject.putProperty(result, "hit", false);
+            return result;
+        }
+        Vec3 dir = new Vec3(direction.x / len, direction.y / len, direction.z / len);
+        Vec3 end = start.add(dir.scale(maxDistance));
+        ClipContext ctx = new ClipContext(start, end, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, CollisionContext.empty());
+        BlockHitResult blockHit = level.clip(ctx);
+        AABB searchBox = new AABB(start, end).inflate(1.0);
+        Entity closestEntity = null;
+        Vec3 entityHitPos = null;
+        double closestEntDistSqr = maxDistance * maxDistance;
+        for (Entity e : level.getEntities((Entity) null, searchBox, e -> true)) {
+            var hit = e.getBoundingBox().clip(start, end);
+            if (hit.isPresent()) {
+                double dSqr = start.distanceToSqr(hit.get());
+                if (dSqr < closestEntDistSqr) {
+                    closestEntDistSqr = dSqr;
+                    closestEntity = e;
+                    entityHitPos = hit.get();
+                }
+            }
+        }
+        double blockDistSqr = blockHit.getType() != HitResult.Type.MISS
+            ? start.distanceToSqr(blockHit.getLocation()) : Double.MAX_VALUE;
+        NativeObject result = new NativeObject();
+        if (closestEntity != null && closestEntDistSqr < blockDistSqr) {
+            ScriptableObject.putProperty(result, "hit", true);
+            ScriptableObject.putProperty(result, "x", entityHitPos.x);
+            ScriptableObject.putProperty(result, "y", entityHitPos.y);
+            ScriptableObject.putProperty(result, "z", entityHitPos.z);
+            ScriptableObject.putProperty(result, "normalX", 0);
+            ScriptableObject.putProperty(result, "normalY", 0);
+            ScriptableObject.putProperty(result, "normalZ", 0);
+            ScriptableObject.putProperty(result, "distance", Math.sqrt(closestEntDistSqr));
+            ScriptableObject.putProperty(result, "entity", new Box3JSEntity(closestEntity, server, engine));
+        } else if (blockHit.getType() != HitResult.Type.MISS) {
+            Vec3 pos = blockHit.getLocation();
+            ScriptableObject.putProperty(result, "hit", true);
+            ScriptableObject.putProperty(result, "x", pos.x);
+            ScriptableObject.putProperty(result, "y", pos.y);
+            ScriptableObject.putProperty(result, "z", pos.z);
+            Direction face = blockHit.getDirection();
+            ScriptableObject.putProperty(result, "normalX", face.getStepX());
+            ScriptableObject.putProperty(result, "normalY", face.getStepY());
+            ScriptableObject.putProperty(result, "normalZ", face.getStepZ());
+            ScriptableObject.putProperty(result, "distance", Math.sqrt(blockDistSqr));
+            ScriptableObject.putProperty(result, "entity", null);
+            BlockPos bp = blockHit.getBlockPos();
+            ScriptableObject.putProperty(result, "voxel", engine.getVoxelsBinding().getId(level.getBlockState(bp)));
+        } else {
+            ScriptableObject.putProperty(result, "hit", false);
+        }
+        return result;
+    }
+
+    public List<Box3JSEntity> entitiesInArea(GameVector3 pos1, GameVector3 pos2) {
+        AABB aabb = new AABB(pos1.x, pos1.y, pos1.z, pos2.x, pos2.y, pos2.z);
+        List<Box3JSEntity> result = new ArrayList<>();
+        for (Entity e : server.overworld().getEntities((Entity) null, aabb, e -> true)) {
+            result.add(new Box3JSEntity(e, server, engine));
+        }
+        return result;
+    }
+
+    public String getBiome(int x, int y, int z) {
+        Holder<Biome> biome = server.overworld().getBiome(new BlockPos(x, y, z));
+        var key = biome.unwrapKey();
+        return key.map(k -> k.location().toString()).orElse("unknown");
+    }
+
+    // ---- Explode ----
+
+    public void explode(double x, double y, double z, double power) {
+        explode(x, y, z, power, false);
+    }
+
+    public void explode(double x, double y, double z, double power, boolean fire) {
+        server.overworld().explode(null, x, y, z, (float) power, fire, Level.ExplosionInteraction.BLOCK);
+    }
+
+    // ---- Sound ----
+
+    public void playSound(String path, double x, double y, double z, double volume, double pitch) {
+        ResourceLocation rl = ResourceLocation.tryParse(path);
+        if (rl == null) return;
+        var sound = BuiltInRegistries.SOUND_EVENT.getHolder(rl);
+        if (sound.isEmpty()) return;
+        var packet = new ClientboundSoundPacket(sound.get(), SoundSource.PLAYERS, x, y, z, (float) volume, (float) pitch, server.overworld().getRandom().nextLong());
+        for (ServerPlayer sp : server.getPlayerList().getPlayers()) {
+            sp.connection.send(packet);
+        }
+    }
+
+    // ---- Message ----
+
+    public void sendMessage(String target, Object data) {
+        engine.fireMessage(engine.getCurrentProject(), target, data);
+    }
+
+    // ---- Helpers ----
 
     private static String resolveScoreName(Object entityOrName) {
         if (entityOrName instanceof String s) return s;
@@ -395,413 +807,5 @@ public class Box3JSWorld {
     @FunctionalInterface
     public interface MessageCallback {
         void onMessage(String from, Object data);
-    }
-
-    // ---- Namespace inner classes ----
-
-    public static class ScoreboardNS {
-        private final MinecraftServer server;
-        ScoreboardNS(MinecraftServer server) { this.server = server; }
-
-        public void add(String name) { add(name, "dummy"); }
-        public void add(String name, String criteria) {
-            Scoreboard sb = server.getScoreboard();
-            if (sb.getObjective(name) != null) return;
-            ObjectiveCriteria crit = "dummy".equals(criteria) || criteria == null
-                ? ObjectiveCriteria.DUMMY
-                : ObjectiveCriteria.byName(criteria).orElse(ObjectiveCriteria.DUMMY);
-            sb.addObjective(name, crit, Component.literal(name), ObjectiveCriteria.RenderType.INTEGER, false, null);
-        }
-        public void setScore(Object entityOrName, String objectiveName, int value) {
-            Scoreboard sb = server.getScoreboard();
-            Objective obj = sb.getObjective(objectiveName);
-            if (obj == null) return;
-            String name = resolveScoreName(entityOrName);
-            if (name == null) return;
-            sb.getOrCreatePlayerScore(ScoreHolder.forNameOnly(name), obj).set(value);
-        }
-        public int getScore(Object entityOrName, String objectiveName) {
-            Scoreboard sb = server.getScoreboard();
-            Objective obj = sb.getObjective(objectiveName);
-            if (obj == null) return 0;
-            String name = resolveScoreName(entityOrName);
-            if (name == null) return 0;
-            ScoreAccess access = sb.getOrCreatePlayerScore(ScoreHolder.forNameOnly(name), obj);
-            return access.get();
-        }
-        public void show(String slot, String objectiveName) {
-            Scoreboard sb = server.getScoreboard();
-            DisplaySlot displaySlot = switch (slot.toLowerCase()) {
-                case "list" -> DisplaySlot.LIST;
-                case "belowname", "below_name" -> DisplaySlot.BELOW_NAME;
-                default -> DisplaySlot.SIDEBAR;
-            };
-            Objective obj = sb.getObjective(objectiveName);
-            sb.setDisplayObjective(displaySlot, obj);
-        }
-        public void hide(String slot) {
-            Scoreboard sb = server.getScoreboard();
-            DisplaySlot displaySlot = switch (slot.toLowerCase()) {
-                case "list" -> DisplaySlot.LIST;
-                case "belowname", "below_name" -> DisplaySlot.BELOW_NAME;
-                default -> DisplaySlot.SIDEBAR;
-            };
-            sb.setDisplayObjective(displaySlot, null);
-        }
-        public void remove(String name) {
-            Scoreboard sb = server.getScoreboard();
-            Objective obj = sb.getObjective(name);
-            if (obj != null) sb.removeObjective(obj);
-        }
-        public java.util.List<NativeObject> list(String objectiveName) {
-            java.util.List<NativeObject> result = new ArrayList<>();
-            Scoreboard sb = server.getScoreboard();
-            Objective obj = sb.getObjective(objectiveName);
-            if (obj == null) return result;
-            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-                int s = sb.getOrCreatePlayerScore(ScoreHolder.forNameOnly(player.getScoreboardName()), obj).get();
-                NativeObject m = new NativeObject();
-                ScriptableObject.putProperty(m, "name", player.getScoreboardName());
-                ScriptableObject.putProperty(m, "value", s);
-                result.add(m);
-            }
-            return result;
-        }
-    }
-
-    public static class BossBarNS {
-        private final MinecraftServer server;
-        private final Map<String, ServerBossEvent> bossBars;
-        BossBarNS(MinecraftServer server, Map<String, ServerBossEvent> bossBars) { this.server = server; this.bossBars = bossBars; }
-
-        public void show(String name, String text, double progress, String colorName) {
-            ServerBossEvent bar = bossBars.get(name);
-            if (bar == null) {
-                BossBarColor color = colorName == null ? BossBarColor.WHITE : switch (colorName.toLowerCase(Locale.ROOT)) {
-                    case "red" -> BossBarColor.RED;
-                    case "blue" -> BossBarColor.BLUE;
-                    case "green" -> BossBarColor.GREEN;
-                    case "yellow" -> BossBarColor.YELLOW;
-                    case "purple" -> BossBarColor.PURPLE;
-                    case "pink" -> BossBarColor.PINK;
-                    default -> BossBarColor.WHITE;
-                };
-                bar = new ServerBossEvent(Component.literal(text), color, BossBarOverlay.PROGRESS);
-                bossBars.put(name, bar);
-            } else {
-                bar.setName(Component.literal(text));
-                if (colorName != null) bar.setColor(switch (colorName.toLowerCase(Locale.ROOT)) {
-                    case "red" -> BossBarColor.RED;
-                    case "blue" -> BossBarColor.BLUE;
-                    case "green" -> BossBarColor.GREEN;
-                    case "yellow" -> BossBarColor.YELLOW;
-                    case "purple" -> BossBarColor.PURPLE;
-                    case "pink" -> BossBarColor.PINK;
-                    default -> BossBarColor.WHITE;
-                });
-            }
-            bar.setProgress((float) Math.max(0, Math.min(1, progress)));
-            for (ServerPlayer sp : server.getPlayerList().getPlayers()) bar.addPlayer(sp);
-        }
-        public void remove(String name) {
-            ServerBossEvent bar = bossBars.remove(name);
-            if (bar != null) bar.removeAllPlayers();
-        }
-    }
-
-    public static class TeamNS {
-        private final MinecraftServer server;
-        TeamNS(MinecraftServer server) { this.server = server; }
-
-        public void create(String name, String colorName) {
-            Scoreboard sb = server.getScoreboard();
-            if (sb.getPlayerTeam(name) != null) return;
-            PlayerTeam team = sb.addPlayerTeam(name);
-            ChatFormatting fmt = ChatFormatting.getByName(colorName);
-            if (fmt != null) {
-                team.setColor(fmt);
-                team.setDisplayName(Component.literal(name));
-            }
-        }
-        public void join(Object entityOrName, String teamName) {
-            Scoreboard sb = server.getScoreboard();
-            PlayerTeam team = sb.getPlayerTeam(teamName);
-            if (team == null) return;
-            String name = resolveScoreName(entityOrName);
-            if (name != null) sb.addPlayerToTeam(name, team);
-        }
-        public void leave(Object entityOrName) {
-            Scoreboard sb = server.getScoreboard();
-            String name = resolveScoreName(entityOrName);
-            if (name != null) sb.removePlayerFromTeam(name);
-        }
-        public void remove(String name) {
-            Scoreboard sb = server.getScoreboard();
-            PlayerTeam team = sb.getPlayerTeam(name);
-            if (team != null) sb.removePlayerTeam(team);
-        }
-        public String of(Object entityOrName) {
-            Scoreboard sb = server.getScoreboard();
-            String name = resolveScoreName(entityOrName);
-            if (name == null) return null;
-            PlayerTeam team = sb.getPlayersTeam(name);
-            return team != null ? team.getName() : null;
-        }
-    }
-
-    public static class BorderNS {
-        private final MinecraftServer server;
-        BorderNS(MinecraftServer server) { this.server = server; }
-
-        public double size() { return server.overworld().getWorldBorder().getSize(); }
-        public void center(double x, double z) { server.overworld().getWorldBorder().setCenter(x, z); }
-        public void set(double size) { server.overworld().getWorldBorder().setSize(size); }
-        public void shrink(double targetSize, double seconds) {
-            WorldBorder border = server.overworld().getWorldBorder();
-            border.lerpSizeBetween(border.getSize(), targetSize, (long)(seconds * 1000));
-        }
-        public void damage(double damage) { server.overworld().getWorldBorder().setDamagePerBlock(damage); }
-        public void warning(int blocks) { server.overworld().getWorldBorder().setWarningBlocks(blocks); }
-    }
-
-    public static class LightningNS {
-        private final MinecraftServer server;
-        LightningNS(MinecraftServer server) { this.server = server; }
-
-        public boolean strike(double x, double y, double z) {
-            ServerLevel level = server.overworld();
-            LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(level);
-            if (bolt == null) return false;
-            bolt.moveTo(x, y, z);
-            bolt.setVisualOnly(false);
-            level.addFreshEntity(bolt);
-            return true;
-        }
-        public boolean strike(double x, double y, double z, double damage) {
-            ServerLevel level = server.overworld();
-            LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(level);
-            if (bolt == null) return false;
-            bolt.moveTo(x, y, z);
-            bolt.setDamage((float) damage);
-            bolt.setVisualOnly(false);
-            level.addFreshEntity(bolt);
-            return true;
-        }
-    }
-
-    public static class FireworkNS {
-        private final MinecraftServer server;
-        FireworkNS(MinecraftServer server) { this.server = server; }
-
-        public void launch(double x, double y, double z, String color, String shape) {
-            ServerLevel level = server.overworld();
-            int colorInt = switch (color != null ? color.toLowerCase(Locale.ROOT) : "") {
-                case "red" -> 0xFF0000;
-                case "blue" -> 0x0000FF;
-                case "green", "lime" -> 0x00FF00;
-                case "yellow" -> 0xFFFF00;
-                case "gold", "orange" -> 0xFFAA00;
-                case "white" -> 0xFFFFFF;
-                case "aqua", "cyan" -> 0x00FFFF;
-                case "pink", "magenta" -> 0xFF00FF;
-                case "purple" -> 0xAA00FF;
-                default -> 0xFFFFFF;
-            };
-            FireworkExplosion.Shape fireworkShape = switch (shape != null ? shape.toLowerCase() : "ball") {
-                case "large_ball" -> FireworkExplosion.Shape.LARGE_BALL;
-                case "star" -> FireworkExplosion.Shape.STAR;
-                case "creeper" -> FireworkExplosion.Shape.CREEPER;
-                case "burst" -> FireworkExplosion.Shape.BURST;
-                default -> FireworkExplosion.Shape.SMALL_BALL;
-            };
-            var explosion = new FireworkExplosion(fireworkShape,
-                new it.unimi.dsi.fastutil.ints.IntArrayList(new int[]{colorInt}),
-                new it.unimi.dsi.fastutil.ints.IntArrayList(new int[]{colorInt}),
-                false, true);
-            var fireworks = new Fireworks(1, java.util.List.of(explosion));
-            ItemStack rocket = new ItemStack(Items.FIREWORK_ROCKET);
-            rocket.set(DataComponents.FIREWORKS, fireworks);
-            var entity = new net.minecraft.world.entity.projectile.FireworkRocketEntity(level, x, y, z, rocket);
-            level.addFreshEntity(entity);
-        }
-    }
-
-    public static class ParticleNS {
-        private final MinecraftServer server;
-        ParticleNS(MinecraftServer server) { this.server = server; }
-
-        public void spawn(String type, double x, double y, double z, int count, double dx, double dy, double dz, double speed) {
-            var particle = resolveParticle(type);
-            if (particle != null) {
-                server.overworld().sendParticles(particle, x, y, z, count, dx, dy, dz, speed);
-            }
-        }
-        public void circle(double x, double y, double z, double radius, String type, int count) {
-            var particle = resolveParticle(type);
-            if (particle == null) return;
-            ServerLevel level = server.overworld();
-            for (int i = 0; i < count; i++) {
-                double angle = (2.0 * Math.PI * i) / count;
-                double px = x + Math.cos(angle) * radius;
-                double pz = z + Math.sin(angle) * radius;
-                level.sendParticles(particle, px, y, pz, 1, 0, 0, 0, 0);
-            }
-        }
-        private ParticleOptions resolveParticle(String type) {
-            ResourceLocation rl = ResourceLocation.tryParse(type);
-            if (rl == null) return null;
-            var particle = BuiltInRegistries.PARTICLE_TYPE.getOptional(rl);
-            if (particle.isEmpty()) return null;
-            var p = particle.get();
-            if (p instanceof ParticleOptions options) return options;
-            return null;
-        }
-    }
-
-    public static class DropNS {
-        private final MinecraftServer server;
-        DropNS(MinecraftServer server) { this.server = server; }
-
-        public void item(double x, double y, double z, String itemId, int count) {
-            ServerLevel level = server.overworld();
-            ResourceLocation rl = ResourceLocation.tryParse(itemId);
-            if (rl == null) return;
-            var item = BuiltInRegistries.ITEM.getOptional(rl).orElse(null);
-            if (item == null) return;
-            ItemStack stack = new ItemStack(item, Math.max(1, count));
-            ItemEntity itemEntity = new ItemEntity(level, x, y, z, stack);
-            level.addFreshEntity(itemEntity);
-        }
-    }
-
-    public static class QueryNS {
-        private final MinecraftServer server;
-        private final Box3ScriptEngine engine;
-        QueryNS(MinecraftServer server, Box3ScriptEngine engine) { this.server = server; this.engine = engine; }
-
-        public Object raycast(GameVector3 origin, GameVector3 direction) {
-            return raycast(origin, direction, 5.0);
-        }
-
-        public Object raycast(GameVector3 origin, GameVector3 direction, double maxDistance) {
-            ServerLevel level = server.overworld();
-            Vec3 start = new Vec3(origin.x, origin.y, origin.z);
-            double len = Math.sqrt(direction.x * direction.x + direction.y * direction.y + direction.z * direction.z);
-            if (len < 0.0001) {
-                NativeObject result = new NativeObject();
-                ScriptableObject.putProperty(result, "hit", false);
-                return result;
-            }
-            Vec3 dir = new Vec3(direction.x / len, direction.y / len, direction.z / len);
-            Vec3 end = start.add(dir.scale(maxDistance));
-            ClipContext ctx = new ClipContext(start, end, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, CollisionContext.empty());
-            BlockHitResult blockHit = level.clip(ctx);
-            AABB searchBox = new AABB(start, end).inflate(1.0);
-            Entity closestEntity = null;
-            Vec3 entityHitPos = null;
-            double closestEntDistSqr = maxDistance * maxDistance;
-            for (Entity e : level.getEntities((Entity) null, searchBox, e -> true)) {
-                var hit = e.getBoundingBox().clip(start, end);
-                if (hit.isPresent()) {
-                    double dSqr = start.distanceToSqr(hit.get());
-                    if (dSqr < closestEntDistSqr) {
-                        closestEntDistSqr = dSqr;
-                        closestEntity = e;
-                        entityHitPos = hit.get();
-                    }
-                }
-            }
-            double blockDistSqr = blockHit.getType() != HitResult.Type.MISS
-                ? start.distanceToSqr(blockHit.getLocation()) : Double.MAX_VALUE;
-            NativeObject result = new NativeObject();
-            if (closestEntity != null && closestEntDistSqr < blockDistSqr) {
-                ScriptableObject.putProperty(result, "hit", true);
-                ScriptableObject.putProperty(result, "x", entityHitPos.x);
-                ScriptableObject.putProperty(result, "y", entityHitPos.y);
-                ScriptableObject.putProperty(result, "z", entityHitPos.z);
-                ScriptableObject.putProperty(result, "normalX", 0);
-                ScriptableObject.putProperty(result, "normalY", 0);
-                ScriptableObject.putProperty(result, "normalZ", 0);
-                ScriptableObject.putProperty(result, "distance", Math.sqrt(closestEntDistSqr));
-                ScriptableObject.putProperty(result, "entity", new Box3JSEntity(closestEntity, server, engine));
-            } else if (blockHit.getType() != HitResult.Type.MISS) {
-                Vec3 pos = blockHit.getLocation();
-                ScriptableObject.putProperty(result, "hit", true);
-                ScriptableObject.putProperty(result, "x", pos.x);
-                ScriptableObject.putProperty(result, "y", pos.y);
-                ScriptableObject.putProperty(result, "z", pos.z);
-                Direction face = blockHit.getDirection();
-                ScriptableObject.putProperty(result, "normalX", face.getStepX());
-                ScriptableObject.putProperty(result, "normalY", face.getStepY());
-                ScriptableObject.putProperty(result, "normalZ", face.getStepZ());
-                ScriptableObject.putProperty(result, "distance", Math.sqrt(blockDistSqr));
-                ScriptableObject.putProperty(result, "entity", null);
-                BlockPos bp = blockHit.getBlockPos();
-                ScriptableObject.putProperty(result, "voxel", engine.getVoxelsBinding().getId(level.getBlockState(bp)));
-            } else {
-                ScriptableObject.putProperty(result, "hit", false);
-            }
-            return result;
-        }
-
-        public List<Box3JSEntity> entitiesInArea(GameVector3 pos1, GameVector3 pos2) {
-            AABB aabb = new AABB(pos1.x, pos1.y, pos1.z, pos2.x, pos2.y, pos2.z);
-            List<Box3JSEntity> result = new ArrayList<>();
-            for (Entity e : server.overworld().getEntities((Entity) null, aabb, e -> true)) {
-                result.add(new Box3JSEntity(e, server, engine));
-            }
-            return result;
-        }
-
-        public String biome(int x, int y, int z) {
-            Holder<Biome> biome = server.overworld().getBiome(new BlockPos(x, y, z));
-            var key = biome.unwrapKey();
-            return key.map(k -> k.location().toString()).orElse("unknown");
-        }
-    }
-
-    public static class EffectNS {
-        private final MinecraftServer server;
-        EffectNS(MinecraftServer server) { this.server = server; }
-
-        public void explode(double x, double y, double z, double power) {
-            explode(x, y, z, power, false);
-        }
-
-        public void explode(double x, double y, double z, double power, boolean fire) {
-            server.overworld().explode(null, x, y, z, (float) power, fire, Level.ExplosionInteraction.BLOCK);
-        }
-    }
-
-    public static class SoundNS {
-        private final MinecraftServer server;
-        SoundNS(MinecraftServer server) { this.server = server; }
-
-        public void playAll(String path, double x, double y, double z, double volume, double pitch) {
-            ResourceLocation rl = ResourceLocation.tryParse(path);
-            if (rl == null) return;
-            var sound = BuiltInRegistries.SOUND_EVENT.getHolder(rl);
-            if (sound.isEmpty()) return;
-            var packet = new ClientboundSoundPacket(sound.get(), SoundSource.PLAYERS, x, y, z, (float) volume, (float) pitch, server.overworld().getRandom().nextLong());
-            for (ServerPlayer sp : server.getPlayerList().getPlayers()) {
-                sp.connection.send(packet);
-            }
-        }
-    }
-
-    public static class MessageNS {
-        private final Box3ScriptEngine engine;
-        MessageNS(Box3ScriptEngine engine) { this.engine = engine; }
-
-        public void send(String target, Object data) {
-            engine.fireMessage(engine.getCurrentProject(), target, data);
-        }
-
-        public void on(Function handler) {
-            String project = engine.getCurrentProject();
-            if (project != null) {
-                engine.addMessageCallback(project, (from, d) -> engine.callFunction(handler, from, d));
-            }
-        }
     }
 }

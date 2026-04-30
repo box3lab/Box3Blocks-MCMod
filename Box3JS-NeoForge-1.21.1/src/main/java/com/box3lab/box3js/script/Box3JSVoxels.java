@@ -225,6 +225,21 @@ public class Box3JSVoxels {
         return BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
     }
 
+    /** setSpawner(x, y, z, entityType) */
+    public void setSpawner(int x, int y, int z, String entityType) {
+        ServerLevel level = server.overworld();
+        BlockPos pos = new BlockPos(x, y, z);
+        var be = level.getBlockEntity(pos);
+        if (!(be instanceof net.minecraft.world.level.block.entity.SpawnerBlockEntity spawnerBe)) return;
+
+        ResourceLocation rl = ResourceLocation.tryParse(entityType);
+        if (rl == null) return;
+        var opt = BuiltInRegistries.ENTITY_TYPE.getOptional(rl);
+        if (opt.isEmpty()) return;
+
+        spawnerBe.setEntityId(opt.get(), level.getRandom());
+    }
+
     /** getVoxelRotation(x, y, z): number — 0, 1, 2, 3 */
     public int getVoxelRotation(int x, int y, int z) {
         ServerLevel level = server.overworld();

@@ -33,14 +33,7 @@ public class Box3JSPlayer {
         this.player = player;
         this.server = server;
         this.engine = engine;
-        this.inventory = new InventoryNS(player);
-        this.effect = new EffectNS(player);
-        this.sound = new SoundNS(player);
     }
-
-    public final InventoryNS inventory;
-    public final EffectNS effect;
-    public final SoundNS sound;
 
     // ---- Info ----
 
@@ -296,6 +289,88 @@ public class Box3JSPlayer {
     public float getSaturation() { return player.getFoodData().getSaturationLevel(); }
     public void setSaturation(float v) { player.getFoodData().setSaturation(v); }
 
+    // ---- Inventory ----
+
+    public void giveItem(String itemId, int count) {
+        ItemStack stack = makeItemStack(itemId, count, null);
+        if (stack != null) player.getInventory().add(stack);
+    }
+
+    public void giveEnchantedItem(String itemId, int count, NativeObject enchants) {
+        ItemStack stack = makeItemStack(itemId, count, enchants);
+        if (stack != null) player.getInventory().add(stack);
+    }
+
+    public void giveNamedItem(String itemId, int count, String customName, Object lore) {
+        ItemStack stack = makeItemStack(itemId, count, null);
+        if (stack == null) return;
+        if (customName != null && !customName.isEmpty()) {
+            stack.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME,
+                Component.literal(customName));
+        }
+        if (lore instanceof NativeObject lo) {
+            var lines = new java.util.ArrayList<Component>();
+            for (int i = 0; ; i++) {
+                Object line = lo.get(i);
+                if (line == null || line == org.mozilla.javascript.UniqueTag.NOT_FOUND) break;
+                lines.add(Component.literal(line.toString()));
+            }
+            if (!lines.isEmpty()) {
+                stack.set(net.minecraft.core.component.DataComponents.LORE,
+                    new net.minecraft.world.item.component.ItemLore(lines));
+            }
+        }
+        player.getInventory().add(stack);
+    }
+
+    public Object getHeldItem() {
+        ItemStack stack = player.getMainHandItem();
+        NativeObject result = new NativeObject();
+        if (stack.isEmpty()) {
+            ScriptableObject.putProperty(result, "id", "minecraft:air");
+            ScriptableObject.putProperty(result, "count", 0);
+            return result;
+        }
+        ResourceLocation key = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        ScriptableObject.putProperty(result, "id", key.toString());
+        ScriptableObject.putProperty(result, "count", stack.getCount());
+        return result;
+    }
+
+    public void clearInventory() {
+        player.getInventory().clearContent();
+    }
+
+    // ---- Effects ----
+
+    public void addEffect(String effectId, int duration, int amplifier) {
+        addEffect(effectId, duration, amplifier, false);
+    }
+
+    public void addEffect(String effectId, int duration, int amplifier, boolean hideParticles) {
+        ResourceLocation rl = ResourceLocation.tryParse(effectId);
+        if (rl == null) return;
+        var effect = BuiltInRegistries.MOB_EFFECT.getHolder(rl);
+        if (effect.isPresent()) {
+            player.addEffect(new MobEffectInstance(effect.get(), duration, amplifier, false, !hideParticles, true));
+        }
+    }
+
+    public void clearEffects() {
+        player.removeAllEffects();
+    }
+
+    // ---- Sound ----
+
+    public void playSound(String path, double volume, double pitch) {
+        ResourceLocation rl = ResourceLocation.tryParse(path);
+        if (rl == null) return;
+        var sound = net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.getOptional(rl);
+        if (sound.isPresent()) {
+            player.playNotifySound(sound.get(), net.minecraft.sounds.SoundSource.PLAYERS, (float) volume, (float) pitch);
+        }
+    }
+
     // ---- Custom properties ----
 
     private Map<String, Object> props() {
@@ -312,70 +387,25 @@ public class Box3JSPlayer {
         props().put(key, value);
     }
 
-    // ---- Namespace classes ----
-
-    public static class InventoryNS {
-        private final ServerPlayer player;
-        InventoryNS(ServerPlayer player) { this.player = player; }
-
-        public void give(String itemId, int count) {
-            ResourceLocation rl = ResourceLocation.tryParse(itemId);
-            if (rl == null) return;
-            var item = BuiltInRegistries.ITEM.getOptional(rl);
-            if (item.isPresent()) {
-                ItemStack stack = new ItemStack(item.get(), Math.max(1, Math.min(count, 64)));
-                player.getInventory().add(stack);
+    private ItemStack makeItemStack(String itemId, int count, NativeObject enchants) {
+        ResourceLocation rl = ResourceLocation.tryParse(itemId);
+        if (rl == null) return null;
+        var item = BuiltInRegistries.ITEM.getOptional(rl);
+        if (item.isEmpty()) return null;
+        ItemStack stack = new ItemStack(item.get(), Math.max(1, Math.min(count, 64)));
+        if (enchants != null) {
+            var enchRegistry = player.server.registryAccess().registryOrThrow(Registries.ENCHANTMENT);
+            for (Object key : enchants.keySet()) {
+                String enchId = key.toString();
+                int level = ((Number) enchants.get(key)).intValue();
+                ResourceLocation enchRl = ResourceLocation.tryParse(enchId);
+                if (enchRl == null) continue;
+                var holder = enchRegistry.getHolder(enchRl);
+                if (holder.isPresent()) {
+                    stack.enchant(holder.get(), level);
+                }
             }
         }
-
-        public Object held() {
-            ItemStack stack = player.getMainHandItem();
-            NativeObject result = new NativeObject();
-            if (stack.isEmpty()) {
-                ScriptableObject.putProperty(result, "id", "minecraft:air");
-                ScriptableObject.putProperty(result, "count", 0);
-                return result;
-            }
-            ResourceLocation key = BuiltInRegistries.ITEM.getKey(stack.getItem());
-            ScriptableObject.putProperty(result, "id", key.toString());
-            ScriptableObject.putProperty(result, "count", stack.getCount());
-            return result;
-        }
-
-        public void clear() {
-            player.getInventory().clearContent();
-        }
-    }
-
-    public static class EffectNS {
-        private final ServerPlayer player;
-        EffectNS(ServerPlayer player) { this.player = player; }
-
-        public void add(String effectId, int duration, int amplifier) {
-            ResourceLocation rl = ResourceLocation.tryParse(effectId);
-            if (rl == null) return;
-            var effect = BuiltInRegistries.MOB_EFFECT.getHolder(rl);
-            if (effect.isPresent()) {
-                player.addEffect(new MobEffectInstance(effect.get(), duration, amplifier));
-            }
-        }
-
-        public void clear() {
-            player.removeAllEffects();
-        }
-    }
-
-    public static class SoundNS {
-        private final ServerPlayer player;
-        SoundNS(ServerPlayer player) { this.player = player; }
-
-        public void play(String path, double volume, double pitch) {
-            ResourceLocation rl = ResourceLocation.tryParse(path);
-            if (rl == null) return;
-            var sound = net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.getOptional(rl);
-            if (sound.isPresent()) {
-                player.playNotifySound(sound.get(), net.minecraft.sounds.SoundSource.PLAYERS, (float) volume, (float) pitch);
-            }
-        }
+        return stack;
     }
 }
