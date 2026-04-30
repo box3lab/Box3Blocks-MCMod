@@ -7,8 +7,10 @@ import net.minecraft.server.MinecraftServer;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 import static net.minecraft.commands.Commands.literal;
 import static net.minecraft.commands.Commands.argument;
@@ -83,16 +85,12 @@ public class Box3ScriptCommand {
                                                 return 0;
                                             }
                                             try {
-                                                Files.createDirectories(projectDir);
-                                                String template = "// " + name + " — Box3JS project\n"
-                                                        + "world.onTick(() => {\n"
-                                                        + "    // 每 tick 执行\n"
-                                                        + "});\n"
-                                                        + "\n"
-                                                        + "console.log('" + name + " loaded');\n";
-                                                Files.writeString(projectDir.resolve("app.js"), template);
+                                                copyTemplate(projectDir, name);
                                                 ctx.getSource().sendSuccess(
-                                                        () -> Component.literal("Project created: " + name + "\nUse /box3script on " + name + " to enable it."),
+                                                        () -> Component.literal("Project created: " + name
+                                                                + "\n  cd config/box3/script/" + name
+                                                                + "\n  npm install && npm run build"
+                                                                + "\nUse /box3script on " + name + " to enable it."),
                                                         false);
                                             } catch (IOException e) {
                                                 ctx.getSource().sendFailure(
@@ -207,6 +205,41 @@ public class Box3ScriptCommand {
                                             return 1;
                                         })))
         );
+    }
+
+    private static final String[] TEMPLATE_FILES = {
+            "gitignore.template",
+            "package.json",
+            "tsconfig.json",
+            "build.mjs",
+            "src/app.ts",
+            "types/globals.d.ts",
+    };
+
+    /**
+     * Copies the TypeScript project template from classpath to the target directory.
+     */
+    private static void copyTemplate(Path projectDir, String projectName) throws IOException {
+        Files.createDirectories(projectDir);
+        for (String relPath : TEMPLATE_FILES) {
+            // gitignore.template → .gitignore
+            String destName = relPath.equals("gitignore.template") ? ".gitignore" : relPath;
+            Path dest = projectDir.resolve(destName);
+            Files.createDirectories(dest.getParent());
+            String resourcePath = "/assets/box3js/template/" + relPath;
+            try (InputStream in = Box3ScriptCommand.class.getResourceAsStream(resourcePath)) {
+                if (in == null) {
+                    throw new IOException("Template file not found: " + resourcePath);
+                }
+                Files.copy(in, dest, StandardCopyOption.REPLACE_EXISTING);
+            }
+            // Replace placeholders in app.ts
+            if (relPath.equals("src/app.ts")) {
+                String content = Files.readString(dest);
+                content = content.replace("PROJECT_NAME", projectName);
+                Files.writeString(dest, content);
+            }
+        }
     }
 
     private static Path resolve(String input, MinecraftServer server) {

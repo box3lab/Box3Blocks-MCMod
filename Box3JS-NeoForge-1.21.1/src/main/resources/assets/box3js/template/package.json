@@ -1,0 +1,17 @@
+{
+  "name": "box3js",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "check": "tsc --noEmit",
+    "dev": "node build.mjs --watch"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.2",
+    "esbuild": "^0.28.0",
+    "typescript": "^5.7.0"
+  }
+}
