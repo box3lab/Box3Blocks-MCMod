@@ -86,7 +86,10 @@ public class Box3ScriptEngine {
                 .sorted()
                 .forEach(project -> {
                     String name = project.getFileName().toString();
-                    Path appJs = project.resolve("app.js");
+                    Path appJs = project.resolve("dist/app.js");
+                    if (!Files.exists(appJs)) {
+                        appJs = project.resolve("app.js");
+                    }
                     if (Files.exists(appJs) && config.isEnabled(name)) {
                         try {
                             setCurrentProject(name);
@@ -484,7 +487,9 @@ public class Box3ScriptEngine {
                         try {
                             ModuleScriptProvider provider = new StrongCachingModuleScriptProvider(
                                 new UrlModuleSourceProvider(
-                                    Collections.singletonList(projectDir.toUri()), null) {
+                                    Collections.unmodifiableList(java.util.Arrays.asList(
+                                        projectDir.resolve("dist").toUri(),
+                                        projectDir.toUri())), null) {
                                     @Override
                                     protected String getCharacterEncoding(java.net.URLConnection c) {
                                         return "utf-8";
