@@ -58,6 +58,11 @@ public class Box3ScriptConfig {
         save();
     }
 
+    public void setAllEnabled(boolean enabled) {
+        projects.replaceAll((k, v) -> enabled);
+        save();
+    }
+
     public Map<String, Boolean> listProjects() {
         return new LinkedHashMap<>(projects);
     }
