@@ -6,20 +6,20 @@
 
 ## 世界属性
 
-### world.projectName()
+### world.projectName
 
-⬆ MC 扩展 | 返回服务端 MOTD 字符串。
+⬆ MC 扩展 | 只读。服务端 MOTD 字符串。
 
 ```js
-console.log(world.projectName()); // "A Minecraft Server"
+console.log(world.projectName); // "A Minecraft Server"
 ```
 
-### world.currentTick()
+### world.currentTick
 
-✅ Box3 API | 返回服务器自启动以来的总 tick 数。
+✅ Box3 API | 只读。服务器自启动以来的总 tick 数。
 
 ```js
-var uptime = world.currentTick();
+var uptime = world.currentTick;
 world.say("服务器已运行 " + Math.floor(uptime / 20 / 60) + " 分钟");
 ```
 
@@ -56,17 +56,20 @@ world.clearWeather();
 
 ## 时间
 
-### world.getTime()
+### world.time
 
-✅ Box3 API | 返回当前世界时间（tick）。
-
-### world.setTime(tick)
-
-✅ Box3 API | 设置世界时间（tick）。Minecraft 一天 = 24000 tick。
+✅ Box3 API | 获取/设置世界时间（tick）。Minecraft 一天 = 24000 tick。
 
 ```js
-world.setTime(6000);  // 正午
-world.setTime(18000); // 午夜
+world.time = 6000;  // 正午
+world.time = 18000; // 午夜
+console.log(world.time); // 当前时间
+```
+
+此外提供 `world.setTime(tick)` 方法作为便捷设置接口。
+
+```js
+world.setTime(6000);  // 等效于 world.time = 6000
 ```
 
 常用时间值：`0` 日出、`6000` 正午、`12000` 日落、`18000` 午夜。
@@ -175,7 +178,7 @@ zombie.setAI(true);
 | `world.onBlockPlace(fn)` | ⬆ MC | `(entity, x, y, z, voxel, voxelId, tick)` | 玩家放置方块 |
 | `world.onBlockActivate(fn)` | ⬆ MC | `(entity, x, y, z, voxel, tick)` | 玩家右键方块 |
 | `world.onInteract(fn)` | ✅ Box3 | `(entity, target, tick)` | 玩家右键实体 |
-| `world.onVoxelContact(fn)` | ✅ Box3 | `(entity, voxel, x, y, z, axis, force, tick)` | 实体接触方块 |
+| `world.onVoxelContact(fn)` | ✅ Box3 | `(entity, voxelId, x, y, z, contactType, force, tick)` | 实体接触方块 |
 | `world.onEntityContact(fn)` | ✅ Box3 | `(entity, other, tick)` | 两个实体接触 |
 | `world.onEntitySeparate(fn)` | ✅ Box3 | `(entity, other, tick)` | 两个实体分离 |
 | `world.onFluidEnter(fn)` | ✅ Box3 | `(entity, fluid, x, y, z, tick)` | 实体进入液体 |
@@ -418,17 +421,13 @@ world.onPlayerJoin((entity) => {
 
 全部 ⬆ MC 扩展。
 
-### world.getBorderSize()
+### world.borderSize
 
-返回当前边界直径。
+获取/设置当前边界大小。
 
 ### world.setBorderCenter(x, z)
 
 设置边界中心。
-
-### world.setBorderSize(size)
-
-立即设置边界大小。
 
 ### world.shrinkBorder(targetSize, seconds)
 
@@ -445,7 +444,7 @@ world.onPlayerJoin((entity) => {
 ```js
 // 缩圈玩法
 world.setBorderCenter(0, 0);
-world.setBorderSize(500);
+world.borderSize = 500;
 world.setBorderDamage(2);
 world.setBorderWarning(10);
 
@@ -685,9 +684,9 @@ world.runCommand("weather clear");
 
 | API | 类型 |
 |---|---|
-| `currentTick()` | ✅ Box3 |
+| `currentTick` | ✅ Box3 |
 | `rainDensity` | ✅ Box3 |
-| `getTime()` / `setTime()` | ✅ Box3 |
+| `time` / `setTime()` | ✅ Box3 |
 | `timeScale` | ✅ Box3 |
 | `difficulty` | ✅ Box3 |
 | `spawnEntity()` | ✅ Box3 |
@@ -725,7 +724,7 @@ world.runCommand("weather clear");
 | `showScoreboard()` / `hideScoreboard()` / `listScores()` | ⬆ MC |
 | `showBossbar()` / `removeBossbar()` | ⬆ MC |
 | `createTeam()` / `removeTeam()` / `joinTeam()` / `leaveTeam()` / `getTeamOf()` | ⬆ MC |
-| `getBorderSize()` / `setBorderCenter()` / `setBorderSize()` / `shrinkBorder()` | ⬆ MC |
+| `borderSize` / `setBorderCenter()` / `shrinkBorder()` | ⬆ MC |
 | `setBorderDamage()` / `setBorderWarning()` | ⬆ MC |
 | `strikeLightning()` | ⬆ MC |
 | `launchFirework()` | ⬆ MC |

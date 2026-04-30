@@ -40,6 +40,8 @@ public class Box3JSPlayer {
     public String getName() { return player.getGameProfile().getName(); }
     public String getUserId() { return player.getUUID().toString(); }
 
+    public int getOpLevel() { return server.getProfilePermissions(player.getGameProfile()); }
+
     // ---- Appearance ----
 
     public boolean getInvisible() { return player.isInvisible(); }

@@ -41,7 +41,7 @@ v.z = 30;
 ### 静态方法
 
 ```js
-var v = GameVector3.fromPolar(pitch, yaw); // 极坐标 → 向量
+var v = GameVector3.fromPolar(mag, phi, theta); // 球坐标 → 向量
 ```
 
 ```js
@@ -177,7 +177,7 @@ var q = new GameQuaternion(0, 0, 0, 1); // w, x, y, z
 | `q.mag()` / `q.sqrMag()` | 模长 |
 | `q.normalize()` | 归一化 |
 | `q.slerp(p, t)` | 球面线性插值 |
-| `q.angle()` | 旋转角度 |
+| `q.angle(p)` | 与另一四元数的夹角 (弧度) |
 | `q.getAxisAngle()` | 获取旋转轴和角度 |
 | `q.rotateX(a)` / `q.rotateY(a)` / `q.rotateZ(a)` | 绕轴旋转 |
 | `q.equals(p)` | 比较 |
@@ -186,6 +186,6 @@ var q = new GameQuaternion(0, 0, 0, 1); // w, x, y, z
 
 ```js
 var q1 = GameQuaternion.fromAxisAngle(axis, angle);
-var q2 = GameQuaternion.fromEuler(yaw, pitch, roll);
+var q2 = GameQuaternion.fromEuler(x, y, z);
 var q3 = GameQuaternion.rotationBetween(fromVec, toVec);
 ```

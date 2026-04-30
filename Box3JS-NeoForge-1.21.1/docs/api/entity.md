@@ -105,16 +105,13 @@ zombie.hurt(10);  // 造成 10 点伤害
 zombie.heal(5);   // 治疗 5 点
 ```
 
-### entity.isInvulnerable()
+### entity.invulnerable
 
-⬆ MC 扩展 | 实体是否无敌。
-
-### entity.setInvulnerable(v)
-
-⬆ MC 扩展 | 设置实体无敌状态。
+⬆ MC 扩展 | 获取/设置实体是否无敌。
 
 ```js
-entity.setInvulnerable(true);  // 不受伤害
+entity.invulnerable = true;  // 不受伤害
+console.log(entity.invulnerable);
 ```
 
 ---
@@ -129,16 +126,13 @@ entity.setInvulnerable(true);  // 不受伤害
 entity.meshInvisible = true;  // 隐身
 ```
 
-### entity.isGlowing()
+### entity.glowing
 
-⬆ MC 扩展 | 获取发光状态。
-
-### entity.setGlowing(v)
-
-⬆ MC 扩展 | 设置发光效果（类似光灵箭效果）。
+⬆ MC 扩展 | 获取/设置发光效果（类似光灵箭效果）。
 
 ```js
-entity.setGlowing(true);  // 实体发光
+entity.glowing = true;  // 实体发光
+console.log(entity.glowing);
 ```
 
 ### entity.nameTag
@@ -403,8 +397,8 @@ console.log(entity.myCustomField);
 |---|---|
 | `onGround` | ⬆ MC |
 | `eyePosition` | ⬆ MC |
-| `isInvulnerable()` / `setInvulnerable()` | ⬆ MC |
-| `isGlowing()` / `setGlowing()` | ⬆ MC |
+| `invulnerable` | ⬆ MC |
+| `glowing` | ⬆ MC |
 | `nameTag` | ⬆ MC |
 | `setFire()` / `clearFire()` | ⬆ MC |
 | `setAI()` | ⬆ MC |

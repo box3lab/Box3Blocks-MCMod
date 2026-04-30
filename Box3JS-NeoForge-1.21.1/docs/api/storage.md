@@ -107,29 +107,39 @@ store.increment("kills", -2); // kills = 4
 
 ### store.list(options)
 
-✅ Box3 API | 分页排序查询。`options` 对象支持的字段：
+✅ Box3 API | 游标分页查询。`options` 对象支持的字段：
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
-| `limit` | number | 返回最多条目数 |
-| `offset` | number | 跳过的条目数 |
-| `sort` | string | 排序方式，`"asc"` 或 `"desc"`（按 key 排序） |
-| `filter` | string | 过滤条件（前缀匹配） |
+| `cursor` | number | 起始游标（页码 × pageSize） |
+| `pageSize` | number | 每页条目数（1–100，默认 100） |
+| `ascending` | boolean | 是否升序排列 |
+| `max` | number | 值的上限过滤 |
+| `min` | number | 值的下限过滤 |
+| `constraintTarget` | string | 排序/过滤的嵌套路径（如 `"a.b.c"`） |
 
-返回 `[{key, value}]` 数组。
+返回 `QueryList` 分页对象：
+
+| 属性/方法 | 说明 |
+|---|---|
+| `result.isLastPage` | 是否最后一页 |
+| `result.getCurrentPage()` | 返回当前页条目数组 |
+| `result.nextPage()` | 移到下一页 |
+
+每条条目为 `{key, value, updateTime, createTime, version}`。
 
 ```js
-// 返回前 10 条
-var top10 = store.list({ limit: 10, sort: "desc" });
+var result = store.list({ pageSize: 10, ascending: false });
 
-// 第 11–20 条
-var page2 = store.list({ limit: 10, offset: 10 });
+// 遍历当前页
+var page = result.getCurrentPage();
+for (var i = 0; i < page.length; i++) {
+    console.log(page[i].key + ": " + page[i].value);
+}
 
-// 查找以 "player_" 开头的 key
-var playerData = store.list({ filter: "player_" });
-
-for (var i = 0; i < top10.length; i++) {
-    console.log(top10[i].key + ": " + top10[i].value);
+// 下一页
+if (!result.isLastPage) {
+    result.nextPage();
 }
 ```
 
@@ -140,33 +150,23 @@ for (var i = 0; i < top10.length; i++) {
 ```js
 var lb = storage.getDataStorage("leaderboard");
 
-// 保存新成绩
+// 保存成绩
 function saveScore(name, time) {
-    var entry = JSON.stringify({
-        name: name,
-        time: time,
-        date: new Date().toISOString()
-    });
-    lb.set("entry_" + Date.now(), entry);
-}
-
-// 获取排行榜
-function getLeaderboard() {
-    var entries = lb.list({ limit: 10, sort: "asc" });
-    var result = [];
-    for (var i = 0; i < entries.length; i++) {
-        result.push(JSON.parse(entries[i].value));
-    }
-    result.sort(function(a, b) { return a.time - b.time; });
-    return result;
+    lb.set(name, time);
 }
 
 saveScore("Steve", 12345);
 saveScore("Alex", 9800);
 
-var top = getLeaderboard();
-for (var i = 0; i < top.length; i++) {
-    console.log((i + 1) + ". " + top[i].name + " - " + top[i].time);
+// 遍历所有条目
+var result = lb.list({ pageSize: 10, ascending: true });
+while (true) {
+    var page = result.getCurrentPage();
+    for (var i = 0; i < page.length; i++) {
+        console.log(page[i].key + ": " + page[i].value);
+    }
+    if (result.isLastPage) break;
+    result.nextPage();
 }
 ```
 

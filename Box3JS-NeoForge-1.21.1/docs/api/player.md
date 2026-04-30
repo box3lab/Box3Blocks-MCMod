@@ -21,6 +21,16 @@ world.onPlayerJoin((entity) => {
 
 ✅ Box3 API | 只读。玩家 UUID 字符串。
 
+### player.getOpLevel()
+
+⬆ MC 扩展 | 返回玩家管理员权限等级 (0-4)。0=普通玩家, 1=可绕过出生点保护, 2=可使用大部分命令, 3=可管理玩家, 4=最高权限。
+
+```js
+if (player.getOpLevel() >= 2) {
+    // 需要权限等级 2 的操作
+}
+```
+
 ---
 
 ## 外观
@@ -452,3 +462,4 @@ player.setPlayerListName(player.name);
 | `lookAt()` | ⬆ MC |
 | `runCommand()` | ⬆ MC |
 | `setPlayerListName()` | ⬆ MC |
+| `getOpLevel()` | ⬆ MC |
