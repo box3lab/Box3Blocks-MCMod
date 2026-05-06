@@ -998,6 +998,11 @@ interface GamePlayer {
   /** 饱和度 (0‑20)。Saturation level (0–20). */
   saturation: number;
 
+  /** 当前生命值。Current health. */
+  hp: number;
+  /** 最大生命值。Maximum health. */
+  maxHp: number;
+
   // ── 经验 / Experience ──
 
   /** 经验等级 (与 /xp 命令相同)。Experience level (same as /xp command). */
