@@ -1,8 +1,9 @@
 package com.box3lab.box3js.script;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
-import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.server.MinecraftServer;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
@@ -23,38 +24,6 @@ public class Box3ScriptCommand {
         dispatcher.register(
                 literal("box3script")
                         .requires(src -> src.hasPermission(2))
-                        // --- file ---
-                        .then(literal("file")
-                                .then(argument("path", StringArgumentType.greedyString())
-                                        .executes(ctx -> {
-                                            String input = StringArgumentType.getString(ctx, "path");
-                                            CommandSourceStack src = ctx.getSource();
-                                            var server = src.getServer();
-                                            Path filePath = resolve(input, server);
-                                            if (!Files.exists(filePath)) {
-                                                src.sendFailure(Component.literal("File not found: " + filePath));
-                                                return 0;
-                                            }
-                                            try {
-                                                Box3ScriptEngine.get().init(server);
-                                                // Detect project name for require() support
-                                                Path scriptDir = server.getServerDirectory().resolve("config/box3/script");
-                                                Path relative = null;
-                                                try { relative = scriptDir.relativize(filePath.toAbsolutePath()); } catch (Exception ignored) {}
-                                                if (relative != null && relative.getNameCount() > 1) {
-                                                    Box3ScriptEngine.get().setCurrentProject(relative.getName(0).toString());
-                                                }
-                                                Box3ScriptEngine.get().eval(Files.readString(filePath));
-                                                src.sendSuccess(
-                                                        () -> Component.literal("Executed: " + filePath.getFileName()), false);
-                                            } catch (IOException e) {
-                                                src.sendFailure(Component.literal("Failed to read file: " + e.getMessage()));
-                                            } catch (Exception e) {
-                                                src.sendFailure(Component.literal("Script error: " + e.getMessage()));
-                                                e.printStackTrace();
-                                            }
-                                            return 1;
-                                        })))
                         // --- create ---
                         .then(literal("create")
                                 .then(argument("name", StringArgumentType.word())
@@ -68,12 +37,16 @@ public class Box3ScriptCommand {
                                             }
                                             try {
                                                 copyTemplate(projectDir, name);
-                                                ctx.getSource().sendSuccess(
-                                                        () -> Component.literal("Project created: " + name
-                                                                + "\n  cd config/box3/script/" + name
+                                                String absPath = projectDir.toAbsolutePath().toString();
+                                                Component msg = Component.literal("Project created: " + name + "\n")
+                                                        .append(Component.literal("  §b§n[Copy path]§r\n")
+                                                                .withStyle(style -> style
+                                                                        .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, absPath))
+                                                                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to copy path")))))
+                                                        .append(Component.literal("  cd config/box3/script/" + name
                                                                 + "\n  npm install && npm run build"
-                                                                + "\nUse /box3script on " + name + " to enable it."),
-                                                        false);
+                                                                + "\nUse /box3script on " + name + " to enable it."));
+                                                ctx.getSource().sendSuccess(() -> msg, false);
                                             } catch (IOException e) {
                                                 ctx.getSource().sendFailure(
                                                         Component.literal("Failed to create: " + e.getMessage()));
@@ -85,10 +58,22 @@ public class Box3ScriptCommand {
                                 .executes(ctx -> {
                                     Box3ScriptEngine.get().reset();
                                     ctx.getSource().sendSuccess(
-                                            () -> Component.literal("All scripts stopped. Callbacks cleared, scope reset."),
+                                            () -> Component.literal("All scripts stopped."),
                                             false);
                                     return 1;
-                                }))
+                                })
+                                .then(argument("project", StringArgumentType.word())
+                                        .executes(ctx -> {
+                                            String project = StringArgumentType.getString(ctx, "project");
+                                            Box3ScriptConfig.get().setEnabled(project, false);
+                                            var server = ctx.getSource().getServer();
+                                            Box3ScriptEngine.get().reset();
+                                            Box3ScriptEngine.get().autoLoad(server);
+                                            ctx.getSource().sendSuccess(
+                                                    () -> Component.literal("Stopped and disabled: " + project),
+                                                    false);
+                                            return 1;
+                                        })))
                         // --- list ---
                         .then(literal("list")
                                 .executes(ctx -> {
@@ -162,30 +147,6 @@ public class Box3ScriptCommand {
                                             false);
                                     return 1;
                                 }))
-                        // --- run ---
-                        .then(literal("run")
-                                .then(argument("project", StringArgumentType.greedyString())
-                                        .executes(ctx -> {
-                                            String project = StringArgumentType.getString(ctx, "project");
-                                            CommandSourceStack src = ctx.getSource();
-                                            var server = src.getServer();
-                                            Path appJs = resolve(project, server).resolve("app.js");
-                                            if (!Files.exists(appJs)) {
-                                                src.sendFailure(Component.literal("app.js not found: " + appJs));
-                                                return 0;
-                                            }
-                                            try {
-                                                Box3ScriptEngine.get().init(server);
-                                                Box3ScriptEngine.get().setCurrentProject(project);
-                                                Box3ScriptEngine.get().eval("require('./app')");
-                                                src.sendSuccess(
-                                                        () -> Component.literal("Executed: " + project + "/app.js"), false);
-                                            } catch (Exception e) {
-                                                src.sendFailure(Component.literal("Script error: " + e.getMessage()));
-                                                e.printStackTrace();
-                                            }
-                                            return 1;
-                                        })))
         );
     }
 

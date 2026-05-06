@@ -403,7 +403,7 @@ interface AxisAngle {
  * 通过 `storage.getDataStorage("name")` 获取。
  * Obtain via `storage.getDataStorage("name")`.
  */
-interface DataStorage {
+interface GameDataStorage {
   /**
    * 获取存储空间名称 (只读)。
    * @en Returns the read‑only namespace name.
@@ -488,8 +488,8 @@ interface DataStorage {
 }
 
 /**
- * 分页查询结果 (由 DataStorage.list() 返回)。
- * Paginated query result returned by DataStorage.list().
+ * 分页查询结果 (由 GameDataStorage.list() 返回)。
+ * Paginated query result returned by GameDataStorage.list().
  */
 interface QueryList {
   /** 是否已到达最后一页。Whether the last page has been reached. */
@@ -538,13 +538,13 @@ interface GameStorage {
    * Opens or creates a named data‑storage namespace.
    * @param name - 命名空间 (可含 "/" 作为目录分隔) / namespace (may contain "/" as directory separator)
    */
-  getDataStorage(name: string): DataStorage;
+  getDataStorage(name: string): GameDataStorage;
 
   /**
    * 行为与 getDataStorage 相同 (Box3 兼容别名)。
    * Same as getDataStorage — Box3 compatibility alias.
    */
-  getGroupStorage(name: string): DataStorage;
+  getGroupStorage(name: string): GameDataStorage;
 }
 
 // ================================================================
