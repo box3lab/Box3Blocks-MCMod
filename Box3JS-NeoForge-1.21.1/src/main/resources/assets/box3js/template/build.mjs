@@ -20,10 +20,11 @@ const distDir = resolve(__dirname, "dist");
 const distFile = resolve(distDir, "app.js");
 const isWatchMode = process.argv.includes("--watch");
 
-const HELPER_REGEX_LITERAL =
-  "/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t)";
-const HELPER_TYPED_ARRAY_CHECK =
-  '(t === "Int8Array" || t === "Uint8Array" || t === "Uint8ClampedArray" || t === "Int16Array" || t === "Uint16Array" || t === "Int32Array" || t === "Uint32Array")';
+const BAD_REGEX =
+  /\/\^\(\?:Ui\|I\)nt\(\?:8\|16\|32\)\(\?:Clamped\)\?Array\$\/\.test\((\w+)\)/g;
+function typedArrayCheck(_, varName) {
+  return `(${varName} === "Int8Array" || ${varName} === "Uint8Array" || ${varName} === "Uint8ClampedArray" || ${varName} === "Int16Array" || ${varName} === "Uint16Array" || ${varName} === "Int32Array" || ${varName} === "Uint32Array")`;
+}
 
 function cleanupTempDir() {
   if (existsSync(tempDir)) rmSync(tempDir, { recursive: true, force: true });
@@ -80,15 +81,13 @@ async function bundleAndSanitize() {
     format: "cjs",
     platform: "neutral",
     target: ["rhino1.9.1"],
-    minify: false,
+    minify: true,
     write: true,
     logLevel: "info",
   });
 
   const code = readFileSync(distFile, "utf-8");
-  const sanitized = code
-    .split(HELPER_REGEX_LITERAL)
-    .join(HELPER_TYPED_ARRAY_CHECK);
+  const sanitized = code.replace(BAD_REGEX, typedArrayCheck);
   writeFileSync(distFile, sanitized, "utf-8");
 }
 

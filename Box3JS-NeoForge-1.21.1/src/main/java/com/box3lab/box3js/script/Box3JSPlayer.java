@@ -323,6 +323,25 @@ public class Box3JSPlayer {
         server.getCommands().performPrefixedCommand(source, cmd);
     }
 
+    // ---- Health ----
+
+    public double getHp() {
+        return player.getHealth();
+    }
+    public void setHp(double v) {
+        trackIfSandboxed();
+        player.setHealth((float) Math.min(v, player.getMaxHealth()));
+    }
+
+    public double getMaxHp() {
+        return player.getMaxHealth();
+    }
+    public void setMaxHp(double v) {
+        trackIfSandboxed();
+        player.getAttribute(Attributes.MAX_HEALTH).setBaseValue(v);
+        if (player.getHealth() > v) player.setHealth((float) v);
+    }
+
     // ---- XP / Food ----
 
     public int getXp() { return player.experienceLevel; }
