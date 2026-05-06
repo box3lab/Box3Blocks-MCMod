@@ -116,7 +116,7 @@ npm install && npm run build     # 安装依赖并编译
 
 - `world` — 世界控制、事件回调 (16 种)、记分板、Bossbar、队伍、边界、粒子、烟花、射线检测
 - `entity` — 实体属性、AI 寻路、装备、药水效果、标签
-- `player` — 玩家专属：背包、飞行、游戏模式、二段跳、传送、消息、经验
+- `player` — 玩家专属：背包、飞行、游戏模式、传送、消息、经验
 - `voxels` — 方块读写、区域填充、刷怪笼
 - `storage` — JSON 数据持久化
 - `console` / `require()` / `sleep()` / `GameVector3` / `GameBounds3` / `GameRGBColor` 等

@@ -1,10 +1,10 @@
-# Box3JS (Shendao Code) -- Minecraft Mod
+# Box3JS -- Minecraft Mod
 
 > **Beta** — This project is in early beta. APIs may change, and undiscovered issues may still exist. Feedback is welcome.
 
 [简体中文](README.md) | [English](README_en.md)
 
-`Box3JS` is a Minecraft server-side mod that follows the coding style of Box3. You do not need to write Java — just use TypeScript to build scripts.
+`Box3JS` is a Minecraft server-side mod inspired by Box3 coding style. You don’t need to write Java — just use TypeScript to build scripts.
 
 ## Features
 
@@ -47,7 +47,7 @@ npm run build          # outputs dist/app.js
 Back in game and enable it:
 
 ```
-/box3script reload mygame
+/box3script on mygame
 ```
 
 ## Available APIs

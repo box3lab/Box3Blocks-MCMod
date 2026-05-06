@@ -201,36 +201,6 @@ var dir = player.facingDirection;
 var target = player.cameraTarget;
 ```
 
-## Double Jump
-
-All ⬆ MC Extension.
-
-### player.canDoubleJump
-
-Get/set whether double jump is allowed. When `true`, the player can jump once more in mid-air.
-
-### player.doubleJumpPower
-
-Vertical force of the double jump, default `0.42` (same as normal jump). Increase to jump higher.
-
-### player.doubleJump()
-
-Execute a double jump (must be called in a tick callback). Only works when `canDoubleJump = true`, the player is in the air, and hasn't used the double jump yet. Auto-resets on landing.
-
-```js
-// Must be called continuously in a tick callback
-world.onTick(() => {
-  player.doubleJump();
-});
-```
-
-Typical usage — enable double jump in colorzone:
-
-```js
-player.canDoubleJump = true;
-player.doubleJumpPower = 0.6; // higher than normal jump
-```
-
 ## Teleport & Respawn
 
 ### player.teleport(pos)
@@ -502,4 +472,3 @@ player.setPlayerListName(player.name);
 | `runCommand()`                                       | ⬆ MC |
 | `setPlayerListName()`                                | ⬆ MC |
 | `getOpLevel()` / `opLevel`                           | ⬆ MC |
-| `canDoubleJump` / `doubleJumpPower` / `doubleJump()` | ⬆ MC |

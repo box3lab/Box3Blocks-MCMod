@@ -437,26 +437,6 @@ public class Box3JSPlayer {
         }
     }
 
-    // ---- Double Jump ----
-
-    public boolean getCanDoubleJump() { return getProp("canDoubleJump", false); }
-    public void setCanDoubleJump(boolean v) { trackIfSandboxed(); setProp("canDoubleJump", v); }
-
-    public double getDoubleJumpPower() { return getProp("doubleJumpPower", 0.42); }
-    public void setDoubleJumpPower(double v) { setProp("doubleJumpPower", v); }
-
-    public void doubleJump() {
-        if (player.onGround()) {
-            setProp("hasDoubleJumped", false);
-        }
-        if (getCanDoubleJump() && !getProp("hasDoubleJumped", false) && !player.onGround()) {
-            double power = getDoubleJumpPower();
-            player.setDeltaMovement(player.getDeltaMovement().x, power, player.getDeltaMovement().z);
-            player.hurtMarked = true;
-            setProp("hasDoubleJumped", true);
-        }
-    }
-
     // ---- Custom properties ----
 
     private void trackIfSandboxed() {
