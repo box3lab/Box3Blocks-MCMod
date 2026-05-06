@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════
 
 // 玩家加入时欢迎
-world.onPlayerJoin(function (entity: Entity) {
+world.onPlayerJoin(function (entity: GameEntity) {
     var p = entity.player;
     if (!p) return;
     world.say("§e" + p.name + " §7进入了服务器");
@@ -12,7 +12,7 @@ world.onPlayerJoin(function (entity: Entity) {
 });
 
 // 聊天命令
-world.onChat(function (entity: Entity, message: string, _tick: number) {
+world.onChat(function (entity: GameEntity, message: string, _tick: number) {
     var p = entity.player;
     if (!p) return;
 

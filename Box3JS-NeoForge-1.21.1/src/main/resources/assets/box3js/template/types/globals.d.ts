@@ -529,7 +529,7 @@ interface ReturnValue {
  * 全局存储入口 — 脚本中通过 `storage` 访问。
  * Global storage entry point — accessed via `storage` in scripts.
  */
-interface StorageAPI {
+interface GameStorage {
   /** 始终返回空字符串 (MC 本地存储无 key)。Always returns "" for MC local storage. */
   key: string;
 
@@ -559,7 +559,7 @@ interface StorageAPI {
  * 通过 `world.querySelector()`, `world.querySelectorAll()` 或事件回调获取。
  * Obtained via `world.querySelector()`, `world.querySelectorAll()`, or event callbacks.
  */
-interface Entity {
+interface GameEntity {
   // ── 身份 / Identity ──
 
   /**
@@ -572,7 +572,7 @@ interface Entity {
    * 是否为玩家实体。返回 true 后 player 属性自动收窄为非 null。
    * True if this entity is a player. After a truthy check, `player` is narrowed to non-null.
    */
-  isPlayer(): this is Entity & { player: Player };
+  isPlayer(): this is GameEntity & { player: GamePlayer };
 
   /**
    * 实体类型标识符 (如 "minecraft:zombie")。
@@ -770,7 +770,7 @@ interface Entity {
    * 设置生物的当前攻击目标。
    * Sets the mob's attack target (the mob will pathfind to and attack it).
    */
-  setTarget(target: Entity): void;
+  setTarget(target: GameEntity): void;
 
   /** 清除攻击目标, 停止追击。Clears the attack target, stopping pursuit. */
   clearTarget(): void;
@@ -779,7 +779,7 @@ interface Entity {
    * 获取当前攻击目标 (可能为 null)。
    * Returns the mob's current attack target, or null.
    */
-  getTarget(): Entity | null;
+  getTarget(): GameEntity | null;
 
   /**
    * 启用或禁用生物 AI (寻路/目标等)。
@@ -814,7 +814,7 @@ interface Entity {
    * 注册实体被销毁时的回调。
    * Registers a callback to be called when this entity is destroyed.
    */
-  setOnDestroy(handler: (entity: Entity) => void): void;
+  setOnDestroy(handler: (entity: GameEntity) => void): void;
 
   // ── 玩家代理 / Player proxy ──
 
@@ -822,7 +822,7 @@ interface Entity {
    * 玩家接口 (仅当 isPlayer 为 true 时非 null)。
    * The player interface — non‑null only when isPlayer is true.
    */
-  player: Player | null;
+  player: GamePlayer | null;
 }
 
 // ================================================================
@@ -833,7 +833,7 @@ interface Entity {
  * 玩家扩展接口 (通过 entity.player 访问)。
  * Player‑specific interface — accessed via `entity.player`.
  */
-interface Player {
+interface GamePlayer {
   // ── 身份 / Identity ──
 
   /** 玩家名。Player display name. */
@@ -937,7 +937,7 @@ interface Player {
    * 相机跟随的实体 (在 FOLLOW 模式下)。
    * The entity the camera follows (when in FOLLOW mode).
    */
-  cameraEntity: Entity | null;
+  cameraEntity: GameEntity | null;
 
   /** 相机俯仰角。Camera pitch (vertical rotation). */
   cameraPitch: number;
@@ -1170,7 +1170,7 @@ interface Player {
    * Registers a per‑player chat handler (overrides global onChat for this player).
    */
   onChat(
-    handler: (entity: Entity, message: string, tick: number) => void,
+    handler: (entity: GameEntity, message: string, tick: number) => void,
   ): void;
 }
 
@@ -1182,7 +1182,7 @@ interface Player {
  * 世界控制与事件 — 脚本中通过 `world` 访问。
  * World control & events — accessed via `world` in scripts.
  */
-interface World {
+interface GameWorld {
   // ── 世界属性 / World properties ──
 
   /** 服务器 MOTD。Server MOTD string. */
@@ -1313,26 +1313,26 @@ interface World {
    * Selects all entities matching a selector (currently only players).
    * @param selector - "*" (所有玩家) | "#uuid" | ".tag"
    */
-  querySelectorAll(selector: string): Entity[];
+  querySelectorAll(selector: string): GameEntity[];
 
   /**
    * 查询第一个匹配的实体 (或 null)。
    * Selects the first matching entity, or null.
    */
-  querySelector(selector: string): Entity | null;
+  querySelector(selector: string): GameEntity | null;
 
   /**
    * 查询指定区域内的所有实体。
    * Returns all entities inside an AABB defined by two corners.
    */
-  entitiesInArea(pos1: GameVector3, pos2: GameVector3): Entity[];
+  entitiesInArea(pos1: GameVector3, pos2: GameVector3): GameEntity[];
 
   /**
    * 查询指定半径内的所有实体。
    * Returns all entities within a radius around a point.
    */
-  entitiesInRadius(x: number, y: number, z: number, radius: number): Entity[];
-  entitiesInRadius(pos: GameVector3, radius: number): Entity[];
+  entitiesInRadius(x: number, y: number, z: number, radius: number): GameEntity[];
+  entitiesInRadius(pos: GameVector3, radius: number): GameEntity[];
 
   // ── 实体生成 / Entity Spawning ──
 
@@ -1343,7 +1343,7 @@ interface World {
    * @param pos - 生成坐标
    * @returns 生成的实体包装, 失败返回 null
    */
-  spawnEntity(type: string, pos: GameVector3): Entity | null;
+  spawnEntity(type: string, pos: GameVector3): GameEntity | null;
 
   // ── 射线检测 / Raycast ──
 
@@ -1507,13 +1507,13 @@ interface World {
     ty: number,
     tz: number,
     speed: number,
-  ): Entity | null;
+  ): GameEntity | null;
   launchProjectile(
     type: string,
     pos: GameVector3,
     target: GameVector3,
     speed: number,
-  ): Entity | null;
+  ): GameEntity | null;
 
   // ── 计分板 / Scoreboard ──
 
@@ -1537,7 +1537,7 @@ interface World {
    * Sets the score of an entity or name for a given objective.
    */
   setScore(
-    entityOrName: string | Entity,
+    entityOrName: string | GameEntity,
     objectiveName: string,
     value: number,
   ): void;
@@ -1546,7 +1546,7 @@ interface World {
    * 获取分数。
    * Gets the score of an entity or name for a given objective.
    */
-  getScore(entityOrName: string | Entity, objectiveName: string): number;
+  getScore(entityOrName: string | GameEntity, objectiveName: string): number;
 
   /**
    * 在指定显示位置展示计分板。
@@ -1605,19 +1605,19 @@ interface World {
    * 将实体/名称加入队伍。
    * Adds an entity or name to a team.
    */
-  joinTeam(entityOrName: string | Entity, teamName: string): void;
+  joinTeam(entityOrName: string | GameEntity, teamName: string): void;
 
   /**
    * 将实体/名称移出队伍。
    * Removes an entity or name from its current team.
    */
-  leaveTeam(entityOrName: string | Entity): void;
+  leaveTeam(entityOrName: string | GameEntity): void;
 
   /**
    * 获取实体/名称所在的队伍名 (不在任何队伍返回 null)。
    * Returns the team name of an entity or name, or null.
    */
-  getTeamOf(entityOrName: string | Entity): string | null;
+  getTeamOf(entityOrName: string | GameEntity): string | null;
 
   // ── 世界边界 / World Border ──
 
@@ -1700,13 +1700,13 @@ interface World {
    * 注册玩家加入回调。
    * Registers a callback invoked when a player joins the server.
    */
-  onPlayerJoin(handler: (entity: Entity) => void): void;
+  onPlayerJoin(handler: (entity: GameEntity) => void): void;
 
   /**
    * 注册玩家离开回调。
    * Registers a callback invoked when a player leaves the server.
    */
-  onPlayerLeave(handler: (entity: Entity) => void): void;
+  onPlayerLeave(handler: (entity: GameEntity) => void): void;
 
   /**
    * 注册聊天消息回调 (包括 /me 消息)。
@@ -1714,14 +1714,14 @@ interface World {
    * @param handler - (entity, message, tick) => void
    */
   onChat(
-    handler: (entity: Entity, message: string, tick: number) => void,
+    handler: (entity: GameEntity, message: string, tick: number) => void,
   ): void;
 
   /**
    * 注册玩家重生回调。
    * Registers a callback invoked when a player respawns.
    */
-  onPlayerRespawn(handler: (entity: Entity) => void): void;
+  onPlayerRespawn(handler: (entity: GameEntity) => void): void;
 
   /**
    * 注册方块右键激活回调。
@@ -1729,7 +1729,7 @@ interface World {
    */
   onBlockActivate(
     handler: (
-      entity: Entity,
+      entity: GameEntity,
       x: number,
       y: number,
       z: number,
@@ -1744,7 +1744,7 @@ interface World {
    */
   onVoxelDestroy(
     handler: (
-      entity: Entity,
+      entity: GameEntity,
       x: number,
       y: number,
       z: number,
@@ -1759,7 +1759,7 @@ interface World {
    */
   onBlockPlace(
     handler: (
-      entity: Entity,
+      entity: GameEntity,
       x: number,
       y: number,
       z: number,
@@ -1775,7 +1775,7 @@ interface World {
    */
   onVoxelContact(
     handler: (
-      entity: Entity,
+      entity: GameEntity,
       voxelId: number,
       x: number,
       y: number,
@@ -1791,7 +1791,7 @@ interface World {
    * Registers a callback invoked when a player right‑clicks an entity.
    */
   onInteract(
-    handler: (entity: Entity, target: Entity, tick: number) => void,
+    handler: (entity: GameEntity, target: GameEntity, tick: number) => void,
   ): void;
 
   /**
@@ -1799,7 +1799,7 @@ interface World {
    * Registers a callback invoked when an entity dies.
    */
   onEntityDeath(
-    handler: (entity: Entity, killer: Entity | null, tick: number) => void,
+    handler: (entity: GameEntity, killer: GameEntity | null, tick: number) => void,
   ): void;
 
   /**
@@ -1808,10 +1808,10 @@ interface World {
    */
   onEntityDamage(
     handler: (
-      entity: Entity,
+      entity: GameEntity,
       amount: number,
       source: string,
-      attacker: Entity | null,
+      attacker: GameEntity | null,
       tick: number,
     ) => void,
   ): void;
@@ -1822,7 +1822,7 @@ interface World {
    */
   onFluidEnter(
     handler: (
-      entity: Entity,
+      entity: GameEntity,
       fluid: string,
       x: number,
       y: number,
@@ -1837,7 +1837,7 @@ interface World {
    */
   onFluidLeave(
     handler: (
-      entity: Entity,
+      entity: GameEntity,
       fluid: string,
       x: number,
       y: number,
@@ -1851,7 +1851,7 @@ interface World {
    * Registers a callback invoked when two entities come into contact.
    */
   onEntityContact(
-    handler: (entityA: Entity, entityB: Entity, tick: number) => void,
+    handler: (entityA: GameEntity, entityB: GameEntity, tick: number) => void,
   ): void;
 
   /**
@@ -1859,7 +1859,7 @@ interface World {
    * Registers a callback invoked when two entities separate after contact.
    */
   onEntitySeparate(
-    handler: (entityA: Entity, entityB: Entity, tick: number) => void,
+    handler: (entityA: GameEntity, entityB: GameEntity, tick: number) => void,
   ): void;
 
   /**
@@ -1893,7 +1893,7 @@ interface RaycastResult {
   /** 命中的方块 ID (命中方块时为数字)。Hit block ID (number when a block was hit). */
   voxel?: number;
   /** 命中的实体 (命中实体时)。The entity that was hit (when an entity was hit). */
-  entity?: Entity;
+  entity?: GameEntity;
 }
 
 // ================================================================
@@ -1908,7 +1908,7 @@ interface RaycastResult {
  * 所有坐标使用世界方块坐标 (整数)。
  * All coordinates are in world block space (integers).
  */
-interface Voxels {
+interface GameVoxels {
   // ── 世界尺寸 / World dimensions ──
 
   /**
@@ -2072,7 +2072,7 @@ interface Voxels {
  * 输出格式: [Box3JS] [projectName] <message>
  * 会通过 System.out / System.err 输出到服务端控制台。
  */
-interface Console {
+interface GameConsole {
   /** 普通日志。Info‑level log. */
   log(...args: unknown[]): void;
 
@@ -2183,16 +2183,16 @@ declare const GamePlayerWalkState: {
 // ================================================================
 
 /** 世界控制与事件 API / World control & events */
-declare const world: World;
+declare const world: GameWorld;
 
 /** 方块读写 API / Block read & write */
-declare const voxels: Voxels;
+declare const voxels: GameVoxels;
 
 /** 持久化存储 API / Persistent key‑value storage */
-declare const storage: StorageAPI;
+declare const storage: GameStorage;
 
 /** 服务端控制台输出 / Server console output */
-declare const console: Console;
+declare const console: GameConsole;
 
 /**
  * CommonJS 模块导入。

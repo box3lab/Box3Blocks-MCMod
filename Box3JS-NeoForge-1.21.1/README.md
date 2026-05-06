@@ -93,7 +93,6 @@ npm run build          # 输出 dist/app.js
 | `/box3script off <project\|all>` | 禁用项目 |
 | `/box3script reload` | 重载所有已启用脚本 |
 | `/box3script stop` | 停止所有脚本 |
-| `/box3script eval <code>` | 直接执行 JS 代码 |
 | `/box3script file <path>` | 加载 JS 文件 |
 
 [命令详细参考 →](docs/api/commands.md)

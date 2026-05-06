@@ -6,15 +6,6 @@
 
 ## 命令列表
 
-### `/box3script eval <code>`
-
-直接执行一段 JS 代码。
-
-```
-/box3script eval world.say("hello")
-/box3script eval var p = world.querySelectorAll("*")[0].player; p.teleport(new GameVector3(0,100,0))
-```
-
 ### `/box3script file <path>`
 
 加载并执行服务器上的 JS 文件。支持相对路径（相对于 `config/box3/script/`）和绝对路径。
@@ -34,7 +25,7 @@
 
 ### `/box3script create <name>`
 
-创建新的脚本项目。在 `config/box3/script/<name>/` 下创建目录和 `app.js` 模板文件。创建后默认**禁用**。
+创建新的 TypeScript 脚本项目。在 `config/box3/script/<name>/` 下生成完整的 TS 脚手架。创建后默认**禁用**。
 
 ```
 /box3script create mygame
@@ -44,7 +35,22 @@
 ```
 config/box3/script/
   └── mygame/
-      └── app.js     ← 模板脚本
+      ├── .gitignore
+      ├── package.json          ← 依赖（esbuild、Babel、TypeScript）
+      ├── tsconfig.json
+      ├── build.mjs             ← 构建脚本
+      ├── types/
+      │   └── globals.d.ts      ← Box3JS 类型声明
+      └── src/
+          └── app.ts            ← 入口（含 Hello World 示例）
+```
+
+创建后需要手动安装依赖和构建：
+
+```bash
+cd config/box3/script/mygame
+npm install
+npm run build          # 输出 dist/app.js
 ```
 
 ### `/box3script list`
@@ -134,12 +140,13 @@ config/box3/
   ├── scripts.json        ← 项目开关配置
   ├── script/              ← 脚本目录
   │   ├── skyrun/
-  │   │   └── app.js       ← 天空跑酷
-  │   ├── siege/
-  │   │   └── app.js       ← 围攻游戏
+  │   │   ├── package.json
+  │   │   ├── src/app.ts
+  │   │   └── dist/app.js  ← 编译产物
   │   └── mygame/
-  │       └── app.js       ← 自定义项目
+  │       ├── package.json
+  │       ├── src/app.ts
+  │       └── dist/app.js
   └── data/                ← 存储数据目录 (storage API)
-      ├── skyrun_times/
       └── ...
 ```

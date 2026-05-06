@@ -23,24 +23,6 @@ public class Box3ScriptCommand {
         dispatcher.register(
                 literal("box3script")
                         .requires(src -> src.hasPermission(2))
-                        // --- eval ---
-                        .then(literal("eval")
-                                .then(argument("code", StringArgumentType.greedyString())
-                                        .executes(ctx -> {
-                                            String code = StringArgumentType.getString(ctx, "code");
-                                            var server = ctx.getSource().getServer();
-                                            try {
-                                                Box3ScriptEngine.get().init(server);
-                                                Box3ScriptEngine.get().eval(code);
-                                                ctx.getSource().sendSuccess(
-                                                        () -> Component.literal("Script executed."), false);
-                                            } catch (Exception e) {
-                                                ctx.getSource().sendFailure(
-                                                        Component.literal("Script error: " + e.getMessage()));
-                                                e.printStackTrace();
-                                            }
-                                            return 1;
-                                        })))
                         // --- file ---
                         .then(literal("file")
                                 .then(argument("path", StringArgumentType.greedyString())
