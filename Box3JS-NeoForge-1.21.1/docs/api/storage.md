@@ -2,8 +2,6 @@
 
 `storage` 提供 JSON 文件持久化存储，带内存缓存加速读写。数据保存在 `config/box3/storage/<项目名>/` 目录下，每个项目自动拥有独立命名空间。
 
----
-
 ## 获取存储实例
 
 ### storage.getDataStorage(name)
@@ -18,8 +16,6 @@
 var store = storage.getDataStorage("leaderboard");
 var config = storage.getDataStorage("settings");
 ```
-
----
 
 ## 读写操作
 
@@ -36,12 +32,13 @@ store.set("highScore", 100);
 store.set("lastWinner", "Steve");
 store.set("config", { difficulty: "hard", maxPlayers: 10 });
 
-var score = store.get("highScore");        // 100 (number)
-var winner = store.get("lastWinner");      // "Steve" (string)
-var cfg = store.get("config");             // {difficulty: "hard", ...} (object — 需要 JSON.parse)
+var score = store.get("highScore"); // 100 (number)
+var winner = store.get("lastWinner"); // "Steve" (string)
+var cfg = store.get("config"); // {difficulty: "hard", ...} (object — 需要 JSON.parse)
 ```
 
 > **注意：** 存储对象时，`store.get()` 返回 JSON 字符串，需要手动 `JSON.parse()`：
+>
 > ```js
 > var cfg = JSON.parse(store.get("config"));
 > console.log(cfg.difficulty); // "hard"
@@ -54,11 +51,9 @@ var cfg = store.get("config");             // {difficulty: "hard", ...} (object 
 ```js
 var keys = store.keys();
 for (var i = 0; i < keys.length; i++) {
-    console.log(keys[i] + " = " + store.get(keys[i]));
+  console.log(keys[i] + " = " + store.get(keys[i]));
 }
 ```
-
----
 
 ## 更新与删除
 
@@ -68,8 +63,8 @@ for (var i = 0; i < keys.length; i++) {
 
 ```js
 store.set("counter", 0);
-store.update("counter", function(current) {
-    return current + 1; // 原子递增
+store.update("counter", function (current) {
+  return current + 1; // 原子递增
 });
 ```
 
@@ -86,8 +81,6 @@ store.remove("tempKey");
 store.destroy(); // 删除该存储的所有数据
 ```
 
----
-
 ## 数值操作
 
 ### store.increment(key, delta)
@@ -96,12 +89,10 @@ store.destroy(); // 删除该存储的所有数据
 
 ```js
 store.set("kills", 0);
-store.increment("kills");     // kills = 1
-store.increment("kills", 5);  // kills = 6
+store.increment("kills"); // kills = 1
+store.increment("kills", 5); // kills = 6
 store.increment("kills", -2); // kills = 4
 ```
-
----
 
 ## 分页查询
 
@@ -109,22 +100,22 @@ store.increment("kills", -2); // kills = 4
 
 ✅ Box3 API | 游标分页查询。`options` 对象支持的字段：
 
-| 字段 | 类型 | 说明 |
-|---|---|---|
-| `cursor` | number | 起始游标（页码 × pageSize） |
-| `pageSize` | number | 每页条目数（1–100，默认 100） |
-| `ascending` | boolean | 是否升序排列 |
-| `max` | number | 值的上限过滤 |
-| `min` | number | 值的下限过滤 |
-| `constraintTarget` | string | 排序/过滤的嵌套路径（如 `"a.b.c"`） |
+| 字段               | 类型    | 说明                                |
+| ------------------ | ------- | ----------------------------------- |
+| `cursor`           | number  | 起始游标（页码 × pageSize）         |
+| `pageSize`         | number  | 每页条目数（1–100，默认 100）       |
+| `ascending`        | boolean | 是否升序排列                        |
+| `max`              | number  | 值的上限过滤                        |
+| `min`              | number  | 值的下限过滤                        |
+| `constraintTarget` | string  | 排序/过滤的嵌套路径（如 `"a.b.c"`） |
 
 返回 `QueryList` 分页对象：
 
-| 属性/方法 | 说明 |
-|---|---|
-| `result.isLastPage` | 是否最后一页 |
+| 属性/方法                 | 说明               |
+| ------------------------- | ------------------ |
+| `result.isLastPage`       | 是否最后一页       |
 | `result.getCurrentPage()` | 返回当前页条目数组 |
-| `result.nextPage()` | 移到下一页 |
+| `result.nextPage()`       | 移到下一页         |
 
 每条条目为 `{key, value, updateTime, createTime, version}`。
 
@@ -134,16 +125,14 @@ var result = store.list({ pageSize: 10, ascending: false });
 // 遍历当前页
 var page = result.getCurrentPage();
 for (var i = 0; i < page.length; i++) {
-    console.log(page[i].key + ": " + page[i].value);
+  console.log(page[i].key + ": " + page[i].value);
 }
 
 // 下一页
 if (!result.isLastPage) {
-    result.nextPage();
+  result.nextPage();
 }
 ```
-
----
 
 ## 内存缓存与持久化
 
@@ -153,8 +142,6 @@ if (!result.isLastPage) {
 - **项目隔离**：`getDataStorage("scores")` 在不同项目中访问不同文件（自动添加项目名前缀）
 - **跨项目共享**：`getGroupStorage("leaderboard")` 所有项目访问同一个 `__shared__/leaderboard.json`
 
----
-
 ## 完整示例：排行榜
 
 ```js
@@ -163,7 +150,7 @@ var lb = storage.getGroupStorage("leaderboard");
 
 // 保存成绩
 function saveScore(name, time) {
-    lb.set(name, time);
+  lb.set(name, time);
 }
 
 saveScore("Steve", 12345);
@@ -172,15 +159,13 @@ saveScore("Alex", 9800);
 // 遍历所有条目
 var result = lb.list({ pageSize: 10, ascending: true });
 while (true) {
-    var page = result.getCurrentPage();
-    for (var i = 0; i < page.length; i++) {
-        console.log(page[i].key + ": " + page[i].value);
-    }
-    if (result.isLastPage) break;
-    result.nextPage();
+  var page = result.getCurrentPage();
+  for (var i = 0; i < page.length; i++) {
+    console.log(page[i].key + ": " + page[i].value);
+  }
+  if (result.isLastPage) break;
+  result.nextPage();
 }
 ```
-
----
 
 全部 ✅ Box3 API。

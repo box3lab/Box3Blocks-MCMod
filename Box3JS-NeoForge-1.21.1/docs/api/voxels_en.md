@@ -1,83 +1,83 @@
-# voxels — 方块操作 API
+# voxels — Block Operations API
 
-`voxels` 提供纯方块层面的读写操作。不涉及实体逻辑。
+`voxels` provides pure block-level read/write operations. No entity logic is involved.
 
-## 方块信息
+## Block Info
 
 ### voxels.shape
 
-✅ Box3 API | 只读 `GameVector3`。世界尺寸（仅在部分 Box3 环境中有效）。
+✅ Box3 API | Read-only `GameVector3`. World dimensions (valid in some Box3 environments).
 
 ### voxels.VoxelTypes
 
-✅ Box3 API | 只读字符串数组。所有已注册方块名称列表。
+✅ Box3 API | Read-only string array. All registered block names.
 
-## 名称 ↔ ID
+## Name ↔ ID
 
 ### voxels.id(name)
 
-✅ Box3 API | 方块名称 → 内部 ID。`name` 为带命名空间的字符串（如 `"minecraft:stone"`）。
+✅ Box3 API | Block name → internal ID. `name` is a namespaced string (e.g. `"minecraft:stone"`).
 
 ### voxels.name(id)
 
-✅ Box3 API | 内部 ID → 方块名称。
+✅ Box3 API | Internal ID → block name.
 
 ```js
-var stoneId = voxels.id("minecraft:stone"); // 获取 ID
+var stoneId = voxels.id("minecraft:stone"); // get ID
 var name = voxels.name(stoneId); // "minecraft:stone"
 ```
 
-## 放置方块
+## Placing Blocks
 
 ### voxels.setVoxel(x, y, z, voxel)
 
-✅ Box3 API | 在指定坐标放置方块。`voxel` 参数接受：
+✅ Box3 API | Place a block at the given coordinates. `voxel` accepts:
 
-- 字符串：命名空间 ID，如 `"minecraft:glass"`
-- 数字：内部方块 ID（含 rotation 编码）
+- String: namespaced ID, e.g. `"minecraft:glass"`
+- Number: internal block ID (rotation encoded)
 
-返回新放置方块的内部 ID。
+Returns the internal ID of the newly placed block.
 
 ### voxels.setVoxel(pos, voxel)
 
-⬆ GameVector3 重载。
+⬆ GameVector3 overload.
 
 ### voxels.setVoxel(x, y, z, voxel, rotation)
 
-✅ Box3 API | 放置方块并指定旋转方向。`rotation` 为 0–3，控制朝向（类似 `BlockState` 的旋转）。
+✅ Box3 API | Place a block with rotation. `rotation` is 0–3, controlling orientation (like `BlockState` rotation).
 
 ### voxels.setVoxel(pos, voxel, rotation)
 
-⬆ GameVector3 重载。
+⬆ GameVector3 overload.
 
 ```js
-// 用字符串放置
+// Place by string
 voxels.setVoxel(0, 100, 0, "minecraft:glass");
 voxels.setVoxel(new GameVector3(0, 100, 0), "minecraft:gold_block");
 
-// 指定旋转
+// With rotation
 voxels.setVoxel(0, 100, 0, "minecraft:oak_stairs", 2);
 voxels.setVoxel(new GameVector3(0, 100, 0), "minecraft:oak_stairs", 2);
 ```
 
 ### voxels.setVoxelId(x, y, z, voxelId)
 
-✅ Box3 API | 放置方块，`voxelId` 为已编码 rotation 的内部 ID。
+✅ Box3 API | Place a block, `voxelId` is the internal ID with encoded rotation.
 
 ### voxels.setVoxelId(pos, voxelId)
 
-⬆ GameVector3 重载。
+⬆ GameVector3 overload.
 
 ### voxels.fillVoxel(x1, y1, z1, x2, y2, z2, voxel)
 
-⬆ MC 扩展 | 在矩形区域内填充方块。坐标两端点会被自动排序（无需保证 x1≤x2）。
+⬆ MC Extension | Fill a rectangular region with a block. Corner coordinates are auto-sorted (no need to ensure x1 ≤ x2).
 
 ### voxels.fillVoxel(pos1, pos2, voxel)
 
-⬆ GameVector3 重载。
+⬆ GameVector3 overload.
 
 ```js
-// 填充一个 5×1×5 的平台
+// Fill a 5×1×5 platform
 voxels.fillVoxel(-2, 100, -2, 2, 100, 2, "minecraft:white_concrete");
 voxels.fillVoxel(
   new GameVector3(-2, 100, -2),
@@ -85,7 +85,7 @@ voxels.fillVoxel(
   "minecraft:white_concrete",
 );
 
-// 清除区域
+// Clear a region
 voxels.fillVoxel(
   new GameVector3(-5, 100, -5),
   new GameVector3(5, 110, 5),
@@ -93,61 +93,61 @@ voxels.fillVoxel(
 );
 ```
 
-## 读取方块
+## Reading Blocks
 
 ### voxels.getVoxel(x, y, z)
 
-✅ Box3 API | 返回方块的基础 ID（不含 rotation 信息）。
+✅ Box3 API | Returns the block's base ID (without rotation info).
 
 ### voxels.getVoxel(pos)
 
-⬆ GameVector3 重载。
+⬆ GameVector3 overload.
 
 ### voxels.getVoxelId(x, y, z)
 
-✅ Box3 API | 返回完整 ID（含 rotation 编码位）。
+✅ Box3 API | Returns the full ID (with rotation bits encoded).
 
 ### voxels.getVoxelId(pos)
 
-⬆ GameVector3 重载。
+⬆ GameVector3 overload.
 
 ### voxels.getVoxelName(x, y, z)
 
-✅ Box3 API | 返回方块的命名空间 ID 字符串。
+✅ Box3 API | Returns the block's namespaced ID string.
 
 ### voxels.getVoxelName(pos)
 
-⬆ GameVector3 重载。
+⬆ GameVector3 overload.
 
 ### voxels.getVoxelRotation(x, y, z)
 
-✅ Box3 API | 返回方块的 rotation 值（0–3）。
+✅ Box3 API | Returns the block's rotation value (0–3).
 
 ### voxels.getVoxelRotation(pos)
 
-⬆ GameVector3 重载。
+⬆ GameVector3 overload.
 
 ```js
-var id = voxels.getVoxel(0, 100, 0); // 基础 ID
-var fullId = voxels.getVoxelId(0, 100, 0); // 含 rotation 的完整 ID
+var id = voxels.getVoxel(0, 100, 0); // base ID
+var fullId = voxels.getVoxelId(0, 100, 0); // full ID with rotation
 var name = voxels.getVoxelName(0, 100, 0); // "minecraft:stone"
 var rot = voxels.getVoxelRotation(0, 100, 0); // 0-3
 
-// GameVector3 重载
+// GameVector3 overloads
 var id = voxels.getVoxel(entity.position);
 var name = voxels.getVoxelName(new GameVector3(0, 100, 0));
 ```
 
 ### voxels.countVoxel(x1, y1, z1, x2, y2, z2, voxel)
 
-⬆ MC 扩展 | 统计区域内匹配方块的个数。`voxel` 可以是字符串或数字 ID。
+⬆ MC Extension | Count matching blocks in a region. `voxel` can be a string or numeric ID.
 
 ### voxels.countVoxel(pos1, pos2, voxel)
 
-⬆ GameVector3 重载。
+⬆ GameVector3 overload.
 
 ```js
-// 统计区域内有多少个钻石块
+// Count how many diamond blocks are in the region
 var count = voxels.countVoxel(
   -10,
   50,
@@ -164,15 +164,15 @@ var count = voxels.countVoxel(
 );
 ```
 
-## 刷怪笼
+## Spawner Control
 
 ### voxels.setSpawner(x, y, z, entityType)
 
-⬆ MC 扩展 | 设置坐标处刷怪笼的刷出类型。只有该坐标是 `minecraft:spawner` 时才有效。
+⬆ MC Extension | Set the spawn type of the spawner at the given coordinates. Only effective if that block is `minecraft:spawner`.
 
 ### voxels.setSpawner(pos, entityType)
 
-⬆ GameVector3 重载。
+⬆ GameVector3 overload.
 
 ```js
 voxels.setVoxel(0, 100, 0, "minecraft:spawner");

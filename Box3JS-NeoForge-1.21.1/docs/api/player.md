@@ -4,12 +4,10 @@
 
 ```js
 world.onPlayerJoin((entity) => {
-    var p = entity.player;  // p 即为 player 对象
-    p.directMessage("欢迎回来, " + p.name + "!");
+  var p = entity.player; // p 即为 player 对象
+  p.directMessage("欢迎回来, " + p.name + "!");
 });
 ```
-
----
 
 ## 基本信息
 
@@ -27,12 +25,10 @@ world.onPlayerJoin((entity) => {
 
 ```js
 if (player.getOpLevel() >= 2) {
-    // 需要权限等级 2 的操作
+  // 需要权限等级 2 的操作
 }
-player.opLevel = 3;  // 设置为 3 级权限
+player.opLevel = 3; // 设置为 3 级权限
 ```
-
----
 
 ## 外观
 
@@ -45,10 +41,8 @@ player.opLevel = 3;  // 设置为 3 级权限
 ✅ Box3 API | 只读。玩家缩放值。
 
 ```js
-player.invisible = true;   // 隐形
+player.invisible = true; // 隐形
 ```
-
----
 
 ## 移动
 
@@ -75,17 +69,15 @@ player.invisible = true;   // 隐形
 只读。当前行走状态：`"CROUCH"`、`"RUN"`、`"WALK"`、`"NONE"`。
 
 ```js
-player.walkSpeed = 0.2;  // 加速
-player.jumpPower = 0.6;  // 跳更高
+player.walkSpeed = 0.2; // 加速
+player.jumpPower = 0.6; // 跳更高
 
 world.onTick(() => {
-    if (player.walkState === "RUN") {
-        // 玩家在奔跑
-    }
+  if (player.walkState === "RUN") {
+    // 玩家在奔跑
+  }
 });
 ```
-
----
 
 ## 飞行
 
@@ -126,11 +118,31 @@ player.disableFly = true;
 ⬆ MC 扩展 | 获取/设置团队内碰撞。设为 `false` 可防止多人推搡。底层修改团队的 `CollisionRule`。
 
 ```js
-player.collision = false;  // 禁用碰撞
+player.collision = false; // 禁用碰撞
 console.log(player.collision); // false
 ```
 
----
+## 生命值
+
+⬆ MC 扩展 | 获取/设置玩家血量。`ServerPlayer` 本身是 `LivingEntity`，直接操作健康值。
+
+### player.hp
+
+获取/设置当前生命值。
+
+### player.maxHp
+
+获取/设置最大生命值。
+
+```js
+// 设置职业血量
+player.maxHp = 40; // 战士 40 HP
+player.hp = 40; // 满血
+
+// 设置后若当前血量超过新最大值会自动截断
+player.maxHp = 20;
+// player.hp 自动降到 20 封顶
+```
 
 ## 游戏模式
 
@@ -139,14 +151,12 @@ console.log(player.collision); // false
 ✅ Box3 API | 获取/设置游戏模式。get 返回名称字符串，set 接受字符串或数字。
 
 ```js
-player.gameMode = "creative";   // 创造模式
-player.gameMode = "survival";   // 生存模式
-player.gameMode = "adventure";  // 冒险模式
-player.gameMode = "spectator";  // 旁观模式
+player.gameMode = "creative"; // 创造模式
+player.gameMode = "survival"; // 生存模式
+player.gameMode = "adventure"; // 冒险模式
+player.gameMode = "spectator"; // 旁观模式
 // 或数字: 0=生存, 1=创造, 2=冒险, 3=旁观
 ```
-
----
 
 ## 相机
 
@@ -189,8 +199,6 @@ var dir = player.facingDirection;
 var target = player.cameraTarget;
 ```
 
----
-
 ## 二段跳
 
 全部 ⬆ MC 扩展。
@@ -210,7 +218,7 @@ var target = player.cameraTarget;
 ```js
 // 需要在 tick 中持续调用
 world.onTick(() => {
-    player.doubleJump();
+  player.doubleJump();
 });
 ```
 
@@ -218,10 +226,8 @@ world.onTick(() => {
 
 ```js
 player.canDoubleJump = true;
-player.doubleJumpPower = 0.6;  // 比普通跳跃高
+player.doubleJumpPower = 0.6; // 比普通跳跃高
 ```
-
----
 
 ## 传送与重生
 
@@ -250,8 +256,6 @@ player.dimension = "minecraft:the_nether";
 player.teleport(new GameVector3(0, 70, 0));
 ```
 
----
-
 ## 踢出
 
 ### player.kick()
@@ -265,8 +269,6 @@ player.teleport(new GameVector3(0, 70, 0));
 ```js
 player.kick("你已被移出游戏");
 ```
-
----
 
 ## 消息
 
@@ -292,8 +294,8 @@ player.kick("你已被移出游戏");
 
 ```js
 var result = player.dialog({
-    content: "选择你的道路",
-    options: ["战士", "法师", "弓箭手"]
+  content: "选择你的道路",
+  options: ["战士", "法师", "弓箭手"],
 });
 player.directMessage("你选择了: " + result.value);
 ```
@@ -315,13 +317,11 @@ player.link("https://example.com");
 // 对话树
 player.directMessage("输入你的选择: A 或 B");
 player.onChat((entity, msg, tick) => {
-    if (msg === "A") {
-        player.directMessage("你选择了 A");
-    }
+  if (msg === "A") {
+    player.directMessage("你选择了 A");
+  }
 });
 ```
-
----
 
 ## 经验与饱食度
 
@@ -342,13 +342,11 @@ player.onChat((entity, msg, tick) => {
 ⬆ MC 扩展 | 获取/设置饱和度（0–20，浮点数）。
 
 ```js
-player.xp = 10;                 // 设置 10 级
-player.addExperienceLevels(3);  // 加 3 级
+player.xp = 10; // 设置 10 级
+player.addExperienceLevels(3); // 加 3 级
 player.food = 20;
 player.saturation = 10;
 ```
-
----
 
 ## 背包
 
@@ -383,15 +381,15 @@ player.clearInventory();
 
 ```js
 player.giveEnchantedItem("minecraft:diamond_sword", 1, {
-    "minecraft:sharpness": 5,
-    "minecraft:fire_aspect": 2,
-    "minecraft:unbreaking": 3
+  "minecraft:sharpness": 5,
+  "minecraft:fire_aspect": 2,
+  "minecraft:unbreaking": 3,
 });
 
 player.giveEnchantedItem("minecraft:bow", 1, {
-    "minecraft:power": 5,
-    "minecraft:punch": 2,
-    "minecraft:infinity": 1
+  "minecraft:power": 5,
+  "minecraft:punch": 2,
+  "minecraft:infinity": 1,
 });
 ```
 
@@ -401,17 +399,15 @@ player.giveEnchantedItem("minecraft:bow", 1, {
 
 ```js
 player.giveNamedItem("minecraft:gold_ingot", 1, "§6§l跑酷金牌", [
-    "§7天空跑酷锦标赛",
-    "§e完赛时间: 1:23.450"
+  "§7天空跑酷锦标赛",
+  "§e完赛时间: 1:23.450",
 ]);
 
 player.giveNamedItem("minecraft:diamond_sword", 1, "§c§l烈焰之刃", [
-    "§7绑定: 火焰",
-    "§e右键: 发射火球"
+  "§7绑定: 火焰",
+  "§e右键: 发射火球",
 ]);
 ```
-
----
 
 ## 药水效果
 
@@ -433,8 +429,6 @@ player.addEffect("minecraft:jump_boost", 99999, 1, true); // 永久，无粒子
 player.clearEffects();
 ```
 
----
-
 ## 音效与指令
 
 ### player.playSound(path, volume, pitch)
@@ -450,8 +444,6 @@ player.playSound("minecraft:block.note_block.pling", 0.8, 1.5);
 player.runCommand("say hello");
 ```
 
----
-
 ## Tab 列表
 
 ### player.setPlayerListName(name)
@@ -465,48 +457,3 @@ player.setPlayerListName("§6★ §f" + player.name);
 // 重置为原名
 player.setPlayerListName(player.name);
 ```
-
----
-
-## Box3 API 列表
-
-| API | 类型 |
-|---|---|
-| `name` | ✅ Box3 |
-| `userId` | ✅ Box3 |
-| `invisible` | ✅ Box3 |
-| `scale` | ✅ Box3 |
-| `walkSpeed` / `runSpeed` / `jumpPower` | ✅ Box3 |
-| `moveState` / `walkState` | ✅ Box3 |
-| `canFly` / `flying` / `flySpeed` / `disableFly` | ✅ Box3 |
-| `spectator` | ✅ Box3 |
-| `gameMode` | ✅ Box3 |
-| `cameraMode` / `cameraEntity` / `cameraPitch` / `cameraYaw` | ✅ Box3 |
-| `facingDirection` / `cameraTarget` | ✅ Box3 |
-| `setRespawnPoint()` / `respawn()` | ✅ Box3 |
-| `kick()` | ✅ Box3 |
-| `teleport()` | ✅ Box3 |
-| `directMessage()` / `actionBar()` | ✅ Box3 |
-| `title()` (2 参) | ✅ Box3 |
-| `dialog()` | ✅ Box3 |
-| `link()` | ✅ Box3 |
-| `onChat()` (player-level) | ✅ Box3 |
-
-## MC 扩展列表
-
-| API | 类型 |
-|---|---|
-| `collision` | ⬆ MC |
-| `title()` (5 参) | ⬆ MC |
-| `xp` / `addExperienceLevels()` | ⬆ MC |
-| `food` / `saturation` | ⬆ MC |
-| `giveItem()` / `clearInventory()` / `getHeldItem()` | ⬆ MC |
-| `giveEnchantedItem()` / `giveNamedItem()` | ⬆ MC |
-| `addEffect()` (3/4 参) / `clearEffects()` | ⬆ MC |
-| `playSound()` | ⬆ MC |
-| `dimension` | ⬆ MC |
-| `lookAt()` | ⬆ MC |
-| `runCommand()` | ⬆ MC |
-| `setPlayerListName()` | ⬆ MC |
-| `getOpLevel()` / `opLevel` | ⬆ MC |
-| `canDoubleJump` / `doubleJumpPower` / `doubleJump()` | ⬆ MC |

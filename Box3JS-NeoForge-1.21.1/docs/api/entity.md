@@ -4,8 +4,6 @@
 
 通过 `entity.player` 可获取该实体对应的 `player` 对象（仅当是玩家时有效）。
 
----
-
 ## 基本属性
 
 ### entity.id
@@ -23,12 +21,10 @@
 ```js
 var all = world.querySelectorAll("*");
 for (var i = 0; i < all.length; i++) {
-    var e = all[i];
-    console.log(e.id + " -> " + e.entityType + " -> isPlayer: " + e.isPlayer());
+  var e = all[i];
+  console.log(e.id + " -> " + e.entityType + " -> isPlayer: " + e.isPlayer());
 }
 ```
-
----
 
 ## 位置与移动
 
@@ -62,7 +58,7 @@ entity.velocity.set(0, 1, 0); // 向上的速度
 
 ```js
 if (entity.onGround) {
-    // 在地面
+  // 在地面
 }
 ```
 
@@ -73,8 +69,6 @@ if (entity.onGround) {
 ```js
 var eye = entity.eyePosition;
 ```
-
----
 
 ## 生命值
 
@@ -101,8 +95,8 @@ zombie.hp = 100;
 ✅ Box3 API | 治疗实体 `amount` 点生命值（不超过 maxHp）。
 
 ```js
-zombie.hurt(10);  // 造成 10 点伤害
-zombie.heal(5);   // 治疗 5 点
+zombie.hurt(10); // 造成 10 点伤害
+zombie.heal(5); // 治疗 5 点
 ```
 
 ### entity.invulnerable
@@ -110,11 +104,9 @@ zombie.heal(5);   // 治疗 5 点
 ⬆ MC 扩展 | 获取/设置实体是否无敌。
 
 ```js
-entity.invulnerable = true;  // 不受伤害
+entity.invulnerable = true; // 不受伤害
 console.log(entity.invulnerable);
 ```
-
----
 
 ## 外观
 
@@ -123,7 +115,7 @@ console.log(entity.invulnerable);
 ✅ Box3 API | 控制实体是否不可见。
 
 ```js
-entity.meshInvisible = true;  // 隐身
+entity.meshInvisible = true; // 隐身
 ```
 
 ### entity.glowing
@@ -131,7 +123,7 @@ entity.meshInvisible = true;  // 隐身
 ⬆ MC 扩展 | 获取/设置发光效果（类似光灵箭效果）。
 
 ```js
-entity.glowing = true;  // 实体发光
+entity.glowing = true; // 实体发光
 console.log(entity.glowing);
 ```
 
@@ -143,8 +135,6 @@ console.log(entity.glowing);
 entity.nameTag = "§cBoss 怪物";
 console.log(entity.nameTag);
 ```
-
----
 
 ## 标签系统
 
@@ -167,14 +157,12 @@ entity.addTag("boss");
 entity.addTag("red_team");
 
 if (entity.hasTag("boss")) {
-    entity.maxHp = 200;
+  entity.maxHp = 200;
 }
 
 // 通过标签查询
 var bosses = world.querySelectorAll(".boss");
 ```
-
----
 
 ## 火焰
 
@@ -188,10 +176,8 @@ var bosses = world.querySelectorAll(".boss");
 
 ```js
 entity.setFire(100); // 点燃 5 秒
-entity.clearFire();  // 立即扑灭
+entity.clearFire(); // 立即扑灭
 ```
-
----
 
 ## AI 与导航
 
@@ -247,8 +233,6 @@ entity.lookAt(0, 100, -10);
 entity.lookAt(target.position);
 ```
 
----
-
 ## 药水效果
 
 全部 ⬆ MC 扩展。
@@ -262,9 +246,9 @@ entity.lookAt(target.position);
 添加效果并可选隐藏粒子。
 
 ```js
-entity.addEffect("minecraft:speed", 600, 2);           // 速度 III，30 秒
+entity.addEffect("minecraft:speed", 600, 2); // 速度 III，30 秒
 entity.addEffect("minecraft:strength", 99999, 1, true); // 永久力量 II，不显示粒子
-entity.addEffect("minecraft:glowing", 200, 0);          // 发光 10 秒
+entity.addEffect("minecraft:glowing", 200, 0); // 发光 10 秒
 
 // 常用效果:
 // minecraft:speed, minecraft:slowness, minecraft:strength
@@ -272,8 +256,6 @@ entity.addEffect("minecraft:glowing", 200, 0);          // 发光 10 秒
 // minecraft:jump_boost, minecraft:slow_falling, minecraft:invisibility
 // minecraft:glowing, minecraft:levitation, minecraft:fire_resistance
 ```
-
----
 
 ## 装备
 
@@ -298,10 +280,8 @@ entity.setEquipment("feet", "minecraft:leather_boots");
 
 ```js
 entity.setDropChance("mainhand", 0.5); // 50% 概率掉落主手物品
-entity.setDropChance("all", 0);        // 不掉落任何装备
+entity.setDropChance("all", 0); // 不掉落任何装备
 ```
-
----
 
 ## 属性
 
@@ -326,8 +306,6 @@ entity.setAttribute("minecraft:generic.armor", 10);
 
 > 注意：`maxHp` / `walkSpeed` / `jumpPower` 等 Box3 便捷属性内部也使用这些 attribute，推荐优先使用便捷属性，仅当需要访问未封装的属性时才用 `setAttribute`。
 
----
-
 ## 生命周期
 
 ### entity.destroy()
@@ -351,14 +329,15 @@ entity.setAttribute("minecraft:generic.armor", 10);
 ⬆ MC 扩展 | 设为 `true` 时生物不会因远离玩家而自然消失（仅 Mob 有效）。
 
 ```js
-var boss = world.spawnEntity("minecraft:wither_skeleton", new GameVector3(0, 100, 0));
+var boss = world.spawnEntity(
+  "minecraft:wither_skeleton",
+  new GameVector3(0, 100, 0),
+);
 boss.setPersistent(true); // 不会消失
 boss.setOnDestroy((e) => {
-    world.say("Boss 被击败了！");
+  world.say("Boss 被击败了！");
 });
 ```
-
----
 
 ## 自定义属性
 
@@ -371,43 +350,3 @@ entity.killCount = 0;
 
 console.log(entity.myCustomField);
 ```
-
----
-
-## Box3 API 列表
-
-| API | 类型 |
-|---|---|
-| `id` | ✅ Box3 |
-| `isPlayer()` | ✅ Box3 |
-| `entityType` | ✅ Box3 |
-| `position` | ✅ Box3 |
-| `velocity` | ✅ Box3 |
-| `bounds` | ✅ Box3 |
-| `meshInvisible` | ✅ Box3 |
-| `addTag()` / `hasTag()` / `removeTag()` | ✅ Box3 |
-| `hp` / `maxHp` | ✅ Box3 |
-| `hurt()` / `heal()` | ✅ Box3 |
-| `destroy()` / `destroyed` | ✅ Box3 |
-| `setOnDestroy()` | ✅ Box3 |
-
-## MC 扩展列表
-
-| API | 类型 |
-|---|---|
-| `onGround` | ⬆ MC |
-| `eyePosition` | ⬆ MC |
-| `invulnerable` | ⬆ MC |
-| `glowing` | ⬆ MC |
-| `nameTag` | ⬆ MC |
-| `setFire()` / `clearFire()` | ⬆ MC |
-| `setAI()` | ⬆ MC |
-| `setTarget()` / `getTarget()` / `clearTarget()` | ⬆ MC |
-| `navigateTo()` | ⬆ MC |
-| `lookAt()` | ⬆ MC |
-| `addEffect()` | ⬆ MC |
-| `setEquipment()` | ⬆ MC |
-| `setDropChance()` | ⬆ MC |
-| `getAttribute()` / `setAttribute()` | ⬆ MC |
-| `remove()` | ⬆ MC |
-| `setPersistent()` | ⬆ MC |

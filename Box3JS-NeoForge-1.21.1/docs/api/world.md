@@ -2,8 +2,6 @@
 
 `world` 是全局单例，代表 Minecraft 服务端的世界状态。控制天气、时间、游戏规则、实体生成，注册事件回调，管理记分板/Bossbar/队伍，以及发射粒子、烟花、闪电等视觉效果。
 
----
-
 ## 世界属性
 
 ### world.projectName()
@@ -23,8 +21,6 @@ var uptime = world.currentTick();
 world.say("服务器已运行 " + Math.floor(uptime / 20 / 60) + " 分钟");
 ```
 
----
-
 ## 天气
 
 ### world.rainDensity
@@ -32,7 +28,7 @@ world.say("服务器已运行 " + Math.floor(uptime / 20 / 60) + " 分钟");
 ✅ Box3 API | 获取/设置降雨强度，范围 0.0–1.0。
 
 ```js
-world.rainDensity = 1.0;  // 满强度下雨
+world.rainDensity = 1.0; // 满强度下雨
 console.log(world.rainDensity); // 0.0 ~ 1.0
 ```
 
@@ -52,8 +48,6 @@ world.thunderDensity = 0.5;
 world.clearWeather();
 ```
 
----
-
 ## 时间
 
 ### world.time
@@ -61,7 +55,7 @@ world.clearWeather();
 ✅ Box3 API | 获取/设置世界时间（tick）。Minecraft 一天 = 24000 tick。
 
 ```js
-world.time = 6000;  // 正午
+world.time = 6000; // 正午
 world.time = 18000; // 午夜
 console.log(world.time); // 当前时间
 ```
@@ -69,7 +63,7 @@ console.log(world.time); // 当前时间
 此外提供 `world.setTime(tick)` 方法作为便捷设置接口。
 
 ```js
-world.setTime(6000);  // 等效于 world.time = 6000
+world.setTime(6000); // 等效于 world.time = 6000
 ```
 
 常用时间值：`0` 日出、`6000` 正午、`12000` 日落、`18000` 午夜。
@@ -79,11 +73,9 @@ world.setTime(6000);  // 等效于 world.time = 6000
 ✅ Box3 API | 获取/设置时间流速。`0` = 暂停，`1` = 正常。底层修改 `doDaylightCycle` 游戏规则。
 
 ```js
-world.timeScale = 0;  // 冻结时间
-world.timeScale = 1;  // 恢复正常
+world.timeScale = 0; // 冻结时间
+world.timeScale = 1; // 恢复正常
 ```
-
----
 
 ## 难度
 
@@ -93,13 +85,11 @@ world.timeScale = 1;  // 恢复正常
 
 ```js
 world.difficulty = "hard";
-world.difficulty = 3;       // 等同 hard
+world.difficulty = 3; // 等同 hard
 console.log(world.difficulty); // "hard"
 
 // 有效值: "peaceful"(0), "easy"(1), "normal"(2), "hard"(3)
 ```
-
----
 
 ## 出生点
 
@@ -115,8 +105,6 @@ console.log(world.difficulty); // "hard"
 world.setWorldSpawn(new GameVector3(0, 70, 0));
 ```
 
----
-
 ## 游戏规则
 
 ### world.getGameRule(name)
@@ -129,23 +117,21 @@ world.setWorldSpawn(new GameVector3(0, 70, 0));
 
 **支持的规则：**
 
-| 规则名 | 说明 |
-|---|---|
-| `doDaylightCycle` | 时间流动 |
-| `doWeatherCycle` | 天气变化 |
-| `keepInventory` | 死亡不掉落 |
-| `doMobSpawning` | 生物自然生成 |
-| `doFireTick` | 火焰蔓延 |
-| `mobGriefing` | 生物破坏方块 |
-| `doImmediateRespawn` | 立即重生 |
+| 规则名               | 说明         |
+| -------------------- | ------------ |
+| `doDaylightCycle`    | 时间流动     |
+| `doWeatherCycle`     | 天气变化     |
+| `keepInventory`      | 死亡不掉落   |
+| `doMobSpawning`      | 生物自然生成 |
+| `doFireTick`         | 火焰蔓延     |
+| `mobGriefing`        | 生物破坏方块 |
+| `doImmediateRespawn` | 立即重生     |
 
 ```js
 world.setGameRule("keepInventory", true);
 world.setGameRule("doFireTick", false);
 console.log(world.getGameRule("doMobSpawning")); // true/false
 ```
-
----
 
 ## 实体生成
 
@@ -162,59 +148,55 @@ zombie.setEquipment("mainhand", "minecraft:iron_sword");
 zombie.setAI(true);
 ```
 
----
-
 ## 事件回调
 
 所有事件回调由 `world.onXxx(handler)` 注册。除 `onTick` 外，回调第一个参数通常是触发该事件的 `entity`（`Box3JSEntity`）。
 
-| 事件 | 类型 | 回调签名 | 触发时机 |
-|---|---|---|---|
-| `world.onTick(fn)` | ✅ Box3 | `()` | 每 tick |
-| `world.onPlayerJoin(fn)` | ✅ Box3 | `(entity)` | 玩家登录 |
-| `world.onPlayerLeave(fn)` | ✅ Box3 | `(entity)` | 玩家退出 |
-| `world.onChat(fn)` | ✅ Box3 | `(entity, message, tick)` | 玩家发送聊天消息 |
-| `world.onVoxelDestroy(fn)` | ✅ Box3 | `(entity, x, y, z, voxel, tick)` | 玩家破坏方块 |
-| `world.onBlockPlace(fn)` | ⬆ MC | `(entity, x, y, z, voxel, voxelId, tick)` | 玩家放置方块 |
-| `world.onBlockActivate(fn)` | ⬆ MC | `(entity, x, y, z, voxel, tick)` | 玩家右键方块 |
-| `world.onInteract(fn)` | ✅ Box3 | `(entity, target, tick)` | 玩家右键实体 |
-| `world.onVoxelContact(fn)` | ✅ Box3 | `(entity, voxelId, x, y, z, contactType, force, tick)` | 实体接触方块 |
-| `world.onEntityContact(fn)` | ✅ Box3 | `(entity, other, tick)` | 两个实体接触 |
-| `world.onEntitySeparate(fn)` | ✅ Box3 | `(entity, other, tick)` | 两个实体分离 |
-| `world.onFluidEnter(fn)` | ✅ Box3 | `(entity, fluid, x, y, z, tick)` | 实体进入液体 |
-| `world.onFluidLeave(fn)` | ✅ Box3 | `(entity, fluid, x, y, z, tick)` | 实体离开液体 |
-| `world.onEntityDeath(fn)` | ⬆ MC | `(entity, killer, tick)` | 实体死亡；`killer` 可能为 null |
-| `world.onEntityDamage(fn)` | ⬆ MC | `(entity, amount, source, attacker, tick)` | 实体受伤（Pre 阶段） |
-| `world.onPlayerRespawn(fn)` | ⬆ MC | `(entity)` | 玩家重生 |
-| `world.onMessage(fn)` | ⬆ MC | `(from, data)` | 收到 `world.sendMessage()` 消息 |
+| 事件                         | 类型    | 回调签名                                               | 触发时机                        |
+| ---------------------------- | ------- | ------------------------------------------------------ | ------------------------------- |
+| `world.onTick(fn)`           | ✅ Box3 | `()`                                                   | 每 tick                         |
+| `world.onPlayerJoin(fn)`     | ✅ Box3 | `(entity)`                                             | 玩家登录                        |
+| `world.onPlayerLeave(fn)`    | ✅ Box3 | `(entity)`                                             | 玩家退出                        |
+| `world.onChat(fn)`           | ✅ Box3 | `(entity, message, tick)`                              | 玩家发送聊天消息                |
+| `world.onVoxelDestroy(fn)`   | ✅ Box3 | `(entity, x, y, z, voxel, tick)`                       | 玩家破坏方块                    |
+| `world.onBlockPlace(fn)`     | ⬆ MC    | `(entity, x, y, z, voxel, voxelId, tick)`              | 玩家放置方块                    |
+| `world.onBlockActivate(fn)`  | ⬆ MC    | `(entity, x, y, z, voxel, tick)`                       | 玩家右键方块                    |
+| `world.onInteract(fn)`       | ✅ Box3 | `(entity, target, tick)`                               | 玩家右键实体                    |
+| `world.onVoxelContact(fn)`   | ✅ Box3 | `(entity, voxelId, x, y, z, contactType, force, tick)` | 实体接触方块                    |
+| `world.onEntityContact(fn)`  | ✅ Box3 | `(entity, other, tick)`                                | 两个实体接触                    |
+| `world.onEntitySeparate(fn)` | ✅ Box3 | `(entity, other, tick)`                                | 两个实体分离                    |
+| `world.onFluidEnter(fn)`     | ✅ Box3 | `(entity, fluid, x, y, z, tick)`                       | 实体进入液体                    |
+| `world.onFluidLeave(fn)`     | ✅ Box3 | `(entity, fluid, x, y, z, tick)`                       | 实体离开液体                    |
+| `world.onEntityDeath(fn)`    | ⬆ MC    | `(entity, killer, tick)`                               | 实体死亡；`killer` 可能为 null  |
+| `world.onEntityDamage(fn)`   | ⬆ MC    | `(entity, amount, source, attacker, tick)`             | 实体受伤（Pre 阶段）            |
+| `world.onPlayerRespawn(fn)`  | ⬆ MC    | `(entity)`                                             | 玩家重生                        |
+| `world.onMessage(fn)`        | ⬆ MC    | `(from, data)`                                         | 收到 `world.sendMessage()` 消息 |
 
 ```js
 world.onTick(() => {
-    // 每 tick 执行
+  // 每 tick 执行
 });
 
 world.onPlayerJoin((entity) => {
-    var p = entity.player;
-    world.say(p.name + " 加入了游戏");
-    p.teleport(new GameVector3(0, 100, 0));
+  var p = entity.player;
+  world.say(p.name + " 加入了游戏");
+  p.teleport(new GameVector3(0, 100, 0));
 });
 
 world.onChat((entity, message, tick) => {
-    var p = entity.player;
-    if (message === "!spawn") {
-        p.teleport(new GameVector3(0, 100, 0));
-    }
+  var p = entity.player;
+  if (message === "!spawn") {
+    p.teleport(new GameVector3(0, 100, 0));
+  }
 });
 
 world.onEntityDeath((entity, killer) => {
-    if (killer && killer.isPlayer()) {
-        var kp = killer.player;
-        kp.addExperienceLevels(1);
-    }
+  if (killer && killer.isPlayer()) {
+    var kp = killer.player;
+    kp.addExperienceLevels(1);
+  }
 });
 ```
-
----
 
 ## 查询
 
@@ -228,22 +210,22 @@ world.onEntityDeath((entity, killer) => {
 
 **选择器语法：**
 
-| 选择器 | 含义 |
-|---|---|
-| `"*"` | 所有在线玩家 |
-| `"#uuid"` | 按 UUID 精确匹配 |
-| `".tagName"` | 按标签匹配 |
+| 选择器       | 含义             |
+| ------------ | ---------------- |
+| `"*"`        | 所有在线玩家     |
+| `"#uuid"`    | 按 UUID 精确匹配 |
+| `".tagName"` | 按标签匹配       |
 
 ```js
 var allPlayers = world.querySelectorAll("*");
 for (var i = 0; i < allPlayers.length; i++) {
-    var p = allPlayers[i].player;
-    p.actionBar("在线人数: " + allPlayers.length);
+  var p = allPlayers[i].player;
+  p.actionBar("在线人数: " + allPlayers.length);
 }
 
 var specific = world.querySelector("#550e8400-e29b-41d4-a716-446655440000");
 if (specific) {
-    specific.player.directMessage("找到你了");
+  specific.player.directMessage("找到你了");
 }
 ```
 
@@ -254,8 +236,6 @@ if (specific) {
 ```js
 world.say("§6[公告] §f比赛即将开始！");
 ```
-
----
 
 ## 计时器
 
@@ -277,19 +257,17 @@ world.say("§6[公告] §f比赛即将开始！");
 
 ```js
 var tid = world.setTimeout(() => {
-    world.say("3 秒后执行");
+  world.say("3 秒后执行");
 }, 60); // 60 ticks = 3 秒
 
 var iid = world.setInterval(() => {
-    world.say("每 10 秒执行一次");
+  world.say("每 10 秒执行一次");
 }, 200); // 200 ticks = 10 秒
 
 // 取消
 world.clearTimeout(tid);
 world.clearInterval(iid);
 ```
-
----
 
 ## 记分板
 
@@ -339,8 +317,6 @@ world.hideScoreboard("sidebar");
 world.removeScoreboard("kills");
 ```
 
----
-
 ## Boss 血条
 
 全部 ⬆ MC 扩展。
@@ -349,12 +325,12 @@ world.removeScoreboard("kills");
 
 显示或更新 Boss 血条。
 
-| 参数 | 说明 |
-|---|---|
-| `name` | 血条 ID，用于后续更新或移除 |
-| `text` | 显示文本（支持颜色代码） |
-| `progress` | 0.0–1.0，进度条长度 |
-| `color` | `"blue"`、`"green"`、`"pink"`、`"purple"`、`"red"`、`"white"`、`"yellow"` |
+| 参数       | 说明                                                                      |
+| ---------- | ------------------------------------------------------------------------- |
+| `name`     | 血条 ID，用于后续更新或移除                                               |
+| `text`     | 显示文本（支持颜色代码）                                                  |
+| `progress` | 0.0–1.0，进度条长度                                                       |
+| `color`    | `"blue"`、`"green"`、`"pink"`、`"purple"`、`"red"`、`"white"`、`"yellow"` |
 
 ### world.removeBossbar(name)
 
@@ -364,21 +340,21 @@ world.removeScoreboard("kills");
 // 创建一个 3 分钟倒计时血条
 var totalTicks = 3600;
 var iid = world.setInterval(() => {
-    totalTicks -= 20;
-    var remain = totalTicks / 3600;
-    if (remain <= 0) {
-        world.removeBossbar("timer");
-        world.clearInterval(iid);
-    } else {
-        world.showBossbar("timer",
-            "§e剩余时间: §f" + Math.ceil(totalTicks / 20) + "s",
-            remain,
-            remain > 0.5 ? "green" : remain > 0.2 ? "yellow" : "red");
-    }
+  totalTicks -= 20;
+  var remain = totalTicks / 3600;
+  if (remain <= 0) {
+    world.removeBossbar("timer");
+    world.clearInterval(iid);
+  } else {
+    world.showBossbar(
+      "timer",
+      "§e剩余时间: §f" + Math.ceil(totalTicks / 20) + "s",
+      remain,
+      remain > 0.5 ? "green" : remain > 0.2 ? "yellow" : "red",
+    );
+  }
 }, 20);
 ```
-
----
 
 ## 队伍
 
@@ -409,13 +385,11 @@ world.createTeam("red_team", "red");
 world.createTeam("blue_team", "blue");
 
 world.onPlayerJoin((entity) => {
-    // 交替分边
-    var online = world.querySelectorAll("*").length;
-    world.joinTeam(entity, online % 2 === 0 ? "red_team" : "blue_team");
+  // 交替分边
+  var online = world.querySelectorAll("*").length;
+  world.joinTeam(entity, online % 2 === 0 ? "red_team" : "blue_team");
 });
 ```
-
----
 
 ## 世界边界
 
@@ -449,11 +423,9 @@ world.setBorderDamage(2);
 world.setBorderWarning(10);
 
 world.setTimeout(() => {
-    world.shrinkBorder(100, 120); // 2 分钟缩到 100
+  world.shrinkBorder(100, 120); // 2 分钟缩到 100
 }, 600); // 30 秒后开始
 ```
-
----
 
 ## 视觉效果
 
@@ -521,15 +493,18 @@ world.spawnParticle("minecraft:cloud", entity.position, 1, 0, 0, 0, 0);
 
 // 圆形粒子圈
 world.spawnParticleCircle(0, 100, 0, 2.0, "minecraft:happy_villager", 20);
-world.spawnParticleCircle(new GameVector3(0, 100, 0), 2.0, "minecraft:happy_villager", 20);
+world.spawnParticleCircle(
+  new GameVector3(0, 100, 0),
+  2.0,
+  "minecraft:happy_villager",
+  20,
+);
 
 // 常用粒子:
 // minecraft:flame, minecraft:cloud, minecraft:happy_villager
 // minecraft:witch, minecraft:portal, minecraft:end_rod
 // minecraft:heart, minecraft:note, minecraft:dragon_breath
 ```
-
----
 
 ## 物品 / 抛射物
 
@@ -559,13 +534,16 @@ world.dropItem(entity.position, "minecraft:diamond", 3);
 ```js
 // 从 (0, 100, 0) 向 (10, 100, 10) 发射火球
 world.launchProjectile("minecraft:fireball", 0, 100, 0, 10, 100, 10, 2);
-world.launchProjectile("minecraft:fireball", new GameVector3(0, 100, 0), new GameVector3(10, 100, 10), 2);
+world.launchProjectile(
+  "minecraft:fireball",
+  new GameVector3(0, 100, 0),
+  new GameVector3(10, 100, 10),
+  2,
+);
 
 // 发射箭
 world.launchProjectile("minecraft:arrow", 0, 100, 0, 5, 105, 0, 3);
 ```
-
----
 
 ## 爆炸 / 音效 / 查询
 
@@ -588,7 +566,7 @@ world.launchProjectile("minecraft:arrow", 0, 100, 0, 5, 105, 0, 3);
 ⬆ GameVector3 重载。
 
 ```js
-world.explode(0, 100, 0, 4);       // 威力 4，不引火
+world.explode(0, 100, 0, 4); // 威力 4，不引火
 world.explode(new GameVector3(0, 100, 0), 8, true); // 威力 8，引火
 ```
 
@@ -602,7 +580,12 @@ world.explode(new GameVector3(0, 100, 0), 8, true); // 威力 8，引火
 
 ```js
 world.playSound("minecraft:block.note_block.pling", 0, 100, 0, 1.0, 1.5);
-world.playSound("minecraft:block.note_block.pling", new GameVector3(0, 100, 0), 1.0, 1.5);
+world.playSound(
+  "minecraft:block.note_block.pling",
+  new GameVector3(0, 100, 0),
+  1.0,
+  1.5,
+);
 ```
 
 ### world.raycast(origin, direction)
@@ -619,10 +602,10 @@ world.playSound("minecraft:block.note_block.pling", new GameVector3(0, 100, 0), 
 var dir = new GameVector3(0, -1, 0);
 var result = world.raycast(playerEntity.position, dir, 50);
 if (result.hit) {
-    console.log("命中方块:", result.voxel, "距离:", result.distance);
-    if (result.entity) {
-        console.log("命中实体:", result.entity.entityType);
-    }
+  console.log("命中方块:", result.voxel, "距离:", result.distance);
+  if (result.entity) {
+    console.log("命中实体:", result.entity.entityType);
+  }
 }
 ```
 
@@ -643,7 +626,7 @@ if (result.hit) {
 var nearby = world.entitiesInRadius(0, 100, 0, 10);
 var nearby = world.entitiesInRadius(entity.position, 10);
 for (var i = 0; i < nearby.length; i++) {
-    console.log(nearby[i].entityType);
+  console.log(nearby[i].entityType);
 }
 ```
 
@@ -661,8 +644,6 @@ console.log(biome); // "minecraft:plains"
 var biome = world.getBiome(entity.position);
 ```
 
----
-
 ## 跨脚本消息
 
 ### world.sendMessage(target, data)
@@ -677,63 +658,3 @@ var biome = world.getBiome(entity.position);
 world.runCommand("time set day");
 world.runCommand("weather clear");
 ```
-
----
-
-## Box3 API 列表
-
-| API | 类型 |
-|---|---|
-| `currentTick()` | ✅ Box3 |
-| `rainDensity` | ✅ Box3 |
-| `time` / `setTime()` | ✅ Box3 |
-| `timeScale` | ✅ Box3 |
-| `difficulty` | ✅ Box3 |
-| `spawnEntity()` | ✅ Box3 |
-| `onTick()` | ✅ Box3 |
-| `onPlayerJoin()` | ✅ Box3 |
-| `onPlayerLeave()` | ✅ Box3 |
-| `onVoxelDestroy()` | ✅ Box3 |
-| `onVoxelContact()` | ✅ Box3 |
-| `onInteract()` | ✅ Box3 |
-| `onChat()` | ✅ Box3 |
-| `onFluidEnter()` | ✅ Box3 |
-| `onFluidLeave()` | ✅ Box3 |
-| `onEntityContact()` | ✅ Box3 |
-| `onEntitySeparate()` | ✅ Box3 |
-| `querySelectorAll()` | ✅ Box3 |
-| `querySelector()` | ✅ Box3 |
-| `say()` | ✅ Box3 |
-
-## MC 扩展列表
-
-| API | 类型 |
-|---|---|
-| `thunderDensity` | ⬆ MC |
-| `clearWeather()` | ⬆ MC |
-| `spawnPoint` / `setWorldSpawn()` | ⬆ MC |
-| `getGameRule()` / `setGameRule()` | ⬆ MC |
-| `onBlockPlace()` | ⬆ MC |
-| `onEntityDeath()` | ⬆ MC |
-| `onPlayerRespawn()` | ⬆ MC |
-| `onBlockActivate()` | ⬆ MC |
-| `onEntityDamage()` | ⬆ MC |
-| `onMessage()` | ⬆ MC |
-| `setTimeout()` / `setInterval()` / `clearTimeout()` / `clearInterval()` | ⬆ MC |
-| `addScoreboard()` / `removeScoreboard()` / `setScore()` / `getScore()` | ⬆ MC |
-| `showScoreboard()` / `hideScoreboard()` / `listScores()` | ⬆ MC |
-| `showBossbar()` / `removeBossbar()` | ⬆ MC |
-| `createTeam()` / `removeTeam()` / `joinTeam()` / `leaveTeam()` / `getTeamOf()` | ⬆ MC |
-| `borderSize` / `setBorderCenter()` / `shrinkBorder()` | ⬆ MC |
-| `setBorderDamage()` / `setBorderWarning()` | ⬆ MC |
-| `strikeLightning()` | ⬆ MC |
-| `launchFirework()` | ⬆ MC |
-| `spawnParticle()` / `spawnParticleCircle()` | ⬆ MC |
-| `dropItem()` | ⬆ MC |
-| `launchProjectile()` | ⬆ MC |
-| `explode()` | ⬆ MC |
-| `playSound()` | ⬆ MC |
-| `raycast()` | ⬆ MC |
-| `entitiesInArea()` / `entitiesInRadius()` | ⬆ MC |
-| `getBiome()` | ⬆ MC |
-| `sendMessage()` / `runCommand()` | ⬆ MC |

@@ -2,8 +2,6 @@
 
 所有命令需要 **OP 权限等级 2**（默认管理员权限）。所有 `<project>` 参数均支持 **Tab 自动补全**。
 
----
-
 ## 命令列表
 
 ### `/box3script create <name>`
@@ -15,6 +13,7 @@
 ```
 
 生成的文件结构：
+
 ```
 config/box3/script/
   └── mygame/
@@ -45,6 +44,7 @@ npm run build          # 输出 dist/app.js
 ```
 
 输出示例：
+
 ```
 === Projects ===
   [ON] [SANDBOX]  colorzone
@@ -57,7 +57,7 @@ npm run build          # 输出 dist/app.js
 启用指定项目并**立即加载执行**。加载错误会直接反馈到聊天栏。
 
 ```
-/box3script on skyrun
+/box3script on mygame
 ```
 
 ### `/box3script on all`
@@ -94,15 +94,15 @@ npm run build          # 输出 dist/app.js
 
 ### `/box3script reload <project>`
 
-重新加载指定项目（先停止再启动）。未启用的项目会自动设为启用后启动。开发调试时比 `stop` + `on` 更快。
+重新加载指定项目（先停止再启动）。未启用的项目会自动设为启用后启动。
 
 ```
-/box3script reload colorzone
+/box3script reload mygame
 ```
 
 ### `/box3script watch`
 
-开启/关闭文件监控。开启后监控所有项目的 `dist/` 目录，`.js` 文件变化时自动热重载对应项目（2 秒防抖）。
+开启/关闭文件监控。开启后监控所有项目的 `dist/` 目录，`.js` 文件变化时自动热重载对应项目。
 
 ```
 /box3script watch          # 切换 开/关
@@ -114,20 +114,18 @@ npm run build          # 输出 dist/app.js
 
 切换沙盒模式。开启后自动追踪该项目所有的方块修改、实体/玩家/世界状态变更。**沙盒持久化**——`/box3script stop` 和 `/box3script reload` 不会清除沙盒状态，仅手动再次执行此命令才会关闭沙盒并回滚全部修改。关闭时在聊天栏显示恢复摘要。
 
-适合反复测试脚本，不用担心残留数据污染世界。
-
 ```
 /box3script sandbox mygame    # 切换 开/关
 ```
 
 **追踪内容：**
 
-| 类别 | 追踪项 |
-|---|---|
-| 方块 | `setVoxel`/`setVoxelId`/`fillVoxel` 修改（上限 500 万块） |
-| 实体 | HP、AI、隐身、发光、无敌、着火、药水效果、标签、名称、装备、掉落率、属性 |
+| 类别 | 追踪项                                                                                 |
+| ---- | -------------------------------------------------------------------------------------- |
+| 方块 | `setVoxel`/`setVoxelId`/`fillVoxel` 修改（上限 500 万块）                              |
+| 实体 | HP、AI、隐身、发光、无敌、着火、药水效果、标签、名称、装备、掉落率、属性               |
 | 玩家 | 游戏模式、飞行能力、速度、跳跃力、经验、饱食度、物品栏、护甲、药水、位置、维度、重生点 |
-| 世界 | 天气、时间、难度、游戏规则、世界边界 |
+| 世界 | 天气、时间、难度、游戏规则、世界边界                                                   |
 
 典型工作流：
 
@@ -160,21 +158,17 @@ npm run build          # 输出 dist/app.js
 /box3script stop siege
 ```
 
----
-
 ## 配置文件
 
 启用/禁用状态保存在 `config/box3/scripts.json`：
 
 ```json
 {
-  "skyrun": true,
+  "mygame": true,
   "siege": false,
   "mygame": true
 }
 ```
-
----
 
 ## 脚本目录结构
 
@@ -182,7 +176,7 @@ npm run build          # 输出 dist/app.js
 config/box3/
   ├── scripts.json        ← 项目开关配置
   ├── script/              ← 脚本目录
-  │   ├── skyrun/
+  │   ├── mygame/
   │   │   ├── package.json
   │   │   ├── src/app.ts
   │   │   └── dist/app.js  ← 编译产物
