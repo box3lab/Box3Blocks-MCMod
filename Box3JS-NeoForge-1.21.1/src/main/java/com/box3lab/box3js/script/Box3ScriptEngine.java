@@ -27,6 +27,7 @@ public class Box3ScriptEngine {
     private Box3JSWorld worldBinding;
     private Box3JSVoxels voxelsBinding;
     private Box3JSStorage storageBinding;
+    private Box3ScriptSandbox sandbox;
     private MinecraftServer server;
     private boolean initialized;
 
@@ -42,8 +43,9 @@ public class Box3ScriptEngine {
     public void init(MinecraftServer server) {
         if (initialized) return;
         this.server = server;
+        this.sandbox = new Box3ScriptSandbox(server.overworld());
         this.worldBinding = new Box3JSWorld(server, this);
-        this.voxelsBinding = new Box3JSVoxels(server);
+        this.voxelsBinding = new Box3JSVoxels(server, sandbox);
         this.storageBinding = new Box3JSStorage(server.getServerDirectory().resolve("config"), this);
         setupScope();
         initialized = true;
@@ -199,12 +201,19 @@ public class Box3ScriptEngine {
     }
     public String getCurrentProject() { return currentProject; }
 
+    Box3ScriptSandbox getSandbox() { return sandbox; }
+
     // ---- Project lifecycle ----
 
-    /** Remove one project's callbacks without affecting others. */
+    /** Remove one project's callbacks, state, and resources without affecting others. */
     public void removeProject(String project) {
         bus.removeProject(project);
         projectRequires.remove(project);
+        worldBinding.removeProject(project);
+        var summary = sandbox.restoreProject(project);
+        if (summary.hasAny()) {
+            Box3JS.LOGGER.info("Sandbox [{}] restored: {}", project, summary.toMessage());
+        }
         Box3JS.LOGGER.info("Removed project: {}", project);
     }
 
@@ -557,12 +566,17 @@ public class Box3ScriptEngine {
         bus.entityCustomProps.remove(uuid);
     }
 
-    /** Clear all callbacks and reset the JS scope (keeps server binding) */
+    /** Clear all callbacks, state, and reset the JS scope (keeps server binding) */
     public void reset() {
         bus.clearAll();
         projectRequires.clear();
+        worldBinding.resetAll();
+        sandbox.restoreAll();
+        var oldSandbox = this.sandbox;
+        this.sandbox = new Box3ScriptSandbox(server.overworld());
+        this.sandbox.inheritEnabled(oldSandbox);
         this.worldBinding = new Box3JSWorld(server, this);
-        this.voxelsBinding = new Box3JSVoxels(server);
+        this.voxelsBinding = new Box3JSVoxels(server, sandbox);
         this.storageBinding = new Box3JSStorage(server.getServerDirectory().resolve("config"), this);
         setupScope();
     }

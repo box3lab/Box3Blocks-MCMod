@@ -684,6 +684,7 @@ interface GameEntity {
    * Custom name tag text (empty string = none).
    */
   nameTag: string;
+  setNameTag(name: string): void;
 
   // ── 无敌 & 持久化 / Invulnerability & Persistence ──
 
@@ -882,6 +883,27 @@ interface GamePlayer {
    * Jump power (jump strength attribute).
    */
   jumpPower: number;
+
+  /**
+   * 是否允许二段跳。
+   * Whether double‑jump is enabled for this player.
+   */
+  canDoubleJump: boolean;
+
+  /**
+   * 二段跳力度 (默认 0.42, 等同于普通跳跃)。
+   * Double‑jump power (default 0.42, same as a normal jump).
+   */
+  doubleJumpPower: number;
+
+  /**
+   * 执行二段跳 — 仅在玩家离地且 canDoubleJump 为 true 时生效。
+   * 每次落地后自动重置, 同一滞空时间只能二段跳一次。
+   *
+   * Performs a double jump — only works when the player is off the ground
+   * and canDoubleJump is true. Resets automatically on landing.
+   */
+  doubleJump(): void;
 
   /**
    * 当前移动状态。

@@ -25,7 +25,7 @@ console.log("脚本已加载");
 | 对象 | 类型 | 说明 |
 |---|---|---|
 | `world` | ✅ Box3 | 世界控制，见 [world.md](world.md) |
-| `entity` | ✅ Box3 | 实体包装，见 [entity.md](entity.md) |
+| `entity` | ✅ Box3 | 实体包装（回调参数，或通过 `world.spawnEntity` 创建），见 [entity.md](entity.md) |
 | `player` | ✅ Box3 | 玩家包装（通过 `entity.player` 获取），见 [player.md](player.md) |
 | `voxels` | ✅ Box3 | 方块操作，见 [voxels.md](voxels.md) |
 | `storage` | ✅ Box3 | 数据持久化，见 [storage.md](storage.md) |
@@ -82,7 +82,7 @@ var buildCourse = require("./course").buildCourse;
 var startRace = require("./game").startRace;
 ```
 
-> 注意：`require()` 使用 Rhino 内置的 CommonJS 模块系统，模块会被缓存供后续导入。仅在 `/box3script run <project>` 和自动加载时可用（需要项目上下文）。
+> 注意：`require()` 使用 Rhino 内置的 CommonJS 模块系统，模块会被缓存供后续导入。仅在脚本加载执行时可用（需要项目上下文）。
 
 ## Tick 与性能
 

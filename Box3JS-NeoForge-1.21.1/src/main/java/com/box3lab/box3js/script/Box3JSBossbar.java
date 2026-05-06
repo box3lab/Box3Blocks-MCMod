@@ -5,27 +5,25 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.BossEvent.BossBarColor;
 import net.minecraft.world.BossEvent.BossBarOverlay;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerBossEvent;
 
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 class Box3JSBossbar {
 
     private final MinecraftServer server;
-    private final Map<String, ServerBossEvent> bossBars = new HashMap<>();
+    private final Map<String, Map<String, ServerBossEvent>> projectBossBars = new HashMap<>();
 
     Box3JSBossbar(MinecraftServer server) {
         this.server = server;
     }
 
-    void showBossbar(String name, String text, double progress, String colorName) {
-        ServerBossEvent bar = bossBars.get(name);
+    void showBossbar(String project, String name, String text, double progress, String colorName) {
+        Map<String, ServerBossEvent> bars = projectBossBars.computeIfAbsent(project, k -> new HashMap<>());
+        ServerBossEvent bar = bars.get(name);
         if (bar == null) {
             bar = new ServerBossEvent(Component.literal(text), resolveColor(colorName), BossBarOverlay.PROGRESS);
-            bossBars.put(name, bar);
+            bars.put(name, bar);
         } else {
             bar.setName(Component.literal(text));
             if (colorName != null) bar.setColor(resolveColor(colorName));
@@ -34,9 +32,25 @@ class Box3JSBossbar {
         for (ServerPlayer sp : server.getPlayerList().getPlayers()) bar.addPlayer(sp);
     }
 
-    void removeBossbar(String name) {
-        ServerBossEvent bar = bossBars.remove(name);
+    void removeBossbar(String project, String name) {
+        Map<String, ServerBossEvent> bars = projectBossBars.get(project);
+        if (bars == null) return;
+        ServerBossEvent bar = bars.remove(name);
         if (bar != null) bar.removeAllPlayers();
+    }
+
+    void removeProject(String project) {
+        Map<String, ServerBossEvent> bars = projectBossBars.remove(project);
+        if (bars != null) {
+            for (ServerBossEvent bar : bars.values()) bar.removeAllPlayers();
+        }
+    }
+
+    void resetAll() {
+        for (Map<String, ServerBossEvent> bars : projectBossBars.values()) {
+            for (ServerBossEvent bar : bars.values()) bar.removeAllPlayers();
+        }
+        projectBossBars.clear();
     }
 
     private static BossBarColor resolveColor(String colorName) {

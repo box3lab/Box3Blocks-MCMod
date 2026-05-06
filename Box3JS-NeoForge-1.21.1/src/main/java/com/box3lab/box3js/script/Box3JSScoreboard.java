@@ -12,32 +12,36 @@ import net.minecraft.world.scores.ScoreHolder;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 class Box3JSScoreboard {
 
     private final MinecraftServer server;
+    private final Map<String, Set<String>> projectObjectives = new HashMap<>();
 
     Box3JSScoreboard(MinecraftServer server) {
         this.server = server;
     }
 
-    void addScoreboard(String name) { addScoreboard(name, "dummy"); }
+    void addScoreboard(String project, String name) { addScoreboard(project, name, "dummy"); }
 
-    void addScoreboard(String name, String criteria) {
+    void addScoreboard(String project, String name, String criteria) {
         Scoreboard sb = server.getScoreboard();
         if (sb.getObjective(name) != null) return;
         ObjectiveCriteria crit = "dummy".equals(criteria) || criteria == null
             ? ObjectiveCriteria.DUMMY
             : ObjectiveCriteria.byName(criteria).orElse(ObjectiveCriteria.DUMMY);
         sb.addObjective(name, crit, Component.literal(name), ObjectiveCriteria.RenderType.INTEGER, false, null);
+        projectObjectives.computeIfAbsent(project, k -> new HashSet<>()).add(name);
     }
 
     void removeScoreboard(String name) {
         Scoreboard sb = server.getScoreboard();
         Objective obj = sb.getObjective(name);
-        if (obj != null) sb.removeObjective(obj);
+        if (obj != null) {
+            sb.removeObjective(obj);
+            for (Set<String> set : projectObjectives.values()) set.remove(name);
+        }
     }
 
     void setScore(Object entityOrName, String objectiveName, int value) {
@@ -83,6 +87,28 @@ class Box3JSScoreboard {
             result.add(m);
         }
         return result;
+    }
+
+    void removeProject(String project) {
+        Set<String> objectives = projectObjectives.remove(project);
+        if (objectives != null) {
+            Scoreboard sb = server.getScoreboard();
+            for (String name : objectives) {
+                Objective obj = sb.getObjective(name);
+                if (obj != null) sb.removeObjective(obj);
+            }
+        }
+    }
+
+    void resetAll() {
+        Scoreboard sb = server.getScoreboard();
+        for (Set<String> objectives : projectObjectives.values()) {
+            for (String name : objectives) {
+                Objective obj = sb.getObjective(name);
+                if (obj != null) sb.removeObjective(obj);
+            }
+        }
+        projectObjectives.clear();
     }
 
     private static DisplaySlot parseSlot(String slot) {

@@ -23,12 +23,13 @@ world.onPlayerJoin((entity) => {
 
 ### player.getOpLevel()
 
-⬆ MC 扩展 | 返回玩家管理员权限等级 (0-4)。0=普通玩家, 1=可绕过出生点保护, 2=可使用大部分命令, 3=可管理玩家, 4=最高权限。
+⬆ MC 扩展 | 获取/设置玩家管理员权限等级 (0-4)。0=普通玩家, 1=可绕过出生点保护, 2=可使用大部分命令, 3=可管理玩家, 4=最高权限。
 
 ```js
 if (player.getOpLevel() >= 2) {
     // 需要权限等级 2 的操作
 }
+player.opLevel = 3;  // 设置为 3 级权限
 ```
 
 ---
@@ -186,6 +187,38 @@ player.lookAt(target.position);
 // 获取视线方向
 var dir = player.facingDirection;
 var target = player.cameraTarget;
+```
+
+---
+
+## 二段跳
+
+全部 ⬆ MC 扩展。
+
+### player.canDoubleJump
+
+获取/设置是否允许二段跳。设为 `true` 后玩家在空中可再跳一次。
+
+### player.doubleJumpPower
+
+二段跳的垂直力度，默认 `0.42`（与普通跳跃一致）。调大可以跳得更高。
+
+### player.doubleJump()
+
+执行二段跳（需在 tick 回调中调用）。仅在 `canDoubleJump = true` 且玩家在空中、且本跳未使用过时才生效。落地自动重置。
+
+```js
+// 需要在 tick 中持续调用
+world.onTick(() => {
+    player.doubleJump();
+});
+```
+
+典型用法 — 在 colorzone 中启用二段跳：
+
+```js
+player.canDoubleJump = true;
+player.doubleJumpPower = 0.6;  // 比普通跳跃高
 ```
 
 ---
@@ -475,4 +508,5 @@ player.setPlayerListName(player.name);
 | `lookAt()` | ⬆ MC |
 | `runCommand()` | ⬆ MC |
 | `setPlayerListName()` | ⬆ MC |
-| `getOpLevel()` | ⬆ MC |
+| `getOpLevel()` / `opLevel` | ⬆ MC |
+| `canDoubleJump` / `doubleJumpPower` / `doubleJump()` | ⬆ MC |

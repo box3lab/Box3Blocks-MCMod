@@ -6,15 +6,18 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
 
+import java.util.*;
+
 class Box3JSTeam {
 
     private final MinecraftServer server;
+    private final Map<String, Set<String>> projectTeams = new HashMap<>();
 
     Box3JSTeam(MinecraftServer server) {
         this.server = server;
     }
 
-    void createTeam(String name, String colorName) {
+    void createTeam(String project, String name, String colorName) {
         Scoreboard sb = server.getScoreboard();
         if (sb.getPlayerTeam(name) != null) return;
         PlayerTeam team = sb.addPlayerTeam(name);
@@ -23,12 +26,16 @@ class Box3JSTeam {
             team.setColor(fmt);
             team.setDisplayName(Component.literal(name));
         }
+        projectTeams.computeIfAbsent(project, k -> new HashSet<>()).add(name);
     }
 
     void removeTeam(String name) {
         Scoreboard sb = server.getScoreboard();
         PlayerTeam team = sb.getPlayerTeam(name);
-        if (team != null) sb.removePlayerTeam(team);
+        if (team != null) {
+            sb.removePlayerTeam(team);
+            for (Set<String> set : projectTeams.values()) set.remove(name);
+        }
     }
 
     void joinTeam(Object entityOrName, String teamName) {
@@ -51,5 +58,27 @@ class Box3JSTeam {
         if (name == null) return null;
         PlayerTeam team = sb.getPlayersTeam(name);
         return team != null ? team.getName() : null;
+    }
+
+    void removeProject(String project) {
+        Set<String> teams = projectTeams.remove(project);
+        if (teams != null) {
+            Scoreboard sb = server.getScoreboard();
+            for (String name : teams) {
+                PlayerTeam team = sb.getPlayerTeam(name);
+                if (team != null) sb.removePlayerTeam(team);
+            }
+        }
+    }
+
+    void resetAll() {
+        Scoreboard sb = server.getScoreboard();
+        for (Set<String> teams : projectTeams.values()) {
+            for (String name : teams) {
+                PlayerTeam team = sb.getPlayerTeam(name);
+                if (team != null) sb.removePlayerTeam(team);
+            }
+        }
+        projectTeams.clear();
     }
 }

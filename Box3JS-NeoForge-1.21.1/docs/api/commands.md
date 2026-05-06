@@ -1,6 +1,6 @@
 # /box3script 命令参考
 
-所有命令需要 **OP 权限等级 2**（默认管理员权限）。
+所有命令需要 **OP 权限等级 2**（默认管理员权限）。所有 `<project>` 参数均支持 **Tab 自动补全**。
 
 ---
 
@@ -36,20 +36,20 @@ npm install
 npm run build          # 输出 dist/app.js
 ```
 
-### `/box3script list`
+### `/box3script`
 
-列出所有已发现的脚本项目及其启用/禁用状态。
+直接输入不带参数，列出所有项目及启用/禁用/沙盒状态。
 
 ```
-/box3script list
+/box3script
 ```
 
 输出示例：
 ```
-项目列表:
-  [开] skyrun
-  [关] siege
-  [关] mygame
+=== Projects ===
+  [ON] [SANDBOX]  colorzone
+  [ON]  demo
+  [OFF]  siege
 ```
 
 ### `/box3script on <project>`
@@ -86,10 +86,18 @@ npm run build          # 输出 dist/app.js
 
 ### `/box3script reload`
 
-停止所有脚本，重新加载所有已启用项目的 `app.js`。等价于 `stop` + 重新 `autoLoad`。加载错误会反馈到聊天栏。
+停止所有脚本，重新加载所有已启用项目的 `app.js`。加载错误会反馈到聊天栏。
 
 ```
 /box3script reload
+```
+
+### `/box3script reload <project>`
+
+重新加载指定项目（先停止再启动）。未启用的项目会自动设为启用后启动。开发调试时比 `stop` + `on` 更快。
+
+```
+/box3script reload colorzone
 ```
 
 ### `/box3script watch`
@@ -102,9 +110,43 @@ npm run build          # 输出 dist/app.js
 /box3script watch off      # 关闭
 ```
 
+### `/box3script sandbox <project>`
+
+切换沙盒模式。开启后自动追踪该项目所有的方块修改、实体/玩家/世界状态变更。**沙盒持久化**——`/box3script stop` 和 `/box3script reload` 不会清除沙盒状态，仅手动再次执行此命令才会关闭沙盒并回滚全部修改。关闭时在聊天栏显示恢复摘要。
+
+适合反复测试脚本，不用担心残留数据污染世界。
+
+```
+/box3script sandbox mygame    # 切换 开/关
+```
+
+**追踪内容：**
+
+| 类别 | 追踪项 |
+|---|---|
+| 方块 | `setVoxel`/`setVoxelId`/`fillVoxel` 修改（上限 500 万块） |
+| 实体 | HP、AI、隐身、发光、无敌、着火、药水效果、标签、名称、装备、掉落率、属性 |
+| 玩家 | 游戏模式、飞行能力、速度、跳跃力、经验、饱食度、物品栏、护甲、药水、位置、维度、重生点 |
+| 世界 | 天气、时间、难度、游戏规则、世界边界 |
+
+典型工作流：
+
+```
+/box3script sandbox mygame    # 开启沙盒
+/box3script on mygame         # 加载脚本
+# ... 测试、观察结果 ...
+/box3script stop mygame       # 停止脚本，不改世界
+# ... 修改代码、npm run build ...
+/box3script on mygame         # 再次测试
+# ... 满意后关闭沙盒回滚 ...
+/box3script sandbox mygame    # 关闭沙盒 → 回滚 + 显示摘要
+```
+
+> **注意：** 沙盒仅追踪通过脚本 API 修改的方块（`setVoxel`/`setVoxelId`/`fillVoxel`）。直接用镐子挖的方块不受影响。追踪上限 500 万块，达到 90% 时控制台日志警告。
+
 ### `/box3script stop`
 
-停止所有项目，清除全部回调、定时器和作用域。
+停止所有项目，清除全部回调、定时器和作用域。**已开启沙盒的项目会自动保留沙盒追踪状态**，不会被回滚。
 
 ```
 /box3script stop
@@ -112,7 +154,7 @@ npm run build          # 输出 dist/app.js
 
 ### `/box3script stop <project>`
 
-停止指定项目，仅清除该项目的回调、定时器和作用域，**不影响其他正在运行的项目**。
+停止指定项目，仅清除该项目的回调、定时器和作用域，**不影响其他正在运行的项目**。沙盒项目会保留追踪状态，不会回滚。
 
 ```
 /box3script stop siege

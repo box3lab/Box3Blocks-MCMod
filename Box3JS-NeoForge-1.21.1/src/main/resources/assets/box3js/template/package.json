@@ -4,14 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "node build.mjs --watch",
     "build": "node build.mjs",
-    "check": "tsc --noEmit",
-    "dev": "node build.mjs --watch"
+    "check": "tsc --noEmit"
   },
-  "devDependencies": {
+  "dependencies": {
     "@babel/core": "^7.29.0",
-    "@babel/preset-env": "^7.29.2",
+    "@babel/preset-env": "^7.29.5",
+    "@babel/preset-typescript": "^7.28.5",
     "esbuild": "^0.28.0",
-    "typescript": "^5.7.0"
+    "typescript": "^6.0.3"
   }
 }

@@ -68,6 +68,61 @@
   - `纸`右键模型：复制当前模型参数
   - `书`右键模型：粘贴参数到目标模型模型
 
+### 🧪 Box3JS 脚本引擎 (Beta)
+
+Box3JS 是一个内置于模组的 JavaScript 脚本引擎（Rhino 引擎），允许服主编写服务端脚本来创建自定义玩法、小游戏和世界交互。所有脚本位于 `config/box3/script/<项目名>/`。
+
+**快速开始：**
+
+```bash
+/box3script create mygame        # 创建 TypeScript 脚手架
+cd config/box3/script/mygame
+npm install && npm run build     # 安装依赖并编译
+/box3script sandbox mygame       # (推荐) 开启沙盒模式
+/box3script on mygame            # 启用并运行脚本
+```
+
+**命令一览：**
+
+| 命令 | 说明 |
+|---|---|
+| `/box3script` | 列出所有项目及启用/沙盒状态 |
+| `/box3script create <name>` | 创建新脚本项目 (TypeScript 脚手架) |
+| `/box3script on <project>` | 启用并加载指定项目 |
+| `/box3script on all` | 一键启用所有项目 |
+| `/box3script off <project>` | 禁用指定项目 |
+| `/box3script off all` | 一键禁用所有项目 |
+| `/box3script stop` | 停止所有脚本（沙盒项目保留追踪状态） |
+| `/box3script stop <project>` | 停止指定项目（沙盒项目保留追踪状态） |
+| `/box3script reload` | 重载所有已启用项目 |
+| `/box3script reload <project>` | 重载指定项目（开发调试用） |
+| `/box3script watch` | 切换文件监控（`.js` 变化自动热重载） |
+| `/box3script sandbox <project>` | 切换沙盒模式（开启追踪 / 关闭回滚） |
+
+> 所有 `<project>` 参数均支持 **Tab 自动补全**。
+
+**沙盒系统：**
+
+沙盒模式开启后自动追踪脚本对世界的所有修改，**持久化**保存（跨 stop/reload 保持），仅手动 `/box3script sandbox <project>` 关闭时才回滚。追踪内容包括：
+
+- **方块修改** — `setVoxel`/`setVoxelId`/`fillVoxel`（上限 500 万块，90% 时日志警告）
+- **实体状态** — 血量、AI、隐身、发光、无敌、着火、药水效果、标签等
+- **玩家状态** — 游戏模式、飞行能力、移动速度、跳跃力、经验、饱食度、物品栏、护甲、药水效果、位置、维度、重生点
+- **世界状态** — 天气、时间、难度、游戏规则、世界边界
+
+关闭沙盒时自动回滚全部修改，并在聊天栏输出恢复摘要：`"restored: 23417 blocks, 83 entities, 2 players, world state"`。
+
+**已实现 API：**
+
+- `world` — 世界控制、事件回调 (16 种)、记分板、Bossbar、队伍、边界、粒子、烟花、射线检测
+- `entity` — 实体属性、AI 寻路、装备、药水效果、标签
+- `player` — 玩家专属：背包、飞行、游戏模式、二段跳、传送、消息、经验
+- `voxels` — 方块读写、区域填充、刷怪笼
+- `storage` — JSON 数据持久化
+- `console` / `require()` / `sleep()` / `GameVector3` / `GameBounds3` / `GameRGBColor` 等
+
+完整 API 文档见 `docs/api/`。
+
 ### 🔒 命令权限管理
 
 - `/box3import`、`/box3barrier`、`/box3export` 会根据配置要求不同的权限等级才能执行，默认为 `0` 权限等级。

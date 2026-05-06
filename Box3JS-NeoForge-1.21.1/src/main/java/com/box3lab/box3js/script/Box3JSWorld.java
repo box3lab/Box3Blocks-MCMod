@@ -49,6 +49,24 @@ public class Box3JSWorld {
 
     public void setProjectName(String name) { this.projectName = name; }
 
+    /** Clean up all bossbar/scoreboard/team state for one project. */
+    public void removeProject(String project) {
+        bossbar.removeProject(project);
+        scoreboard.removeProject(project);
+        team.removeProject(project);
+    }
+
+    /** Remove ALL bossbar/scoreboard/team state across all projects. */
+    public void resetAll() {
+        bossbar.resetAll();
+        scoreboard.resetAll();
+        team.resetAll();
+    }
+
+    private void trackIfSandboxed() {
+        engine.getSandbox().trackWorld(engine.getCurrentProject());
+    }
+
     // ---- World properties ----
 
     public String projectName() { return server.getMotd(); }
@@ -56,14 +74,16 @@ public class Box3JSWorld {
     public int currentTick() { return server.getTickCount(); }
 
     public double getRainDensity() { return server.overworld().getRainLevel(1.0f); }
-    public void setRainDensity(double v) { server.overworld().getLevelData().setRaining(v > 0); }
+    public void setRainDensity(double v) { trackIfSandboxed(); server.overworld().getLevelData().setRaining(v > 0); }
 
     public double getThunderDensity() { return server.overworld().getThunderLevel(1.0f); }
     public void setThunderDensity(double v) {
+        trackIfSandboxed();
         ((ServerLevelData) server.overworld().getLevelData()).setThundering(v > 0);
     }
 
     public void clearWeather() {
+        trackIfSandboxed();
         var level = server.overworld();
         level.getLevelData().setRaining(false);
         ((ServerLevelData) level.getLevelData()).setThundering(false);
@@ -72,12 +92,13 @@ public class Box3JSWorld {
     // ---- Time ----
 
     public long getTime() { return server.overworld().getDayTime(); }
-    public void setTime(long tick) { server.overworld().setDayTime(tick); }
+    public void setTime(long tick) { trackIfSandboxed(); server.overworld().setDayTime(tick); }
 
     public double getTimeScale() {
         return server.overworld().getGameRules().getBoolean(GameRules.RULE_DAYLIGHT) ? 1.0 : 0.0;
     }
     public void setTimeScale(double v) {
+        trackIfSandboxed();
         server.overworld().getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(v > 0, server);
     }
 
@@ -85,6 +106,7 @@ public class Box3JSWorld {
 
     public String getDifficulty() { return server.overworld().getDifficulty().getKey(); }
     public void setDifficulty(Object v) {
+        trackIfSandboxed();
         Difficulty diff = v instanceof Number n ? Difficulty.byId(n.intValue()) : Difficulty.byName(v.toString());
         if (diff != null) server.setDifficulty(diff, true);
     }
@@ -106,6 +128,7 @@ public class Box3JSWorld {
     }
 
     public void setGameRule(String name, Object value) {
+        trackIfSandboxed();
         GameRules rules = server.overworld().getGameRules();
         switch (name) {
             case "doDaylightCycle": rules.getRule(GameRules.RULE_DAYLIGHT).set(Box3ScriptUtils.coerceBool(value), server); break;
@@ -137,6 +160,7 @@ public class Box3JSWorld {
         if (entity == null) return null;
         entity.setPos(pos.x, pos.y, pos.z);
         server.overworld().addFreshEntity(entity);
+        engine.getSandbox().trackEntity(engine.getCurrentProject(), entity);
         return new Box3JSEntity(entity, server, engine);
     }
 
@@ -235,8 +259,8 @@ public class Box3JSWorld {
 
     // ---- Scoreboard ----
 
-    public void addScoreboard(String name) { scoreboard.addScoreboard(name); }
-    public void addScoreboard(String name, String criteria) { scoreboard.addScoreboard(name, criteria); }
+    public void addScoreboard(String name) { scoreboard.addScoreboard(engine.getCurrentProject(), name); }
+    public void addScoreboard(String name, String criteria) { scoreboard.addScoreboard(engine.getCurrentProject(), name, criteria); }
     public void removeScoreboard(String name) { scoreboard.removeScoreboard(name); }
     public void setScore(Object entityOrName, String objectiveName, int value) { scoreboard.setScore(entityOrName, objectiveName, value); }
     public int getScore(Object entityOrName, String objectiveName) { return scoreboard.getScore(entityOrName, objectiveName); }
@@ -246,12 +270,12 @@ public class Box3JSWorld {
 
     // ---- Boss Bar ----
 
-    public void showBossbar(String name, String text, double progress, String colorName) { bossbar.showBossbar(name, text, progress, colorName); }
-    public void removeBossbar(String name) { bossbar.removeBossbar(name); }
+    public void showBossbar(String name, String text, double progress, String colorName) { bossbar.showBossbar(engine.getCurrentProject(), name, text, progress, colorName); }
+    public void removeBossbar(String name) { bossbar.removeBossbar(engine.getCurrentProject(), name); }
 
     // ---- Team ----
 
-    public void createTeam(String name, String colorName) { team.createTeam(name, colorName); }
+    public void createTeam(String name, String colorName) { team.createTeam(engine.getCurrentProject(), name, colorName); }
     public void removeTeam(String name) { team.removeTeam(name); }
     public void joinTeam(Object entityOrName, String teamName) { team.joinTeam(entityOrName, teamName); }
     public void leaveTeam(Object entityOrName) { team.leaveTeam(entityOrName); }
@@ -260,14 +284,15 @@ public class Box3JSWorld {
     // ---- World Border ----
 
     public double getBorderSize() { return server.overworld().getWorldBorder().getSize(); }
-    public void setBorderCenter(double x, double z) { server.overworld().getWorldBorder().setCenter(x, z); }
-    public void setBorderSize(double size) { server.overworld().getWorldBorder().setSize(size); }
+    public void setBorderCenter(double x, double z) { trackIfSandboxed(); server.overworld().getWorldBorder().setCenter(x, z); }
+    public void setBorderSize(double size) { trackIfSandboxed(); server.overworld().getWorldBorder().setSize(size); }
     public void shrinkBorder(double targetSize, double seconds) {
+        trackIfSandboxed();
         WorldBorder border = server.overworld().getWorldBorder();
         border.lerpSizeBetween(border.getSize(), targetSize, (long)(seconds * 1000));
     }
-    public void setBorderDamage(double damage) { server.overworld().getWorldBorder().setDamagePerBlock(damage); }
-    public void setBorderWarning(int blocks) { server.overworld().getWorldBorder().setWarningBlocks(blocks); }
+    public void setBorderDamage(double damage) { trackIfSandboxed(); server.overworld().getWorldBorder().setDamagePerBlock(damage); }
+    public void setBorderWarning(int blocks) { trackIfSandboxed(); server.overworld().getWorldBorder().setWarningBlocks(blocks); }
 
     // ---- Lightning ----
 

@@ -12,7 +12,6 @@ public class Box3ScriptTemplate {
         "gitignore.template",
         "package.json",
         "tsconfig.json",
-        "build.mjs",
         "src/app.ts",
         "types/globals.d.ts",
     };

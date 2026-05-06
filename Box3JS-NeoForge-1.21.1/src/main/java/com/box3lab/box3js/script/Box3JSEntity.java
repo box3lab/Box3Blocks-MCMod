@@ -83,6 +83,7 @@ public class Box3JSEntity {
 
     public boolean getMeshInvisible() { return getProp("meshInvisible", false); }
     public void setMeshInvisible(boolean v) {
+        trackIfSandboxed();
         setProp("meshInvisible", v);
         entity.setInvisible(v);
     }
@@ -90,6 +91,7 @@ public class Box3JSEntity {
     // ---- Tags ----
 
     public void addTag(String tag) {
+        trackIfSandboxed();
         entity.addTag(tag);
     }
 
@@ -98,13 +100,14 @@ public class Box3JSEntity {
     }
 
     public void removeTag(String tag) {
+        trackIfSandboxed();
         entity.removeTag(tag);
     }
 
     // ---- Glowing (MC extension) ----
 
     public boolean isGlowing() { return entity.isCurrentlyGlowing(); }
-    public void setGlowing(boolean v) { entity.setGlowingTag(v); }
+    public void setGlowing(boolean v) { trackIfSandboxed(); entity.setGlowingTag(v); }
 
     // ---- Name tag (MC extension) ----
 
@@ -114,6 +117,7 @@ public class Box3JSEntity {
     }
 
     public void setNameTag(String name) {
+        trackIfSandboxed();
         entity.setCustomName(net.minecraft.network.chat.Component.literal(name));
         entity.setCustomNameVisible(true);
     }
@@ -137,6 +141,7 @@ public class Box3JSEntity {
         return getProp("hp", 100.0);
     }
     public void setHp(double v) {
+        trackIfSandboxed();
         setProp("hp", v);
         LivingEntity le = asLiving();
         if (le != null) {
@@ -151,6 +156,7 @@ public class Box3JSEntity {
         return getProp("maxHp", 100.0);
     }
     public void setMaxHp(double v) {
+        trackIfSandboxed();
         setProp("maxHp", v);
         LivingEntity le = asLiving();
         if (le != null) {
@@ -174,14 +180,19 @@ public class Box3JSEntity {
         return entity instanceof LivingEntity le ? le : null;
     }
 
+    private void trackIfSandboxed() {
+        engine.getSandbox().trackEntityModify(engine.getCurrentProject(), entity);
+    }
+
     // ---- Invulnerable (MC extension) ----
 
     public boolean isInvulnerable() { return entity.isInvulnerable(); }
-    public void setInvulnerable(boolean v) { entity.setInvulnerable(v); }
+    public void setInvulnerable(boolean v) { trackIfSandboxed(); entity.setInvulnerable(v); }
 
     // ---- Fire (MC extension) ----
 
     public void setFire(int ticks) {
+        trackIfSandboxed();
         entity.setRemainingFireTicks(ticks);
     }
 
@@ -208,6 +219,7 @@ public class Box3JSEntity {
 
     /** Set the mob's attack target. The mob will pathfind to and attack the target. */
     public void setTarget(Box3JSEntity target) {
+        trackIfSandboxed();
         if (entity instanceof Mob mob && target != null && target.getEntity() instanceof LivingEntity le) {
             mob.setTarget(le);
         }
@@ -215,6 +227,7 @@ public class Box3JSEntity {
 
     /** Clear the mob's attack target, stopping pursuit. */
     public void clearTarget() {
+        trackIfSandboxed();
         if (entity instanceof Mob mob) {
             mob.setTarget(null);
         }
@@ -231,6 +244,7 @@ public class Box3JSEntity {
 
     /** Enable or disable the mob's AI (pathfinding, goals, etc.) */
     public void setAI(boolean enabled) {
+        trackIfSandboxed();
         if (entity instanceof Mob mob) {
             mob.setNoAi(!enabled);
         }
@@ -243,6 +257,7 @@ public class Box3JSEntity {
     }
 
     public void addEffect(String effectId, int duration, int amplifier, boolean hideParticles) {
+        trackIfSandboxed();
         LivingEntity le = asLiving();
         if (le == null) return;
         Holder<MobEffect> effect = Box3ScriptUtils.lookupMobEffect(effectId);
@@ -253,6 +268,7 @@ public class Box3JSEntity {
     // ---- Equipment (MC extension) ----
 
     public void setEquipment(String slot, String itemId) {
+        trackIfSandboxed();
         if (!(entity instanceof Mob mob)) return;
         EquipmentSlot equipmentSlot = parseEquipmentSlot(slot);
         if (equipmentSlot == null) return;
@@ -264,6 +280,7 @@ public class Box3JSEntity {
     // ---- Drop chances (MC extension) ----
 
     public void setDropChance(String slot, double chance) {
+        trackIfSandboxed();
         if (!(entity instanceof Mob mob)) return;
         float f = (float) Math.max(0, Math.min(1, chance));
         if ("all".equalsIgnoreCase(slot)) {
@@ -279,6 +296,7 @@ public class Box3JSEntity {
     // ---- Persistence (MC extension) ----
 
     public void setPersistent(boolean v) {
+        trackIfSandboxed();
         if (entity instanceof Mob mob && v) mob.setPersistenceRequired();
     }
 
@@ -293,6 +311,7 @@ public class Box3JSEntity {
     }
 
     public void setAttribute(String attributeId, double value) {
+        trackIfSandboxed();
         LivingEntity le = asLiving();
         if (le == null) return;
         var holder = Box3ScriptUtils.lookupAttribute(attributeId);

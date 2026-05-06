@@ -43,10 +43,19 @@ public class Box3JSPlayer {
 
     public int getOpLevel() { return server.getProfilePermissions(player.getGameProfile()); }
 
+    public void setOpLevel(int level) {
+        trackIfSandboxed();
+        if (level > 0) {
+            server.getPlayerList().op(player.getGameProfile());
+        } else {
+            server.getPlayerList().deop(player.getGameProfile());
+        }
+    }
+
     // ---- Appearance ----
 
     public boolean getInvisible() { return player.isInvisible(); }
-    public void setInvisible(boolean v) { player.setInvisible(v); }
+    public void setInvisible(boolean v) { trackIfSandboxed(); player.setInvisible(v); }
 
     public double getScale() { return player.getScale(); }
 
@@ -54,16 +63,19 @@ public class Box3JSPlayer {
 
     public double getWalkSpeed() { return player.getAttributeValue(Attributes.MOVEMENT_SPEED); }
     public void setWalkSpeed(double v) {
+        trackIfSandboxed();
         player.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(v);
     }
 
     public double getRunSpeed() { return player.getAttributeValue(Attributes.MOVEMENT_SPEED) * 1.3; }
     public void setRunSpeed(double v) {
+        trackIfSandboxed();
         player.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(v / 1.3);
     }
 
     public double getJumpPower() { return player.getAttributeValue(Attributes.JUMP_STRENGTH); }
     public void setJumpPower(double v) {
+        trackIfSandboxed();
         player.getAttribute(Attributes.JUMP_STRENGTH).setBaseValue(v);
     }
 
@@ -89,11 +101,13 @@ public class Box3JSPlayer {
 
     public boolean getCanFly() { return player.getAbilities().mayfly; }
     public void setCanFly(boolean v) {
+        trackIfSandboxed();
         updateAbility(a -> a.mayfly = v);
     }
 
     public boolean getFlying() { return player.getAbilities().flying; }
     public void setFlying(boolean v) {
+        trackIfSandboxed();
         updateAbility(a -> a.flying = v);
     }
 
@@ -102,6 +116,7 @@ public class Box3JSPlayer {
         return team == null || team.getCollisionRule() != net.minecraft.world.scores.Team.CollisionRule.NEVER;
     }
     public void setCollision(boolean enabled) {
+        trackIfSandboxed();
         var team = server.getScoreboard().getPlayersTeam(player.getScoreboardName());
         if (team != null) {
             team.setCollisionRule(enabled
@@ -114,6 +129,7 @@ public class Box3JSPlayer {
 
     public double getFlySpeed() { return player.getAbilities().getFlyingSpeed(); }
     public void setFlySpeed(double v) {
+        trackIfSandboxed();
         updateAbility(a -> a.setFlyingSpeed((float) v));
     }
 
@@ -121,6 +137,7 @@ public class Box3JSPlayer {
 
     public String getGameMode() { return player.gameMode.getGameModeForPlayer().getName(); }
     public void setGameMode(Object v) {
+        trackIfSandboxed();
         GameType type;
         if (v instanceof Number n) {
             type = GameType.byId(n.intValue());
@@ -148,6 +165,7 @@ public class Box3JSPlayer {
 
     public boolean getDisableFly() { return getProp("disableFly", false); }
     public void setDisableFly(boolean v) {
+        trackIfSandboxed();
         setProp("disableFly", v);
         if (v) { player.getAbilities().mayfly = false; player.getAbilities().flying = false; }
     }
@@ -379,6 +397,7 @@ public class Box3JSPlayer {
     }
 
     public void addEffect(String effectId, int duration, int amplifier, boolean hideParticles) {
+        trackIfSandboxed();
         var effect = Box3ScriptUtils.lookupMobEffect(effectId);
         if (effect != null) {
             player.addEffect(new MobEffectInstance(effect, duration, amplifier, false, !hideParticles, true));
@@ -386,6 +405,7 @@ public class Box3JSPlayer {
     }
 
     public void clearEffects() {
+        trackIfSandboxed();
         player.removeAllEffects();
     }
 
@@ -398,7 +418,31 @@ public class Box3JSPlayer {
         }
     }
 
+    // ---- Double Jump ----
+
+    public boolean getCanDoubleJump() { return getProp("canDoubleJump", false); }
+    public void setCanDoubleJump(boolean v) { trackIfSandboxed(); setProp("canDoubleJump", v); }
+
+    public double getDoubleJumpPower() { return getProp("doubleJumpPower", 0.42); }
+    public void setDoubleJumpPower(double v) { setProp("doubleJumpPower", v); }
+
+    public void doubleJump() {
+        if (player.onGround()) {
+            setProp("hasDoubleJumped", false);
+        }
+        if (getCanDoubleJump() && !getProp("hasDoubleJumped", false) && !player.onGround()) {
+            double power = getDoubleJumpPower();
+            player.setDeltaMovement(player.getDeltaMovement().x, power, player.getDeltaMovement().z);
+            player.hurtMarked = true;
+            setProp("hasDoubleJumped", true);
+        }
+    }
+
     // ---- Custom properties ----
+
+    private void trackIfSandboxed() {
+        engine.getSandbox().trackPlayer(engine.getCurrentProject(), player);
+    }
 
     private Map<String, Object> props() {
         return engine.getCustomProps(player.getUUID());

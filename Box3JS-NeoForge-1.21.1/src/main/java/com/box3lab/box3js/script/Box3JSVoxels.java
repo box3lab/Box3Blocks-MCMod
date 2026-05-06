@@ -33,6 +33,7 @@ public class Box3JSVoxels {
     );
 
     private final MinecraftServer server;
+    private final Box3ScriptSandbox sandbox;
     private final Map<String, Integer> nameToId = new HashMap<>();
     private final Map<Integer, String> idToName = new HashMap<>();
     private final Map<String, Block> resourceToBlock = new HashMap<>();
@@ -42,8 +43,9 @@ public class Box3JSVoxels {
     public final GameVector3 shape;
     public final String[] VoxelTypes;
 
-    public Box3JSVoxels(MinecraftServer server) {
+    public Box3JSVoxels(MinecraftServer server, Box3ScriptSandbox sandbox) {
         this.server = server;
+        this.sandbox = sandbox;
 
         nameToId.put("air", 0);
         idToName.put(0, "air");
@@ -113,6 +115,8 @@ public class Box3JSVoxels {
     public int setVoxel(int x, int y, int z, Object voxel, Object rotation) {
         ServerLevel level = server.overworld();
         BlockPos pos = new BlockPos(x, y, z);
+
+        if (sandbox != null) sandbox.trackBlock(Box3ScriptEngine.get().getCurrentProject(), pos);
 
         if (voxel == null) return 0;
 
@@ -185,6 +189,8 @@ public class Box3JSVoxels {
     public int setVoxelId(int x, int y, int z, int voxel) {
         ServerLevel level = server.overworld();
         BlockPos pos = new BlockPos(x, y, z);
+
+        if (sandbox != null) sandbox.trackBlock(Box3ScriptEngine.get().getCurrentProject(), pos);
 
         int rot = voxel / ROTATION_MULTIPLIER;
         int baseId = voxel % ROTATION_MULTIPLIER;
