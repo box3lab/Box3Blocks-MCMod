@@ -13,12 +13,11 @@ import org.mozilla.javascript.commonjs.module.provider.StrongCachingModuleScript
 import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
 public class Box3ScriptEngine {
 
@@ -31,32 +30,10 @@ public class Box3ScriptEngine {
     private MinecraftServer server;
     private boolean initialized;
 
-    private final List<Runnable> tickCallbacks = new CopyOnWriteArrayList<>();
-    private final List<Box3JSWorld.PlayerJoinCallback> joinCallbacks = new CopyOnWriteArrayList<>();
-    private final List<Box3JSWorld.PlayerLeaveCallback> leaveCallbacks = new CopyOnWriteArrayList<>();
-    private final List<Box3JSWorld.VoxelDestroyCallback> voxelDestroyCallbacks = new CopyOnWriteArrayList<>();
-    private final List<Box3JSWorld.VoxelContactCallback> voxelContactCallbacks = new CopyOnWriteArrayList<>();
-    private final List<Box3JSWorld.InteractCallback> interactCallbacks = new CopyOnWriteArrayList<>();
-    private final List<Box3JSWorld.ChatCallback> chatCallbacks = new CopyOnWriteArrayList<>();
-    private final List<Box3JSWorld.FluidEnterCallback> fluidEnterCallbacks = new CopyOnWriteArrayList<>();
-    private final List<Box3JSWorld.FluidLeaveCallback> fluidLeaveCallbacks = new CopyOnWriteArrayList<>();
-    private final List<Box3JSWorld.EntityContactCallback> entityContactCallbacks = new CopyOnWriteArrayList<>();
-    private final List<Box3JSWorld.EntitySeparateCallback> entitySeparateCallbacks = new CopyOnWriteArrayList<>();
-    private final List<Box3JSWorld.BlockPlaceCallback> blockPlaceCallbacks = new CopyOnWriteArrayList<>();
-    private final List<Box3JSWorld.EntityDeathCallback> entityDeathCallbacks = new CopyOnWriteArrayList<>();
-    private final List<Box3JSWorld.PlayerRespawnCallback> respawnCallbacks = new CopyOnWriteArrayList<>();
-    private final List<Box3JSWorld.BlockActivateCallback> blockActivateCallbacks = new CopyOnWriteArrayList<>();
-    private final List<Box3JSWorld.EntityDamageCallback> entityDamageCallbacks = new CopyOnWriteArrayList<>();
-    private final Map<String, List<Box3JSWorld.MessageCallback>> messageCallbacks = new ConcurrentHashMap<>();
+    final Box3JSEventBus bus = new Box3JSEventBus();
     private String currentProject;
-    private final Map<UUID, BlockPos> voxelContactTracked = new ConcurrentHashMap<>();
-    private final Map<UUID, String> fluidStateTracked = new ConcurrentHashMap<>();
-    private final Set<String> entityContactPairs = ConcurrentHashMap.newKeySet();
-    private final Map<UUID, Function> playerChatHandlers = new ConcurrentHashMap<>();
-    private final Map<UUID, Map<String, Object>> entityCustomProps = new HashMap<>();
+    private Consumer<String> errorReporter;
     private final Map<String, Require> projectRequires = new HashMap<>();
-    private final List<TimerEntry> timers = new ArrayList<>();
-    private int timerIdCounter;
 
     public static Box3ScriptEngine get() {
         return INSTANCE;
@@ -115,34 +92,106 @@ public class Box3ScriptEngine {
         }
     }
 
-    /** Tick callback from Box3JSWorld — wraps to restore project context */
+    /** Report error to the current errorReporter (player), or just log if none. */
+    void reportError(String msg) {
+        Box3JS.LOGGER.error(msg);
+        if (errorReporter != null) errorReporter.accept(msg);
+    }
+
+    /** Set reporter for the current operation, clear after. Returns self for chaining. */
+    Box3ScriptEngine withErrorReporter(Consumer<String> reporter) {
+        this.errorReporter = reporter;
+        return this;
+    }
+    void clearErrorReporter() { this.errorReporter = null; }
+
+    // ---- Callback registration (all wrap project context) ----
+
     public void addTickCallback(Runnable cb) {
         String project = currentProject;
-        tickCallbacks.add(() -> {
+        bus.addTick(project, wrapContext(project, cb));
+    }
+    public void addJoinCallback(PlayerJoinCallback cb) {
+        String project = currentProject;
+        bus.addJoin(project, (e) -> runInContext(project, () -> cb.onJoin(e)));
+    }
+    public void addLeaveCallback(PlayerLeaveCallback cb) {
+        String project = currentProject;
+        bus.addLeave(project, (e) -> runInContext(project, () -> cb.onLeave(e)));
+    }
+    public void addVoxelDestroyCallback(VoxelDestroyCallback cb) {
+        String project = currentProject;
+        bus.addVoxelDestroy(project, (e, x, y, z, v, t) -> runInContext(project, () -> cb.onDestroy(e, x, y, z, v, t)));
+    }
+    public void addVoxelContactCallback(VoxelContactCallback cb) {
+        String project = currentProject;
+        bus.addVoxelContact(project, (e, v, x, y, z, a, f, t) -> runInContext(project, () -> cb.onContact(e, v, x, y, z, a, f, t)));
+    }
+    public void addInteractCallback(InteractCallback cb) {
+        String project = currentProject;
+        bus.addInteract(project, (e, tgt, tick) -> runInContext(project, () -> cb.onInteract(e, tgt, tick)));
+    }
+    public void addChatCallback(ChatCallback cb) {
+        String project = currentProject;
+        bus.addChat(project, (e, msg, tick) -> runInContext(project, () -> cb.onChat(e, msg, tick)));
+    }
+    public void addFluidEnterCallback(FluidEnterCallback cb) {
+        String project = currentProject;
+        bus.addFluidEnter(project, (e, f, x, y, z, t) -> runInContext(project, () -> cb.onEnter(e, f, x, y, z, t)));
+    }
+    public void addFluidLeaveCallback(FluidLeaveCallback cb) {
+        String project = currentProject;
+        bus.addFluidLeave(project, (e, f, x, y, z, t) -> runInContext(project, () -> cb.onLeave(e, f, x, y, z, t)));
+    }
+    public void addEntityContactCallback(EntityContactCallback cb) {
+        String project = currentProject;
+        bus.addEntityContact(project, (e, o, t) -> runInContext(project, () -> cb.onContact(e, o, t)));
+    }
+    public void addEntitySeparateCallback(EntitySeparateCallback cb) {
+        String project = currentProject;
+        bus.addEntitySeparate(project, (e, o, t) -> runInContext(project, () -> cb.onSeparate(e, o, t)));
+    }
+    public void addBlockPlaceCallback(BlockPlaceCallback cb) {
+        String project = currentProject;
+        bus.addBlockPlace(project, (e, x, y, z, v, vid, t) -> runInContext(project, () -> cb.onPlace(e, x, y, z, v, vid, t)));
+    }
+    public void addEntityDeathCallback(EntityDeathCallback cb) {
+        String project = currentProject;
+        bus.addEntityDeath(project, (e, k, t) -> runInContext(project, () -> cb.onDeath(e, k, t)));
+    }
+    public void addRespawnCallback(PlayerRespawnCallback cb) {
+        String project = currentProject;
+        bus.addRespawn(project, (e) -> runInContext(project, () -> cb.onRespawn(e)));
+    }
+    public void addBlockActivateCallback(BlockActivateCallback cb) {
+        String project = currentProject;
+        bus.addBlockActivate(project, (e, x, y, z, v, t) -> runInContext(project, () -> cb.onActivate(e, x, y, z, v, t)));
+    }
+    public void addEntityDamageCallback(EntityDamageCallback cb) {
+        String project = currentProject;
+        bus.addEntityDamage(project, (e, a, s, at, t) -> runInContext(project, () -> cb.onDamage(e, a, s, at, t)));
+    }
+    public void addMessageCallback(String project, MessageCallback cb) {
+        bus.addMessage(project, (from, d) -> runInContext(project, () -> cb.onMessage(from, d)));
+    }
+    public void setPlayerChatHandler(UUID uuid, Function handler) {
+        String project = currentProject;
+        bus.chatHandlersFor(project).put(uuid, handler);
+    }
+
+    private Runnable wrapContext(String project, Runnable cb) {
+        return () -> {
             String prev = currentProject;
             setCurrentProject(project);
             try { cb.run(); } finally { setCurrentProject(prev); }
-        });
+        };
     }
-    public void addJoinCallback(Box3JSWorld.PlayerJoinCallback cb) { joinCallbacks.add(cb); }
-    public void addLeaveCallback(Box3JSWorld.PlayerLeaveCallback cb) { leaveCallbacks.add(cb); }
-    public void addVoxelDestroyCallback(Box3JSWorld.VoxelDestroyCallback cb) { voxelDestroyCallbacks.add(cb); }
-    public void addVoxelContactCallback(Box3JSWorld.VoxelContactCallback cb) { voxelContactCallbacks.add(cb); }
-    public void addInteractCallback(Box3JSWorld.InteractCallback cb) { interactCallbacks.add(cb); }
-    public void addChatCallback(Box3JSWorld.ChatCallback cb) { chatCallbacks.add(cb); }
-    public void addFluidEnterCallback(Box3JSWorld.FluidEnterCallback cb) { fluidEnterCallbacks.add(cb); }
-    public void addFluidLeaveCallback(Box3JSWorld.FluidLeaveCallback cb) { fluidLeaveCallbacks.add(cb); }
-    public void addEntityContactCallback(Box3JSWorld.EntityContactCallback cb) { entityContactCallbacks.add(cb); }
-    public void addEntitySeparateCallback(Box3JSWorld.EntitySeparateCallback cb) { entitySeparateCallbacks.add(cb); }
-    public void addBlockPlaceCallback(Box3JSWorld.BlockPlaceCallback cb) { blockPlaceCallbacks.add(cb); }
-    public void addEntityDeathCallback(Box3JSWorld.EntityDeathCallback cb) { entityDeathCallbacks.add(cb); }
-    public void addRespawnCallback(Box3JSWorld.PlayerRespawnCallback cb) { respawnCallbacks.add(cb); }
-    public void addBlockActivateCallback(Box3JSWorld.BlockActivateCallback cb) { blockActivateCallbacks.add(cb); }
-    public void addEntityDamageCallback(Box3JSWorld.EntityDamageCallback cb) { entityDamageCallbacks.add(cb); }
-    public void addMessageCallback(String project, Box3JSWorld.MessageCallback cb) {
-        messageCallbacks.computeIfAbsent(project, k -> new CopyOnWriteArrayList<>()).add(cb);
+
+    private void runInContext(String project, Runnable action) {
+        String prev = currentProject;
+        setCurrentProject(project);
+        try { action.run(); } finally { setCurrentProject(prev); }
     }
-    public void setPlayerChatHandler(UUID uuid, Function handler) { playerChatHandlers.put(uuid, handler); }
 
     public void setCurrentProject(String name) {
         currentProject = name;
@@ -150,120 +199,119 @@ public class Box3ScriptEngine {
     }
     public String getCurrentProject() { return currentProject; }
 
+    // ---- Project lifecycle ----
+
+    /** Remove one project's callbacks without affecting others. */
+    public void removeProject(String project) {
+        bus.removeProject(project);
+        projectRequires.remove(project);
+        Box3JS.LOGGER.info("Removed project: {}", project);
+    }
+
+    // ---- Message routing ----
+
     public void fireMessage(String sender, String target, Object data) {
         if ("*".equals(target)) {
-            for (var entry : messageCallbacks.entrySet()) {
+            for (var entry : bus.messageCallbacks.entrySet()) {
                 if (!entry.getKey().equals(sender)) {
-                    for (var cb : entry.getValue()) {
-                        String prev = currentProject;
-                        setCurrentProject(entry.getKey());
-                        try { cb.onMessage(sender, data); } finally { setCurrentProject(prev); }
-                    }
+                    for (var cb : entry.getValue()) cb.onMessage(sender, data);
                 }
             }
         } else {
-            List<Box3JSWorld.MessageCallback> cbs = messageCallbacks.get(target);
+            List<MessageCallback> cbs = bus.messageCallbacks.get(target);
             if (cbs != null) {
-                for (var cb : cbs) {
-                    String prev = currentProject;
-                    setCurrentProject(target);
-                    try { cb.onMessage(sender, data); } finally { setCurrentProject(prev); }
-                }
+                for (var cb : cbs) cb.onMessage(sender, data);
             }
         }
     }
 
+    // ---- Timers ----
+
     public int scheduleTimeout(Function handler, int ticks) {
-        int id = ++timerIdCounter;
-        timers.add(new TimerEntry(id, handler, ticks, 0, currentProject));
+        String project = currentProject;
+        int id = bus.nextTimerId(project);
+        bus.timersFor(project).add(new TimerEntry(id, handler, ticks, 0, project));
         return id;
     }
 
     public int scheduleInterval(Function handler, int ticks) {
-        int id = ++timerIdCounter;
-        timers.add(new TimerEntry(id, handler, ticks, ticks, currentProject));
+        String project = currentProject;
+        int id = bus.nextTimerId(project);
+        bus.timersFor(project).add(new TimerEntry(id, handler, ticks, ticks, project));
         return id;
     }
 
     public void clearTimer(int id) {
-        timers.removeIf(t -> t.id == id);
+        for (var list : bus.timers.values()) {
+            if (list.removeIf(t -> t.id == id)) return;
+        }
     }
 
     private void fireTimers() {
-        var toFire = new ArrayList<TimerEntry>();
-        var toRemove = new ArrayList<TimerEntry>();
-        for (var t : timers) {
-            if (--t.remaining <= 0) {
-                toFire.add(t);
-                if (t.interval == 0) {
-                    toRemove.add(t);
-                } else {
-                    t.remaining = t.interval;
+        for (var list : bus.timers.values()) {
+            var toFire = new ArrayList<TimerEntry>();
+            var toRemove = new ArrayList<TimerEntry>();
+            for (var t : list) {
+                if (--t.remaining <= 0) {
+                    toFire.add(t);
+                    if (t.interval == 0) toRemove.add(t);
+                    else t.remaining = t.interval;
                 }
             }
-        }
-        timers.removeAll(toRemove);
-        for (var t : toFire) {
-            String prev = currentProject;
-            setCurrentProject(t.project);
-            try { callFunction(t.handler); } finally { setCurrentProject(prev); }
+            list.removeAll(toRemove);
+            for (var t : toFire) {
+                runInContext(t.project, () -> callFunction(t.handler));
+            }
         }
     }
 
+    // ---- Tick ----
+
     public void fireTick() {
         fireTimers();
-        for (Runnable cb : tickCallbacks) cb.run();
-        // Voxel contact tracking: check if any tracked entity changed block position
-        if (!voxelContactCallbacks.isEmpty()) {
+        for (var list : bus.tickCallbacks.values()) {
+            for (Runnable cb : list) cb.run();
+        }
+        // Voxel contact tracking — per-project
+        for (var entry : bus.voxelContactCallbacks.entrySet()) {
+            String project = entry.getKey();
+            var callbacks = entry.getValue();
+            if (callbacks.isEmpty()) continue;
             long tick = server.getTickCount();
+            var tracked = bus.voxelContactFor(project);
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
                 UUID uuid = player.getUUID();
                 BlockPos current = player.blockPosition();
-                BlockPos last = voxelContactTracked.put(uuid, current);
+                BlockPos last = tracked.put(uuid, current);
                 if (!current.equals(last)) {
                     Box3JSEntity entity = new Box3JSEntity(player, server, this);
                     var state = player.level().getBlockState(current);
                     int voxelId = voxelsBinding.getId(state);
                     double force = player.getDeltaMovement().length();
-                    for (var cb : voxelContactCallbacks) {
-                        cb.onContact(entity, voxelId, current.getX(), current.getY(), current.getZ(), 1, force, tick);
-                    }
+                    runInContext(project, () -> {
+                        for (var cb : callbacks) {
+                            cb.onContact(entity, voxelId, current.getX(), current.getY(), current.getZ(), 1, force, tick);
+                        }
+                    });
                 }
             }
         }
-        // Fluid state tracking
-        if (!fluidEnterCallbacks.isEmpty() || !fluidLeaveCallbacks.isEmpty()) {
-            long tick = server.getTickCount();
-            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-                UUID uuid = player.getUUID();
-                String current = player.isInLava() ? "lava" : player.isInWater() ? "water" : "none";
-                String last = fluidStateTracked.put(uuid, current);
-                if (!current.equals(last)) {
-                    Box3JSEntity entity = new Box3JSEntity(player, server, this);
-                    BlockPos pos = player.blockPosition();
-                    if (!"none".equals(current) && !"none".equals(last) && last != null) {
-                        // Switched fluid type (water→lava or lava→water)
-                        for (var cb : fluidLeaveCallbacks) {
-                            cb.onLeave(entity, last, pos.getX(), pos.getY(), pos.getZ(), tick);
-                        }
-                        for (var cb : fluidEnterCallbacks) {
-                            cb.onEnter(entity, current, pos.getX(), pos.getY(), pos.getZ(), tick);
-                        }
-                    } else if (!"none".equals(current) && ("none".equals(last) || last == null)) {
-                        for (var cb : fluidEnterCallbacks) {
-                            cb.onEnter(entity, current, pos.getX(), pos.getY(), pos.getZ(), tick);
-                        }
-                    } else if ("none".equals(current) && last != null && !"none".equals(last)) {
-                        for (var cb : fluidLeaveCallbacks) {
-                            cb.onLeave(entity, last, pos.getX(), pos.getY(), pos.getZ(), tick);
-                        }
-                    }
-                }
-            }
+        // Fluid state tracking — per-project
+        for (var entry : bus.fluidEnterCallbacks.entrySet()) {
+            tickFluid(entry.getKey(), entry.getValue(), bus.fluidLeaveCallbacks.get(entry.getKey()));
         }
-        // Entity contact tracking
-        if (!entityContactCallbacks.isEmpty()) {
+        for (var entry : bus.fluidLeaveCallbacks.entrySet()) {
+            if (bus.fluidEnterCallbacks.containsKey(entry.getKey())) continue; // handled above
+            tickFluid(entry.getKey(), bus.fluidEnterCallbacks.get(entry.getKey()), entry.getValue());
+        }
+        // Entity contact tracking — per-project
+        for (var entry : bus.entityContactCallbacks.entrySet()) {
+            String project = entry.getKey();
+            var callbacks = entry.getValue();
+            if (callbacks.isEmpty()) continue;
             long tick = server.getTickCount();
+            var pairs = bus.contactPairsFor(project);
+            var separate = bus.entitySeparateCallbacks.getOrDefault(project, Collections.emptyList());
             var players = server.getPlayerList().getPlayers();
             for (int i = 0; i < players.size(); i++) {
                 for (int j = i + 1; j < players.size(); j++) {
@@ -271,27 +319,55 @@ public class Box3ScriptEngine {
                     ServerPlayer b = players.get(j);
                     double dist = a.distanceToSqr(b);
                     String pairKey = a.getStringUUID() + "|" + b.getStringUUID();
-                    if (dist < 2.25) { // 1.5 blocks squared
-                        if (entityContactPairs.add(pairKey)) {
+                    if (dist < 2.25) {
+                        if (pairs.add(pairKey)) {
                             Box3JSEntity ea = new Box3JSEntity(a, server, this);
                             Box3JSEntity eb = new Box3JSEntity(b, server, this);
-                            for (var cb : entityContactCallbacks) {
-                                cb.onContact(ea, eb, tick);
-                            }
+                            runInContext(project, () -> {
+                                for (var cb : callbacks) cb.onContact(ea, eb, tick);
+                            });
                         }
-                    } else if (entityContactPairs.remove(pairKey)) {
-                        if (!entitySeparateCallbacks.isEmpty()) {
-                            Box3JSEntity ea = new Box3JSEntity(a, server, this);
-                            Box3JSEntity eb = new Box3JSEntity(b, server, this);
-                            for (var cb : entitySeparateCallbacks) {
-                                cb.onSeparate(ea, eb, tick);
-                            }
-                        }
+                    } else if (pairs.remove(pairKey) && !separate.isEmpty()) {
+                        Box3JSEntity ea = new Box3JSEntity(a, server, this);
+                        Box3JSEntity eb = new Box3JSEntity(b, server, this);
+                        runInContext(project, () -> {
+                            for (var cb : separate) cb.onSeparate(ea, eb, tick);
+                        });
                     }
                 }
             }
         }
     }
+
+    private void tickFluid(String project, List<FluidEnterCallback> enter, List<FluidLeaveCallback> leave) {
+        if ((enter == null || enter.isEmpty()) && (leave == null || leave.isEmpty())) return;
+        long tick = server.getTickCount();
+        var tracked = bus.fluidStateFor(project);
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            UUID uuid = player.getUUID();
+            String current = player.isInLava() ? "lava" : player.isInWater() ? "water" : "none";
+            String last = tracked.put(uuid, current);
+            if (current.equals(last)) continue;
+            Box3JSEntity entity = new Box3JSEntity(player, server, this);
+            BlockPos pos = player.blockPosition();
+            if (!"none".equals(current) && !"none".equals(last) && last != null) {
+                runInContext(project, () -> {
+                    if (leave != null) for (var cb : leave) cb.onLeave(entity, last, pos.getX(), pos.getY(), pos.getZ(), tick);
+                    if (enter != null) for (var cb : enter) cb.onEnter(entity, current, pos.getX(), pos.getY(), pos.getZ(), tick);
+                });
+            } else if (!"none".equals(current) && ("none".equals(last) || last == null)) {
+                runInContext(project, () -> {
+                    if (enter != null) for (var cb : enter) cb.onEnter(entity, current, pos.getX(), pos.getY(), pos.getZ(), tick);
+                });
+            } else if ("none".equals(current) && last != null && !"none".equals(last)) {
+                runInContext(project, () -> {
+                    if (leave != null) for (var cb : leave) cb.onLeave(entity, last, pos.getX(), pos.getY(), pos.getZ(), tick);
+                });
+            }
+        }
+    }
+
+    // ---- Fire methods (iterate all projects) ----
 
     private String getBlockIdString(BlockPos pos) {
         var state = server.overworld().getBlockState(pos);
@@ -300,96 +376,160 @@ public class Box3ScriptEngine {
     }
 
     public void fireVoxelDestroy(ServerPlayer player, BlockPos pos) {
-        if (voxelDestroyCallbacks.isEmpty()) return;
-        Box3JSEntity entity = new Box3JSEntity(player, server, this);
-        long tick = server.getTickCount();
-        String voxel = getBlockIdString(pos);
-        for (var cb : voxelDestroyCallbacks) {
-            cb.onDestroy(entity, pos.getX(), pos.getY(), pos.getZ(), voxel, tick);
+        String voxel = null;
+        long tick = -1;
+        Box3JSEntity entity = null;
+        for (var entry : bus.voxelDestroyCallbacks.entrySet()) {
+            if (entry.getValue().isEmpty()) continue;
+            if (entity == null) { entity = new Box3JSEntity(player, server, this); tick = server.getTickCount(); voxel = getBlockIdString(pos); }
+            Box3JSEntity e = entity;
+            long t = tick;
+            String v = voxel;
+            runInContext(entry.getKey(), () -> {
+                for (var cb : entry.getValue()) cb.onDestroy(e, pos.getX(), pos.getY(), pos.getZ(), v, t);
+            });
         }
     }
 
     public void fireInteract(ServerPlayer player, net.minecraft.world.entity.Entity target) {
-        if (interactCallbacks.isEmpty()) return;
-        Box3JSEntity entity = new Box3JSEntity(player, server, this);
-        Box3JSEntity targetEntity = new Box3JSEntity(target, server, this);
-        long tick = server.getTickCount();
-        for (var cb : interactCallbacks) {
-            cb.onInteract(entity, targetEntity, tick);
+        Box3JSEntity entity = null;
+        Box3JSEntity targetEntity = null;
+        long tick = -1;
+        for (var entry : bus.interactCallbacks.entrySet()) {
+            if (entry.getValue().isEmpty()) continue;
+            if (entity == null) { entity = new Box3JSEntity(player, server, this); targetEntity = new Box3JSEntity(target, server, this); tick = server.getTickCount(); }
+            Box3JSEntity e = entity;
+            Box3JSEntity te = targetEntity;
+            long t = tick;
+            runInContext(entry.getKey(), () -> {
+                for (var cb : entry.getValue()) cb.onInteract(e, te, t);
+            });
         }
     }
 
     public void fireChat(ServerPlayer player, String message) {
-        Box3JSEntity entity = new Box3JSEntity(player, server, this);
-        long tick = server.getTickCount();
-        // Global chat callbacks
-        for (var cb : chatCallbacks) {
-            cb.onChat(entity, message, tick);
+        Box3JSEntity entity = null;
+        long tick = -1;
+        for (var entry : bus.chatCallbacks.entrySet()) {
+            if (entity == null) { entity = new Box3JSEntity(player, server, this); tick = server.getTickCount(); }
+            Box3JSEntity e = entity;
+            long t = tick;
+            runInContext(entry.getKey(), () -> {
+                for (var cb : entry.getValue()) cb.onChat(e, message, t);
+            });
         }
-        // Per-player chat handler
-        Function playerHandler = playerChatHandlers.get(player.getUUID());
-        if (playerHandler != null) {
-            callFunction(playerHandler, entity, message, tick);
+        // Per-player chat handlers
+        for (var entry : bus.playerChatHandlers.entrySet()) {
+            Function handler = entry.getValue().get(player.getUUID());
+            if (handler != null) {
+                Box3JSEntity e = entity != null ? entity : new Box3JSEntity(player, server, this);
+                long t = tick != -1 ? tick : server.getTickCount();
+                String project = entry.getKey();
+                runInContext(project, () -> callFunction(handler, e, message, t));
+            }
         }
     }
 
     public void fireBlockPlace(ServerPlayer player, BlockPos pos, BlockState state) {
-        if (blockPlaceCallbacks.isEmpty()) return;
-        Box3JSEntity entity = new Box3JSEntity(player, server, this);
-        long tick = server.getTickCount();
-        int voxelId = voxelsBinding.getId(state);
-        String voxel = state.isAir() ? "minecraft:air" : state.getBlock().builtInRegistryHolder().key().location().toString();
-        for (var cb : blockPlaceCallbacks) {
-            cb.onPlace(entity, pos.getX(), pos.getY(), pos.getZ(), voxel, voxelId, tick);
+        Box3JSEntity entity = null;
+        long tick = -1;
+        int voxelId = -1;
+        String voxel = null;
+        for (var entry : bus.blockPlaceCallbacks.entrySet()) {
+            if (entry.getValue().isEmpty()) continue;
+            if (entity == null) { entity = new Box3JSEntity(player, server, this); tick = server.getTickCount(); voxelId = voxelsBinding.getId(state); voxel = state.isAir() ? "minecraft:air" : state.getBlock().builtInRegistryHolder().key().location().toString(); }
+            Box3JSEntity e = entity;
+            long t = tick;
+            int vid = voxelId;
+            String v = voxel;
+            runInContext(entry.getKey(), () -> {
+                for (var cb : entry.getValue()) cb.onPlace(e, pos.getX(), pos.getY(), pos.getZ(), v, vid, t);
+            });
         }
     }
 
     public void fireEntityDeath(net.minecraft.world.entity.Entity deadEntity, net.minecraft.world.entity.Entity attacker) {
-        if (entityDeathCallbacks.isEmpty()) return;
-        Box3JSEntity entity = new Box3JSEntity(deadEntity, server, this);
-        Box3JSEntity killer = attacker != null ? new Box3JSEntity(attacker, server, this) : null;
-        long tick = server.getTickCount();
-        for (var cb : entityDeathCallbacks) {
-            cb.onDeath(entity, killer, tick);
+        Box3JSEntity entity = null;
+        Box3JSEntity killer = null;
+        long tick = -1;
+        for (var entry : bus.entityDeathCallbacks.entrySet()) {
+            if (entry.getValue().isEmpty()) continue;
+            if (entity == null) { entity = new Box3JSEntity(deadEntity, server, this); killer = attacker != null ? new Box3JSEntity(attacker, server, this) : null; tick = server.getTickCount(); }
+            Box3JSEntity e = entity;
+            Box3JSEntity k = killer;
+            long t = tick;
+            runInContext(entry.getKey(), () -> {
+                for (var cb : entry.getValue()) cb.onDeath(e, k, t);
+            });
         }
     }
 
     public void firePlayerRespawn(ServerPlayer player) {
-        if (respawnCallbacks.isEmpty()) return;
-        Box3JSEntity entity = new Box3JSEntity(player, server, this);
-        for (var cb : respawnCallbacks) {
-            cb.onRespawn(entity);
+        Box3JSEntity entity = null;
+        for (var entry : bus.respawnCallbacks.entrySet()) {
+            if (entry.getValue().isEmpty()) continue;
+            if (entity == null) entity = new Box3JSEntity(player, server, this);
+            Box3JSEntity e = entity;
+            runInContext(entry.getKey(), () -> {
+                for (var cb : entry.getValue()) cb.onRespawn(e);
+            });
         }
     }
 
     public void fireBlockActivate(ServerPlayer player, BlockPos pos, BlockState state) {
-        if (blockActivateCallbacks.isEmpty()) return;
-        Box3JSEntity entity = new Box3JSEntity(player, server, this);
-        long tick = server.getTickCount();
-        String voxel = state.isAir() ? "minecraft:air" : state.getBlock().builtInRegistryHolder().key().location().toString();
-        for (var cb : blockActivateCallbacks) {
-            cb.onActivate(entity, pos.getX(), pos.getY(), pos.getZ(), voxel, tick);
+        Box3JSEntity entity = null;
+        long tick = -1;
+        String voxel = null;
+        for (var entry : bus.blockActivateCallbacks.entrySet()) {
+            if (entry.getValue().isEmpty()) continue;
+            if (entity == null) { entity = new Box3JSEntity(player, server, this); tick = server.getTickCount(); voxel = state.isAir() ? "minecraft:air" : state.getBlock().builtInRegistryHolder().key().location().toString(); }
+            Box3JSEntity e = entity;
+            long t = tick;
+            String v = voxel;
+            runInContext(entry.getKey(), () -> {
+                for (var cb : entry.getValue()) cb.onActivate(e, pos.getX(), pos.getY(), pos.getZ(), v, t);
+            });
         }
     }
 
     public void fireEntityDamage(net.minecraft.world.entity.Entity damagedEntity, double amount, String source, net.minecraft.world.entity.Entity attacker) {
-        if (entityDamageCallbacks.isEmpty()) return;
-        Box3JSEntity entity = new Box3JSEntity(damagedEntity, server, this);
-        Box3JSEntity attackerEntity = attacker != null ? new Box3JSEntity(attacker, server, this) : null;
-        long tick = server.getTickCount();
-        for (var cb : entityDamageCallbacks) {
-            cb.onDamage(entity, amount, source, attackerEntity, tick);
+        Box3JSEntity entity = null;
+        Box3JSEntity attackerEntity = null;
+        long tick = -1;
+        for (var entry : bus.entityDamageCallbacks.entrySet()) {
+            if (entry.getValue().isEmpty()) continue;
+            if (entity == null) { entity = new Box3JSEntity(damagedEntity, server, this); attackerEntity = attacker != null ? new Box3JSEntity(attacker, server, this) : null; tick = server.getTickCount(); }
+            Box3JSEntity e = entity;
+            Box3JSEntity ae = attackerEntity;
+            long t = tick;
+            runInContext(entry.getKey(), () -> {
+                for (var cb : entry.getValue()) cb.onDamage(e, amount, source, ae, t);
+            });
         }
     }
 
     public void firePlayerJoin(ServerPlayer player) {
-        Box3JSEntity entity = new Box3JSEntity(player, server, this);
-        for (var cb : joinCallbacks) cb.onJoin(entity);
+        Box3JSEntity entity = null;
+        for (var entry : bus.joinCallbacks.entrySet()) {
+            if (entry.getValue().isEmpty()) continue;
+            if (entity == null) entity = new Box3JSEntity(player, server, this);
+            Box3JSEntity e = entity;
+            runInContext(entry.getKey(), () -> {
+                for (var cb : entry.getValue()) cb.onJoin(e);
+            });
+        }
     }
 
     public void firePlayerLeave(ServerPlayer player) {
-        Box3JSEntity entity = new Box3JSEntity(player, server, this);
-        for (var cb : leaveCallbacks) cb.onLeave(entity);
+        Box3JSEntity entity = null;
+        for (var entry : bus.leaveCallbacks.entrySet()) {
+            if (entry.getValue().isEmpty()) continue;
+            if (entity == null) entity = new Box3JSEntity(player, server, this);
+            Box3JSEntity e = entity;
+            runInContext(entry.getKey(), () -> {
+                for (var cb : entry.getValue()) cb.onLeave(e);
+            });
+        }
     }
 
     /** Call a JS function from Java, managing Rhino context */
@@ -410,39 +550,16 @@ public class Box3ScriptEngine {
     public ScriptableObject getScope() { return scope; }
 
     public Map<String, Object> getCustomProps(UUID uuid) {
-        return entityCustomProps.computeIfAbsent(uuid, k -> new HashMap<>());
+        return bus.entityCustomProps.computeIfAbsent(uuid, k -> new HashMap<>());
     }
 
     public void clearCustomProps(UUID uuid) {
-        entityCustomProps.remove(uuid);
+        bus.entityCustomProps.remove(uuid);
     }
 
     /** Clear all callbacks and reset the JS scope (keeps server binding) */
     public void reset() {
-        tickCallbacks.clear();
-        joinCallbacks.clear();
-        leaveCallbacks.clear();
-        voxelDestroyCallbacks.clear();
-        voxelContactCallbacks.clear();
-        interactCallbacks.clear();
-        chatCallbacks.clear();
-        fluidEnterCallbacks.clear();
-        fluidLeaveCallbacks.clear();
-        entityContactCallbacks.clear();
-        entitySeparateCallbacks.clear();
-        blockPlaceCallbacks.clear();
-        entityDeathCallbacks.clear();
-        respawnCallbacks.clear();
-        blockActivateCallbacks.clear();
-        entityDamageCallbacks.clear();
-        messageCallbacks.clear();
-        voxelContactTracked.clear();
-        fluidStateTracked.clear();
-        entityContactPairs.clear();
-        playerChatHandlers.clear();
-        entityCustomProps.clear();
-        timers.clear();
-        timerIdCounter = 0;
+        bus.clearAll();
         projectRequires.clear();
         this.worldBinding = new Box3JSWorld(server, this);
         this.voxelsBinding = new Box3JSVoxels(server);
@@ -565,7 +682,7 @@ public class Box3ScriptEngine {
         }
     }
 
-    private static class TimerEntry {
+    static class TimerEntry {
         final int id;
         final Function handler;
         int remaining;

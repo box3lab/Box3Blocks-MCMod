@@ -528,21 +528,32 @@ interface ReturnValue {
 /**
  * 全局存储入口 — 脚本中通过 `storage` 访问。
  * Global storage entry point — accessed via `storage` in scripts.
+ *
+ * @remarks
+ * 项目间数据隔离: 每个项目自动使用项目名作为存储文件前缀。
+ * Per‑project isolation: each project's storage is automatically prefixed with the project name.
+ * 跨项目共享: `getGroupStorage` 使用 `__shared__/` 命名空间, 所有项目访问同一数据。
+ * Cross‑project sharing: `getGroupStorage` uses a `__shared__/` namespace visible to all projects.
  */
 interface GameStorage {
   /** 始终返回空字符串 (MC 本地存储无 key)。Always returns "" for MC local storage. */
   key: string;
 
   /**
-   * 打开或创建指定名称的数据存储空间。
-   * Opens or creates a named data‑storage namespace.
+   * 打开或创建指定名称的数据存储空间 (项目隔离)。
+   * Opens or creates a named data‑storage namespace (per‑project isolated).
    * @param name - 命名空间 (可含 "/" 作为目录分隔) / namespace (may contain "/" as directory separator)
+   * @remarks 不同项目使用同一 name 会访问不同文件。
+   *          Different projects using the same name access different files.
    */
   getDataStorage(name: string): GameDataStorage;
 
   /**
-   * 行为与 getDataStorage 相同 (Box3 兼容别名)。
-   * Same as getDataStorage — Box3 compatibility alias.
+   * 获取跨项目共享存储 — 所有项目通过同一 name 读写同一份数据。
+   * Shared cross‑project storage — all projects read/write the same data by name.
+   * @param name - 命名空间 / namespace
+   * @remarks 底层使用 `__shared__/` 前缀, 适合全服排行榜、全局配置等场景。
+   *          Uses `__shared__/` prefix internally; suitable for global leaderboards, shared config, etc.
    */
   getGroupStorage(name: string): GameDataStorage;
 }

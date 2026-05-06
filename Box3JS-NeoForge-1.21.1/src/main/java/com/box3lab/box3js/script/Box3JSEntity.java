@@ -1,8 +1,6 @@
 package com.box3lab.box3js.script;
 
 import net.minecraft.core.Holder;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
@@ -17,7 +15,6 @@ import net.minecraft.world.item.ItemStack;
 import org.mozilla.javascript.Function;
 
 import java.util.Map;
-import java.util.UUID;
 import java.util.function.Consumer;
 
 public class Box3JSEntity {
@@ -135,24 +132,28 @@ public class Box3JSEntity {
     public boolean getDestroyed() { return entity.isRemoved(); }
 
     public double getHp() {
-        if (entity instanceof LivingEntity le) return le.getHealth();
+        LivingEntity le = asLiving();
+        if (le != null) return le.getHealth();
         return getProp("hp", 100.0);
     }
     public void setHp(double v) {
         setProp("hp", v);
-        if (entity instanceof LivingEntity le) {
+        LivingEntity le = asLiving();
+        if (le != null) {
             double max = le.getMaxHealth();
             le.setHealth((float) Math.max(0, Math.min(v, max)));
         }
     }
 
     public double getMaxHp() {
-        if (entity instanceof LivingEntity le) return le.getMaxHealth();
+        LivingEntity le = asLiving();
+        if (le != null) return le.getMaxHealth();
         return getProp("maxHp", 100.0);
     }
     public void setMaxHp(double v) {
         setProp("maxHp", v);
-        if (entity instanceof LivingEntity le) {
+        LivingEntity le = asLiving();
+        if (le != null) {
             le.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH)
                     .setBaseValue(v);
             if (le.getHealth() > v) le.setHealth((float) v);
@@ -160,15 +161,17 @@ public class Box3JSEntity {
     }
 
     public void hurt(double amount) {
-        if (entity instanceof LivingEntity le) {
-            le.hurt(le.damageSources().generic(), (float) amount);
-        }
+        LivingEntity le = asLiving();
+        if (le != null) le.hurt(le.damageSources().generic(), (float) amount);
     }
 
     public void heal(double amount) {
-        if (entity instanceof LivingEntity le) {
-            le.heal((float) amount);
-        }
+        LivingEntity le = asLiving();
+        if (le != null) le.heal((float) amount);
+    }
+
+    private LivingEntity asLiving() {
+        return entity instanceof LivingEntity le ? le : null;
     }
 
     // ---- Invulnerable (MC extension) ----
@@ -188,19 +191,8 @@ public class Box3JSEntity {
 
     // ---- Look at (MC extension) ----
 
-    public void lookAt(double x, double y, double z) {
-        double dx = x - entity.getX();
-        double dy = y - entity.getEyeY();
-        double dz = z - entity.getZ();
-        double horizontalDist = Math.sqrt(dx * dx + dz * dz);
-        float yaw = (float) (Math.toDegrees(Math.atan2(dz, dx)) - 90.0);
-        float pitch = (float) (-Math.toDegrees(Math.atan2(dy, horizontalDist)));
-        entity.setYRot(yaw);
-        entity.setXRot(pitch);
-    }
-    public void lookAt(GameVector3 pos) {
-        lookAt(pos.x, pos.y, pos.z);
-    }
+    public void lookAt(double x, double y, double z) { Box3ScriptUtils.lookAt(entity, x, y, z); }
+    public void lookAt(GameVector3 pos) { lookAt(pos.x, pos.y, pos.z); }
 
     // ---- Navigation (MC extension) ----
 
@@ -251,10 +243,9 @@ public class Box3JSEntity {
     }
 
     public void addEffect(String effectId, int duration, int amplifier, boolean hideParticles) {
-        if (!(entity instanceof LivingEntity le)) return;
-        ResourceLocation rl = ResourceLocation.tryParse(effectId);
-        if (rl == null) return;
-        Holder<MobEffect> effect = BuiltInRegistries.MOB_EFFECT.getHolder(rl).orElse(null);
+        LivingEntity le = asLiving();
+        if (le == null) return;
+        Holder<MobEffect> effect = Box3ScriptUtils.lookupMobEffect(effectId);
         if (effect == null) return;
         le.addEffect(new MobEffectInstance(effect, duration, amplifier, false, !hideParticles, true));
     }
@@ -265,9 +256,7 @@ public class Box3JSEntity {
         if (!(entity instanceof Mob mob)) return;
         EquipmentSlot equipmentSlot = parseEquipmentSlot(slot);
         if (equipmentSlot == null) return;
-        ResourceLocation rl = ResourceLocation.tryParse(itemId);
-        if (rl == null) return;
-        Item item = BuiltInRegistries.ITEM.getOptional(rl).orElse(null);
+        Item item = Box3ScriptUtils.lookupItem(itemId);
         if (item == null) return;
         mob.setItemSlot(equipmentSlot, new ItemStack(item));
     }
@@ -296,21 +285,19 @@ public class Box3JSEntity {
     // ---- Attributes (MC extension) ----
 
     public double getAttribute(String attributeId) {
-        if (!(entity instanceof LivingEntity le)) return 0;
-        ResourceLocation rl = ResourceLocation.tryParse(attributeId);
-        if (rl == null) return 0;
-        var holder = BuiltInRegistries.ATTRIBUTE.getHolder(rl);
-        if (holder.isPresent()) return le.getAttributeValue(holder.get());
+        LivingEntity le = asLiving();
+        if (le == null) return 0;
+        var holder = Box3ScriptUtils.lookupAttribute(attributeId);
+        if (holder != null) return le.getAttributeValue(holder);
         return 0;
     }
 
     public void setAttribute(String attributeId, double value) {
-        if (!(entity instanceof LivingEntity le)) return;
-        ResourceLocation rl = ResourceLocation.tryParse(attributeId);
-        if (rl == null) return;
-        var holder = BuiltInRegistries.ATTRIBUTE.getHolder(rl);
-        if (holder.isPresent()) {
-            var instance = le.getAttribute(holder.get());
+        LivingEntity le = asLiving();
+        if (le == null) return;
+        var holder = Box3ScriptUtils.lookupAttribute(attributeId);
+        if (holder != null) {
+            var instance = le.getAttribute(holder);
             if (instance != null) instance.setBaseValue(value);
         }
     }

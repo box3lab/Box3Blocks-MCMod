@@ -82,13 +82,10 @@ public class Box3JSVoxels {
         Integer id = nameToId.get(name);
         if (id != null) return id;
         // Try vanilla block by ResourceLocation
-        ResourceLocation rl = ResourceLocation.tryParse(name);
-        if (rl != null) {
-            Block block = BuiltInRegistries.BLOCK.getOptional(rl).orElse(null);
-            if (block != null && block != Blocks.AIR) {
-                Integer foundId = blockToId.get(block);
-                if (foundId != null) return foundId;
-            }
+        Block block = Box3ScriptUtils.lookupBlock(name);
+        if (block != null && block != Blocks.AIR) {
+            Integer foundId = blockToId.get(block);
+            if (foundId != null) return foundId;
         }
         return 0;
     }
@@ -264,12 +261,10 @@ public class Box3JSVoxels {
         var be = level.getBlockEntity(pos);
         if (!(be instanceof net.minecraft.world.level.block.entity.SpawnerBlockEntity spawnerBe)) return;
 
-        ResourceLocation rl = ResourceLocation.tryParse(entityType);
-        if (rl == null) return;
-        var opt = BuiltInRegistries.ENTITY_TYPE.getOptional(rl);
-        if (opt.isEmpty()) return;
+        var opt = Box3ScriptUtils.lookupEntityType(entityType);
+        if (opt == null) return;
 
-        spawnerBe.setEntityId(opt.get(), level.getRandom());
+        spawnerBe.setEntityId(opt, level.getRandom());
     }
     public void setSpawner(GameVector3 pos, String entityType) {
         setSpawner((int) pos.x, (int) pos.y, (int) pos.z, entityType);
@@ -318,9 +313,7 @@ public class Box3JSVoxels {
             Block b = resourceToBlock.get(s.toLowerCase(Locale.ROOT));
             if (b != null) return b;
             // Try vanilla block by ResourceLocation (e.g. "minecraft:stone" or "stone")
-            ResourceLocation rl = ResourceLocation.tryParse(s);
-            if (rl == null) return null;
-            return BuiltInRegistries.BLOCK.getOptional(rl).orElse(null);
+            return Box3ScriptUtils.lookupBlock(s);
         }
         return null;
     }

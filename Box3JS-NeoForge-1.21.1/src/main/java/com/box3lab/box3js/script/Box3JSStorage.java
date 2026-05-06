@@ -9,6 +9,7 @@ import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Box3JSStorage {
 
@@ -17,6 +18,7 @@ public class Box3JSStorage {
 
     private final Path baseDir;
     private final Box3ScriptEngine engine;
+    private final Map<Path, Map<String, ValueEntry>> cache = new ConcurrentHashMap<>();
 
     public Box3JSStorage(Path configDir, Box3ScriptEngine engine) {
         this.baseDir = configDir.resolve("box3").resolve("storage");
@@ -26,20 +28,24 @@ public class Box3JSStorage {
 
     // ---- GameStorage ----
 
-    /** storage.key — always empty for MC local storage */
     public String getKey() { return ""; }
 
-    /** storage.getDataStorage(name): GameDataStorage */
     public GameDataStorage getDataStorage(String name) {
-        return new GameDataStorage(name);
+        return new GameDataStorage(resolveName(name));
     }
 
-    /** storage.getGroupStorage(name): GameDataStorage — same as getDataStorage in MC */
+    /** Shared storage accessible by all projects. */
     public GameDataStorage getGroupStorage(String name) {
-        return new GameDataStorage(name);
+        return new GameDataStorage("__shared__/" + name);
     }
 
-    // ---- ValueEntry (internal metadata container) ----
+    /** Prefix with project namespace if running inside a project. */
+    private String resolveName(String name) {
+        String project = engine.getCurrentProject();
+        return project != null ? project + "/" + name : name;
+    }
+
+    // ---- ValueEntry ----
 
     private static class ValueEntry {
         Object value;
@@ -55,7 +61,7 @@ public class Box3JSStorage {
         }
     }
 
-    // ---- ReturnValue (JS-accessible) ----
+    // ---- ReturnValue ----
 
     public static class ReturnValue {
         public String key;
@@ -73,7 +79,7 @@ public class Box3JSStorage {
         }
     }
 
-    // ---- QueryList (JS-accessible) ----
+    // ---- QueryList ----
 
     public static class QueryList {
         public boolean isLastPage;
@@ -91,8 +97,7 @@ public class Box3JSStorage {
         public ReturnValue[] getCurrentPage() {
             int end = Math.min(cursor + pageSize, all.size());
             if (cursor >= all.size()) return new ReturnValue[0];
-            List<ReturnValue> slice = all.subList(cursor, end);
-            return slice.toArray(new ReturnValue[0]);
+            return all.subList(cursor, end).toArray(new ReturnValue[0]);
         }
 
         public void nextPage() {
@@ -107,6 +112,7 @@ public class Box3JSStorage {
 
         private final String name;
         private final Path path;
+        private final Map<String, ValueEntry> data;
 
         GameDataStorage(String name) {
             this.name = name;
@@ -119,102 +125,99 @@ public class Box3JSStorage {
             String file = sanitize(parts[parts.length - 1]);
             if (file.isEmpty()) file = "default";
             this.path = dir.resolve(file + ".json");
+            this.data = cache.computeIfAbsent(path, p -> {
+                if (Files.exists(p)) {
+                    try {
+                        String json = Files.readString(p);
+                        Map<String, ValueEntry> map = GSON.fromJson(json, MAP_TYPE);
+                        return map != null ? Collections.synchronizedMap(new LinkedHashMap<>(map))
+                                           : Collections.synchronizedMap(new LinkedHashMap<>());
+                    } catch (IOException e) {
+                        return Collections.synchronizedMap(new LinkedHashMap<>());
+                    }
+                }
+                return Collections.synchronizedMap(new LinkedHashMap<>());
+            });
         }
 
         private String sanitize(String s) {
             return s.replaceAll("[^a-zA-Z0-9_.\\-]", "_");
         }
 
-        /** GameDataStorage.key — read-only space name */
         public String getKey() { return name; }
 
-        // ---- Internal read/write ----
+        // ---- Persist ----
 
-        private synchronized Map<String, ValueEntry> read() {
-            if (!Files.exists(path)) return new LinkedHashMap<>();
-            try {
-                String json = Files.readString(path);
-                Map<String, ValueEntry> map = GSON.fromJson(json, MAP_TYPE);
-                return map != null ? new LinkedHashMap<>(map) : new LinkedHashMap<>();
-            } catch (IOException e) {
-                return new LinkedHashMap<>();
-            }
-        }
-
-        private synchronized void write(Map<String, ValueEntry> map) {
+        private void persist() {
             try {
                 Files.createDirectories(path.getParent());
-                Files.writeString(path, GSON.toJson(map));
+                Files.writeString(path, GSON.toJson(data));
             } catch (IOException ignored) {}
         }
 
         // ---- Public API ----
 
-        /** set(key: string, value: JSONValue): void */
         public void set(String key, Object value) {
             if (key == null) return;
-            Map<String, ValueEntry> map = read();
-            ValueEntry existing = map.get(key);
             long now = System.currentTimeMillis();
-            if (existing != null) {
-                existing.value = value;
-                existing.updateTime = now;
-                existing.version = Long.toHexString(now) + "-" + Integer.toHexString(new Random().nextInt());
-            } else {
-                map.put(key, new ValueEntry(value, now));
+            synchronized (data) {
+                ValueEntry existing = data.get(key);
+                if (existing != null) {
+                    existing.value = value;
+                    existing.updateTime = now;
+                    existing.version = Long.toHexString(now) + "-" + Integer.toHexString(new Random().nextInt());
+                } else {
+                    data.put(key, new ValueEntry(value, now));
+                }
+                persist();
             }
-            write(map);
         }
 
-        /** get(key: string): value — returns the stored value directly */
         public Object get(String key) {
             if (key == null) return null;
-            Map<String, ValueEntry> map = read();
-            ValueEntry entry = map.get(key);
-            return entry != null ? entry.value : null;
+            synchronized (data) {
+                ValueEntry entry = data.get(key);
+                return entry != null ? entry.value : null;
+            }
         }
 
-        /** keys(): string[] — returns all keys in this storage */
         public String[] keys() {
-            return read().keySet().toArray(new String[0]);
+            synchronized (data) {
+                return data.keySet().toArray(new String[0]);
+            }
         }
 
-        /** update(key: string, handler: function(prevValue): value): void */
         public void update(String key, Function handler) {
             if (key == null || handler == null) return;
-            Map<String, ValueEntry> map = read();
-            ValueEntry entry = map.get(key);
-            if (entry == null) return; // can't update non-existent key per Box3 spec
-            Object newValue = engine.callFunction(handler, entry.value);
-            long now = System.currentTimeMillis();
-            entry.value = newValue;
-            entry.updateTime = now;
-            entry.version = Long.toHexString(now) + "-" + Integer.toHexString(new Random().nextInt());
-            write(map);
+            synchronized (data) {
+                ValueEntry entry = data.get(key);
+                if (entry == null) return;
+                long now = System.currentTimeMillis();
+                entry.value = engine.callFunction(handler, entry.value);
+                entry.updateTime = now;
+                entry.version = Long.toHexString(now) + "-" + Integer.toHexString(new Random().nextInt());
+                persist();
+            }
         }
 
-        /** remove(key: string): value — returns the old value */
         public Object remove(String key) {
             if (key == null) return null;
-            Map<String, ValueEntry> map = read();
-            ValueEntry entry = map.remove(key);
-            if (entry != null) {
-                write(map);
-                return entry.value;
+            synchronized (data) {
+                ValueEntry entry = data.remove(key);
+                if (entry != null) {
+                    persist();
+                    return entry.value;
+                }
             }
             return null;
         }
 
-        /** increment(key: string, value?: number): number — atomic increment, default delta=1 */
         public double increment(String key, double value) {
             if (key == null) return 0;
-            // Rhino calls increment(key) with undefined for the second arg,
-            // which maps to Double.NaN in Java. Handle that case.
             double delta = Double.isNaN(value) ? 1.0 : value;
-            synchronized (this) {
-                Map<String, ValueEntry> map = read();
-                ValueEntry entry = map.get(key);
-                long now = System.currentTimeMillis();
+            long now = System.currentTimeMillis();
+            synchronized (data) {
+                ValueEntry entry = data.get(key);
                 if (entry != null) {
                     if (entry.value instanceof Number n) {
                         entry.value = n.doubleValue() + delta;
@@ -225,28 +228,26 @@ public class Box3JSStorage {
                     entry.version = Long.toHexString(now) + "-" + Integer.toHexString(new Random().nextInt());
                 } else {
                     entry = new ValueEntry(delta, now);
-                    map.put(key, entry);
+                    data.put(key, entry);
                 }
-                write(map);
+                persist();
                 return ((Number) entry.value).doubleValue();
             }
         }
 
-        // Overload for Rhino: when called with 1 arg
         public double increment(String key) {
             return increment(key, 1.0);
         }
 
-        /** list(options: {cursor, pageSize?, ascending?, max?, min?, constraintTarget?}): QueryList */
         public QueryList list(Map<String, Object> options) {
-            Map<String, ValueEntry> map = read();
-            List<ReturnValue> results = new ArrayList<>();
-
-            for (Map.Entry<String, ValueEntry> e : map.entrySet()) {
-                results.add(new ReturnValue(e.getKey(), e.getValue()));
+            List<ReturnValue> results;
+            synchronized (data) {
+                results = new ArrayList<>();
+                for (Map.Entry<String, ValueEntry> e : data.entrySet()) {
+                    results.add(new ReturnValue(e.getKey(), e.getValue()));
+                }
             }
 
-            // Parse options
             int cursor = 0;
             int pageSize = 100;
             boolean ascending = false;
@@ -271,7 +272,6 @@ public class Box3JSStorage {
             final String target = constraintTarget;
             final boolean asc = ascending;
 
-            // Sort
             if (doSort) {
                 results.sort((a, b) -> {
                     double va = extractSortValue(a.value, target);
@@ -281,7 +281,6 @@ public class Box3JSStorage {
                 });
             }
 
-            // Filter by min/max
             if (max != null || min != null) {
                 List<ReturnValue> filtered = new ArrayList<>();
                 for (ReturnValue rv : results) {
@@ -301,7 +300,6 @@ public class Box3JSStorage {
                 if (value instanceof Number n) return n.doubleValue();
                 return 0;
             }
-            // Navigate nested path like "a.b.c"
             Object current = value;
             for (String part : target.split("\\.")) {
                 if (current instanceof Map<?, ?> m) {
@@ -314,9 +312,9 @@ public class Box3JSStorage {
             return 0;
         }
 
-        /** destroy(): void — delete this data storage space */
         public void destroy() {
-            synchronized (this) {
+            synchronized (data) {
+                cache.remove(path);
                 try { Files.deleteIfExists(path); } catch (IOException ignored) {}
             }
         }

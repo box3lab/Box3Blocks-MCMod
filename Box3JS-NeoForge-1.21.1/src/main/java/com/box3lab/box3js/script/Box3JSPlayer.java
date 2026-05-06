@@ -22,6 +22,7 @@ import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.ScriptableObject;
 
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class Box3JSPlayer {
 
@@ -88,14 +89,12 @@ public class Box3JSPlayer {
 
     public boolean getCanFly() { return player.getAbilities().mayfly; }
     public void setCanFly(boolean v) {
-        player.getAbilities().mayfly = v;
-        player.onUpdateAbilities();
+        updateAbility(a -> a.mayfly = v);
     }
 
     public boolean getFlying() { return player.getAbilities().flying; }
     public void setFlying(boolean v) {
-        player.getAbilities().flying = v;
-        player.onUpdateAbilities();
+        updateAbility(a -> a.flying = v);
     }
 
     public boolean getCollision() {
@@ -115,8 +114,7 @@ public class Box3JSPlayer {
 
     public double getFlySpeed() { return player.getAbilities().getFlyingSpeed(); }
     public void setFlySpeed(double v) {
-        player.getAbilities().setFlyingSpeed((float) v);
-        player.onUpdateAbilities();
+        updateAbility(a -> a.setFlyingSpeed((float) v));
     }
 
     // ---- Game Mode ----
@@ -297,17 +295,8 @@ public class Box3JSPlayer {
 
     // ---- Look at (MC extension) ----
 
-    public void lookAt(double x, double y, double z) {
-        double dx = x - player.getX();
-        double dy = y - player.getEyeY();
-        double dz = z - player.getZ();
-        double hd = Math.sqrt(dx * dx + dz * dz);
-        player.setYRot((float) (Math.toDegrees(Math.atan2(dz, dx)) - 90.0));
-        player.setXRot((float) (-Math.toDegrees(Math.atan2(dy, hd))));
-    }
-    public void lookAt(GameVector3 pos) {
-        lookAt(pos.x, pos.y, pos.z);
-    }
+    public void lookAt(double x, double y, double z) { Box3ScriptUtils.lookAt(player, x, y, z); }
+    public void lookAt(GameVector3 pos) { lookAt(pos.x, pos.y, pos.z); }
 
     // ---- Command ----
 
@@ -390,11 +379,9 @@ public class Box3JSPlayer {
     }
 
     public void addEffect(String effectId, int duration, int amplifier, boolean hideParticles) {
-        ResourceLocation rl = ResourceLocation.tryParse(effectId);
-        if (rl == null) return;
-        var effect = BuiltInRegistries.MOB_EFFECT.getHolder(rl);
-        if (effect.isPresent()) {
-            player.addEffect(new MobEffectInstance(effect.get(), duration, amplifier, false, !hideParticles, true));
+        var effect = Box3ScriptUtils.lookupMobEffect(effectId);
+        if (effect != null) {
+            player.addEffect(new MobEffectInstance(effect, duration, amplifier, false, !hideParticles, true));
         }
     }
 
@@ -405,11 +392,9 @@ public class Box3JSPlayer {
     // ---- Sound ----
 
     public void playSound(String path, double volume, double pitch) {
-        ResourceLocation rl = ResourceLocation.tryParse(path);
-        if (rl == null) return;
-        var sound = net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.getOptional(rl);
-        if (sound.isPresent()) {
-            player.playNotifySound(sound.get(), net.minecraft.sounds.SoundSource.PLAYERS, (float) volume, (float) pitch);
+        var sound = Box3ScriptUtils.lookupSoundEvent(path);
+        if (sound != null) {
+            player.playNotifySound(sound.value(), net.minecraft.sounds.SoundSource.PLAYERS, (float) volume, (float) pitch);
         }
     }
 
@@ -429,12 +414,15 @@ public class Box3JSPlayer {
         props().put(key, value);
     }
 
+    private void updateAbility(Consumer<net.minecraft.world.entity.player.Abilities> updater) {
+        updater.accept(player.getAbilities());
+        player.onUpdateAbilities();
+    }
+
     private ItemStack makeItemStack(String itemId, int count, NativeObject enchants) {
-        ResourceLocation rl = ResourceLocation.tryParse(itemId);
-        if (rl == null) return null;
-        var item = BuiltInRegistries.ITEM.getOptional(rl);
-        if (item.isEmpty()) return null;
-        ItemStack stack = new ItemStack(item.get(), Math.max(1, Math.min(count, 64)));
+        var item = Box3ScriptUtils.lookupItem(itemId);
+        if (item == null) return null;
+        ItemStack stack = new ItemStack(item, Math.max(1, Math.min(count, 64)));
         if (enchants != null) {
             var enchRegistry = player.server.registryAccess().registryOrThrow(Registries.ENCHANTMENT);
             for (Object key : enchants.keySet()) {

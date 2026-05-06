@@ -1,6 +1,6 @@
 # storage — 数据存储 API
 
-`storage` 提供 JSON 文件持久化存储，项目间数据隔离。数据保存在 `config/box3/data/<项目名>/` 目录下。
+`storage` 提供 JSON 文件持久化存储，带内存缓存加速读写。数据保存在 `config/box3/storage/<项目名>/` 目录下，每个项目自动拥有独立命名空间。
 
 ---
 
@@ -12,7 +12,7 @@
 
 ### storage.getGroupStorage(name)
 
-✅ Box3 API | 获取组存储（目前与 `getDataStorage` 行为一致）。
+✅ Box3 API | 获取**跨项目共享**存储。所有项目通过同一 `name` 访问同一份数据（底层使用 `__shared__/` 命名空间）。适合做全服排行榜、全局配置等。
 
 ```js
 var store = storage.getDataStorage("leaderboard");
@@ -79,7 +79,7 @@ store.update("counter", function(current) {
 
 ### store.destroy()
 
-✅ Box3 API | 删除整个存储文件。
+✅ Box3 API | 删除整个存储文件（同时清除内存缓存）。
 
 ```js
 store.remove("tempKey");
@@ -145,10 +145,21 @@ if (!result.isLastPage) {
 
 ---
 
+## 内存缓存与持久化
+
+所有 `GameDataStorage` 实例共享一个内存缓存（`ConcurrentHashMap`）。首次访问时从磁盘加载 JSON，后续读写均在内存中操作，每次写操作（`set`/`update`/`remove`/`increment`）同步刷盘。
+
+- **同名存储**：同一文件路径多次 `getDataStorage` 返回共享同一份内存数据，避免重复 I/O
+- **项目隔离**：`getDataStorage("scores")` 在不同项目中访问不同文件（自动添加项目名前缀）
+- **跨项目共享**：`getGroupStorage("leaderboard")` 所有项目访问同一个 `__shared__/leaderboard.json`
+
+---
+
 ## 完整示例：排行榜
 
 ```js
-var lb = storage.getDataStorage("leaderboard");
+// 跨项目共享排行榜 — 所有项目读写同一份数据
+var lb = storage.getGroupStorage("leaderboard");
 
 // 保存成绩
 function saveScore(name, time) {

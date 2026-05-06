@@ -6,23 +6,6 @@
 
 ## 命令列表
 
-### `/box3script file <path>`
-
-加载并执行服务器上的 JS 文件。支持相对路径（相对于 `config/box3/script/`）和绝对路径。
-
-```
-/box3script file my_script.js
-/box3script file /home/server/scripts/test.js
-```
-
-### `/box3script run <project>`
-
-运行一次指定项目的 `app.js`（不改变启用状态）。
-
-```
-/box3script run skyrun
-```
-
 ### `/box3script create <name>`
 
 创建新的 TypeScript 脚本项目。在 `config/box3/script/<name>/` 下生成完整的 TS 脚手架。创建后默认**禁用**。
@@ -71,7 +54,7 @@ npm run build          # 输出 dist/app.js
 
 ### `/box3script on <project>`
 
-启用指定项目。下次服务端重启时自动执行该项目的 `app.js`。
+启用指定项目并**立即加载执行**。加载错误会直接反馈到聊天栏。
 
 ```
 /box3script on skyrun
@@ -103,18 +86,36 @@ npm run build          # 输出 dist/app.js
 
 ### `/box3script reload`
 
-停止所有脚本，重新加载所有已启用项目的 `app.js`。等价于 `stop` + 重新 `autoLoad`。
+停止所有脚本，重新加载所有已启用项目的 `app.js`。等价于 `stop` + 重新 `autoLoad`。加载错误会反馈到聊天栏。
 
 ```
 /box3script reload
 ```
 
+### `/box3script watch`
+
+开启/关闭文件监控。开启后监控所有项目的 `dist/` 目录，`.js` 文件变化时自动热重载对应项目（2 秒防抖）。
+
+```
+/box3script watch          # 切换 开/关
+/box3script watch on       # 开启
+/box3script watch off      # 关闭
+```
+
 ### `/box3script stop`
 
-立即停止所有正在运行的脚本。清除所有回调、定时器和作用域。
+停止所有项目，清除全部回调、定时器和作用域。
 
 ```
 /box3script stop
+```
+
+### `/box3script stop <project>`
+
+停止指定项目，仅清除该项目的回调、定时器和作用域，**不影响其他正在运行的项目**。
+
+```
+/box3script stop siege
 ```
 
 ---
@@ -147,6 +148,6 @@ config/box3/
   │       ├── package.json
   │       ├── src/app.ts
   │       └── dist/app.js
-  └── data/                ← 存储数据目录 (storage API)
+  └── storage/             ← 存储数据目录 (storage API)
       └── ...
 ```
