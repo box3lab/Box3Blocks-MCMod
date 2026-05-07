@@ -104,6 +104,10 @@ public class Box3JSEntity {
         entity.removeTag(tag);
     }
 
+    public String[] tags() {
+        return entity.getTags().toArray(new String[0]);
+    }
+
     // ---- Glowing (MC extension) ----
 
     public boolean isGlowing() { return entity.isCurrentlyGlowing(); }
@@ -183,6 +187,38 @@ public class Box3JSEntity {
     private void trackIfSandboxed() {
         engine.getSandbox().trackEntityModify(engine.getCurrentProject(), entity);
     }
+
+    // ---- Physics ----
+
+    public boolean getCollides() { return getProp("collides", true); }
+    public void setCollides(boolean v) {
+        trackIfSandboxed();
+        setProp("collides", v);
+        if (!v && entity instanceof LivingEntity le) le.setNoGravity(true);
+    }
+
+    public boolean getFixed() { return getProp("fixed", false); }
+    public void setFixed(boolean v) {
+        trackIfSandboxed();
+        setProp("fixed", v);
+        if (v && entity instanceof LivingEntity le) le.setNoGravity(true);
+    }
+
+    public boolean getGravity() { return getProp("gravity", true); }
+    public void setGravity(boolean v) {
+        trackIfSandboxed();
+        setProp("gravity", v);
+        if (!v && entity instanceof LivingEntity le) le.setNoGravity(true);
+    }
+
+    public double getFriction() { return getProp("friction", 0.0); }
+    public void setFriction(double v) { trackIfSandboxed(); setProp("friction", v); }
+
+    public double getMass() { return getProp("mass", 1.0); }
+    public void setMass(double v) { trackIfSandboxed(); setProp("mass", v); }
+
+    public double getRestitution() { return getProp("restitution", 0.0); }
+    public void setRestitution(double v) { trackIfSandboxed(); setProp("restitution", v); }
 
     // ---- Invulnerable (MC extension) ----
 
@@ -327,12 +363,6 @@ public class Box3JSEntity {
         if (_onDestroyHandler != null) {
             engine.callFunction(_onDestroyHandler, this);
         }
-        entity.discard();
-        engine.clearCustomProps(entity.getUUID());
-    }
-
-    /** Remove entity without triggering onDestroy callback */
-    public void remove() {
         entity.discard();
         engine.clearCustomProps(entity.getUUID());
     }

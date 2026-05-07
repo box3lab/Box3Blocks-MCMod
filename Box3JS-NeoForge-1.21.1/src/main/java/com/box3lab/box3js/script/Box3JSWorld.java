@@ -1,13 +1,14 @@
 package com.box3lab.box3js.script;
 
-import net.minecraft.commands.CommandSourceStack;
+import com.box3lab.box3js.registries.Box3JSRecipeManager;
+import java.nio.file.Path;
+
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Difficulty;
@@ -21,10 +22,13 @@ import net.minecraft.world.item.component.FireworkExplosion;
 import net.minecraft.world.item.component.Fireworks;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.border.WorldBorder;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.storage.ServerLevelData;
 import org.mozilla.javascript.Function;
+import org.mozilla.javascript.NativeArray;
+import org.mozilla.javascript.NativeObject;
+import org.mozilla.javascript.ScriptableObject;
 
 import java.util.*;
 
@@ -70,8 +74,13 @@ public class Box3JSWorld {
     // ---- World properties ----
 
     public String projectName() { return server.getMotd(); }
+    public String getProjectName() { return server.getMotd(); }
 
     public int currentTick() { return server.getTickCount(); }
+    public int getCurrentTick() { return server.getTickCount(); }
+
+    public String getServerId() { return server.getMotd(); }
+    public void setServerId(String id) { server.setMotd(id); }
 
     public double getRainDensity() { return server.overworld().getRainLevel(1.0f); }
     public void setRainDensity(double v) { trackIfSandboxed(); server.overworld().getLevelData().setRaining(v > 0); }
@@ -164,73 +173,177 @@ public class Box3JSWorld {
         return new Box3JSEntity(entity, server, engine);
     }
 
+    // ---- createEntity(config) ----
+
+    public Box3JSEntity createEntity(NativeObject config) {
+        String type = config.containsKey("type") ? config.get("type").toString() : "minecraft:pig";
+        EntityType<?> eType = Box3ScriptUtils.lookupEntityType(type);
+        if (eType == null) return null;
+        Entity entity = eType.create(server.overworld());
+        if (entity == null) return null;
+
+        GameVector3 pos = config.containsKey("position") ? (GameVector3) config.get("position")
+            : new GameVector3(0, 0, 0);
+        entity.setPos(pos.x, pos.y, pos.z);
+        server.overworld().addFreshEntity(entity);
+        engine.getSandbox().trackEntity(engine.getCurrentProject(), entity);
+        Box3JSEntity be = new Box3JSEntity(entity, server, engine);
+
+        if (config.containsKey("velocity")) {
+            GameVector3 v = (GameVector3) config.get("velocity");
+            if (v != null) entity.setDeltaMovement(v.x, v.y, v.z);
+        }
+        if (config.containsKey("fixed")) be.setFixed(Box3ScriptUtils.coerceBool(config.get("fixed")));
+        if (config.containsKey("gravity")) be.setGravity(Box3ScriptUtils.coerceBool(config.get("gravity")));
+        if (config.containsKey("friction")) be.setFriction(((Number) config.get("friction")).doubleValue());
+        if (config.containsKey("mass")) be.setMass(((Number) config.get("mass")).doubleValue());
+        if (config.containsKey("restitution")) be.setRestitution(((Number) config.get("restitution")).doubleValue());
+        if (config.containsKey("collides")) be.setCollides(Box3ScriptUtils.coerceBool(config.get("collides")));
+        if (config.containsKey("meshInvisible")) be.setMeshInvisible(Box3ScriptUtils.coerceBool(config.get("meshInvisible")));
+        if (config.containsKey("hp")) be.setHp(((Number) config.get("hp")).doubleValue());
+        if (config.containsKey("maxHp")) be.setMaxHp(((Number) config.get("maxHp")).doubleValue());
+        if (config.containsKey("tags")) {
+            Object tags = config.get("tags");
+            if (tags instanceof NativeArray arr) {
+                for (int i = 0; i < arr.getLength(); i++) be.addTag(arr.get(i).toString());
+            }
+        }
+        return be;
+    }
+
+    // ---- sound(config) ----
+
+    public void sound(Object cfg) {
+        if (cfg instanceof String path) {
+            playSound(path, 0, 0, 0, 1.0, 1.0);
+        } else if (cfg instanceof NativeObject obj) {
+            String path = obj.containsKey("path") ? obj.get("path").toString() : "";
+            double x = 0, y = 0, z = 0;
+            if (obj.containsKey("position")) {
+                GameVector3 pos = (GameVector3) obj.get("position");
+                x = pos.x; y = pos.y; z = pos.z;
+            }
+            double vol = obj.containsKey("volume") ? ((Number) obj.get("volume")).doubleValue() : 1.0;
+            double pitch = obj.containsKey("pitch") ? ((Number) obj.get("pitch")).doubleValue() : 1.0;
+            playSound(path, x, y, z, vol, pitch);
+        }
+    }
+
+    // ---- searchBox(bounds) ----
+
+    public List<Box3JSEntity> searchBox(GameBounds3 bounds) {
+        return entitiesInArea(bounds.lo, bounds.hi);
+    }
+
+    // ---- Sound properties ----
+
+    public String getAmbientSound() { return ambientSound; }
+    public void setAmbientSound(String path) { ambientSound = path; }
+
+    public String getPlayerJoinSound() { return playerJoinSound; }
+    public void setPlayerJoinSound(String path) { playerJoinSound = path; }
+
+    public String getPlayerLeaveSound() { return playerLeaveSound; }
+    public void setPlayerLeaveSound(String path) { playerLeaveSound = path; }
+
+    public String getPlaceVoxelSound() { return placeVoxelSound; }
+    public void setPlaceVoxelSound(String path) { placeVoxelSound = path; }
+
+    public String getBreakVoxelSound() { return breakVoxelSound; }
+    public void setBreakVoxelSound(String path) { breakVoxelSound = path; }
+
+    private String ambientSound, playerJoinSound, playerLeaveSound, placeVoxelSound, breakVoxelSound;
+    private long lastAmbientPlayTick;
+
+    void tickAmbientSound(long currentTick) {
+        if (ambientSound != null && !ambientSound.isEmpty() && currentTick - lastAmbientPlayTick >= 200) {
+            lastAmbientPlayTick = currentTick;
+            var pos = server.overworld().getSharedSpawnPos();
+            playSound(ambientSound, pos.getX(), pos.getY(), pos.getZ(), 0.3, 1.0);
+        }
+    }
+
     // ---- Events ----
 
-    public void onTick(Function handler) {
-        engine.addTickCallback(() -> engine.callFunction(handler));
+    public GameEventHandlerToken onTick(Function handler) {
+        return new GameEventHandlerToken(engine.addTickCallback(() -> {
+            long tick = server.getTickCount();
+            long prevTick = engine.getPrevTick();
+            NativeObject info = new NativeObject();
+            ScriptableObject.putProperty(info, "tick", tick);
+            ScriptableObject.putProperty(info, "prevTick", prevTick);
+            ScriptableObject.putProperty(info, "elapsedTimeMS", tick * 50);
+            ScriptableObject.putProperty(info, "skip", 0);
+            engine.callFunction(handler, info);
+        }));
     }
-    public void onPlayerJoin(Function handler) {
-        engine.addJoinCallback(entity -> engine.callFunction(handler, entity));
+    public GameEventHandlerToken onPlayerJoin(Function handler) {
+        return new GameEventHandlerToken(engine.addJoinCallback((entity, tick) -> engine.callFunction(handler, entity, tick)));
     }
-    public void onPlayerLeave(Function handler) {
-        engine.addLeaveCallback(entity -> engine.callFunction(handler, entity));
+    public GameEventHandlerToken onPlayerLeave(Function handler) {
+        return new GameEventHandlerToken(engine.addLeaveCallback((entity, tick) -> engine.callFunction(handler, entity, tick)));
     }
-    public void onVoxelDestroy(Function handler) {
-        engine.addVoxelDestroyCallback((entity, x, y, z, voxel, tick) ->
-            engine.callFunction(handler, entity, x, y, z, voxel, tick));
+    public GameEventHandlerToken onVoxelDestroy(Function handler) {
+        return new GameEventHandlerToken(engine.addVoxelDestroyCallback((entity, x, y, z, voxel, tick) ->
+            engine.callFunction(handler, entity, x, y, z, voxel, tick)));
     }
-    public void onVoxelContact(Function handler) {
-        engine.addVoxelContactCallback((entity, voxel, x, y, z, axis, force, tick) ->
-            engine.callFunction(handler, entity, voxel, x, y, z, axis, force, tick));
+    public GameEventHandlerToken onVoxelContact(Function handler) {
+        return new GameEventHandlerToken(engine.addVoxelContactCallback((entity, voxel, x, y, z, axis, force, tick) ->
+            engine.callFunction(handler, entity, voxel, x, y, z, axis, force, tick)));
     }
-    public void onInteract(Function handler) {
-        engine.addInteractCallback((entity, target, tick) ->
-            engine.callFunction(handler, entity, target, tick));
+    public GameEventHandlerToken onInteract(Function handler) {
+        return new GameEventHandlerToken(engine.addInteractCallback((entity, target, tick) ->
+            engine.callFunction(handler, entity, target, tick)));
     }
-    public void onChat(Function handler) {
-        engine.addChatCallback((entity, message, tick) ->
-            engine.callFunction(handler, entity, message, tick));
+    public GameEventHandlerToken onChat(Function handler) {
+        return new GameEventHandlerToken(engine.addChatCallback((entity, message, tick) ->
+            engine.callFunction(handler, entity, message, tick)));
     }
-    public void onFluidEnter(Function handler) {
-        engine.addFluidEnterCallback((entity, fluid, x, y, z, tick) ->
-            engine.callFunction(handler, entity, fluid, x, y, z, tick));
+    public GameEventHandlerToken onFluidEnter(Function handler) {
+        return new GameEventHandlerToken(engine.addFluidEnterCallback((entity, fluid, x, y, z, tick) ->
+            engine.callFunction(handler, entity, fluid, x, y, z, tick)));
     }
-    public void onFluidLeave(Function handler) {
-        engine.addFluidLeaveCallback((entity, fluid, x, y, z, tick) ->
-            engine.callFunction(handler, entity, fluid, x, y, z, tick));
+    public GameEventHandlerToken onFluidLeave(Function handler) {
+        return new GameEventHandlerToken(engine.addFluidLeaveCallback((entity, fluid, x, y, z, tick) ->
+            engine.callFunction(handler, entity, fluid, x, y, z, tick)));
     }
-    public void onEntityContact(Function handler) {
-        engine.addEntityContactCallback((entity, other, tick) ->
-            engine.callFunction(handler, entity, other, tick));
+    public GameEventHandlerToken onEntityContact(Function handler) {
+        return new GameEventHandlerToken(engine.addEntityContactCallback((entity, other, tick) ->
+            engine.callFunction(handler, entity, other, tick)));
     }
-    public void onEntitySeparate(Function handler) {
-        engine.addEntitySeparateCallback((entity, other, tick) ->
-            engine.callFunction(handler, entity, other, tick));
+    public GameEventHandlerToken onEntitySeparate(Function handler) {
+        return new GameEventHandlerToken(engine.addEntitySeparateCallback((entity, other, tick) ->
+            engine.callFunction(handler, entity, other, tick)));
     }
-    public void onBlockPlace(Function handler) {
-        engine.addBlockPlaceCallback((entity, x, y, z, voxel, voxelId, tick) ->
-            engine.callFunction(handler, entity, x, y, z, voxel, voxelId, tick));
+    public GameEventHandlerToken onBlockPlace(Function handler) {
+        return new GameEventHandlerToken(engine.addBlockPlaceCallback((entity, x, y, z, voxel, voxelId, tick) ->
+            engine.callFunction(handler, entity, x, y, z, voxel, voxelId, tick)));
     }
-    public void onEntityDeath(Function handler) {
-        engine.addEntityDeathCallback((entity, killer, tick) ->
-            engine.callFunction(handler, entity, killer, tick));
+    public GameEventHandlerToken onEntityDeath(Function handler) {
+        return new GameEventHandlerToken(engine.addEntityDeathCallback((entity, killer, tick) ->
+            engine.callFunction(handler, entity, killer, tick)));
     }
-    public void onPlayerRespawn(Function handler) {
-        engine.addRespawnCallback(entity -> engine.callFunction(handler, entity));
+    public GameEventHandlerToken onPlayerRespawn(Function handler) {
+        return new GameEventHandlerToken(engine.addRespawnCallback((entity, tick) -> engine.callFunction(handler, entity, tick)));
     }
-    public void onBlockActivate(Function handler) {
-        engine.addBlockActivateCallback((entity, x, y, z, voxel, tick) ->
-            engine.callFunction(handler, entity, x, y, z, voxel, tick));
+    public GameEventHandlerToken onBlockActivate(Function handler) {
+        return new GameEventHandlerToken(engine.addBlockActivateCallback((entity, x, y, z, voxel, tick) ->
+            engine.callFunction(handler, entity, x, y, z, voxel, tick)));
     }
-    public void onEntityDamage(Function handler) {
-        engine.addEntityDamageCallback((entity, amount, source, attacker, tick) ->
-            engine.callFunction(handler, entity, amount, source, attacker, tick));
+    public GameEventHandlerToken onEntityDamage(Function handler) {
+        return new GameEventHandlerToken(engine.addEntityDamageCallback((entity, amount, source, attacker, tick) ->
+            engine.callFunction(handler, entity, amount, source, attacker, tick)));
     }
-    public void onMessage(Function handler) {
+    public GameEventHandlerToken onButtonPressed(Function handler) {
+        return new GameEventHandlerToken(engine.addButtonPressedCallback((entity, button, tick) ->
+            engine.callFunction(handler, entity, button, tick)));
+    }
+    public GameEventHandlerToken onMessage(Function handler) {
         String project = engine.getCurrentProject();
         if (project != null) {
-            engine.addMessageCallback(project, (from, d) -> engine.callFunction(handler, from, d));
+            return new GameEventHandlerToken(engine.addMessageCallback(project, (from, d) -> engine.callFunction(handler, from, d)));
         }
+        return new GameEventHandlerToken(() -> {});
     }
 
     // ---- Entity Query ----
@@ -439,6 +552,61 @@ public class Box3JSWorld {
     }
     public void playSound(String path, GameVector3 pos, double volume, double pitch) {
         playSound(path, pos.x, pos.y, pos.z, volume, pitch);
+    }
+
+    // ---- Structure ----
+
+    public void placeStructure(double x, double y, double z, String structureId) {
+        ResourceLocation rl = ResourceLocation.tryParse(structureId);
+        if (rl == null) return;
+        server.overworld().getStructureManager().get(rl).ifPresent(template -> {
+            template.placeInWorld(server.overworld(),
+                new BlockPos(0, 0, 0),
+                new BlockPos((int) x, (int) y, (int) z),
+                new StructurePlaceSettings().setKnownShape(true),
+                server.overworld().getRandom(), 3);
+        });
+    }
+    public void placeStructure(GameVector3 pos, String structureId) {
+        placeStructure(pos.x, pos.y, pos.z, structureId);
+    }
+
+    // ---- Advancement ----
+
+    public void grantAdvancement(String playerName, String advancementId) {
+        ServerPlayer sp = server.getPlayerList().getPlayerByName(playerName);
+        if (sp == null) return;
+        ResourceLocation rl = ResourceLocation.tryParse(advancementId);
+        if (rl == null) return;
+        var holder = server.getAdvancements().get(rl);
+        if (holder != null) {
+            for (String criterion : holder.value().criteria().keySet()) {
+                sp.getAdvancements().award(holder, criterion);
+            }
+        }
+    }
+
+    // ---- Custom Items ----
+
+    /** Load custom items from a resource pack's items.json using MC component IDs. */
+    public void loadCustomItems(String packName) {
+        Path itemsFile = Path.of(".").toAbsolutePath().normalize()
+            .resolve("resourcepacks").resolve(packName).resolve("items.json");
+        com.box3lab.box3js.registries.Box3JSCustomItems.loadFromPack(itemsFile);
+    }
+
+    // ---- Recipe ----
+
+    public List<String> listRecipes(String filter) {
+        return Box3JSRecipeManager.listRecipes(filter != null ? filter : "");
+    }
+
+    public boolean removeRecipe(String recipeId) {
+        return Box3JSRecipeManager.removeRecipe(recipeId);
+    }
+
+    public void clearRecipes() {
+        Box3JSRecipeManager.clearRecipes();
     }
 
     // ---- Message ----

@@ -33,6 +33,7 @@ public class Box3ScriptEngine {
 
     final Box3JSEventBus bus = new Box3JSEventBus();
     private String currentProject;
+    private long currentTick, prevTick;
     private Consumer<String> errorReporter;
     private final Map<String, Require> projectRequires = new HashMap<>();
 
@@ -107,74 +108,118 @@ public class Box3ScriptEngine {
     }
     void clearErrorReporter() { this.errorReporter = null; }
 
-    // ---- Callback registration (all wrap project context) ----
+    // ---- Callback registration (all return removal Runnables) ----
 
-    public void addTickCallback(Runnable cb) {
+    public Runnable addTickCallback(Runnable cb) {
         String project = currentProject;
-        bus.addTick(project, wrapContext(project, cb));
+        Runnable wrapped = wrapContext(project, cb);
+        bus.addTick(project, wrapped);
+        return () -> bus.removeTick(project, wrapped);
     }
-    public void addJoinCallback(PlayerJoinCallback cb) {
+    public Runnable addJoinCallback(PlayerJoinCallback cb) {
         String project = currentProject;
-        bus.addJoin(project, (e) -> runInContext(project, () -> cb.onJoin(e)));
+        PlayerJoinCallback wrapped = (e, t) -> runInContext(project, () -> cb.onJoin(e, t));
+        bus.addJoin(project, wrapped);
+        return () -> bus.removeJoin(project, wrapped);
     }
-    public void addLeaveCallback(PlayerLeaveCallback cb) {
+    public Runnable addLeaveCallback(PlayerLeaveCallback cb) {
         String project = currentProject;
-        bus.addLeave(project, (e) -> runInContext(project, () -> cb.onLeave(e)));
+        PlayerLeaveCallback wrapped = (e, t) -> runInContext(project, () -> cb.onLeave(e, t));
+        bus.addLeave(project, wrapped);
+        return () -> bus.removeLeave(project, wrapped);
     }
-    public void addVoxelDestroyCallback(VoxelDestroyCallback cb) {
+    public Runnable addVoxelDestroyCallback(VoxelDestroyCallback cb) {
         String project = currentProject;
-        bus.addVoxelDestroy(project, (e, x, y, z, v, t) -> runInContext(project, () -> cb.onDestroy(e, x, y, z, v, t)));
+        VoxelDestroyCallback wrapped = (e, x, y, z, v, t) -> runInContext(project, () -> cb.onDestroy(e, x, y, z, v, t));
+        bus.addVoxelDestroy(project, wrapped);
+        return () -> bus.removeVoxelDestroy(project, wrapped);
     }
-    public void addVoxelContactCallback(VoxelContactCallback cb) {
+    public Runnable addVoxelContactCallback(VoxelContactCallback cb) {
         String project = currentProject;
-        bus.addVoxelContact(project, (e, v, x, y, z, a, f, t) -> runInContext(project, () -> cb.onContact(e, v, x, y, z, a, f, t)));
+        VoxelContactCallback wrapped = (e, v, x, y, z, a, f, t) -> runInContext(project, () -> cb.onContact(e, v, x, y, z, a, f, t));
+        bus.addVoxelContact(project, wrapped);
+        return () -> bus.removeVoxelContact(project, wrapped);
     }
-    public void addInteractCallback(InteractCallback cb) {
+    public Runnable addInteractCallback(InteractCallback cb) {
         String project = currentProject;
-        bus.addInteract(project, (e, tgt, tick) -> runInContext(project, () -> cb.onInteract(e, tgt, tick)));
+        InteractCallback wrapped = (e, tgt, tick) -> runInContext(project, () -> cb.onInteract(e, tgt, tick));
+        bus.addInteract(project, wrapped);
+        return () -> bus.removeInteract(project, wrapped);
     }
-    public void addChatCallback(ChatCallback cb) {
+    public Runnable addChatCallback(ChatCallback cb) {
         String project = currentProject;
-        bus.addChat(project, (e, msg, tick) -> runInContext(project, () -> cb.onChat(e, msg, tick)));
+        ChatCallback wrapped = (e, msg, tick) -> {
+            java.util.concurrent.atomic.AtomicReference<Object> result = new java.util.concurrent.atomic.AtomicReference<>();
+            runInContext(project, () -> result.set(cb.onChat(e, msg, tick)));
+            return result.get();
+        };
+        bus.addChat(project, wrapped);
+        return () -> bus.removeChat(project, wrapped);
     }
-    public void addFluidEnterCallback(FluidEnterCallback cb) {
+    public Runnable addFluidEnterCallback(FluidEnterCallback cb) {
         String project = currentProject;
-        bus.addFluidEnter(project, (e, f, x, y, z, t) -> runInContext(project, () -> cb.onEnter(e, f, x, y, z, t)));
+        FluidEnterCallback wrapped = (e, f, x, y, z, t) -> runInContext(project, () -> cb.onEnter(e, f, x, y, z, t));
+        bus.addFluidEnter(project, wrapped);
+        return () -> bus.removeFluidEnter(project, wrapped);
     }
-    public void addFluidLeaveCallback(FluidLeaveCallback cb) {
+    public Runnable addFluidLeaveCallback(FluidLeaveCallback cb) {
         String project = currentProject;
-        bus.addFluidLeave(project, (e, f, x, y, z, t) -> runInContext(project, () -> cb.onLeave(e, f, x, y, z, t)));
+        FluidLeaveCallback wrapped = (e, f, x, y, z, t) -> runInContext(project, () -> cb.onLeave(e, f, x, y, z, t));
+        bus.addFluidLeave(project, wrapped);
+        return () -> bus.removeFluidLeave(project, wrapped);
     }
-    public void addEntityContactCallback(EntityContactCallback cb) {
+    public Runnable addEntityContactCallback(EntityContactCallback cb) {
         String project = currentProject;
-        bus.addEntityContact(project, (e, o, t) -> runInContext(project, () -> cb.onContact(e, o, t)));
+        EntityContactCallback wrapped = (e, o, t) -> runInContext(project, () -> cb.onContact(e, o, t));
+        bus.addEntityContact(project, wrapped);
+        return () -> bus.removeEntityContact(project, wrapped);
     }
-    public void addEntitySeparateCallback(EntitySeparateCallback cb) {
+    public Runnable addEntitySeparateCallback(EntitySeparateCallback cb) {
         String project = currentProject;
-        bus.addEntitySeparate(project, (e, o, t) -> runInContext(project, () -> cb.onSeparate(e, o, t)));
+        EntitySeparateCallback wrapped = (e, o, t) -> runInContext(project, () -> cb.onSeparate(e, o, t));
+        bus.addEntitySeparate(project, wrapped);
+        return () -> bus.removeEntitySeparate(project, wrapped);
     }
-    public void addBlockPlaceCallback(BlockPlaceCallback cb) {
+    public Runnable addBlockPlaceCallback(BlockPlaceCallback cb) {
         String project = currentProject;
-        bus.addBlockPlace(project, (e, x, y, z, v, vid, t) -> runInContext(project, () -> cb.onPlace(e, x, y, z, v, vid, t)));
+        BlockPlaceCallback wrapped = (e, x, y, z, v, vid, t) -> runInContext(project, () -> cb.onPlace(e, x, y, z, v, vid, t));
+        bus.addBlockPlace(project, wrapped);
+        return () -> bus.removeBlockPlace(project, wrapped);
     }
-    public void addEntityDeathCallback(EntityDeathCallback cb) {
+    public Runnable addEntityDeathCallback(EntityDeathCallback cb) {
         String project = currentProject;
-        bus.addEntityDeath(project, (e, k, t) -> runInContext(project, () -> cb.onDeath(e, k, t)));
+        EntityDeathCallback wrapped = (e, k, t) -> runInContext(project, () -> cb.onDeath(e, k, t));
+        bus.addEntityDeath(project, wrapped);
+        return () -> bus.removeEntityDeath(project, wrapped);
     }
-    public void addRespawnCallback(PlayerRespawnCallback cb) {
+    public Runnable addRespawnCallback(PlayerRespawnCallback cb) {
         String project = currentProject;
-        bus.addRespawn(project, (e) -> runInContext(project, () -> cb.onRespawn(e)));
+        PlayerRespawnCallback wrapped = (e, t) -> runInContext(project, () -> cb.onRespawn(e, t));
+        bus.addRespawn(project, wrapped);
+        return () -> bus.removeRespawn(project, wrapped);
     }
-    public void addBlockActivateCallback(BlockActivateCallback cb) {
+    public Runnable addBlockActivateCallback(BlockActivateCallback cb) {
         String project = currentProject;
-        bus.addBlockActivate(project, (e, x, y, z, v, t) -> runInContext(project, () -> cb.onActivate(e, x, y, z, v, t)));
+        BlockActivateCallback wrapped = (e, x, y, z, v, t) -> runInContext(project, () -> cb.onActivate(e, x, y, z, v, t));
+        bus.addBlockActivate(project, wrapped);
+        return () -> bus.removeBlockActivate(project, wrapped);
     }
-    public void addEntityDamageCallback(EntityDamageCallback cb) {
+    public Runnable addEntityDamageCallback(EntityDamageCallback cb) {
         String project = currentProject;
-        bus.addEntityDamage(project, (e, a, s, at, t) -> runInContext(project, () -> cb.onDamage(e, a, s, at, t)));
+        EntityDamageCallback wrapped = (e, a, s, at, t) -> runInContext(project, () -> cb.onDamage(e, a, s, at, t));
+        bus.addEntityDamage(project, wrapped);
+        return () -> bus.removeEntityDamage(project, wrapped);
     }
-    public void addMessageCallback(String project, MessageCallback cb) {
-        bus.addMessage(project, (from, d) -> runInContext(project, () -> cb.onMessage(from, d)));
+    public Runnable addButtonPressedCallback(ButtonPressedCallback cb) {
+        String project = currentProject;
+        ButtonPressedCallback wrapped = (e, btn, t) -> runInContext(project, () -> cb.onButtonPressed(e, btn, t));
+        bus.addButtonPressed(project, wrapped);
+        return () -> bus.removeButtonPressed(project, wrapped);
+    }
+    public Runnable addMessageCallback(String project, MessageCallback cb) {
+        MessageCallback wrapped = (from, d) -> runInContext(project, () -> cb.onMessage(from, d));
+        bus.addMessage(project, wrapped);
+        return () -> bus.removeMessage(project, wrapped);
     }
     public void setPlayerChatHandler(UUID uuid, Function handler) {
         String project = currentProject;
@@ -200,6 +245,7 @@ public class Box3ScriptEngine {
         worldBinding.setProjectName(name);
     }
     public String getCurrentProject() { return currentProject; }
+    long getPrevTick() { return prevTick; }
 
     Box3ScriptSandbox getSandbox() { return sandbox; }
 
@@ -274,10 +320,64 @@ public class Box3ScriptEngine {
         }
     }
 
+    // ---- Button press tracking ----
+
+    private void checkButtonPresses() {
+        if (bus.buttonPressedCallbacks.isEmpty()) return;
+        long tick = server.getTickCount();
+        boolean anyProjectCares = false;
+        for (var list : bus.buttonPressedCallbacks.values()) {
+            if (!list.isEmpty()) { anyProjectCares = true; break; }
+        }
+        if (!anyProjectCares) return;
+
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            UUID uuid = player.getUUID();
+            Set<String> current = new HashSet<>();
+
+            if (player.isCrouching()) current.add("CROUCH");
+            if (player.isSprinting()) current.add("RUN");
+            var delta = player.getDeltaMovement();
+            if (Math.abs(delta.x) > 0.01 || Math.abs(delta.z) > 0.01) {
+                if (player.onGround() && !player.isSprinting()) current.add("WALK");
+            }
+            if (!player.onGround() && delta.y > 0.01) current.add("JUMP");
+            if (player.getAbilities().flying) current.add("FLY");
+
+            Set<String> previous = bus.previousButtonStates.get(uuid);
+            if (previous != null) {
+                for (String btn : current) {
+                    if (!previous.contains(btn)) {
+                        fireButtonPressed(player, btn, tick);
+                    }
+                }
+            }
+            bus.previousButtonStates.put(uuid, current);
+        }
+    }
+
+    private void fireButtonPressed(ServerPlayer sp, String button, long tick) {
+        Box3JSEntity entity = new Box3JSEntity(sp, server, this);
+        for (var entry : bus.buttonPressedCallbacks.entrySet()) {
+            if (entry.getValue().isEmpty()) continue;
+            runInContext(entry.getKey(), () -> {
+                for (var cb : entry.getValue()) cb.onButtonPressed(entity, button, tick);
+            });
+        }
+    }
+
+    public void fireActionButton(ServerPlayer sp, String button) {
+        long tick = server.getTickCount();
+        fireButtonPressed(sp, button, tick);
+    }
+
     // ---- Tick ----
 
     public void fireTick() {
+        prevTick = currentTick;
+        currentTick = server.getTickCount();
         fireTimers();
+        checkButtonPresses();
         for (var list : bus.tickCallbacks.values()) {
             for (Runnable cb : list) cb.run();
         }
@@ -346,6 +446,7 @@ public class Box3ScriptEngine {
                 }
             }
         }
+        worldBinding.tickAmbientSound(currentTick);
     }
 
     private void tickFluid(String project, List<FluidEnterCallback> enter, List<FluidLeaveCallback> leave) {
@@ -398,6 +499,8 @@ public class Box3ScriptEngine {
                 for (var cb : entry.getValue()) cb.onDestroy(e, pos.getX(), pos.getY(), pos.getZ(), v, t);
             });
         }
+        String s = worldBinding.getBreakVoxelSound();
+        if (s != null && !s.isEmpty()) worldBinding.playSound(s, pos.getX(), pos.getY(), pos.getZ(), 1.0, 1.0);
     }
 
     public void fireInteract(ServerPlayer player, net.minecraft.world.entity.Entity target) {
@@ -416,7 +519,9 @@ public class Box3ScriptEngine {
         }
     }
 
-    public void fireChat(ServerPlayer player, String message) {
+    /** @return true if any chat callback returned false to cancel */
+    public boolean fireChat(ServerPlayer player, String message) {
+        java.util.concurrent.atomic.AtomicBoolean cancelled = new java.util.concurrent.atomic.AtomicBoolean(false);
         Box3JSEntity entity = null;
         long tick = -1;
         for (var entry : bus.chatCallbacks.entrySet()) {
@@ -424,9 +529,15 @@ public class Box3ScriptEngine {
             Box3JSEntity e = entity;
             long t = tick;
             runInContext(entry.getKey(), () -> {
-                for (var cb : entry.getValue()) cb.onChat(e, message, t);
+                for (var cb : entry.getValue()) {
+                    Object result = cb.onChat(e, message, t);
+                    if (result instanceof Boolean && !((Boolean) result)) {
+                        cancelled.set(true);
+                    }
+                }
             });
         }
+        if (cancelled.get()) return true;
         // Per-player chat handlers
         for (var entry : bus.playerChatHandlers.entrySet()) {
             Function handler = entry.getValue().get(player.getUUID());
@@ -437,6 +548,7 @@ public class Box3ScriptEngine {
                 runInContext(project, () -> callFunction(handler, e, message, t));
             }
         }
+        return cancelled.get();
     }
 
     public void fireBlockPlace(ServerPlayer player, BlockPos pos, BlockState state) {
@@ -455,6 +567,8 @@ public class Box3ScriptEngine {
                 for (var cb : entry.getValue()) cb.onPlace(e, pos.getX(), pos.getY(), pos.getZ(), v, vid, t);
             });
         }
+        String s = worldBinding.getPlaceVoxelSound();
+        if (s != null && !s.isEmpty()) worldBinding.playSound(s, pos.getX(), pos.getY(), pos.getZ(), 1.0, 1.0);
     }
 
     public void fireEntityDeath(net.minecraft.world.entity.Entity deadEntity, net.minecraft.world.entity.Entity attacker) {
@@ -475,12 +589,14 @@ public class Box3ScriptEngine {
 
     public void firePlayerRespawn(ServerPlayer player) {
         Box3JSEntity entity = null;
+        long tick = -1;
         for (var entry : bus.respawnCallbacks.entrySet()) {
             if (entry.getValue().isEmpty()) continue;
-            if (entity == null) entity = new Box3JSEntity(player, server, this);
+            if (entity == null) { entity = new Box3JSEntity(player, server, this); tick = server.getTickCount(); }
             Box3JSEntity e = entity;
+            long t = tick;
             runInContext(entry.getKey(), () -> {
-                for (var cb : entry.getValue()) cb.onRespawn(e);
+                for (var cb : entry.getValue()) cb.onRespawn(e, t);
             });
         }
     }
@@ -519,26 +635,34 @@ public class Box3ScriptEngine {
 
     public void firePlayerJoin(ServerPlayer player) {
         Box3JSEntity entity = null;
+        long tick = -1;
         for (var entry : bus.joinCallbacks.entrySet()) {
             if (entry.getValue().isEmpty()) continue;
-            if (entity == null) entity = new Box3JSEntity(player, server, this);
+            if (entity == null) { entity = new Box3JSEntity(player, server, this); tick = server.getTickCount(); }
             Box3JSEntity e = entity;
+            long t = tick;
             runInContext(entry.getKey(), () -> {
-                for (var cb : entry.getValue()) cb.onJoin(e);
+                for (var cb : entry.getValue()) cb.onJoin(e, t);
             });
         }
+        String s = worldBinding.getPlayerJoinSound();
+        if (s != null && !s.isEmpty()) worldBinding.playSound(s, player.getX(), player.getY(), player.getZ(), 1.0, 1.0);
     }
 
     public void firePlayerLeave(ServerPlayer player) {
         Box3JSEntity entity = null;
+        long tick = -1;
         for (var entry : bus.leaveCallbacks.entrySet()) {
             if (entry.getValue().isEmpty()) continue;
-            if (entity == null) entity = new Box3JSEntity(player, server, this);
+            if (entity == null) { entity = new Box3JSEntity(player, server, this); tick = server.getTickCount(); }
             Box3JSEntity e = entity;
+            long t = tick;
             runInContext(entry.getKey(), () -> {
-                for (var cb : entry.getValue()) cb.onLeave(e);
+                for (var cb : entry.getValue()) cb.onLeave(e, t);
             });
         }
+        String s = worldBinding.getPlayerLeaveSound();
+        if (s != null && !s.isEmpty()) worldBinding.playSound(s, player.getX(), player.getY(), player.getZ(), 1.0, 1.0);
     }
 
     /** Call a JS function from Java, managing Rhino context */
@@ -550,13 +674,6 @@ public class Box3ScriptEngine {
             Context.exit();
         }
     }
-
-    /** Wrap a Java object for return to JS */
-    public Object wrap(Object obj) {
-        return Context.javaToJS(obj, scope);
-    }
-
-    public ScriptableObject getScope() { return scope; }
 
     public Map<String, Object> getCustomProps(UUID uuid) {
         return bus.entityCustomProps.computeIfAbsent(uuid, k -> new HashMap<>());
@@ -650,14 +767,13 @@ public class Box3ScriptEngine {
             ScriptableObject.putProperty(scope, "GameRGBColor", new NativeJavaClass(scope, GameRGBColor.class));
             ScriptableObject.putProperty(scope, "GameRGBAColor", new NativeJavaClass(scope, GameRGBAColor.class));
             ScriptableObject.putProperty(scope, "GameQuaternion", new NativeJavaClass(scope, GameQuaternion.class));
+            ScriptableObject.putProperty(scope, "GameEventHandlerToken", new NativeJavaClass(scope, GameEventHandlerToken.class));
             cx.evaluateString(scope,
-                "GameDialogType = { TEXT: 'TEXT', INPUT: 'INPUT', SELECT: 'SELECT' }; " +
                 "GameButtonType = { WALK: 'WALK', RUN: 'RUN', CROUCH: 'CROUCH', JUMP: 'JUMP', " +
-                "  DOUBLE_JUMP: 'DOUBLE_JUMP', FLY: 'FLY', ACTION0: 'ACTION0', ACTION1: 'ACTION1' }; " +
-                "GameInputDirection = { NONE: 0, VERTICAL: 1, HORIZONTAL: 2, BOTH: 3 }; " +
-                "GameCameraMode = { FIXED: 'FIXED', FOLLOW: 'FOLLOW', FPS: 'FPS', RELATIVE: 'RELATIVE' }; " +
+                "  FLY: 'FLY', ACTION0: 'ACTION0', ACTION1: 'ACTION1' }; " +
+                "GameCameraMode = { FOLLOW: 'FOLLOW', FPS: 'FPS' }; " +
                 "GamePlayerMoveState = { FLYING: 'FLYING', GROUND: 'GROUND', SWIM: 'SWIM', FALL: 'FALL', " +
-                "  JUMP: 'JUMP', DOUBLE_JUMP: 'DOUBLE_JUMP' }; " +
+                "  JUMP: 'JUMP' }; " +
                 "GamePlayerWalkState = { NONE: 'NONE', CROUCH: 'CROUCH', WALK: 'WALK', RUN: 'RUN' };",
                 "enums", 1, null);
         } finally {
@@ -665,8 +781,6 @@ public class Box3ScriptEngine {
         }
     }
 
-    public MinecraftServer getServer() { return server; }
-    public Box3JSWorld getWorldBinding() { return worldBinding; }
     public Box3JSVoxels getVoxelsBinding() { return voxelsBinding; }
 
     public class Box3JSConsole {

@@ -1,10 +1,10 @@
 # player — 玩家 API
 
-`player` 对象通过 `entity.player` 获取，代表登录的玩家。它包含 `entity` 的全部能力，并额外提供玩家专属功能：背包、经验、飞行、消息、传送等。
+`player` 对象通过 `entity.player` 获取，代表登录的玩家。它拥有 `entity` 的全部属性和方法（如 `hp`、`position`、`tags()` 等），并额外提供玩家专属功能：背包、经验、飞行、消息、传送等。
 
 ```js
-world.onPlayerJoin((entity) => {
-  var p = entity.player; // p 即为 player 对象
+world.onPlayerJoin(function(entity, tick) {
+  var p = entity.player;  // p 即为 player 对象
   p.directMessage("欢迎回来, " + p.name + "!");
 });
 ```
@@ -17,18 +17,28 @@ world.onPlayerJoin((entity) => {
 
 ### player.userId
 
-✅ Box3 API | 只读。玩家 UUID 字符串。
+✅ Box3 API | 只读。玩家 UUID 字符串（与 `entity.id` 相同）。
 
-### player.getOpLevel()
+### player.opLevel
 
-⬆ MC 扩展 | 获取/设置玩家管理员权限等级 (0-4)。0=普通玩家, 1=可绕过出生点保护, 2=可使用大部分命令, 3=可管理玩家, 4=最高权限。
+✅ Box3 API | 获取/设置玩家管理员权限等级 (0–4)。
+
+| 等级 | 说明 |
+|------|------|
+| 0 | 普通玩家 |
+| 1 | 可绕过出生点保护 |
+| 2 | 可使用大部分命令 |
+| 3 | 可管理玩家 |
+| 4 | 最高权限 (等同于 `/op`) |
 
 ```js
-if (player.getOpLevel() >= 2) {
+if (player.opLevel >= 2) {
   // 需要权限等级 2 的操作
 }
-player.opLevel = 3; // 设置为 3 级权限
+player.opLevel = 3;  // 属性方式设置为 3 级
 ```
+
+另有 `player.getOpLevel()` 方法返回权限等级数字。
 
 ## 外观
 
@@ -38,10 +48,11 @@ player.opLevel = 3; // 设置为 3 级权限
 
 ### player.scale
 
-✅ Box3 API | 只读。玩家缩放值。
+✅ Box3 API | 只读。玩家模型缩放比例（MC 原生 scale，非 Box3 scale）。
 
 ```js
-player.invisible = true; // 隐形
+player.invisible = true;  // 隐形
+console.log("玩家缩放: " + player.scale);
 ```
 
 ## 移动
@@ -50,29 +61,66 @@ player.invisible = true; // 隐形
 
 ### player.walkSpeed
 
-步行速度，对应 `MOVEMENT_SPEED` 属性。默认值约 0.1。
+步行速度，对应 `MOVEMENT_SPEED` 属性基值。默认值约 0.1。
 
 ### player.runSpeed
 
-奔跑速度。`walkSpeed × 1.3` 的关系自动保持。
+奔跑速度。get 返回 `walkSpeed × 1.3`，set 自动反算 `walkSpeed`，保持 1.3 倍比例关系。
 
 ### player.jumpPower
 
-跳跃力度，对应 `JUMP_STRENGTH` 属性。
+跳跃力度，对应 `JUMP_STRENGTH` 属性基值。默认值约 0.42。
+
+### player.enableJump
+
+获取/设置是否允许跳跃。默认 `true`。设为 `false` 时保存当前跳跃力并将 `JUMP_STRENGTH` 设为 0；设回 `true` 时恢复。
+
+```js
+player.enableJump = false;  // 禁止跳跃
+player.enableJump = true;   // 恢复跳跃
+```
+
+### player.crouchSpeed
+
+获取/设置潜行速度（自定义属性，默认 `0.0`）。MC 无独立潜行速度属性，脚本可读取此值自行实现。
+
+### player.swimSpeed
+
+获取/设置游泳速度。底层映射到 `WATER_MOVEMENT_EFFICIENCY` 属性。
+
+```js
+player.swimSpeed = 0.5;  // 游泳更快
+```
 
 ### player.moveState
 
-只读。当前移动状态：`"FLYING"`、`"SWIM"`、`"JUMP"`、`"FALL"`、`"GROUND"`。
+只读。当前移动状态字符串：
+
+| 值 | 说明 |
+|------|------|
+| `"FLYING"` | 正在飞行 |
+| `"SWIM"` | 在水中 |
+| `"JUMP"` | 向上跳跃 |
+| `"FALL"` | 下落中 |
+| `"GROUND"` | 在地面上 |
 
 ### player.walkState
 
-只读。当前行走状态：`"CROUCH"`、`"RUN"`、`"WALK"`、`"NONE"`。
+只读。当前行走状态字符串：
+
+| 值 | 说明 |
+|------|------|
+| `"CROUCH"` | 潜行中 |
+| `"RUN"` | 奔跑中 |
+| `"WALK"` | 行走中 |
+| `"NONE"` | 静止 |
 
 ```js
-player.walkSpeed = 0.2; // 加速
-player.jumpPower = 0.6; // 跳更高
+player.walkSpeed = 0.2;   // 加速
+player.jumpPower = 0.6;   // 跳更高
+player.swimSpeed = 0.3;   // 游泳速度
 
-world.onTick(() => {
+world.onTick(function() {
   if (player.walkState === "RUN") {
     // 玩家在奔跑
   }
@@ -115,11 +163,11 @@ player.disableFly = true;
 
 ### player.collision
 
-⬆ MC 扩展 | 获取/设置团队内碰撞。设为 `false` 可防止多人推搡。底层修改团队的 `CollisionRule`。
+⬆ MC 扩展 | 获取/设置团队内碰撞。设为 `false` 可防止多人推搡。底层修改玩家所在队伍的 `CollisionRule`（ALWAYS / NEVER）。
 
 ```js
-player.collision = false; // 禁用碰撞
-console.log(player.collision); // false
+player.collision = false;  // 禁用碰撞
+console.log(player.collision);
 ```
 
 ## 生命值
@@ -134,14 +182,22 @@ console.log(player.collision); // false
 
 获取/设置最大生命值。
 
+### player.dead
+
+只读。玩家是否已死亡或正在死亡中（`isDeadOrDying()`）。
+
 ```js
 // 设置职业血量
-player.maxHp = 40; // 战士 40 HP
-player.hp = 40; // 满血
+player.maxHp = 40;  // 战士 40 HP
+player.hp = 40;     // 满血
 
 // 设置后若当前血量超过新最大值会自动截断
 player.maxHp = 20;
 // player.hp 自动降到 20 封顶
+
+if (player.dead) {
+  console.log("玩家已死亡");
+}
 ```
 
 ## 游戏模式
@@ -151,10 +207,10 @@ player.maxHp = 20;
 ✅ Box3 API | 获取/设置游戏模式。get 返回名称字符串，set 接受字符串或数字。
 
 ```js
-player.gameMode = "creative"; // 创造模式
-player.gameMode = "survival"; // 生存模式
-player.gameMode = "adventure"; // 冒险模式
-player.gameMode = "spectator"; // 旁观模式
+player.gameMode = "creative";   // 创造模式
+player.gameMode = "survival";   // 生存模式
+player.gameMode = "adventure";  // 冒险模式
+player.gameMode = "spectator";  // 旁观模式
 // 或数字: 0=生存, 1=创造, 2=冒险, 3=旁观
 ```
 
@@ -164,19 +220,19 @@ player.gameMode = "spectator"; // 旁观模式
 
 ### player.cameraMode
 
-获取/设置相机模式：`"FPS"`（第一人称）或 `"FOLLOW"`（跟随实体）。
+获取/设置相机模式：`"FPS"`（第一人称）或 `"FOLLOW"`（跟随实体）。设为 `"FPS"` 时自动清除跟随目标。
 
 ### player.cameraEntity
 
-设置或获取跟随的实体对象（`Box3JSEntity`）。
+设置或获取跟随的实体对象（`GameEntity`）。设为实体时相机模式自动切换为 `"FOLLOW"`，设为 `null` 时切换回 `"FPS"`。
 
 ### player.cameraPitch / player.cameraYaw
 
-相机的俯仰角和偏航角。
+相机的俯仰角（pitch）和偏航角（yaw）。注意：MC 中 yaw 对应 Y 旋转角 (xRot)，pitch 对应 X 旋转角 (yRot)。
 
 ### player.facingDirection
 
-只读 `GameVector3`。玩家视线方向单位向量。
+只读 `GameVector3`。玩家视线方向的单位向量。
 
 ### player.cameraTarget
 
@@ -194,7 +250,7 @@ player.gameMode = "spectator"; // 旁观模式
 player.lookAt(10, 100, 10);
 player.lookAt(target.position);
 
-// 获取视线方向
+// 获取视线信息
 var dir = player.facingDirection;
 var target = player.cameraTarget;
 ```
@@ -205,9 +261,23 @@ var target = player.cameraTarget;
 
 ✅ Box3 API | 传送玩家到指定 `GameVector3` 坐标。
 
+### player.spawnPoint
+
+✅ Box3 API | 获取/设置玩家的重生点坐标 (`GameVector3`)。读取时若玩家未设置重生点，返回世界出生点。
+
+```js
+// 属性方式设置
+player.spawnPoint = new GameVector3(0, 100, 0);
+console.log(player.spawnPoint);
+```
+
 ### player.setRespawnPoint(pos)
 
-✅ Box3 API | 设置玩家的重生点。
+✅ Box3 API | 设置玩家重生点（方法方式，与 `spawnPoint` 属性等价）。
+
+### player.setSpawnPoint(pos)
+
+✅ Box3 API | 同 `setRespawnPoint`，Box3 标准命名。
 
 ### player.respawn()
 
@@ -234,7 +304,7 @@ player.teleport(new GameVector3(0, 70, 0));
 
 ### player.kick(reason)
 
-✅ Box3 API | 踢出玩家，自定义原因。
+✅ Box3 API | 踢出玩家，自定义踢出原因。
 
 ```js
 player.kick("你已被移出游戏");
@@ -244,7 +314,7 @@ player.kick("你已被移出游戏");
 
 ### player.directMessage(msg)
 
-✅ Box3 API | 向玩家发送聊天栏消息。
+✅ Box3 API | 向玩家发送聊天栏消息（仅该玩家可见的系统消息）。
 
 ### player.actionBar(msg)
 
@@ -252,11 +322,11 @@ player.kick("你已被移出游戏");
 
 ### player.title(title, subtitle)
 
-✅ Box3 API | 向玩家发送屏幕标题。使用默认动画参数。
+✅ Box3 API | 向玩家发送屏幕标题。使用默认动画参数：淡入 10 tick、停留 70 tick、淡出 20 tick。
 
 ### player.title(title, subtitle, fadeIn, stay, fadeOut)
 
-⬆ MC 扩展 | 完全参数的标题。`fadeIn`/`stay`/`fadeOut` 单位均为 tick。
+⬆ MC 扩展 | 完全参数的标题。`fadeIn`/`stay`/`fadeOut` 单位均为 tick (20 tick = 1秒)。
 
 ### player.dialog(config)
 
@@ -272,11 +342,11 @@ player.directMessage("你选择了: " + result.value);
 
 ### player.link(href)
 
-✅ Box3 API | 向玩家发送可点击链接。
+✅ Box3 API | 向玩家发送可点击的 URL 链接（蓝色下划线）。
 
 ### player.onChat(handler)
 
-✅ Box3 API | 为单个玩家注册聊天回调（更精细的控制，常用于对话树）。
+✅ Box3 API | 为单个玩家注册聊天回调（比全局 `world.onChat` 更精细的控制，常用于对话树）。
 
 ```js
 player.directMessage("你好！");
@@ -286,7 +356,7 @@ player.link("https://example.com");
 
 // 对话树
 player.directMessage("输入你的选择: A 或 B");
-player.onChat((entity, msg, tick) => {
+player.onChat(function(entity, msg, tick) {
   if (msg === "A") {
     player.directMessage("你选择了 A");
   }
@@ -312,8 +382,8 @@ player.onChat((entity, msg, tick) => {
 ⬆ MC 扩展 | 获取/设置饱和度（0–20，浮点数）。
 
 ```js
-player.xp = 10; // 设置 10 级
-player.addExperienceLevels(3); // 加 3 级
+player.xp = 10;                 // 设置 10 级
+player.addExperienceLevels(3);  // 加 3 级
 player.food = 20;
 player.saturation = 10;
 ```
@@ -326,30 +396,15 @@ player.saturation = 10;
 
 给予物品。
 
-### player.clearInventory()
+### player.giveEnchantedItem(itemId, count, enchants)
 
-清空背包。
-
-### player.getHeldItem()
-
-获取主手物品，返回 `{id, count}`。空手返回 `{id: "minecraft:air", count: 0}`。
+给予附魔物品。`enchants` 是 `{附魔ID: 等级}` 对象。
 
 ```js
 player.giveItem("minecraft:diamond_sword", 1);
 player.giveItem("minecraft:golden_apple", 5);
 player.giveItem("minecraft:arrow", 64);
 
-var held = player.getHeldItem();
-console.log(held.id, held.count); // "minecraft:diamond_sword" 1
-
-player.clearInventory();
-```
-
-### player.giveEnchantedItem(itemId, count, enchants)
-
-给予附魔物品。`enchants` 是 `{附魔ID: 等级}` 对象。
-
-```js
 player.giveEnchantedItem("minecraft:diamond_sword", 1, {
   "minecraft:sharpness": 5,
   "minecraft:fire_aspect": 2,
@@ -363,9 +418,22 @@ player.giveEnchantedItem("minecraft:bow", 1, {
 });
 ```
 
+### player.giveCustomItem(id, count)
+
+⬆ MC 扩展 | 给予通过 `world.loadCustomItems()` 加载的自定义物品。物品以 `minecraft:paper` 为载体，通过 DataComponents 获得名称、贴图、食物等属性。
+
+```js
+// 先加载配置
+world.loadCustomItems("box3js-items");
+// 再给予物品
+player.giveCustomItem("arena_trophy", 1);
+player.giveCustomItem("arena_stew", 4);
+player.giveCustomItem("arena_medal", 16);
+```
+
 ### player.giveNamedItem(itemId, count, name, lore)
 
-给予带自定义名称和描述的物品。`lore` 为字符串数组。
+给予带自定义名称和描述的物品。`lore` 为字符串数组，每项一行描述文字。
 
 ```js
 player.giveNamedItem("minecraft:gold_ingot", 1, "§6§l跑酷金牌", [
@@ -379,6 +447,23 @@ player.giveNamedItem("minecraft:diamond_sword", 1, "§c§l烈焰之刃", [
 ]);
 ```
 
+### player.getHeldItem()
+
+获取主手物品，返回 `{id, count}`。空手返回 `{id: "minecraft:air", count: 0}`。
+
+```js
+var held = player.getHeldItem();
+console.log(held.id, held.count);  // "minecraft:diamond_sword" 1
+```
+
+### player.clearInventory()
+
+清空背包（包括盔甲槽和副手）。
+
+```js
+player.clearInventory();
+```
+
 ## 药水效果
 
 ### player.addEffect(effectId, duration, amplifier)
@@ -387,7 +472,7 @@ player.giveNamedItem("minecraft:diamond_sword", 1, "§c§l烈焰之刃", [
 
 ### player.addEffect(effectId, duration, amplifier, hideParticles)
 
-⬆ MC 扩展 | 添加效果并可选隐藏粒子。
+⬆ MC 扩展 | 添加效果并可选择隐藏粒子。
 
 ### player.clearEffects()
 
@@ -395,7 +480,7 @@ player.giveNamedItem("minecraft:diamond_sword", 1, "§c§l烈焰之刃", [
 
 ```js
 player.addEffect("minecraft:speed", 600, 2);
-player.addEffect("minecraft:jump_boost", 99999, 1, true); // 永久，无粒子
+player.addEffect("minecraft:jump_boost", 99999, 1, true);  // 永久，无粒子
 player.clearEffects();
 ```
 
@@ -403,22 +488,38 @@ player.clearEffects();
 
 ### player.playSound(path, volume, pitch)
 
-⬆ MC 扩展 | 向该玩家播放音效。`path` 为命名空间 ID。
+⬆ MC 扩展 | 向该玩家单独播放音效。`path` 为命名空间 ID（如 `"minecraft:block.note_block.pling"`），`volume` 0–1，`pitch` 0.5–2。
 
 ### player.runCommand(cmd)
 
-⬆ MC 扩展 | 以玩家身份执行命令。
+⬆ MC 扩展 | 以该玩家身份执行 Minecraft 命令。
 
 ```js
 player.playSound("minecraft:block.note_block.pling", 0.8, 1.5);
 player.runCommand("say hello");
 ```
 
+## 成就
+
+### player.grantAdvancement(advancementId)
+
+⬆ MC 扩展 | 为该玩家授予成就/进度。
+
+### player.revokeAdvancement(advancementId)
+
+⬆ MC 扩展 | 撤销该玩家的成就/进度。
+
+```js
+player.grantAdvancement("minecraft:story/mine_stone");
+player.grantAdvancement("minecraft:adventure/kill_a_mob");
+player.revokeAdvancement("minecraft:story/mine_stone");
+```
+
 ## Tab 列表
 
 ### player.setPlayerListName(name)
 
-⬆ MC 扩展 | 修改该玩家在 Tab 列表中显示的名字。
+⬆ MC 扩展 | 修改该玩家在 Tab 列表中显示的名字（支持颜色代码）。
 
 ```js
 player.setPlayerListName("§e[CP3] §f" + player.name);

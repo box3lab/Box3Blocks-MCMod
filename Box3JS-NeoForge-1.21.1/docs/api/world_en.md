@@ -4,20 +4,29 @@
 
 ## World Properties
 
-### world.projectName()
+### world.projectName
 
-⬆ MC Extension | Read-only. The server MOTD string.
+✅ Box3 API | Read-only property. The server MOTD string. Also callable as `world.projectName()` for backward compatibility.
 
 ```js
-console.log(world.projectName()); // "A Minecraft Server"
+console.log(world.projectName); // "A Minecraft Server"
 ```
 
-### world.currentTick()
+### world.serverId
 
-✅ Box3 API | Read-only. Total ticks since server startup.
+✅ Box3 API | Read/write property. Server identifier, maps to the server MOTD.
 
 ```js
-var uptime = world.currentTick();
+world.serverId = "My Cool Server";
+console.log(world.serverId);
+```
+
+### world.currentTick
+
+✅ Box3 API | Read-only property. Total ticks since server startup. Also callable as `world.currentTick()` for backward compatibility.
+
+```js
+var uptime = world.currentTick;
 world.say(
   "Server has been running for " + Math.floor(uptime / 20 / 60) + " minutes",
 );
@@ -150,15 +159,106 @@ zombie.setEquipment("mainhand", "minecraft:iron_sword");
 zombie.setAI(true);
 ```
 
+### world.createEntity(config)
+
+✅ Box3 API | Spawn an entity with a full configuration object. Returns `Box3JSEntity`.
+
+Supported config fields: `type`, `position`, `velocity`, `fixed`, `gravity`, `friction`, `mass`, `restitution`, `collides`, `meshInvisible`, `hp`, `maxHp`, `tags` (array).
+
+```js
+var entity = world.createEntity({
+  type: "minecraft:skeleton",
+  position: new GameVector3(0, 100, 0),
+  velocity: new GameVector3(0, 0.5, 0),
+  fixed: false,
+  gravity: true,
+  collides: true,
+  hp: 30,
+  maxHp: 30,
+  tags: ["enemy", "undead"]
+});
+```
+
+## Sound Properties
+
+✅ Box3 API | Sound path strings that auto-play when set to a non-empty value:
+
+| Property             | Trigger                                                        |
+| -------------------- | -------------------------------------------------------------- |
+| `ambientSound`       | Every 200 ticks (10s) at world spawn with 0.3 volume           |
+| `playerJoinSound`    | At player's position with full volume when a player joins      |
+| `playerLeaveSound`   | At player's position with full volume when a player leaves     |
+| `placeVoxelSound`    | At block position with full volume when a block is placed      |
+| `breakVoxelSound`    | At block position with full volume when a block is broken      |
+
+Set to `null` or empty string to stop auto-play.
+
+```js
+world.ambientSound = "minecraft:ambient.cave";
+world.playerJoinSound = "minecraft:block.note_block.pling";
+world.playerLeaveSound = "minecraft:block.note_block.bass";
+world.placeVoxelSound = "minecraft:block.stone.place";
+world.breakVoxelSound = "minecraft:block.stone.break";
+```
+
+## Sound
+
+### world.sound(config)
+
+✅ Box3 API | Play a sound. `config` can be a path string or `{path, position, volume, pitch}` object.
+
+```js
+// String shorthand — plays at origin with default volume/pitch
+world.sound("minecraft:block.note_block.pling");
+
+// Full config
+world.sound({
+  path: "minecraft:entity.experience_orb.pickup",
+  position: new GameVector3(0, 100, 0),
+  volume: 0.8,
+  pitch: 1.5
+});
+```
+
+## Search Box
+
+### world.searchBox(bounds)
+
+✅ Box3 API | Query all entities within a GameBounds3 region.
+
+```js
+var bounds = new GameBounds3(
+  new GameVector3(-10, 0, -10),
+  new GameVector3(10, 50, 10)
+);
+var entities = world.searchBox(bounds);
+```
+
 ## Event Callbacks
 
-All event callbacks are registered via `world.onXxx(handler)`. Except for `onTick`, the first callback parameter is usually the triggering `entity` (`Box3JSEntity`).
+All event callbacks are registered via `world.onXxx(handler)`, returning a `GameEventHandlerToken`. Call `.cancel()` to unregister, `.active()` to check status. Except for `onTick`, the first callback parameter is usually the triggering `entity` (`Box3JSEntity`).
+
+### GameEventHandlerToken
+
+| Method | Description |
+|--------|-------------|
+| `token.cancel()` | Unregister the event handler |
+| `token.active()` | Returns `true` if the handler is still active |
+| `token.resume()` | Throws UnsupportedOperationException — re-register instead |
+
+```js
+var token = world.onTick(function(info) {
+  if (info.tick > 6000) {
+    token.cancel();
+  }
+});
+```
 
 | Event                        | Type    | Callback Signature                                     | Trigger                                |
 | ---------------------------- | ------- | ------------------------------------------------------ | -------------------------------------- |
-| `world.onTick(fn)`           | ✅ Box3 | `()`                                                   | Every tick                             |
-| `world.onPlayerJoin(fn)`     | ✅ Box3 | `(entity)`                                             | Player logs in                         |
-| `world.onPlayerLeave(fn)`    | ✅ Box3 | `(entity)`                                             | Player leaves                          |
+| `world.onTick(fn)`           | ✅ Box3 | `(info)` → `{tick, prevTick, elapsedTimeMS, skip}`     | Every tick                             |
+| `world.onPlayerJoin(fn)`     | ✅ Box3 | `(entity, tick)`                                       | Player logs in                         |
+| `world.onPlayerLeave(fn)`    | ✅ Box3 | `(entity, tick)`                                       | Player leaves                          |
 | `world.onChat(fn)`           | ✅ Box3 | `(entity, message, tick)`                              | Player sends chat message              |
 | `world.onVoxelDestroy(fn)`   | ✅ Box3 | `(entity, x, y, z, voxel, tick)`                       | Player breaks a block                  |
 | `world.onBlockPlace(fn)`     | ⬆ MC    | `(entity, x, y, z, voxel, voxelId, tick)`              | Player places a block                  |
@@ -171,15 +271,21 @@ All event callbacks are registered via `world.onXxx(handler)`. Except for `onTic
 | `world.onFluidLeave(fn)`     | ✅ Box3 | `(entity, fluid, x, y, z, tick)`                       | Entity leaves a fluid                  |
 | `world.onEntityDeath(fn)`    | ⬆ MC    | `(entity, killer, tick)`                               | Entity dies; `killer` may be null      |
 | `world.onEntityDamage(fn)`   | ⬆ MC    | `(entity, amount, source, attacker, tick)`             | Entity takes damage (Pre phase)        |
-| `world.onPlayerRespawn(fn)`  | ⬆ MC    | `(entity)`                                             | Player respawns                        |
+| `world.onPlayerRespawn(fn)`  | ⬆ MC    | `(entity, tick)`                                       | Player respawns                        |
+| `world.onButtonPressed(fn)`  | ⬆ MC    | `(entity, button, tick)`                               | Player presses a button (see GameButtonType) |
 | `world.onMessage(fn)`        | ⬆ MC    | `(from, data)`                                         | Receives `world.sendMessage()` message |
 
+All `onXxx()` methods return `GameEventHandlerToken` — call `.cancel()` to unregister.
+
 ```js
-world.onTick(() => {
-  // runs every tick
+world.onTick((info) => {
+  // info.tick, info.prevTick, info.elapsedTimeMS, info.skip
+  if (info.tick % 100 === 0) {
+    world.say("Server tick: " + info.tick);
+  }
 });
 
-world.onPlayerJoin((entity) => {
+world.onPlayerJoin((entity, tick) => {
   var p = entity.player;
   world.say(p.name + " joined the game");
   p.teleport(new GameVector3(0, 100, 0));
@@ -660,3 +766,88 @@ var biome = world.getBiome(entity.position);
 world.runCommand("time set day");
 world.runCommand("weather clear");
 ```
+
+## Structures & Advancements
+
+### world.placeStructure(x, y, z, structureId)
+
+⬆ MC extension | Places a datapack structure template (NBT) at the given position.
+
+### world.placeStructure(pos, structureId)
+
+⬆ GameVector3 overload.
+
+```js
+world.placeStructure(0, 100, 0, "minecraft:village/plains/houses/plains_small_house_1");
+world.placeStructure(pos, "box3js:arena");
+```
+
+### world.grantAdvancement(playerName, advancementId)
+
+⬆ MC extension | Grants an advancement to a player by name.
+
+```js
+world.grantAdvancement("Steve", "minecraft:story/mine_stone");
+```
+
+## Recipe Management
+
+### world.listRecipes(filter)
+
+⬆ MC extension | Searches recipe IDs matching a keyword.
+
+```js
+var recipes = world.listRecipes("diamond");
+console.log(recipes); // ["minecraft:diamond_sword", "minecraft:diamond_block", ...]
+```
+
+### world.removeRecipe(recipeId)
+
+⬆ MC extension | Blacklists a recipe so it's no longer craftable. Returns whether successful.
+
+```js
+world.removeRecipe("minecraft:iron_pickaxe");
+```
+
+### world.clearRecipes()
+
+⬆ MC extension | Clears the recipe blacklist, restoring all original recipes.
+
+```js
+world.clearRecipes();
+```
+
+## Custom Items
+
+### world.loadCustomItems(packName)
+
+⬆ MC extension | Loads custom item definitions from a resource pack's `items.json`. Reads `resourcepacks/<packName>/items.json`, parses item definitions using Minecraft's native data component IDs as JSON keys. All items use `minecraft:paper` as the base, with `DataComponents` providing name, lore, texture, food, etc.
+
+JSON format uses MC component ID prefixes:
+
+| JSON Key | DataComponent | Description |
+|----------|--------------|-------------|
+| `minecraft:custom_model_data` | `CUSTOM_MODEL_DATA` | Model predicate value, matched by paper.json overrides |
+| `minecraft:custom_name` | `CUSTOM_NAME` | Display name |
+| `minecraft:lore` | `LORE` | Lore text array |
+| `minecraft:max_stack_size` | `MAX_STACK_SIZE` | Max stack size (1–64), default 64 |
+| `minecraft:enchantment_glint_override` | `ENCHANTMENT_GLINT_OVERRIDE` | Enchantment foil effect |
+| `minecraft:rarity` | `RARITY` | Rarity: `common`/`uncommon`/`rare`/`epic` |
+| `minecraft:food` | `FOOD` | Food properties (see sub-fields below) |
+
+**`minecraft:food` sub-fields:**
+
+| Sub-field | Type | Description |
+|-----------|------|-------------|
+| `nutrition` | int | Nutrition value (1–20) |
+| `saturation` | float | Saturation modifier |
+| `can_always_eat` | bool | Always edible |
+| `eat_seconds` | float | Eat time in seconds, ≤0.8 = fast |
+
+```js
+world.loadCustomItems("box3js-items");
+// Loads all items defined in resourcepacks/box3js-items/items.json
+// Items can then be given via player.giveCustomItem("arena_trophy", 1)
+```
+
+**Note:** Textures require the client to load the resource pack. Without it, items still function (name/lore/food), but display the default paper texture.

@@ -121,7 +121,7 @@ npm install && npm run build     # 安装依赖并编译
 - `storage` — JSON 数据持久化
 - `console` / `require()` / `sleep()` / `GameVector3` / `GameBounds3` / `GameRGBColor` 等
 
-完整 API 文档见 `docs/api/`。
+完整 API 文档见 `docs/api/`，开发教程见 `docs/tutorial/`（[从零开始 →](Box3JS-NeoForge-1.21.1/docs/tutorial/01-basics.md)）。
 
 ### 🔒 命令权限管理
 

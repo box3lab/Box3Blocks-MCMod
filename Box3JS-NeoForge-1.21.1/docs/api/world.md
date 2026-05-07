@@ -4,20 +4,29 @@
 
 ## 世界属性
 
-### world.projectName()
+### world.projectName
 
-⬆ MC 扩展 | 只读。服务端 MOTD 字符串。
+✅ Box3 API | 只读属性。服务端 MOTD 字符串。为兼容旧代码也可作为方法调用 `world.projectName()`。
 
 ```js
-console.log(world.projectName()); // "A Minecraft Server"
+console.log(world.projectName); // "A Minecraft Server"
 ```
 
-### world.currentTick()
+### world.serverId
 
-✅ Box3 API | 只读。服务器自启动以来的总 tick 数。
+✅ Box3 API | 可读写属性。服务器标识符，映射到服务端 MOTD。
 
 ```js
-var uptime = world.currentTick();
+world.serverId = "My Cool Server";
+console.log(world.serverId);
+```
+
+### world.currentTick
+
+✅ Box3 API | 只读属性。服务器自启动以来的总 tick 数。为兼容旧代码也可作为方法调用 `world.currentTick()`。
+
+```js
+var uptime = world.currentTick;
 world.say("服务器已运行 " + Math.floor(uptime / 20 / 60) + " 分钟");
 ```
 
@@ -148,15 +157,106 @@ zombie.setEquipment("mainhand", "minecraft:iron_sword");
 zombie.setAI(true);
 ```
 
+### world.createEntity(config)
+
+✅ Box3 API | 使用完整配置对象生成实体。返回 `Box3JSEntity`。
+
+支持的配置字段：`type`、`position`、`velocity`、`fixed`、`gravity`、`friction`、`mass`、`restitution`、`collides`、`meshInvisible`、`hp`、`maxHp`、`tags`（数组）。
+
+```js
+var entity = world.createEntity({
+  type: "minecraft:skeleton",
+  position: new GameVector3(0, 100, 0),
+  velocity: new GameVector3(0, 0.5, 0),
+  fixed: false,
+  gravity: true,
+  collides: true,
+  hp: 30,
+  maxHp: 30,
+  tags: ["enemy", "undead"]
+});
+```
+
+## 音效属性
+
+✅ Box3 API | 存储音效路径字符串，设为非空后触发时机如下：
+
+| 属性                 | 触发时机                                              |
+| -------------------- | ----------------------------------------------------- |
+| `ambientSound`       | 每 200 tick（10 秒）在世界出生点以 0.3 音量播放       |
+| `playerJoinSound`    | 玩家加入时在其所在位置以满音量播放                     |
+| `playerLeaveSound`   | 玩家退出时在其所在位置以满音量播放                     |
+| `placeVoxelSound`    | 方块放置时在方块位置以满音量播放                       |
+| `breakVoxelSound`    | 方块破坏时在方块位置以满音量播放                       |
+
+设为 `null` 或空字符串可停止自动播放。
+
+```js
+world.ambientSound = "minecraft:ambient.cave";
+world.playerJoinSound = "minecraft:block.note_block.pling";
+world.playerLeaveSound = "minecraft:block.note_block.bass";
+world.placeVoxelSound = "minecraft:block.stone.place";
+world.breakVoxelSound = "minecraft:block.stone.break";
+```
+
+## 音效
+
+### world.sound(config)
+
+✅ Box3 API | 播放音效。`config` 可以是路径字符串或 `{path, position, volume, pitch}` 对象。
+
+```js
+// 字符串简写 — 在原点以默认音量/音调播放
+world.sound("minecraft:block.note_block.pling");
+
+// 完整配置
+world.sound({
+  path: "minecraft:entity.experience_orb.pickup",
+  position: new GameVector3(0, 100, 0),
+  volume: 0.8,
+  pitch: 1.5
+});
+```
+
+## 搜索包围盒
+
+### world.searchBox(bounds)
+
+✅ Box3 API | 查询 GameBounds3 区域内的所有实体。
+
+```js
+var bounds = new GameBounds3(
+  new GameVector3(-10, 0, -10),
+  new GameVector3(10, 50, 10)
+);
+var entities = world.searchBox(bounds);
+```
+
 ## 事件回调
 
-所有事件回调由 `world.onXxx(handler)` 注册。除 `onTick` 外，回调第一个参数通常是触发该事件的 `entity`（`Box3JSEntity`）。
+所有事件回调由 `world.onXxx(handler)` 注册，返回 `GameEventHandlerToken`。调用 `.cancel()` 取消注册，`.active()` 检查状态。除 `onTick` 外，回调第一个参数通常是触发该事件的 `entity`（`Box3JSEntity`）。
+
+### GameEventHandlerToken
+
+| 方法 | 说明 |
+|--------|-------------|
+| `token.cancel()` | 取消事件监听 |
+| `token.active()` | 返回 `true` 表示监听仍处于活跃状态 |
+| `token.resume()` | 抛出 UnsupportedOperationException — 请重新注册 |
+
+```js
+var token = world.onTick(function(info) {
+  if (info.tick > 6000) {
+    token.cancel();
+  }
+});
+```
 
 | 事件                         | 类型    | 回调签名                                               | 触发时机                        |
 | ---------------------------- | ------- | ------------------------------------------------------ | ------------------------------- |
-| `world.onTick(fn)`           | ✅ Box3 | `()`                                                   | 每 tick                         |
-| `world.onPlayerJoin(fn)`     | ✅ Box3 | `(entity)`                                             | 玩家登录                        |
-| `world.onPlayerLeave(fn)`    | ✅ Box3 | `(entity)`                                             | 玩家退出                        |
+| `world.onTick(fn)`           | ✅ Box3 | `(info)` → `{tick, prevTick, elapsedTimeMS, skip}`     | 每 tick                         |
+| `world.onPlayerJoin(fn)`     | ✅ Box3 | `(entity, tick)`                                       | 玩家登录                        |
+| `world.onPlayerLeave(fn)`    | ✅ Box3 | `(entity, tick)`                                       | 玩家退出                        |
 | `world.onChat(fn)`           | ✅ Box3 | `(entity, message, tick)`                              | 玩家发送聊天消息                |
 | `world.onVoxelDestroy(fn)`   | ✅ Box3 | `(entity, x, y, z, voxel, tick)`                       | 玩家破坏方块                    |
 | `world.onBlockPlace(fn)`     | ⬆ MC    | `(entity, x, y, z, voxel, voxelId, tick)`              | 玩家放置方块                    |
@@ -169,15 +269,21 @@ zombie.setAI(true);
 | `world.onFluidLeave(fn)`     | ✅ Box3 | `(entity, fluid, x, y, z, tick)`                       | 实体离开液体                    |
 | `world.onEntityDeath(fn)`    | ⬆ MC    | `(entity, killer, tick)`                               | 实体死亡；`killer` 可能为 null  |
 | `world.onEntityDamage(fn)`   | ⬆ MC    | `(entity, amount, source, attacker, tick)`             | 实体受伤（Pre 阶段）            |
-| `world.onPlayerRespawn(fn)`  | ⬆ MC    | `(entity)`                                             | 玩家重生                        |
+| `world.onPlayerRespawn(fn)`  | ⬆ MC    | `(entity, tick)`                                       | 玩家重生                        |
+| `world.onButtonPressed(fn)`  | ⬆ MC    | `(entity, button, tick)`                               | 玩家按下按钮（见 GameButtonType）|
 | `world.onMessage(fn)`        | ⬆ MC    | `(from, data)`                                         | 收到 `world.sendMessage()` 消息 |
 
+所有 `onXxx()` 方法返回 `GameEventHandlerToken` — 调用 `.cancel()` 取消监听。
+
 ```js
-world.onTick(() => {
-  // 每 tick 执行
+world.onTick((info) => {
+  // info.tick, info.prevTick, info.elapsedTimeMS, info.skip
+  if (info.tick % 100 === 0) {
+    world.say("服务器 tick: " + info.tick);
+  }
 });
 
-world.onPlayerJoin((entity) => {
+world.onPlayerJoin((entity, tick) => {
   var p = entity.player;
   world.say(p.name + " 加入了游戏");
   p.teleport(new GameVector3(0, 100, 0));
@@ -644,6 +750,60 @@ console.log(biome); // "minecraft:plains"
 var biome = world.getBiome(entity.position);
 ```
 
+## 自定义物品
+
+### world.loadCustomItems(packName)
+
+⬆ MC 扩展 | 从资源包加载自定义物品配置。读取 `resourcepacks/<packName>/items.json`，解析其中以 Minecraft 原生数据组件 ID 为 key 的物品定义。所有自定义物品以 `minecraft:paper` 为载体，通过 `DataComponents` 实现名称、描述、贴图、食物等功能。
+
+JSON 格式使用 MC 原版组件 ID：
+
+| JSON Key | 对应 DataComponent | 说明 |
+|----------|-------------------|------|
+| `minecraft:custom_model_data` | `CUSTOM_MODEL_DATA` | 模型切换值，匹配资源包 paper.json 的 override |
+| `minecraft:custom_name` | `CUSTOM_NAME` | 物品显示名称 |
+| `minecraft:lore` | `LORE` | 描述文字数组 |
+| `minecraft:max_stack_size` | `MAX_STACK_SIZE` | 最大堆叠数 (1–64)，默认 64 |
+| `minecraft:enchantment_glint_override` | `ENCHANTMENT_GLINT_OVERRIDE` | 附魔光效 |
+| `minecraft:rarity` | `RARITY` | 稀有度: `common`/`uncommon`/`rare`/`epic` |
+| `minecraft:food` | `FOOD` | 食物属性，子字段见下 |
+
+**`minecraft:food` 子字段：**
+
+| 子字段 | 类型 | 说明 |
+|--------|------|------|
+| `nutrition` | int | 营养值 (1–20) |
+| `saturation` | float | 饱和度修饰符 |
+| `can_always_eat` | bool | 是否始终可食用 |
+| `eat_seconds` | float | 食用时间 (秒)，≤0.8 为快速食用 |
+
+```js
+world.loadCustomItems("box3js-items");
+// 加载 resourcepacks/box3js-items/items.json 中定义的所有物品
+// 之后可通过 player.giveCustomItem("arena_trophy", 1) 给予
+```
+
+**资源包结构参考：**
+```
+resourcepacks/box3js-items/
+├── pack.mcmeta
+├── items.json                          # 物品定义
+└── assets/
+    ├── minecraft/models/item/
+    │   └── paper.json                  # custom_model_data overrides
+    └── box3js/
+        ├── models/item/                # 模型 JSON
+        │   ├── arena_trophy.json
+        │   ├── arena_stew.json
+        │   └── arena_medal.json
+        └── textures/item/              # PNG 贴图
+            ├── arena_trophy.png
+            ├── arena_stew.png
+            └── arena_medal.png
+```
+
+**注意：** 贴图依赖客户端加载资源包。未加载时物品功能正常（名称/描述/食物），仅显示为 paper 默认外观。
+
 ## 跨脚本消息
 
 ### world.sendMessage(target, data)
@@ -657,4 +817,54 @@ var biome = world.getBiome(entity.position);
 ```js
 world.runCommand("time set day");
 world.runCommand("weather clear");
+```
+
+## 结构与成就
+
+### world.placeStructure(x, y, z, structureId)
+
+⬆ MC 扩展 | 在指定位置放置数据包中的结构模板 (NBT)。
+
+### world.placeStructure(pos, structureId)
+
+⬆ GameVector3 重载。
+
+```js
+world.placeStructure(0, 100, 0, "minecraft:village/plains/houses/plains_small_house_1");
+world.placeStructure(pos, "box3js:arena");
+```
+
+### world.grantAdvancement(playerName, advancementId)
+
+⬆ MC 扩展 | 为指定玩家授予成就/进度。
+
+```js
+world.grantAdvancement("Steve", "minecraft:story/mine_stone");
+```
+
+## 配方管理
+
+### world.listRecipes(filter)
+
+⬆ MC 扩展 | 按关键字搜索配方 ID 列表。
+
+```js
+var recipes = world.listRecipes("diamond");
+console.log(recipes); // ["minecraft:diamond_sword", "minecraft:diamond_block", ...]
+```
+
+### world.removeRecipe(recipeId)
+
+⬆ MC 扩展 | 将指定配方加入黑名单并立即生效。返回是否成功。
+
+```js
+world.removeRecipe("minecraft:iron_pickaxe");
+```
+
+### world.clearRecipes()
+
+⬆ MC 扩展 | 清除配方黑名单，恢复所有原始配方。
+
+```js
+world.clearRecipes();
 ```

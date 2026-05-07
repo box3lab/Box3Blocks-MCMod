@@ -29,12 +29,41 @@ public class Box3JSPlayer {
     private final ServerPlayer player;
     private final MinecraftServer server;
     private final Box3ScriptEngine engine;
+    private final GameVector3 _position, _velocity, _bounds;
 
     public Box3JSPlayer(ServerPlayer player, MinecraftServer server, Box3ScriptEngine engine) {
         this.player = player;
         this.server = server;
         this.engine = engine;
+        this._position = new GameVector3();
+        this._velocity = new GameVector3();
+        this._bounds = new GameVector3();
     }
+
+    // ---- Position / Velocity / Bounds ----
+
+    public GameVector3 getPosition() {
+        _position.x = player.getX();
+        _position.y = player.getY();
+        _position.z = player.getZ();
+        return _position;
+    }
+
+    public GameVector3 getVelocity() {
+        var v = player.getDeltaMovement();
+        _velocity.x = v.x; _velocity.y = v.y; _velocity.z = v.z;
+        return _velocity;
+    }
+
+    public GameVector3 getBounds() {
+        var bb = player.getBoundingBox();
+        _bounds.x = (bb.maxX - bb.minX) / 2.0;
+        _bounds.y = (bb.maxY - bb.minY) / 2.0;
+        _bounds.z = (bb.maxZ - bb.minZ) / 2.0;
+        return _bounds;
+    }
+
+    public boolean getOnGround() { return player.onGround(); }
 
     // ---- Info ----
 
@@ -95,6 +124,32 @@ public class Box3JSPlayer {
         var delta = player.getDeltaMovement();
         if (Math.abs(delta.x) > 0.01 || Math.abs(delta.z) > 0.01) return "WALK";
         return "NONE";
+    }
+
+    // ---- Jump / Sneak / Swim ----
+
+    public boolean getEnableJump() { return getProp("enableJump", true); }
+    public void setEnableJump(boolean v) {
+        trackIfSandboxed();
+        setProp("enableJump", v);
+        if (!v) {
+            setProp("_savedJumpStrength", player.getAttributeValue(Attributes.JUMP_STRENGTH));
+            player.getAttribute(Attributes.JUMP_STRENGTH).setBaseValue(0);
+        } else {
+            double saved = getProp("_savedJumpStrength", 0.42);
+            player.getAttribute(Attributes.JUMP_STRENGTH).setBaseValue(saved);
+        }
+    }
+
+    public double getCrouchSpeed() { return getProp("crouchSpeed", 0.0); }
+    public void setCrouchSpeed(double v) { trackIfSandboxed(); setProp("crouchSpeed", v); }
+
+    public double getSwimSpeed() {
+        return player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.WATER_MOVEMENT_EFFICIENCY);
+    }
+    public void setSwimSpeed(double v) {
+        trackIfSandboxed();
+        player.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.WATER_MOVEMENT_EFFICIENCY).setBaseValue(v);
     }
 
     // ---- Fly / Spectator ----
@@ -211,11 +266,26 @@ public class Box3JSPlayer {
 
     // ---- Respawn ----
 
+    public boolean getDead() { return player.isDeadOrDying(); }
+
     public void setRespawnPoint(GameVector3 pos) {
         player.setRespawnPosition(
             player.level().dimension(),
             new BlockPos((int) pos.x, (int) pos.y, (int) pos.z),
             0, true, false);
+    }
+
+    public GameVector3 getSpawnPoint() {
+        var pos = player.getRespawnPosition();
+        if (pos == null) {
+            var worldSpawn = server.overworld().getSharedSpawnPos();
+            return new GameVector3(worldSpawn.getX(), worldSpawn.getY(), worldSpawn.getZ());
+        }
+        return new GameVector3(pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    public void setSpawnPoint(GameVector3 pos) {
+        setRespawnPoint(pos);
     }
 
     public void respawn() {
@@ -364,6 +434,13 @@ public class Box3JSPlayer {
         if (stack != null) player.getInventory().add(stack);
     }
 
+    public void giveCustomItem(String id, int count) {
+        ItemStack stack = com.box3lab.box3js.registries.Box3JSCustomItems.createStack(id, count);
+        if (stack != null) {
+            player.getInventory().add(stack);
+        }
+    }
+
     public void giveEnchantedItem(String itemId, int count, NativeObject enchants) {
         ItemStack stack = makeItemStack(itemId, count, enchants);
         if (stack != null) player.getInventory().add(stack);
@@ -407,6 +484,30 @@ public class Box3JSPlayer {
 
     public void clearInventory() {
         player.getInventory().clearContent();
+    }
+
+    // ---- Advancements ----
+
+    public void grantAdvancement(String advancementId) {
+        ResourceLocation rl = ResourceLocation.tryParse(advancementId);
+        if (rl == null) return;
+        var holder = player.server.getAdvancements().get(rl);
+        if (holder != null) {
+            for (String criterion : holder.value().criteria().keySet()) {
+                player.getAdvancements().award(holder, criterion);
+            }
+        }
+    }
+
+    public void revokeAdvancement(String advancementId) {
+        ResourceLocation rl = ResourceLocation.tryParse(advancementId);
+        if (rl == null) return;
+        var holder = player.server.getAdvancements().get(rl);
+        if (holder != null) {
+            for (String criterion : holder.value().criteria().keySet()) {
+                player.getAdvancements().revoke(holder, criterion);
+            }
+        }
     }
 
     // ---- Effects ----

@@ -54,6 +54,16 @@ Back in game and enable it:
 
 [API Overview →](docs/api/README.md) ([English](docs/api/README_en.md))
 
+## Tutorials
+
+Step-by-step guides from basics to full mini-games:
+
+1. [Getting Started](docs/tutorial/01-basics.md) — Project setup, console, chat commands, timers
+2. [Players & Items](docs/tutorial/02-player-items.md) — Teleport, flight, inventory, custom items
+3. [Events & Entities](docs/tutorial/03-events-entities.md) — Event callbacks, entity spawn/AI, scoreboards, teams
+4. [Advanced Systems](docs/tutorial/04-advanced-systems.md) — BossBar, particles, fireworks, world border, PvP arena
+5. [Example Collection](docs/tutorial/05-examples.md) — Teleport, anti-grief, wave mobs, race checkpoints, hide-and-seek etc.
+
 ## Commands
 
 [Full Command Reference →](docs/api/commands.md) ([English](docs/api/commands_en.md))
