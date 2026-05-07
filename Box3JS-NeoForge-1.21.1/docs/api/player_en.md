@@ -1,47 +1,58 @@
 # player — Player API
 
-The `player` object is obtained via `entity.player` and represents a logged-in player. It includes all `entity` capabilities plus player-specific features: inventory, XP, flight, messaging, teleport, etc.
+The `player` object is obtained via `entity.player` and represents a logged-in player. It includes all `entity` capabilities (like `hp`, `position`, `tags()`, etc.) plus player-specific features: inventory, XP, flight, messaging, teleport, etc.
 
 ```js
-world.onPlayerJoin((entity) => {
-  var p = entity.player; // p is the player object
+world.onPlayerJoin(function(entity, tick) {
+  var p = entity.player;  // p is the player object
   p.directMessage("Welcome back, " + p.name + "!");
 });
 ```
 
-## Basic Info
+## Basic Identity
 
 ### player.name
 
-✅ Box3 API | Read-only. Player name.
+✅ Box3 API | Readonly. Player display name.
 
 ### player.userId
 
-✅ Box3 API | Read-only. Player UUID string.
+✅ Box3 API | Readonly. Player UUID string (same as `entity.id`).
 
-### player.getOpLevel()
+### player.opLevel
 
-⬆ MC Extension | Get/set the player's operator permission level (0–4). 0 = normal player, 1 = bypass spawn protection, 2 = most commands, 3 = manage players, 4 = full access.
+✅ Box3 API | Gets/sets the player's operator permission level (0–4).
+
+| Level | Description |
+|-------|-------------|
+| 0 | Normal player |
+| 1 | Can bypass spawn protection |
+| 2 | Can use most commands |
+| 3 | Can manage players |
+| 4 | Full admin (equivalent to `/op`) |
 
 ```js
-if (player.getOpLevel() >= 2) {
-  // operations requiring permission level 2
+if (player.opLevel >= 2) {
+  // Operations requiring permission level 2
 }
-player.opLevel = 3; // set to level 3
+player.opLevel = 3;  // Set to level 3 via property
 ```
+
+There is also `player.getOpLevel()` method returning the permission level number.
 
 ## Appearance
 
 ### player.invisible
 
-✅ Box3 API | Get/set whether the player is invisible.
+✅ Box3 API | Gets/sets whether the player is invisible.
 
 ### player.scale
 
-✅ Box3 API | Read-only. Player scale value.
+✅ Box3 API | Readonly. Player model scale (Minecraft native scale, not Box3 scale).
 
 ```js
-player.invisible = true; // invisible
+player.invisible = true;  // Invisible
+console.log("Player scale: " + player.scale);
 ```
 
 ## Movement
@@ -50,31 +61,68 @@ All ✅ Box3 API.
 
 ### player.walkSpeed
 
-Walking speed, corresponds to `MOVEMENT_SPEED` attribute. Default ~0.1.
+Walk speed, maps to `MOVEMENT_SPEED` attribute base value. Default ~0.1.
 
 ### player.runSpeed
 
-Running speed. Automatically maintained as `walkSpeed × 1.3`.
+Run/sprint speed. Get returns `walkSpeed × 1.3`; set auto-calculates `walkSpeed` to maintain the 1.3× ratio.
 
 ### player.jumpPower
 
-Jump strength, corresponds to `JUMP_STRENGTH` attribute.
+Jump strength, maps to `JUMP_STRENGTH` attribute base value. Default ~0.42.
+
+### player.enableJump
+
+Gets/sets whether jumping is enabled. Default `true`. When set to `false`, saves the current jump strength and sets `JUMP_STRENGTH` to 0; set back to `true` to restore.
+
+```js
+player.enableJump = false;  // Disable jumping
+player.enableJump = true;   // Re-enable jumping
+```
+
+### player.crouchSpeed
+
+Gets/sets crouch speed (custom property, default `0.0`). MC has no independent sneak speed attribute; scripts can read this for custom logic.
+
+### player.swimSpeed
+
+Gets/sets swim speed. Backed by the `WATER_MOVEMENT_EFFICIENCY` attribute.
+
+```js
+player.swimSpeed = 0.5;  // Swim faster
+```
 
 ### player.moveState
 
-Read-only. Current movement state: `"FLYING"`, `"SWIM"`, `"JUMP"`, `"FALL"`, `"GROUND"`.
+Readonly. Current movement state string:
+
+| Value | Description |
+|-------|-------------|
+| `"FLYING"` | Currently flying |
+| `"SWIM"` | In water |
+| `"JUMP"` | Jumping upward |
+| `"FALL"` | Falling |
+| `"GROUND"` | On the ground |
 
 ### player.walkState
 
-Read-only. Current walking state: `"CROUCH"`, `"RUN"`, `"WALK"`, `"NONE"`.
+Readonly. Current walk state string:
+
+| Value | Description |
+|-------|-------------|
+| `"CROUCH"` | Crouching / sneaking |
+| `"RUN"` | Sprinting |
+| `"WALK"` | Walking |
+| `"NONE"` | Standing still |
 
 ```js
-player.walkSpeed = 0.2; // speed up
-player.jumpPower = 0.6; // jump higher
+player.walkSpeed = 0.2;   // Speed up
+player.jumpPower = 0.6;   // Jump higher
+player.swimSpeed = 0.3;   // Swim speed
 
-world.onTick(() => {
+world.onTick(function() {
   if (player.walkState === "RUN") {
-    // player is sprinting
+    // Player is sprinting
   }
 });
 ```
@@ -83,15 +131,15 @@ world.onTick(() => {
 
 ### player.canFly
 
-✅ Box3 API | Get/set flight permission (`mayfly`). When `true`, player can take off by pressing jump.
+✅ Box3 API | Gets/sets flight permission (`mayfly`). When `true`, player can take off by pressing jump.
 
 ### player.flying
 
-✅ Box3 API | Get/set whether currently flying (`flying`). Requires `canFly = true` first.
+✅ Box3 API | Gets/sets whether the player is currently flying (`flying`). Requires `canFly = true` first.
 
 ### player.flySpeed
 
-✅ Box3 API | Flight speed.
+✅ Box3 API | Flying speed.
 
 ### player.disableFly
 
@@ -99,10 +147,10 @@ world.onTick(() => {
 
 ### player.spectator
 
-✅ Box3 API | Read-only. Whether the player is in spectator mode.
+✅ Box3 API | Readonly. Whether the player is in spectator mode.
 
 ```js
-// Allow flight
+// Enable flight
 player.canFly = true;
 player.flySpeed = 0.1;
 
@@ -115,49 +163,55 @@ player.disableFly = true;
 
 ### player.collision
 
-⬆ MC Extension | Get/set team collision. Set to `false` to prevent players pushing each other. Modifies the team's `CollisionRule` internally.
+⬆ MC extension | Gets/sets team collision. Set to `false` to prevent players from pushing each other. Backed by the player's team `CollisionRule` (ALWAYS / NEVER).
 
 ```js
-player.collision = false; // disable collision
-console.log(player.collision); // false
+player.collision = false;  // Disable collision
+console.log(player.collision);
 ```
 
 ## Health
 
-⬆ MC Extension | Get/set player health. `ServerPlayer` is a `LivingEntity`, so health is accessed directly.
+⬆ MC extension | Gets/sets player health. `ServerPlayer` is a `LivingEntity`, so health is operated on directly.
 
 ### player.hp
 
-Get/set current health.
+Gets/sets current health.
 
 ### player.maxHp
 
-Get/set maximum health.
+Gets/sets maximum health.
+
+### player.dead
+
+Readonly. Whether the player is dead or dying (`isDeadOrDying()`).
 
 ```js
-// Set class-based health
-player.maxHp = 40; // Warrior 40 HP
-player.hp = 40; // full health
+// Set class-specific health
+player.maxHp = 40;  // Warrior 40 HP
+player.hp = 40;     // Full health
 
-// If current HP exceeds new max, it's auto-capped
+// Current health is clamped when max decreases
 player.maxHp = 20;
-// player.hp is auto-clamped to 20
+// player.hp auto-clamped to 20
+
+if (player.dead) {
+  console.log("Player is dead");
+}
 ```
 
-> Typically set during `!join` or `!ready` phase for class-based HP. Use `player.addEffect("minecraft:instant_health", ...)` for healing afterward.
-
-## Gamemode
+## Game Mode
 
 ### player.gameMode
 
-✅ Box3 API | Get/set the player's gamemode. Get returns the name string; set accepts a string or number.
+✅ Box3 API | Gets/sets game mode. Get returns a name string; set accepts a string or number.
 
 ```js
-player.gameMode = "creative"; // creative mode
-player.gameMode = "survival"; // survival mode
-player.gameMode = "adventure"; // adventure mode
-player.gameMode = "spectator"; // spectator mode
-// or numbers: 0=survival, 1=creative, 2=adventure, 3=spectator
+player.gameMode = "creative";   // Creative
+player.gameMode = "survival";   // Survival
+player.gameMode = "adventure";  // Adventure
+player.gameMode = "spectator";  // Spectator
+// Or by number: 0=survival, 1=creative, 2=adventure, 3=spectator
 ```
 
 ## Camera
@@ -166,27 +220,27 @@ All ✅ Box3 API.
 
 ### player.cameraMode
 
-Get/set camera mode: `"FPS"` (first person) or `"FOLLOW"` (follow entity).
+Gets/sets the camera mode: `"FPS"` (first-person) or `"FOLLOW"` (follow entity). Setting to `"FPS"` clears the follow target.
 
 ### player.cameraEntity
 
-Set or get the followed entity object (`Box3JSEntity`).
+Gets/sets the entity to follow (`GameEntity`). Setting an entity auto-switches camera mode to `"FOLLOW"`; setting `null` switches back to `"FPS"`.
 
 ### player.cameraPitch / player.cameraYaw
 
-Camera pitch and yaw angles.
+Camera pitch (vertical angle) and yaw (horizontal angle). Note: in MC, yaw maps to Y rotation (yRot), pitch maps to X rotation (xRot).
 
 ### player.facingDirection
 
-Read-only `GameVector3`. The player's look direction unit vector.
+Readonly `GameVector3`. The unit vector of the player's look direction.
 
 ### player.cameraTarget
 
-Read-only `GameVector3`. The point 5 blocks ahead of the player's eyes.
+Readonly `GameVector3`. A point 5 blocks ahead of the player's eyes.
 
 ### player.lookAt(x, y, z)
 
-⬆ MC Extension | Make the player look at the given coordinates.
+⬆ MC extension | Makes the player look at the given coordinates.
 
 ### player.lookAt(pos)
 
@@ -196,7 +250,7 @@ Read-only `GameVector3`. The point 5 blocks ahead of the player's eyes.
 player.lookAt(10, 100, 10);
 player.lookAt(target.position);
 
-// Get look direction
+// Get view information
 var dir = player.facingDirection;
 var target = player.cameraTarget;
 ```
@@ -205,19 +259,33 @@ var target = player.cameraTarget;
 
 ### player.teleport(pos)
 
-✅ Box3 API | Teleport the player to the given `GameVector3` coordinates.
+✅ Box3 API | Teleports the player to the given `GameVector3` coordinates.
+
+### player.spawnPoint
+
+✅ Box3 API | Gets/sets the player's respawn point (`GameVector3`). When reading, returns the world spawn if the player hasn't set a personal respawn point.
+
+```js
+// Property-style set
+player.spawnPoint = new GameVector3(0, 100, 0);
+console.log(player.spawnPoint);
+```
 
 ### player.setRespawnPoint(pos)
 
-✅ Box3 API | Set the player's respawn point.
+✅ Box3 API | Sets the player's respawn point (method-style, equivalent to `spawnPoint` property).
+
+### player.setSpawnPoint(pos)
+
+✅ Box3 API | Same as `setRespawnPoint`, Box3 standard naming.
 
 ### player.respawn()
 
-✅ Box3 API | Force the player to respawn (only effective when dead).
+✅ Box3 API | Forces the player to respawn (only works when dead).
 
 ### player.dimension
 
-⬆ MC Extension | Get/set the player's dimension. Set can teleport cross-dimension.
+⬆ MC extension | Gets/sets the player's dimension. Setting it performs a cross-dimensional teleport.
 
 ```js
 player.teleport(new GameVector3(0, 100, 0));
@@ -228,15 +296,15 @@ player.dimension = "minecraft:the_nether";
 player.teleport(new GameVector3(0, 70, 0));
 ```
 
-## Kick
+## Kicking
 
 ### player.kick()
 
-✅ Box3 API | Kick the player, default reason "Kicked".
+✅ Box3 API | Kicks the player with the default reason "Kicked".
 
 ### player.kick(reason)
 
-✅ Box3 API | Kick the player with a custom reason.
+✅ Box3 API | Kicks the player with a custom reason.
 
 ```js
 player.kick("You have been removed from the game");
@@ -246,23 +314,23 @@ player.kick("You have been removed from the game");
 
 ### player.directMessage(msg)
 
-✅ Box3 API | Send a chat message to the player.
+✅ Box3 API | Sends a chat message visible only to this player (system message).
 
 ### player.actionBar(msg)
 
-✅ Box3 API | Send an action bar message (above the hotbar).
+✅ Box3 API | Sends a message displayed on the action bar (above the hotbar).
 
 ### player.title(title, subtitle)
 
-✅ Box3 API | Send a screen title to the player. Uses default animation parameters.
+✅ Box3 API | Displays a screen title with default animation: fade-in 10 ticks, stay 70 ticks, fade-out 20 ticks.
 
 ### player.title(title, subtitle, fadeIn, stay, fadeOut)
 
-⬆ MC Extension | Full-parameter title. `fadeIn`/`stay`/`fadeOut` are in ticks.
+⬆ MC extension | Title with full animation parameters. `fadeIn`/`stay`/`fadeOut` are all in ticks (20 ticks = 1 second).
 
 ### player.dialog(config)
 
-✅ Box3 API | Show a dialog. Pass `{content, options}` config, returns `{index, value}`. Currently implemented as a simplified system message in MC.
+✅ Box3 API | Shows a dialog panel. Pass `{content, options}`, returns `{index, value}`. Currently simplified in MC — sends system messages.
 
 ```js
 var result = player.dialog({
@@ -274,11 +342,11 @@ player.directMessage("You chose: " + result.value);
 
 ### player.link(href)
 
-✅ Box3 API | Send a clickable link to the player.
+✅ Box3 API | Sends a clickable URL link to the player (blue underlined text).
 
 ### player.onChat(handler)
 
-✅ Box3 API | Register a per-player chat callback (for finer control, commonly used in dialogue trees).
+✅ Box3 API | Registers a per-player chat handler (more granular than global `world.onChat`, useful for dialog trees).
 
 ```js
 player.directMessage("Hello!");
@@ -286,72 +354,57 @@ player.actionBar("§eType !help for help");
 player.title("§6§lBOSS FIGHT", "§7Defeat all enemies", 10, 60, 10);
 player.link("https://example.com");
 
-// Dialogue tree
+// Dialog tree
 player.directMessage("Enter your choice: A or B");
-player.onChat((entity, msg, tick) => {
+player.onChat(function(entity, msg, tick) {
   if (msg === "A") {
     player.directMessage("You chose A");
   }
 });
 ```
 
-## XP & Food
+## Experience & Food
 
 ### player.xp
 
-⬆ MC Extension | Get/set experience level.
+⬆ MC extension | Gets/sets experience level.
 
 ### player.addExperienceLevels(levels)
 
-⬆ MC Extension | Add `levels` experience levels.
+⬆ MC extension | Adds `levels` experience levels.
 
 ### player.food
 
-⬆ MC Extension | Get/set food level (0–20).
+⬆ MC extension | Gets/sets food level (0–20).
 
 ### player.saturation
 
-⬆ MC Extension | Get/set saturation (0–20, float).
+⬆ MC extension | Gets/sets saturation level (0–20, floating-point).
 
 ```js
-player.xp = 10; // set to level 10
-player.addExperienceLevels(3); // add 3 levels
+player.xp = 10;                 // Set to level 10
+player.addExperienceLevels(3);  // Add 3 levels
 player.food = 20;
 player.saturation = 10;
 ```
 
 ## Inventory
 
-All ⬆ MC Extension.
+All ⬆ MC extension.
 
 ### player.giveItem(itemId, count)
 
-Give an item.
+Gives items to the player.
 
-### player.clearInventory()
+### player.giveEnchantedItem(itemId, count, enchants)
 
-Clear the inventory.
-
-### player.getHeldItem()
-
-Get the main hand item, returns `{id, count}`. Empty hand returns `{id: "minecraft:air", count: 0}`.
+Gives an enchanted item. `enchants` is an `{enchantmentId: level}` object.
 
 ```js
 player.giveItem("minecraft:diamond_sword", 1);
 player.giveItem("minecraft:golden_apple", 5);
 player.giveItem("minecraft:arrow", 64);
 
-var held = player.getHeldItem();
-console.log(held.id, held.count); // "minecraft:diamond_sword" 1
-
-player.clearInventory();
-```
-
-### player.giveEnchantedItem(itemId, count, enchants)
-
-Give an enchanted item. `enchants` is a `{enchantmentId: level}` object.
-
-```js
 player.giveEnchantedItem("minecraft:diamond_sword", 1, {
   "minecraft:sharpness": 5,
   "minecraft:fire_aspect": 2,
@@ -367,37 +420,54 @@ player.giveEnchantedItem("minecraft:bow", 1, {
 
 ### player.giveNamedItem(itemId, count, name, lore)
 
-Give an item with a custom name and lore. `lore` is a string array.
+Gives an item with a custom name and lore. `lore` is a string array, one line per entry.
 
 ```js
-player.giveNamedItem("minecraft:gold_ingot", 1, "§6§lParkour Gold Medal", [
+player.giveNamedItem("minecraft:gold_ingot", 1, "§6§lParkour Medal", [
   "§7Sky Parkour Championship",
-  "§eFinish time: 1:23.450",
+  "§eFinishing time: 1:23.450",
 ]);
 
-player.giveNamedItem("minecraft:diamond_sword", 1, "§c§lBlade of Flame", [
+player.giveNamedItem("minecraft:diamond_sword", 1, "§c§lFlameblade", [
   "§7Bound: Fire",
   "§eRight-click: Launch fireball",
 ]);
 ```
 
-## Potion Effects
+### player.getHeldItem()
+
+Returns the currently held main-hand item as `{id, count}`. Empty hand returns `{id: "minecraft:air", count: 0}`.
+
+```js
+var held = player.getHeldItem();
+console.log(held.id, held.count);  // "minecraft:diamond_sword" 1
+```
+
+### player.clearInventory()
+
+Clears the entire inventory (including armor slots and offhand).
+
+```js
+player.clearInventory();
+```
+
+## Status Effects
 
 ### player.addEffect(effectId, duration, amplifier)
 
-⬆ MC Extension | Add a potion effect. `duration` in ticks, `amplifier` starts at 0.
+⬆ MC extension | Applies a status effect. `duration` in ticks, `amplifier` starts at 0.
 
 ### player.addEffect(effectId, duration, amplifier, hideParticles)
 
-⬆ MC Extension | Add effect with optional particle hiding.
+⬆ MC extension | Applies an effect, optionally hiding particles.
 
 ### player.clearEffects()
 
-⬆ MC Extension | Remove all potion effects.
+⬆ MC extension | Removes all status effects.
 
 ```js
 player.addEffect("minecraft:speed", 600, 2);
-player.addEffect("minecraft:jump_boost", 99999, 1, true); // permanent, no particles
+player.addEffect("minecraft:jump_boost", 99999, 1, true);  // Permanent, no particles
 player.clearEffects();
 ```
 
@@ -405,11 +475,11 @@ player.clearEffects();
 
 ### player.playSound(path, volume, pitch)
 
-⬆ MC Extension | Play a sound to this player. `path` is a namespaced ID.
+⬆ MC extension | Plays a sound to this player only. `path` is a namespace ID (e.g. `"minecraft:block.note_block.pling"`), `volume` 0–1, `pitch` 0.5–2.
 
 ### player.runCommand(cmd)
 
-⬆ MC Extension | Execute a command as this player.
+⬆ MC extension | Executes a Minecraft command as this player.
 
 ```js
 player.playSound("minecraft:block.note_block.pling", 0.8, 1.5);
@@ -420,7 +490,7 @@ player.runCommand("say hello");
 
 ### player.setPlayerListName(name)
 
-⬆ MC Extension | Modify this player's displayed name in the tab list.
+⬆ MC extension | Changes the player's display name in the tab list (supports color codes).
 
 ```js
 player.setPlayerListName("§e[CP3] §f" + player.name);
@@ -429,46 +499,3 @@ player.setPlayerListName("§6★ §f" + player.name);
 // Reset to original name
 player.setPlayerListName(player.name);
 ```
-
-## Box3 API List
-
-| API                                                         | Type    |
-| ----------------------------------------------------------- | ------- |
-| `name`                                                      | ✅ Box3 |
-| `userId`                                                    | ✅ Box3 |
-| `invisible`                                                 | ✅ Box3 |
-| `scale`                                                     | ✅ Box3 |
-| `walkSpeed` / `runSpeed` / `jumpPower`                      | ✅ Box3 |
-| `moveState` / `walkState`                                   | ✅ Box3 |
-| `canFly` / `flying` / `flySpeed` / `disableFly`             | ✅ Box3 |
-| `spectator`                                                 | ✅ Box3 |
-| `gameMode`                                                  | ✅ Box3 |
-| `cameraMode` / `cameraEntity` / `cameraPitch` / `cameraYaw` | ✅ Box3 |
-| `facingDirection` / `cameraTarget`                          | ✅ Box3 |
-| `setRespawnPoint()` / `respawn()`                           | ✅ Box3 |
-| `kick()`                                                    | ✅ Box3 |
-| `teleport()`                                                | ✅ Box3 |
-| `directMessage()` / `actionBar()`                           | ✅ Box3 |
-| `title()` (2-param)                                         | ✅ Box3 |
-| `dialog()`                                                  | ✅ Box3 |
-| `link()`                                                    | ✅ Box3 |
-| `onChat()` (player-level)                                   | ✅ Box3 |
-
-## MC Extension List
-
-| API                                                  | Type |
-| ---------------------------------------------------- | ---- |
-| `collision`                                          | ⬆ MC |
-| `title()` (5-param)                                  | ⬆ MC |
-| `hp` / `maxHp`                                       | ⬆ MC |
-| `xp` / `addExperienceLevels()`                       | ⬆ MC |
-| `food` / `saturation`                                | ⬆ MC |
-| `giveItem()` / `clearInventory()` / `getHeldItem()`  | ⬆ MC |
-| `giveEnchantedItem()` / `giveNamedItem()`            | ⬆ MC |
-| `addEffect()` (3/4-param) / `clearEffects()`         | ⬆ MC |
-| `playSound()`                                        | ⬆ MC |
-| `dimension`                                          | ⬆ MC |
-| `lookAt()`                                           | ⬆ MC |
-| `runCommand()`                                       | ⬆ MC |
-| `setPlayerListName()`                                | ⬆ MC |
-| `getOpLevel()` / `opLevel`                           | ⬆ MC |

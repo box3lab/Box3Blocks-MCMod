@@ -97,6 +97,32 @@ public class Box3JSPlayer {
         return "NONE";
     }
 
+    // ---- Jump / Sneak / Swim ----
+
+    public boolean getEnableJump() { return getProp("enableJump", true); }
+    public void setEnableJump(boolean v) {
+        trackIfSandboxed();
+        setProp("enableJump", v);
+        if (!v) {
+            setProp("_savedJumpStrength", player.getAttributeValue(Attributes.JUMP_STRENGTH));
+            player.getAttribute(Attributes.JUMP_STRENGTH).setBaseValue(0);
+        } else {
+            double saved = getProp("_savedJumpStrength", 0.42);
+            player.getAttribute(Attributes.JUMP_STRENGTH).setBaseValue(saved);
+        }
+    }
+
+    public double getCrouchSpeed() { return getProp("crouchSpeed", 0.0); }
+    public void setCrouchSpeed(double v) { trackIfSandboxed(); setProp("crouchSpeed", v); }
+
+    public double getSwimSpeed() {
+        return player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.WATER_MOVEMENT_EFFICIENCY);
+    }
+    public void setSwimSpeed(double v) {
+        trackIfSandboxed();
+        player.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.WATER_MOVEMENT_EFFICIENCY).setBaseValue(v);
+    }
+
     // ---- Fly / Spectator ----
 
     public boolean getCanFly() { return player.getAbilities().mayfly; }
@@ -211,11 +237,26 @@ public class Box3JSPlayer {
 
     // ---- Respawn ----
 
+    public boolean getDead() { return player.isDeadOrDying(); }
+
     public void setRespawnPoint(GameVector3 pos) {
         player.setRespawnPosition(
             player.level().dimension(),
             new BlockPos((int) pos.x, (int) pos.y, (int) pos.z),
             0, true, false);
+    }
+
+    public GameVector3 getSpawnPoint() {
+        var pos = player.getRespawnPosition();
+        if (pos == null) {
+            var worldSpawn = server.overworld().getSharedSpawnPos();
+            return new GameVector3(worldSpawn.getX(), worldSpawn.getY(), worldSpawn.getZ());
+        }
+        return new GameVector3(pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    public void setSpawnPoint(GameVector3 pos) {
+        setRespawnPoint(pos);
     }
 
     public void respawn() {

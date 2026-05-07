@@ -2,12 +2,12 @@ package com.box3lab.box3js.script;
 
 @FunctionalInterface
 interface PlayerJoinCallback {
-    void onJoin(Box3JSEntity entity);
+    void onJoin(Box3JSEntity entity, long tick);
 }
 
 @FunctionalInterface
 interface PlayerLeaveCallback {
-    void onLeave(Box3JSEntity entity);
+    void onLeave(Box3JSEntity entity, long tick);
 }
 
 @FunctionalInterface
@@ -62,7 +62,7 @@ interface EntityDeathCallback {
 
 @FunctionalInterface
 interface PlayerRespawnCallback {
-    void onRespawn(Box3JSEntity entity);
+    void onRespawn(Box3JSEntity entity, long tick);
 }
 
 @FunctionalInterface
@@ -73,6 +73,11 @@ interface BlockActivateCallback {
 @FunctionalInterface
 interface EntityDamageCallback {
     void onDamage(Box3JSEntity entity, double amount, String source, Box3JSEntity attacker, long tick);
+}
+
+@FunctionalInterface
+interface ButtonPressedCallback {
+    void onButtonPressed(Box3JSEntity entity, String button, long tick);
 }
 
 @FunctionalInterface

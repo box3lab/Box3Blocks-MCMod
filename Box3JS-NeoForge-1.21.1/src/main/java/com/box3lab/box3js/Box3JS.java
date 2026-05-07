@@ -66,6 +66,31 @@ public class Box3JS {
         NeoForge.EVENT_BUS.addListener((PlayerInteractEvent.RightClickBlock event) -> {
             if (event.getEntity() instanceof ServerPlayer sp) {
                 Box3ScriptEngine.get().fireBlockActivate(sp, event.getPos(), event.getLevel().getBlockState(event.getPos()));
+                Box3ScriptEngine.get().fireActionButton(sp, "ACTION1");
+            }
+        });
+
+        // Left-click (ACTION0) — block and air
+        NeoForge.EVENT_BUS.addListener((PlayerInteractEvent.LeftClickBlock event) -> {
+            if (event.getEntity() instanceof ServerPlayer sp) {
+                Box3ScriptEngine.get().fireActionButton(sp, "ACTION0");
+            }
+        });
+        NeoForge.EVENT_BUS.addListener((PlayerInteractEvent.LeftClickEmpty event) -> {
+            if (event.getEntity() instanceof ServerPlayer sp) {
+                Box3ScriptEngine.get().fireActionButton(sp, "ACTION0");
+            }
+        });
+
+        // Right-click (ACTION1) — item and empty (block already covered above)
+        NeoForge.EVENT_BUS.addListener((PlayerInteractEvent.RightClickItem event) -> {
+            if (event.getEntity() instanceof ServerPlayer sp) {
+                Box3ScriptEngine.get().fireActionButton(sp, "ACTION1");
+            }
+        });
+        NeoForge.EVENT_BUS.addListener((PlayerInteractEvent.RightClickEmpty event) -> {
+            if (event.getEntity() instanceof ServerPlayer sp) {
+                Box3ScriptEngine.get().fireActionButton(sp, "ACTION1");
             }
         });
 
