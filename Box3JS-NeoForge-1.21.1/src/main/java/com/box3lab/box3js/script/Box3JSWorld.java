@@ -1,9 +1,14 @@
 package com.box3lab.box3js.script;
 
+import com.box3lab.box3js.registries.Box3JSRecipeManager;
+import java.nio.file.Path;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.protocol.game.ClientboundSoundPacket;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Difficulty;
@@ -18,6 +23,7 @@ import net.minecraft.world.item.component.Fireworks;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.border.WorldBorder;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.storage.ServerLevelData;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.NativeArray;
@@ -546,6 +552,61 @@ public class Box3JSWorld {
     }
     public void playSound(String path, GameVector3 pos, double volume, double pitch) {
         playSound(path, pos.x, pos.y, pos.z, volume, pitch);
+    }
+
+    // ---- Structure ----
+
+    public void placeStructure(double x, double y, double z, String structureId) {
+        ResourceLocation rl = ResourceLocation.tryParse(structureId);
+        if (rl == null) return;
+        server.overworld().getStructureManager().get(rl).ifPresent(template -> {
+            template.placeInWorld(server.overworld(),
+                new BlockPos(0, 0, 0),
+                new BlockPos((int) x, (int) y, (int) z),
+                new StructurePlaceSettings().setKnownShape(true),
+                server.overworld().getRandom(), 3);
+        });
+    }
+    public void placeStructure(GameVector3 pos, String structureId) {
+        placeStructure(pos.x, pos.y, pos.z, structureId);
+    }
+
+    // ---- Advancement ----
+
+    public void grantAdvancement(String playerName, String advancementId) {
+        ServerPlayer sp = server.getPlayerList().getPlayerByName(playerName);
+        if (sp == null) return;
+        ResourceLocation rl = ResourceLocation.tryParse(advancementId);
+        if (rl == null) return;
+        var holder = server.getAdvancements().get(rl);
+        if (holder != null) {
+            for (String criterion : holder.value().criteria().keySet()) {
+                sp.getAdvancements().award(holder, criterion);
+            }
+        }
+    }
+
+    // ---- Custom Items ----
+
+    /** Load custom items from a resource pack's items.json using MC component IDs. */
+    public void loadCustomItems(String packName) {
+        Path itemsFile = Path.of(".").toAbsolutePath().normalize()
+            .resolve("resourcepacks").resolve(packName).resolve("items.json");
+        com.box3lab.box3js.registries.Box3JSCustomItems.loadFromPack(itemsFile);
+    }
+
+    // ---- Recipe ----
+
+    public List<String> listRecipes(String filter) {
+        return Box3JSRecipeManager.listRecipes(filter != null ? filter : "");
+    }
+
+    public boolean removeRecipe(String recipeId) {
+        return Box3JSRecipeManager.removeRecipe(recipeId);
+    }
+
+    public void clearRecipes() {
+        Box3JSRecipeManager.clearRecipes();
     }
 
     // ---- Message ----

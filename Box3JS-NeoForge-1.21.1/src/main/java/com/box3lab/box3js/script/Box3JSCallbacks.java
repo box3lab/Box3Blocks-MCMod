@@ -27,7 +27,7 @@ interface InteractCallback {
 
 @FunctionalInterface
 interface ChatCallback {
-    void onChat(Box3JSEntity entity, String message, long tick);
+    Object onChat(Box3JSEntity entity, String message, long tick);
 }
 
 @FunctionalInterface

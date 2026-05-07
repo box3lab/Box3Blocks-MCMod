@@ -148,7 +148,11 @@ public class Box3ScriptEngine {
     }
     public Runnable addChatCallback(ChatCallback cb) {
         String project = currentProject;
-        ChatCallback wrapped = (e, msg, tick) -> runInContext(project, () -> cb.onChat(e, msg, tick));
+        ChatCallback wrapped = (e, msg, tick) -> {
+            java.util.concurrent.atomic.AtomicReference<Object> result = new java.util.concurrent.atomic.AtomicReference<>();
+            runInContext(project, () -> result.set(cb.onChat(e, msg, tick)));
+            return result.get();
+        };
         bus.addChat(project, wrapped);
         return () -> bus.removeChat(project, wrapped);
     }
@@ -515,7 +519,9 @@ public class Box3ScriptEngine {
         }
     }
 
-    public void fireChat(ServerPlayer player, String message) {
+    /** @return true if any chat callback returned false to cancel */
+    public boolean fireChat(ServerPlayer player, String message) {
+        java.util.concurrent.atomic.AtomicBoolean cancelled = new java.util.concurrent.atomic.AtomicBoolean(false);
         Box3JSEntity entity = null;
         long tick = -1;
         for (var entry : bus.chatCallbacks.entrySet()) {
@@ -523,9 +529,15 @@ public class Box3ScriptEngine {
             Box3JSEntity e = entity;
             long t = tick;
             runInContext(entry.getKey(), () -> {
-                for (var cb : entry.getValue()) cb.onChat(e, message, t);
+                for (var cb : entry.getValue()) {
+                    Object result = cb.onChat(e, message, t);
+                    if (result instanceof Boolean && !((Boolean) result)) {
+                        cancelled.set(true);
+                    }
+                }
             });
         }
+        if (cancelled.get()) return true;
         // Per-player chat handlers
         for (var entry : bus.playerChatHandlers.entrySet()) {
             Function handler = entry.getValue().get(player.getUUID());
@@ -536,6 +548,7 @@ public class Box3ScriptEngine {
                 runInContext(project, () -> callFunction(handler, e, message, t));
             }
         }
+        return cancelled.get();
     }
 
     public void fireBlockPlace(ServerPlayer player, BlockPos pos, BlockState state) {

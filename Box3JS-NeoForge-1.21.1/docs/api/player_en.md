@@ -418,6 +418,19 @@ player.giveEnchantedItem("minecraft:bow", 1, {
 });
 ```
 
+### player.giveCustomItem(id, count)
+
+⬆ MC extension | Gives a custom item loaded via `world.loadCustomItems()`. Items use `minecraft:paper` as a carrier with DataComponents for name, texture, food, etc.
+
+```js
+// Load config first
+world.loadCustomItems("box3js-items");
+// Then give items
+player.giveCustomItem("arena_trophy", 1);
+player.giveCustomItem("arena_stew", 4);
+player.giveCustomItem("arena_medal", 16);
+```
+
 ### player.giveNamedItem(itemId, count, name, lore)
 
 Gives an item with a custom name and lore. `lore` is a string array, one line per entry.
@@ -484,6 +497,22 @@ player.clearEffects();
 ```js
 player.playSound("minecraft:block.note_block.pling", 0.8, 1.5);
 player.runCommand("say hello");
+```
+
+## Advancements
+
+### player.grantAdvancement(advancementId)
+
+⬆ MC extension | Grants an advancement to this player.
+
+### player.revokeAdvancement(advancementId)
+
+⬆ MC extension | Revokes an advancement from this player.
+
+```js
+player.grantAdvancement("minecraft:story/mine_stone");
+player.grantAdvancement("minecraft:adventure/kill_a_mob");
+player.revokeAdvancement("minecraft:story/mine_stone");
 ```
 
 ## Tab List

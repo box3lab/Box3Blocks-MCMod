@@ -29,12 +29,41 @@ public class Box3JSPlayer {
     private final ServerPlayer player;
     private final MinecraftServer server;
     private final Box3ScriptEngine engine;
+    private final GameVector3 _position, _velocity, _bounds;
 
     public Box3JSPlayer(ServerPlayer player, MinecraftServer server, Box3ScriptEngine engine) {
         this.player = player;
         this.server = server;
         this.engine = engine;
+        this._position = new GameVector3();
+        this._velocity = new GameVector3();
+        this._bounds = new GameVector3();
     }
+
+    // ---- Position / Velocity / Bounds ----
+
+    public GameVector3 getPosition() {
+        _position.x = player.getX();
+        _position.y = player.getY();
+        _position.z = player.getZ();
+        return _position;
+    }
+
+    public GameVector3 getVelocity() {
+        var v = player.getDeltaMovement();
+        _velocity.x = v.x; _velocity.y = v.y; _velocity.z = v.z;
+        return _velocity;
+    }
+
+    public GameVector3 getBounds() {
+        var bb = player.getBoundingBox();
+        _bounds.x = (bb.maxX - bb.minX) / 2.0;
+        _bounds.y = (bb.maxY - bb.minY) / 2.0;
+        _bounds.z = (bb.maxZ - bb.minZ) / 2.0;
+        return _bounds;
+    }
+
+    public boolean getOnGround() { return player.onGround(); }
 
     // ---- Info ----
 
@@ -405,6 +434,13 @@ public class Box3JSPlayer {
         if (stack != null) player.getInventory().add(stack);
     }
 
+    public void giveCustomItem(String id, int count) {
+        ItemStack stack = com.box3lab.box3js.registries.Box3JSCustomItems.createStack(id, count);
+        if (stack != null) {
+            player.getInventory().add(stack);
+        }
+    }
+
     public void giveEnchantedItem(String itemId, int count, NativeObject enchants) {
         ItemStack stack = makeItemStack(itemId, count, enchants);
         if (stack != null) player.getInventory().add(stack);
@@ -448,6 +484,30 @@ public class Box3JSPlayer {
 
     public void clearInventory() {
         player.getInventory().clearContent();
+    }
+
+    // ---- Advancements ----
+
+    public void grantAdvancement(String advancementId) {
+        ResourceLocation rl = ResourceLocation.tryParse(advancementId);
+        if (rl == null) return;
+        var holder = player.server.getAdvancements().get(rl);
+        if (holder != null) {
+            for (String criterion : holder.value().criteria().keySet()) {
+                player.getAdvancements().award(holder, criterion);
+            }
+        }
+    }
+
+    public void revokeAdvancement(String advancementId) {
+        ResourceLocation rl = ResourceLocation.tryParse(advancementId);
+        if (rl == null) return;
+        var holder = player.server.getAdvancements().get(rl);
+        if (holder != null) {
+            for (String criterion : holder.value().criteria().keySet()) {
+                player.getAdvancements().revoke(holder, criterion);
+            }
+        }
     }
 
     // ---- Effects ----

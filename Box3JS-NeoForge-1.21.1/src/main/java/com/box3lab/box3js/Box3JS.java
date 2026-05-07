@@ -1,5 +1,7 @@
 package com.box3lab.box3js;
 
+import com.box3lab.box3js.registries.Box3JSCustomItems;
+import com.box3lab.box3js.registries.Box3JSRecipeManager;
 import com.box3lab.box3js.script.Box3ScriptCommand;
 import com.box3lab.box3js.script.Box3ScriptEngine;
 import com.mojang.logging.LogUtils;
@@ -8,6 +10,8 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
+
+import java.nio.file.Path;
 import net.neoforged.neoforge.event.ServerChatEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -25,6 +29,9 @@ public class Box3JS {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public Box3JS(IEventBus modEventBus, ModContainer modContainer) {
+        // Custom items via data components + resource pack (no DeferredRegister, no registry sync)
+        Box3JSCustomItems.init(Path.of(".").toAbsolutePath().normalize());
+
         // Script commands
         NeoForge.EVENT_BUS.addListener(Box3ScriptCommand::register);
 
@@ -97,7 +104,9 @@ public class Box3JS {
         // Chat
         NeoForge.EVENT_BUS.addListener((ServerChatEvent event) -> {
             if (event.getPlayer() instanceof ServerPlayer sp) {
-                Box3ScriptEngine.get().fireChat(sp, event.getMessage().getString());
+                if (Box3ScriptEngine.get().fireChat(sp, event.getMessage().getString())) {
+                    event.setCanceled(true);
+                }
             }
         });
 
@@ -124,6 +133,7 @@ public class Box3JS {
         // Auto-load scripts from config/box3/script/<project>/app.js on server start
         NeoForge.EVENT_BUS.addListener((ServerStartedEvent event) -> {
             Box3ScriptEngine.get().autoLoad(event.getServer());
+            Box3JSRecipeManager.init(event.getServer());
         });
 
         LOGGER.info("Box3JS script engine initialized.");

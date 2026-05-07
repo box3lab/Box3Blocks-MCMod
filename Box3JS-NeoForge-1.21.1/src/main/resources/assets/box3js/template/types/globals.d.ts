@@ -189,7 +189,14 @@ declare class GameBounds3 {
   constructor(lo: GameVector3, hi: GameVector3);
 
   /** 原地设置所有边界。Sets all boundaries in‑place. */
-  set(lox: number, loy: number, loz: number, hix: number, hiy: number, hiz: number): GameBounds3;
+  set(
+    lox: number,
+    loy: number,
+    loz: number,
+    hix: number,
+    hiy: number,
+    hiz: number,
+  ): GameBounds3;
 
   /** 原地复制 b 的值。Copies values from b in‑place. */
   copy(b: GameBounds3): GameBounds3;
@@ -726,7 +733,7 @@ interface GameEntity {
    * 是否为玩家实体。返回 true 后 player 属性自动收窄为非 null。
    * True if this entity is a player. After a truthy check, `player` is narrowed to non-null.
    */
-  isPlayer(): this is GameEntity & { player: GamePlayer };
+  isPlayer(): this is GamePlayerEntity;
 
   /**
    * 实体类型标识符 (如 "minecraft:zombie", 只读)。
@@ -991,16 +998,6 @@ interface GameEntity {
    */
   destroy(): void;
 
-  /**
-   * 移除实体 (不触发 onDestroy 回调)。
-   * Removes the entity WITHOUT triggering onDestroy callback.
-   */
-  remove(): void;
-
-  /**
-   * 注册实体被销毁时的回调。
-   * Registers a callback to be called when this entity is destroyed.
-   */
   setOnDestroy(handler: (entity: GameEntity) => void): void;
 
   // ── 玩家代理 / Player proxy ──
@@ -1011,6 +1008,12 @@ interface GameEntity {
    */
   player: GamePlayer | null;
 }
+
+/**
+ * 玩家实体 — GameEntity 的子类型, 保证 player 属性非 null。
+ * A player entity — subtype of GameEntity with a guaranteed non‑null `player`.
+ */
+type GamePlayerEntity = GameEntity & { player: GamePlayer };
 
 // ================================================================
 //  §4  Player — 玩家
@@ -1027,6 +1030,32 @@ interface GamePlayer {
   readonly name: string;
   /** 玩家 UUID (与 entity.id 相同, 只读)。Player UUID (same as entity.id), readonly. */
   readonly userId: string;
+
+  // ── 位置 & 运动 / Position & Movement ──
+
+  /**
+   * 当前坐标 (世界坐标, 只读, 可通过 .set() 修改)。
+   * Current world‑space position. Readonly ref — mutate via .set(), cannot reassign.
+   */
+  readonly position: GameVector3;
+
+  /**
+   * 当前速度 (运动向量, 只读, 可通过 .set() 修改)。
+   * Current velocity (motion vector). Readonly ref — mutate via .set(), cannot reassign.
+   */
+  readonly velocity: GameVector3;
+
+  /**
+   * 包围盒半尺寸 (只读)。
+   * Bounding‑box half‑extents, readonly.
+   */
+  readonly bounds: GameVector3;
+
+  /**
+   * 是否在地面上 (只读)。
+   * True if the player is standing on a block, readonly.
+   */
+  readonly onGround: boolean;
 
   // ── 外观 / Appearance ──
 
@@ -1307,6 +1336,15 @@ interface GamePlayer {
   giveItem(itemId: string, count: number): void;
 
   /**
+   * 给予玩家自定义物品 (基于 resourcepacks/box3js-items/items.json 配置)。
+   * Gives a custom item defined in the resource pack's items.json.
+   * Items are vanilla paper with custom_model_data + name/lore/food components.
+   * @param id - 自定义物品 ID (如 "arena_trophy")
+   * @param count - 数量 (1‑64)
+   */
+  giveCustomItem(id: string, count: number): void;
+
+  /**
    * 给予玩家附魔物品。
    * Gives an enchanted item to the player.
    * @param itemId - 物品 ID
@@ -1383,10 +1421,29 @@ interface GamePlayer {
   /**
    * 为该玩家注册聊天处理器 (覆盖全局 onChat)。
    * Registers a per‑player chat handler (overrides global onChat for this player).
+   * @returns GameEventHandlerToken
    */
   onChat(
-    handler: (entity: GameEntity, message: string, tick: number) => void,
-  ): void;
+    handler: (
+      entity: GamePlayerEntity,
+      message: string,
+      tick: number,
+    ) => boolean | void,
+  ): GameEventHandlerToken;
+
+  // ── 成就 / Advancements ──
+
+  /**
+   * 授予该玩家一个成就/进度。
+   * Grants an advancement to this player by resource location (e.g. "minecraft:story/mine_stone").
+   */
+  grantAdvancement(advancementId: string): void;
+
+  /**
+   * 撤销该玩家的一个成就/进度。
+   * Revokes an advancement from this player.
+   */
+  revokeAdvancement(advancementId: string): void;
 }
 
 // ================================================================
@@ -1542,6 +1599,60 @@ interface GameWorld {
    */
   say(message: string): void;
 
+  // ── 自定义物品 / Custom Items ──
+
+  /**
+   * 从资源包加载自定义物品配置 (基于数据组件, 无需 DeferredRegister, 无注册表同步问题)。
+   * Loads custom item definitions from a resource pack's items.json.
+   * Items use minecraft:paper as base with custom_model_data for model switching.
+   * Models & textures must be provided via the resource pack (resourcepacks/<packName>/).
+   *
+   * JSON 格式使用 Minecraft 原版组件 ID 作为 key:
+   *   "minecraft:custom_model_data", "minecraft:custom_name", "minecraft:lore",
+   *   "minecraft:max_stack_size", "minecraft:enchantment_glint_override",
+   *   "minecraft:rarity", "minecraft:food": { nutrition, saturation, can_always_eat, eat_seconds }
+   *
+   * @param packName - 资源包目录名 (如 "box3js-items"), 会在 resourcepacks/<packName>/items.json 查找
+   */
+  loadCustomItems(packName: string): void;
+
+  // ── 结构 & 成就 / Structure & Advancement ──
+
+  /**
+   * 在指定位置放置数据包中的 .nbt 结构。
+   * Places an .nbt structure from current datapacks at the given position.
+   * Structure must exist under data/<namespace>/structure/<id>.nbt
+   */
+  placeStructure(x: number, y: number, z: number, structureId: string): void;
+  placeStructure(pos: GameVector3, structureId: string): void;
+
+  /**
+   * 为指定玩家授予成就/进度。
+   * Grants a datapack advancement to a player by name.
+   */
+  grantAdvancement(playerName: string, advancementId: string): void;
+
+  /**
+   * 按物品名搜索配方 ID 列表。
+   * Searches recipe IDs matching a filter string.
+   * @param filter - 搜索关键词 (匹配配方 ID)
+   */
+  listRecipes(filter: string): string[];
+
+  /**
+   * 移除指定 ID 的配方 (黑名单机制, 服务器重载后需重新移除)。
+   * Removes a recipe by ID (blacklisted; re‑apply after server reload).
+   * @param recipeId - 配方 ID, 例如 "minecraft:iron_pickaxe"
+   * @returns 是否成功加入黑名单
+   */
+  removeRecipe(recipeId: string): boolean;
+
+  /**
+   * 清除所有配方黑名单, 恢复全部原始配方。
+   * Clears the recipe blacklist and restores all original recipes.
+   */
+  clearRecipes(): void;
+
   /**
    * 在指定位置向全服播放声音。
    * Plays a sound for all players at a location.
@@ -1598,7 +1709,12 @@ interface GameWorld {
    * 查询指定半径内的所有实体。
    * Returns all entities within a radius around a point.
    */
-  entitiesInRadius(x: number, y: number, z: number, radius: number): GameEntity[];
+  entitiesInRadius(
+    x: number,
+    y: number,
+    z: number,
+    radius: number,
+  ): GameEntity[];
   entitiesInRadius(pos: GameVector3, radius: number): GameEntity[];
 
   // ── 搜索与音效 / Search & Sound ──
@@ -1608,12 +1724,16 @@ interface GameWorld {
    * Plays a sound (string shorthand or full config object).
    * @param config - 音效路径字符串 或 { path, position, volume, pitch }
    */
-  sound(config: string | {
-    path: string;
-    position?: GameVector3;
-    volume?: number;
-    pitch?: number;
-  }): void;
+  sound(
+    config:
+      | string
+      | {
+          path: string;
+          position?: GameVector3;
+          volume?: number;
+          pitch?: number;
+        },
+  ): void;
 
   /**
    * 查询包围盒内的所有实体。
@@ -1980,14 +2100,18 @@ interface GameWorld {
    * Registers a callback invoked when a player joins the server.
    * @returns GameEventHandlerToken — 调用 .cancel() 取消
    */
-  onPlayerJoin(handler: (entity: GameEntity, tick: number) => void): GameEventHandlerToken;
+  onPlayerJoin(
+    handler: (entity: GamePlayerEntity, tick: number) => void,
+  ): GameEventHandlerToken;
 
   /**
    * 注册玩家离开回调。
    * Registers a callback invoked when a player leaves the server.
    * @returns GameEventHandlerToken — 调用 .cancel() 取消
    */
-  onPlayerLeave(handler: (entity: GameEntity, tick: number) => void): GameEventHandlerToken;
+  onPlayerLeave(
+    handler: (entity: GamePlayerEntity, tick: number) => void,
+  ): GameEventHandlerToken;
 
   /**
    * 注册聊天消息回调 (包括 /me 消息)。
@@ -1996,7 +2120,7 @@ interface GameWorld {
    * @returns GameEventHandlerToken — 调用 .cancel() 取消
    */
   onChat(
-    handler: (entity: GameEntity, message: string, tick: number) => void,
+    handler: (entity: GamePlayerEntity, message: string, tick: number) => void,
   ): GameEventHandlerToken;
 
   /**
@@ -2004,7 +2128,9 @@ interface GameWorld {
    * Registers a callback invoked when a player respawns.
    * @returns GameEventHandlerToken — 调用 .cancel() 取消
    */
-  onPlayerRespawn(handler: (entity: GameEntity, tick: number) => void): GameEventHandlerToken;
+  onPlayerRespawn(
+    handler: (entity: GamePlayerEntity, tick: number) => void,
+  ): GameEventHandlerToken;
 
   /**
    * 注册方块右键激活回调。
@@ -2013,7 +2139,7 @@ interface GameWorld {
    */
   onBlockActivate(
     handler: (
-      entity: GameEntity,
+      entity: GamePlayerEntity,
       x: number,
       y: number,
       z: number,
@@ -2029,7 +2155,7 @@ interface GameWorld {
    */
   onVoxelDestroy(
     handler: (
-      entity: GameEntity,
+      entity: GamePlayerEntity,
       x: number,
       y: number,
       z: number,
@@ -2045,7 +2171,7 @@ interface GameWorld {
    */
   onBlockPlace(
     handler: (
-      entity: GameEntity,
+      entity: GamePlayerEntity,
       x: number,
       y: number,
       z: number,
@@ -2062,7 +2188,7 @@ interface GameWorld {
    */
   onVoxelContact(
     handler: (
-      entity: GameEntity,
+      entity: GamePlayerEntity,
       voxelId: number,
       x: number,
       y: number,
@@ -2079,7 +2205,11 @@ interface GameWorld {
    * @returns GameEventHandlerToken — 调用 .cancel() 取消
    */
   onInteract(
-    handler: (entity: GameEntity, target: GameEntity, tick: number) => void,
+    handler: (
+      entity: GamePlayerEntity,
+      target: GameEntity,
+      tick: number,
+    ) => void,
   ): GameEventHandlerToken;
 
   /**
@@ -2088,7 +2218,11 @@ interface GameWorld {
    * @returns GameEventHandlerToken — 调用 .cancel() 取消
    */
   onEntityDeath(
-    handler: (entity: GameEntity, killer: GameEntity | null, tick: number) => void,
+    handler: (
+      entity: GameEntity,
+      killer: GameEntity | null,
+      tick: number,
+    ) => void,
   ): GameEventHandlerToken;
 
   /**
@@ -2113,7 +2247,7 @@ interface GameWorld {
    */
   onFluidEnter(
     handler: (
-      entity: GameEntity,
+      entity: GamePlayerEntity,
       fluid: string,
       x: number,
       y: number,
@@ -2129,7 +2263,7 @@ interface GameWorld {
    */
   onFluidLeave(
     handler: (
-      entity: GameEntity,
+      entity: GamePlayerEntity,
       fluid: string,
       x: number,
       y: number,
@@ -2165,14 +2299,18 @@ interface GameWorld {
    * WALK / RUN / CROUCH / JUMP / FLY / ACTION0 / ACTION1
    * @returns GameEventHandlerToken — 调用 .cancel() 取消
    */
-  onButtonPressed(handler: (entity: GameEntity, button: string, tick: number) => void): GameEventHandlerToken;
+  onButtonPressed(
+    handler: (entity: GamePlayerEntity, button: string, tick: number) => void,
+  ): GameEventHandlerToken;
 
   /**
    * 注册跨项目消息回调。
    * Registers a callback for messages from other script projects.
    * @returns GameEventHandlerToken — 调用 .cancel() 取消
    */
-  onMessage(handler: (sender: string, data: unknown) => void): GameEventHandlerToken;
+  onMessage(
+    handler: (sender: string, data: unknown) => void,
+  ): GameEventHandlerToken;
 }
 
 /**
@@ -2474,21 +2612,6 @@ declare const storage: GameStorage;
 
 /** 服务端控制台输出 / Server console output */
 declare const console: GameConsole;
-
-/**
- * CommonJS 模块导入。
- * CommonJS module import.
- *
- * @remarks
- * 从当前项目目录加载 .js 文件 (自动追加 .js 后缀)。
- * Loads a .js file from the current project directory (auto‑appends .js extension).
- * 模块通过 Rhino 的 ModuleScope 加载，支持相对路径和嵌套导入。
- * Modules are loaded via Rhino's ModuleScope; relative paths and nested requires are supported.
- *
- * @param id - 模块标识符 (如 "./state" 或 "./state.js")
- * @returns 模块的 exports 对象
- */
-declare function require(id: string): any;
 
 /**
  * 阻塞当前执行线程 (毫秒级)。

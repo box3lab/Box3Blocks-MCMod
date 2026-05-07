@@ -418,6 +418,19 @@ player.giveEnchantedItem("minecraft:bow", 1, {
 });
 ```
 
+### player.giveCustomItem(id, count)
+
+⬆ MC 扩展 | 给予通过 `world.loadCustomItems()` 加载的自定义物品。物品以 `minecraft:paper` 为载体，通过 DataComponents 获得名称、贴图、食物等属性。
+
+```js
+// 先加载配置
+world.loadCustomItems("box3js-items");
+// 再给予物品
+player.giveCustomItem("arena_trophy", 1);
+player.giveCustomItem("arena_stew", 4);
+player.giveCustomItem("arena_medal", 16);
+```
+
 ### player.giveNamedItem(itemId, count, name, lore)
 
 给予带自定义名称和描述的物品。`lore` 为字符串数组，每项一行描述文字。
@@ -484,6 +497,22 @@ player.clearEffects();
 ```js
 player.playSound("minecraft:block.note_block.pling", 0.8, 1.5);
 player.runCommand("say hello");
+```
+
+## 成就
+
+### player.grantAdvancement(advancementId)
+
+⬆ MC 扩展 | 为该玩家授予成就/进度。
+
+### player.revokeAdvancement(advancementId)
+
+⬆ MC 扩展 | 撤销该玩家的成就/进度。
+
+```js
+player.grantAdvancement("minecraft:story/mine_stone");
+player.grantAdvancement("minecraft:adventure/kill_a_mob");
+player.revokeAdvancement("minecraft:story/mine_stone");
 ```
 
 ## Tab 列表

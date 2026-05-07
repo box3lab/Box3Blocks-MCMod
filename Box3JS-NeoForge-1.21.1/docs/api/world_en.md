@@ -766,3 +766,88 @@ var biome = world.getBiome(entity.position);
 world.runCommand("time set day");
 world.runCommand("weather clear");
 ```
+
+## Structures & Advancements
+
+### world.placeStructure(x, y, z, structureId)
+
+⬆ MC extension | Places a datapack structure template (NBT) at the given position.
+
+### world.placeStructure(pos, structureId)
+
+⬆ GameVector3 overload.
+
+```js
+world.placeStructure(0, 100, 0, "minecraft:village/plains/houses/plains_small_house_1");
+world.placeStructure(pos, "box3js:arena");
+```
+
+### world.grantAdvancement(playerName, advancementId)
+
+⬆ MC extension | Grants an advancement to a player by name.
+
+```js
+world.grantAdvancement("Steve", "minecraft:story/mine_stone");
+```
+
+## Recipe Management
+
+### world.listRecipes(filter)
+
+⬆ MC extension | Searches recipe IDs matching a keyword.
+
+```js
+var recipes = world.listRecipes("diamond");
+console.log(recipes); // ["minecraft:diamond_sword", "minecraft:diamond_block", ...]
+```
+
+### world.removeRecipe(recipeId)
+
+⬆ MC extension | Blacklists a recipe so it's no longer craftable. Returns whether successful.
+
+```js
+world.removeRecipe("minecraft:iron_pickaxe");
+```
+
+### world.clearRecipes()
+
+⬆ MC extension | Clears the recipe blacklist, restoring all original recipes.
+
+```js
+world.clearRecipes();
+```
+
+## Custom Items
+
+### world.loadCustomItems(packName)
+
+⬆ MC extension | Loads custom item definitions from a resource pack's `items.json`. Reads `resourcepacks/<packName>/items.json`, parses item definitions using Minecraft's native data component IDs as JSON keys. All items use `minecraft:paper` as the base, with `DataComponents` providing name, lore, texture, food, etc.
+
+JSON format uses MC component ID prefixes:
+
+| JSON Key | DataComponent | Description |
+|----------|--------------|-------------|
+| `minecraft:custom_model_data` | `CUSTOM_MODEL_DATA` | Model predicate value, matched by paper.json overrides |
+| `minecraft:custom_name` | `CUSTOM_NAME` | Display name |
+| `minecraft:lore` | `LORE` | Lore text array |
+| `minecraft:max_stack_size` | `MAX_STACK_SIZE` | Max stack size (1–64), default 64 |
+| `minecraft:enchantment_glint_override` | `ENCHANTMENT_GLINT_OVERRIDE` | Enchantment foil effect |
+| `minecraft:rarity` | `RARITY` | Rarity: `common`/`uncommon`/`rare`/`epic` |
+| `minecraft:food` | `FOOD` | Food properties (see sub-fields below) |
+
+**`minecraft:food` sub-fields:**
+
+| Sub-field | Type | Description |
+|-----------|------|-------------|
+| `nutrition` | int | Nutrition value (1–20) |
+| `saturation` | float | Saturation modifier |
+| `can_always_eat` | bool | Always edible |
+| `eat_seconds` | float | Eat time in seconds, ≤0.8 = fast |
+
+```js
+world.loadCustomItems("box3js-items");
+// Loads all items defined in resourcepacks/box3js-items/items.json
+// Items can then be given via player.giveCustomItem("arena_trophy", 1)
+```
+
+**Note:** Textures require the client to load the resource pack. Without it, items still function (name/lore/food), but display the default paper texture.
