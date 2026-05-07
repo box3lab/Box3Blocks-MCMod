@@ -367,12 +367,6 @@ public class Box3JSEntity {
         engine.clearCustomProps(entity.getUUID());
     }
 
-    /** Remove entity without triggering onDestroy callback */
-    public void remove() {
-        entity.discard();
-        engine.clearCustomProps(entity.getUUID());
-    }
-
     public void setOnDestroy(Function handler) {
         this._onDestroyHandler = handler;
     }

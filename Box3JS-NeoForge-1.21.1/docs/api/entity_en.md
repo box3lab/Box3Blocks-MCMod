@@ -393,10 +393,6 @@ entity.setAttribute("minecraft:generic.armor", 10);
 
 ✅ Box3 API | Destroys the entity. If a callback was registered via `setOnDestroy()`, it will be invoked.
 
-### entity.remove()
-
-⬆ MC extension | Removes the entity **without** triggering the `setOnDestroy` callback.
-
 ### entity.setOnDestroy(handler)
 
 ✅ Box3 API | Registers a callback called when the entity is destroyed. `handler` receives one argument `(entity)`.

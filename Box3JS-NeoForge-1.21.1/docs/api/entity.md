@@ -393,10 +393,6 @@ entity.setAttribute("minecraft:generic.armor", 10);
 
 ✅ Box3 API | 销毁实体。如果通过 `setOnDestroy()` 设置了回调，会触发它。
 
-### entity.remove()
-
-⬆ MC 扩展 | 直接移除实体，**不触发** `setOnDestroy` 回调。
-
 ### entity.setOnDestroy(handler)
 
 ✅ Box3 API | 设置销毁回调。`handler` 接收一个参数 `(entity)`。

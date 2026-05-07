@@ -451,7 +451,6 @@ Box3 实体可独立发射粒子，Box3JS 完全未实现实体级粒子：
 | `entity.hurt(amount)` | `entity.hurt(amount)` | ✅ | 一致 |
 | — | `entity.heal(amount)` | ⬆ | MC 扩展。治疗实体 |
 | `entity.destroy()` | `entity.destroy()` | ✅ | 一致。触发 onDestroy 回调后移除。Box3 中 destroy() 调用后实体立即消失 |
-| — | `entity.remove()` | ⬆ | MC 扩展。无回调直接移除 |
 
 ### 2.10 实体事件
 
