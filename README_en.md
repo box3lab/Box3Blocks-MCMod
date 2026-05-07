@@ -80,6 +80,45 @@ You can also migrate structures from Box3 directly into your Minecraft world, pr
     Quickly toggle barrier visibility.  
     The state is saved to a local config file and will be applied automatically next time you enter the world.
 
+### 🧪 Box3JS Script Engine (Beta)
+
+Box3JS is a built-in JavaScript scripting engine (Rhino engine) that lets server owners write server-side scripts for custom gameplay, mini-games, and world interactions. Scripts live in `config/box3/script/<project>/`.
+
+**Quick start:**
+
+```bash
+/box3script create mygame        # Create TypeScript scaffold
+cd config/box3/script/mygame
+npm install && npm run build     # Install and compile
+/box3script sandbox mygame       # (Recommended) Enable sandbox mode
+/box3script on mygame            # Enable and run
+```
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| `/box3script` | List all projects and their on/sandbox status |
+| `/box3script create <name>` | Create a new script project (TypeScript scaffold) |
+| `/box3script on <project>` | Enable and load a project |
+| `/box3script on all` | Enable all projects |
+| `/box3script off <project>` | Disable a project |
+| `/box3script off all` | Disable all projects |
+| `/box3script stop` | Stop all scripts (sandbox projects keep tracking state) |
+| `/box3script stop <project>` | Stop a project (sandbox projects keep tracking state) |
+| `/box3script reload` | Reload all enabled projects |
+| `/box3script reload <project>` | Reload a project (for development) |
+| `/box3script watch` | Toggle file watching (auto-reload `.js` on changes) |
+| `/box3script sandbox <project>` | Toggle sandbox mode (on = track, off = rollback) |
+
+> All `<project>` parameters support **Tab completion**.
+
+**Sandbox system:** tracks all world modifications and auto-rolls back when disabled, covering: block changes, entity/player states, world state.
+
+**Available APIs:** `world`, `entity`, `player`, `voxels`, `storage`, `console` / `require()` / `GameVector3` / `GameBounds3` and more.
+
+Full API docs: `docs/api/`. Step-by-step tutorials: `docs/tutorial/` ([Getting Started →](Box3JS-NeoForge-1.21.1/docs/tutorial/01-basics.md)).
+
 ### 🔒 Command Permission Management
 
 - `/box3import`, `/box3barrier`, and `/box3export` require different permission levels depending on configuration (default level `0`).

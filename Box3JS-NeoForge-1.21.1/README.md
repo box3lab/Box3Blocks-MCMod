@@ -54,6 +54,16 @@ npm run build          # 输出 dist/app.js
 
 [API 总览 →](docs/api/README.md) ([English](docs/api/README_en.md))
 
+## 教程
+
+从零基础到完整小游戏，手把手教你用 Box3JS 写脚本：
+
+1. [从零开始](docs/tutorial/01-basics.md) — 创建项目、控制台、聊天命令、定时器
+2. [玩家与物品](docs/tutorial/02-player-items.md) — 传送、飞行、背包、自定义物品
+3. [事件与实体](docs/tutorial/03-events-entities.md) — 事件回调、实体生成/AI、计分板、队伍
+4. [高级游戏系统](docs/tutorial/04-advanced-systems.md) — BossBar、粒子、烟花、世界边界、PvP 竞技场
+5. [实用示例集](docs/tutorial/05-examples.md) — 传送系统、防破坏、波次刷怪、赛跑、捉迷藏等
+
 ## 命令
 
 [命令详细参考 →](docs/api/commands.md) ([English](docs/api/commands_en.md))
