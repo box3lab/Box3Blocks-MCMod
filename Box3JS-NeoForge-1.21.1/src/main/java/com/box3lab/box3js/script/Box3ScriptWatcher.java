@@ -1,14 +1,27 @@
 package com.box3lab.box3js.script;
 
-import com.box3lab.box3js.Box3JS;
-import net.minecraft.server.MinecraftServer;
-
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.ClosedWatchServiceException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
+import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchKey;
+import java.nio.file.WatchService;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
-import static java.nio.file.StandardWatchEventKinds.*;
+import com.box3lab.box3js.Box3JS;
+
+import net.minecraft.server.MinecraftServer;
 
 class Box3ScriptWatcher {
 
@@ -28,10 +41,13 @@ class Box3ScriptWatcher {
         this.config = Box3ScriptConfig.get();
     }
 
-    boolean isRunning() { return running; }
+    boolean isRunning() {
+        return running;
+    }
 
     void start() {
-        if (running) return;
+        if (running)
+            return;
         try {
             watchService = FileSystems.getDefault().newWatchService();
             Path scriptDir = config.getScriptDir(server);
@@ -55,7 +71,10 @@ class Box3ScriptWatcher {
     void stop() {
         running = false;
         if (watchService != null) {
-            try { watchService.close(); } catch (IOException ignored) {}
+            try {
+                watchService.close();
+            } catch (IOException ignored) {
+            }
             watchService = null;
         }
         if (scheduler != null) {
@@ -68,7 +87,8 @@ class Box3ScriptWatcher {
 
     /** Register only dist/ directories under each project. */
     private void registerDistDirs(Path scriptDir) throws IOException {
-        if (!Files.isDirectory(scriptDir)) return;
+        if (!Files.isDirectory(scriptDir))
+            return;
         try (var dirs = Files.list(scriptDir)) {
             dirs.filter(Files::isDirectory).forEach(projectDir -> {
                 Path distDir = projectDir.resolve("dist");
@@ -87,19 +107,24 @@ class Box3ScriptWatcher {
     private void pollLoop() {
         while (running) {
             WatchKey key;
-            try { key = watchService.poll(1, TimeUnit.SECONDS); }
-            catch (InterruptedException e) { break; }
-            catch (ClosedWatchServiceException e) { break; }
-            if (key == null) continue;
+            try {
+                key = watchService.poll(1, TimeUnit.SECONDS);
+            } catch (InterruptedException | ClosedWatchServiceException e) {
+                break;
+            }
+            if (key == null)
+                continue;
 
             Path dir = (Path) key.watchable();
             String project = dir.getParent().getFileName().toString();
             for (WatchEvent<?> event : key.pollEvents()) {
                 WatchEvent.Kind<?> kind = event.kind();
-                if (kind == OVERFLOW) continue;
+                if (kind == OVERFLOW)
+                    continue;
                 String fileName = ((Path) event.context()).toString();
                 // Only react to JS output files in dist/
-                if (!fileName.endsWith(".js")) continue;
+                if (!fileName.endsWith(".js"))
+                    continue;
 
                 if (kind == ENTRY_DELETE && fileName.equals("app.js")) {
                     // dist/app.js deleted — allow rebuild to recreate it
@@ -124,14 +149,17 @@ class Box3ScriptWatcher {
                 distDir.register(watchService, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_DELETE);
                 Box3JS.LOGGER.info("Re-registered watch: {}", distDir);
             }
-        } catch (IOException | InterruptedException ignored) {}
+        } catch (IOException | InterruptedException ignored) {
+        }
     }
 
     private void debounceReload(String project) {
-        if (!config.isEnabled(project)) return;
+        if (!config.isEnabled(project))
+            return;
         synchronized (pending) {
             ScheduledFuture<?> existing = pending.remove(project);
-            if (existing != null) existing.cancel(false);
+            if (existing != null)
+                existing.cancel(false);
             pending.put(project, scheduler.schedule(() -> {
                 pending.remove(project);
                 reloadProject(project);
@@ -140,18 +168,21 @@ class Box3ScriptWatcher {
     }
 
     private void reloadProject(String project) {
-        if (!config.isEnabled(project)) return;
-        try {
-            engine.setCurrentProject(project);
+        server.execute(() -> {
+            if (!running || !config.isEnabled(project))
+                return;
             try {
-                engine.removeProject(project);
-                engine.eval("require('./app')");
-                Box3JS.LOGGER.info("Watcher reloaded: {}", project);
-            } finally {
-                engine.setCurrentProject(null);
+                engine.setCurrentProject(project);
+                try {
+                    engine.removeProject(project);
+                    engine.eval("require('./app')");
+                    Box3JS.LOGGER.info("Watcher reloaded: {}", project);
+                } finally {
+                    engine.setCurrentProject(null);
+                }
+            } catch (Exception e) {
+                Box3JS.LOGGER.error("Watcher reload failed for {}", project, e);
             }
-        } catch (Exception e) {
-            Box3JS.LOGGER.error("Watcher reload failed for {}", project, e);
-        }
+        });
     }
 }

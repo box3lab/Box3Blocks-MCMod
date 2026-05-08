@@ -68,18 +68,31 @@
   - `纸`右键模型：复制当前模型参数
   - `书`右键模型：粘贴参数到目标模型模型
 
-### 🧪 Box3JS 脚本引擎 (Beta)
+### 🧪 Box3JS — 服务端脚本引擎
 
-Box3JS 是一个内置于模组的 JavaScript 脚本引擎（Rhino 引擎），允许服主编写服务端脚本来创建自定义玩法、小游戏和世界交互。所有脚本位于 `config/box3/script/<项目名>/`。
+**无需 Java 知识，用 TypeScript 为你的服务器创造无限玩法。**
+
+Box3JS 是内置于模组的服务端脚本引擎（Mozilla Rhino），让你像写网页一样为 Minecraft 服务器编写小游戏、自定义机制和世界交互。告别复杂的 Java 模组开发 — 写 TypeScript，一键热重载，即时生效。
+
+**为什么选择 Box3JS？**
+
+- **零门槛** — 会写 TypeScript/JavaScript 就能开发 Minecraft 玩法，无需 Gradle、无需 IDE、无需重启服务器
+- **热重载** — 修改代码后自动编译重载（`--watch`），迭代速度秒杀传统模组开发
+- **沙盒保护** — 一键开启沙盒模式，自动追踪所有世界修改；关闭时完整回滚，服务器不留痕迹。适合活动服、小游戏轮换
+- **TypeScript 全流程** — esbuild 打包 + Babel 转译 + 类型声明文件，享受完整的类型检查和智能提示
+- **16 种事件回调** — 玩家加入/离开、聊天、方块交互、实体死亡/受伤、玩家重生……覆盖所有玩法需求
+- **丰富的视觉 API** — 粒子效果 (13+ 种)、烟花 (5 种形状)、闪电、爆炸、音效，打造沉浸式体验
+- **完整游戏系统** — 计分板、BossBar 倒计时、队伍系统、世界边界缩圈、跨脚本通信，开箱即用
+- **自定义物品/配方** — JSON 配置即可注册自定义物品（支持食物、稀有度、光效），动态管理合成配方
 
 **快速开始：**
 
 ```bash
-/box3script create mygame        # 创建 TypeScript 脚手架
+/box3script create mygame        # 创建 TypeScript 脚手架项目
 cd config/box3/script/mygame
 npm install && npm run build     # 安装依赖并编译
-/box3script sandbox mygame       # (推荐) 开启沙盒模式
-/box3script on mygame            # 启用并运行脚本
+/box3script sandbox mygame       # (推荐) 开启沙盒，放心测试
+/box3script start mygame         # 启动脚本
 ```
 
 **命令一览：**
@@ -88,18 +101,26 @@ npm install && npm run build     # 安装依赖并编译
 |---|---|
 | `/box3script` | 列出所有项目及启用/沙盒状态 |
 | `/box3script create <name>` | 创建新脚本项目 (TypeScript 脚手架) |
-| `/box3script on <project>` | 启用并加载指定项目 |
-| `/box3script on all` | 一键启用所有项目 |
-| `/box3script off <project>` | 禁用指定项目 |
-| `/box3script off all` | 一键禁用所有项目 |
-| `/box3script stop` | 停止所有脚本（沙盒项目保留追踪状态） |
-| `/box3script stop <project>` | 停止指定项目（沙盒项目保留追踪状态） |
-| `/box3script reload` | 重载所有已启用项目 |
+| `/box3script start <project>` | 启动指定项目 |
+| `/box3script start all` | 一键启动所有项目 |
+| `/box3script stop <project>` | 停止指定项目（沙盒项目保留追踪） |
+| `/box3script stop all` | 一键停止所有项目 |
 | `/box3script reload <project>` | 重载指定项目（开发调试用） |
+| `/box3script reload` | 重载所有已启用项目 |
 | `/box3script watch` | 切换文件监控（`.js` 变化自动热重载） |
 | `/box3script sandbox <project>` | 切换沙盒模式（开启追踪 / 关闭回滚） |
 
 > 所有 `<project>` 参数均支持 **Tab 自动补全**。
+
+**你能用它做什么？**
+
+| 玩法类型 | 示例 |
+|---|---|
+| 竞技对抗 | PvP 竞技场、队伍对战、缩圈毒圈、击杀积分榜 |
+| 休闲派对 | 领地圈地竞速、跑酷计时、大厅欢迎礼包 |
+| RPG 机制 | 波次刷怪、精英 Boss 战、自定义物品/药水、巡逻守卫 |
+| 社交工具 | 彩色聊天弹幕、家传送、坐标分享、随机传送 |
+| 世界管理 | 方块区域填充、天气/时间控制、游戏规则切换 |
 
 **沙盒系统：**
 
@@ -114,14 +135,14 @@ npm install && npm run build     # 安装依赖并编译
 
 **已实现 API：**
 
-- `world` — 世界控制、事件回调 (16 种)、记分板、Bossbar、队伍、边界、粒子、烟花、射线检测
-- `entity` — 实体属性、AI 寻路、装备、药水效果、标签
-- `player` — 玩家专属：背包、飞行、游戏模式、传送、消息、经验
+- `world` — 世界控制、16 种事件回调、记分板、BossBar、队伍、边界、粒子、烟花、闪电、爆炸、抛射物、射线检测、跨脚本通信
+- `entity` — 实体属性、AI 寻路、装备、药水效果、标签、导航
+- `player` — 玩家专属：背包、飞行、游戏模式、传送、消息、经验、成就
 - `voxels` — 方块读写、区域填充、刷怪笼
 - `storage` — JSON 数据持久化
 - `console` / `require()` / `sleep()` / `GameVector3` / `GameBounds3` / `GameRGBColor` 等
 
-完整 API 文档见 `docs/api/`，开发教程见 `docs/tutorial/`（[从零开始 →](Box3JS-NeoForge-1.21.1/docs/tutorial/01-basics.md)）。
+完整 API 文档见 `docs/api/`，从零开始的开发教程见 `docs/tutorial/`（[第一课：Hello World →](Box3JS-NeoForge-1.21.1/docs/tutorial/01-basics.md)），全部示例代码均已通过 TypeScript 编译 + ESLint 验证。
 
 ### 🔒 命令权限管理
 

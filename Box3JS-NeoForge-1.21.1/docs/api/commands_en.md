@@ -4,40 +4,9 @@ All commands require **OP level 2** (default admin permission). All `<project>` 
 
 ## Command List
 
-### `/box3script create <name>`
-
-Creates a new TypeScript script project. Generates a complete TS scaffold under `config/box3/script/<name>/`. Created projects are **disabled** by default.
-
-```
-/box3script create mygame
-```
-
-Generated file structure:
-
-```
-config/box3/script/
-  └── mygame/
-      ├── .gitignore
-      ├── package.json          ← dependencies (esbuild, Babel, TypeScript)
-      ├── tsconfig.json
-      ├── build.mjs             ← build script
-      ├── types/
-      │   └── globals.d.ts      ← Box3JS type declarations
-      └── src/
-          └── app.ts            ← entry point (with Hello World example)
-```
-
-After creation, manually install dependencies and build:
-
-```bash
-cd config/box3/script/mygame
-npm install
-npm run build          # outputs dist/app.js
-```
-
 ### `/box3script`
 
-With no arguments, lists all projects and their enable/disable/sandbox status.
+Shows project status overview.
 
 ```
 /box3script
@@ -46,117 +15,102 @@ With no arguments, lists all projects and their enable/disable/sandbox status.
 Example output:
 
 ```
-=== Projects ===
-  [ON] [SANDBOX]  colorzone
-  [ON]  demo
-  [OFF]  siege
+══ Box3JS Script Engine ══
+
+  Watch: ● Active    Sandbox: ● 1 project(s)
+
+  Projects: 1/2 enabled  |  1 loaded
+
+  ────────────────────────────
+  ● colorzone ▐SANDBOX▌
+  ◌ demo
+  ────────────────────────────
+
+  Start  /box3script start [name|all]
+  Stop   /box3script stop [name|all]
+  Reload /box3script reload [name]
+  New    /box3script create <name>
 ```
 
-### `/box3script on <project>`
+- `◉` = loaded & running, `○` = enabled but not loaded, `◌` = disabled
+- `▐SANDBOX▌` = sandbox active
 
-Enables the specified project and **immediately loads and executes** it. Load errors are reported in chat.
+### `/box3script create <name>`
 
-```
-/box3script on mygame
-```
-
-### `/box3script on all`
-
-Enables all projects at once.
+Creates a new TypeScript script project. Generates a complete TS scaffold, **disabled** by default.
 
 ```
-/box3script on all
+/box3script create mygame
 ```
 
-### `/box3script off <project>`
+After creation:
 
-Disables the specified project. It won't auto-run on next server restart.
-
-```
-/box3script off siege
-```
-
-### `/box3script off all`
-
-Disables all projects at once.
-
-```
-/box3script off all
+```bash
+cd config/box3/script/mygame
+npm install && npm run build
 ```
 
-### `/box3script reload`
+Then enable with `/box3script start mygame`.
 
-Stops all scripts and reloads `app.js` for all enabled projects. Load errors are reported in chat.
+### `/box3script start [project|all]`
 
-```
-/box3script reload
-```
-
-### `/box3script reload <project>`
-
-Reloads the specified project (stop then start). If the project was disabled, it gets auto-enabled before starting.
+Enable and load projects. **No args** = all projects. **Project name** = only that project. **`all`** = explicitly all.
 
 ```
-/box3script reload mygame
+/box3script start              # enable all
+/box3script start all          # enable all (same as no args)
+/box3script start mygame       # enable only mygame
 ```
+
+### `/box3script stop [project|all]`
+
+Disable and unload projects. **No args** = all projects. **Project name** = only that project. **`all`** = explicitly all.
+
+```
+/box3script stop               # disable all
+/box3script stop all           # disable all (same as no args)
+/box3script stop mygame        # disable only mygame
+```
+
+### `/box3script reload [project]`
+
+Reload scripts. **No args** = stop all, reload all enabled projects. **With project name** = reload only that project.
+
+```
+/box3script reload            # reload all enabled projects
+/box3script reload mygame     # reload only mygame
+```
+
+After editing code and running `npm run build`, use `reload` to apply changes. Or enable `watch` for auto-reload.
 
 ### `/box3script watch`
 
-Toggle file watching on/off. When enabled, monitors the `dist/` directory of all projects and auto hot-reloads when `.js` files change.
+Toggle file watching. When on, monitors `dist/` across all projects and auto-reloads on `.js` file changes.
 
 ```
-/box3script watch          # toggle on/off
-/box3script watch on       # turn on
-/box3script watch off      # turn off
+/box3script watch             # toggle on/off
 ```
 
 ### `/box3script sandbox <project>`
 
-Toggle sandbox mode. When enabled, automatically tracks all block modifications, entity/player/world state changes made by the project. **Sandbox state is persistent** — `/box3script stop` and `/box3script reload` do NOT clear sandbox tracking. Only manually running this command again will disable sandbox and roll back all modifications. Rollback summary is displayed in chat.
+Toggle sandbox mode. When enabled, tracks all block/entity/world state changes. When disabled, rolls back and shows summary.
 
 ```
 /box3script sandbox mygame    # toggle on/off
 ```
 
-**Tracked content:**
-
-| Category | Tracked Items                                                                                                        |
-| -------- | -------------------------------------------------------------------------------------------------------------------- |
-| Blocks   | `setVoxel`/`setVoxelId`/`fillVoxel` modifications (max 5 million blocks)                                             |
-| Entities | HP, AI, invisibility, glowing, invulnerability, fire, potion effects, tags, name, equipment, drop rate, attributes   |
-| Players  | Gamemode, flight ability, speed, jump power, XP, food, inventory, armor, potions, position, dimension, respawn point |
-| World    | Weather, time, difficulty, game rules, world border                                                                  |
-
 Typical workflow:
 
 ```
 /box3script sandbox mygame    # enable sandbox
-/box3script on mygame         # load script
-# ... test, observe results ...
-/box3script stop mygame       # stop script, world unchanged
-# ... edit code, npm run build ...
-/box3script on mygame         # test again
-# ... satisfied, roll back ...
-/box3script sandbox mygame    # disable sandbox → rollback + summary
+/box3script start mygame      # load project
+# ... test ...
+/box3script reload mygame     # reload after code changes
+# ... satisfied ...
+/box3script sandbox mygame    # disable sandbox → full rollback
 ```
 
-> **Note:** Sandbox only tracks block modifications made through script APIs (`setVoxel`/`setVoxelId`/`fillVoxel`). Blocks mined with a pickaxe are unaffected. Tracking limit is 5 million blocks; console warns at 90%.
-
-### `/box3script stop`
-
-Stops all projects, clearing all callbacks, timers, and scopes. **Projects with sandbox enabled automatically retain their sandbox tracking state** and are not rolled back.
-
-```
-/box3script stop
-```
-
-### `/box3script stop <project>`
-
-Stops the specified project, clearing only that project's callbacks, timers, and scope — **other running projects are unaffected**. Sandboxed projects retain tracking state without rollback.
-
-```
-/box3script stop siege
-```
+> **Note:** Sandbox only tracks blocks placed through script APIs (`setVoxel`/`setVoxelId`/`fillVoxel`). Manual mining is unaffected.
 
 ## Configuration File
 
@@ -164,9 +118,8 @@ Enable/disable state is saved in `config/box3/scripts.json`:
 
 ```json
 {
-  "mygame": true,
-  "siege": false,
-  "mygame": true
+  "colorzone": true,
+  "demo": false
 }
 ```
 
@@ -174,16 +127,15 @@ Enable/disable state is saved in `config/box3/scripts.json`:
 
 ```
 config/box3/
-  ├── scripts.json        ← project enable/disable config
-  ├── script/              ← scripts directory
-  │   ├── mygame/
-  │   │   ├── package.json
-  │   │   ├── src/app.ts
-  │   │   └── dist/app.js  ← compiled output
+  ├── scripts.json             ← project enable/disable config
+  ├── script/                   ← scripts directory
   │   └── mygame/
+  │       ├── build.mjs
   │       ├── package.json
+  │       ├── eslint.config.mjs
+  │       ├── tsconfig.json
+  │       ├── types/globals.d.ts
   │       ├── src/app.ts
-  │       └── dist/app.js
-  └── storage/             ← storage data directory (storage API)
-      └── ...
+  │       └── dist/app.js       ← compiled output
+  └── storage/                  ← storage API persistence
 ```

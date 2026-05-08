@@ -34,15 +34,10 @@ store.set("config", { difficulty: "hard", maxPlayers: 10 });
 
 var score = store.get("highScore"); // 100 (number)
 var winner = store.get("lastWinner"); // "Steve" (string)
-var cfg = store.get("config"); // {difficulty: "hard", ...} (object — 需要 JSON.parse)
+var cfg = store.get("config"); // {difficulty: "hard", ...} (object)
 ```
 
-> **注意：** 存储对象时，`store.get()` 返回 JSON 字符串，需要手动 `JSON.parse()`：
->
-> ```js
-> var cfg = JSON.parse(store.get("config"));
-> console.log(cfg.difficulty); // "hard"
-> ```
+> **注意：** 当数据从磁盘重新加载后，复杂对象会以普通 JSON 对象形式返回（例如 `Map` 风格对象），请避免依赖原始 JS 原型方法。
 
 ### store.keys()
 
@@ -70,7 +65,7 @@ store.update("counter", function (current) {
 
 ### store.remove(key)
 
-✅ Box3 API | 删除指定 key。
+✅ Box3 API | 删除指定 key，并返回被删除的旧值（不存在时返回 `null`）。
 
 ### store.destroy()
 
@@ -85,7 +80,7 @@ store.destroy(); // 删除该存储的所有数据
 
 ### store.increment(key, delta)
 
-✅ Box3 API | 递增数值。`delta` 默认为 1。
+✅ Box3 API | 递增数值。`delta` 默认为 1，返回递增后的新值。
 
 ```js
 store.set("kills", 0);

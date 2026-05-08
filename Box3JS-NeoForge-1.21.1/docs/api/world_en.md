@@ -175,7 +175,7 @@ var entity = world.createEntity({
   collides: true,
   hp: 30,
   maxHp: 30,
-  tags: ["enemy", "undead"]
+  tags: ["enemy", "undead"],
 });
 ```
 
@@ -183,13 +183,13 @@ var entity = world.createEntity({
 
 ✅ Box3 API | Sound path strings that auto-play when set to a non-empty value:
 
-| Property             | Trigger                                                        |
-| -------------------- | -------------------------------------------------------------- |
-| `ambientSound`       | Every 200 ticks (10s) at world spawn with 0.3 volume           |
-| `playerJoinSound`    | At player's position with full volume when a player joins      |
-| `playerLeaveSound`   | At player's position with full volume when a player leaves     |
-| `placeVoxelSound`    | At block position with full volume when a block is placed      |
-| `breakVoxelSound`    | At block position with full volume when a block is broken      |
+| Property           | Trigger                                                    |
+| ------------------ | ---------------------------------------------------------- |
+| `ambientSound`     | Every 200 ticks (10s) at world spawn with 0.3 volume       |
+| `playerJoinSound`  | At player's position with full volume when a player joins  |
+| `playerLeaveSound` | At player's position with full volume when a player leaves |
+| `placeVoxelSound`  | At block position with full volume when a block is placed  |
+| `breakVoxelSound`  | At block position with full volume when a block is broken  |
 
 Set to `null` or empty string to stop auto-play.
 
@@ -216,7 +216,7 @@ world.sound({
   path: "minecraft:entity.experience_orb.pickup",
   position: new GameVector3(0, 100, 0),
   volume: 0.8,
-  pitch: 1.5
+  pitch: 1.5,
 });
 ```
 
@@ -229,51 +229,51 @@ world.sound({
 ```js
 var bounds = new GameBounds3(
   new GameVector3(-10, 0, -10),
-  new GameVector3(10, 50, 10)
+  new GameVector3(10, 50, 10),
 );
 var entities = world.searchBox(bounds);
 ```
 
 ## Event Callbacks
 
-All event callbacks are registered via `world.onXxx(handler)`, returning a `GameEventHandlerToken`. Call `.cancel()` to unregister, `.active()` to check status. Except for `onTick`, the first callback parameter is usually the triggering `entity` (`Box3JSEntity`).
+All event callbacks are registered via `world.onXxx(handler)`, returning a `GameEventHandlerToken`. Call `.cancel()` to unregister, `.active()` to check status. Except for `onTick`, the first callback parameter is usually the triggering `entity` (`Box3JSEntity`). For `world.onChat()`, returning `false` from the handler cancels that chat message.
 
 ### GameEventHandlerToken
 
-| Method | Description |
-|--------|-------------|
-| `token.cancel()` | Unregister the event handler |
-| `token.active()` | Returns `true` if the handler is still active |
+| Method           | Description                                                |
+| ---------------- | ---------------------------------------------------------- |
+| `token.cancel()` | Unregister the event handler                               |
+| `token.active()` | Returns `true` if the handler is still active              |
 | `token.resume()` | Throws UnsupportedOperationException — re-register instead |
 
 ```js
-var token = world.onTick(function(info) {
+var token = world.onTick(function (info) {
   if (info.tick > 6000) {
     token.cancel();
   }
 });
 ```
 
-| Event                        | Type    | Callback Signature                                     | Trigger                                |
-| ---------------------------- | ------- | ------------------------------------------------------ | -------------------------------------- |
-| `world.onTick(fn)`           | ✅ Box3 | `(info)` → `{tick, prevTick, elapsedTimeMS, skip}`     | Every tick                             |
-| `world.onPlayerJoin(fn)`     | ✅ Box3 | `(entity, tick)`                                       | Player logs in                         |
-| `world.onPlayerLeave(fn)`    | ✅ Box3 | `(entity, tick)`                                       | Player leaves                          |
-| `world.onChat(fn)`           | ✅ Box3 | `(entity, message, tick)`                              | Player sends chat message              |
-| `world.onVoxelDestroy(fn)`   | ✅ Box3 | `(entity, x, y, z, voxel, tick)`                       | Player breaks a block                  |
-| `world.onBlockPlace(fn)`     | ⬆ MC    | `(entity, x, y, z, voxel, voxelId, tick)`              | Player places a block                  |
-| `world.onBlockActivate(fn)`  | ⬆ MC    | `(entity, x, y, z, voxel, tick)`                       | Player right-clicks a block            |
-| `world.onInteract(fn)`       | ✅ Box3 | `(entity, target, tick)`                               | Player right-clicks an entity          |
-| `world.onVoxelContact(fn)`   | ✅ Box3 | `(entity, voxelId, x, y, z, contactType, force, tick)` | Entity contacts a block                |
-| `world.onEntityContact(fn)`  | ✅ Box3 | `(entity, other, tick)`                                | Two entities contact                   |
-| `world.onEntitySeparate(fn)` | ✅ Box3 | `(entity, other, tick)`                                | Two entities separate                  |
-| `world.onFluidEnter(fn)`     | ✅ Box3 | `(entity, fluid, x, y, z, tick)`                       | Entity enters a fluid                  |
-| `world.onFluidLeave(fn)`     | ✅ Box3 | `(entity, fluid, x, y, z, tick)`                       | Entity leaves a fluid                  |
-| `world.onEntityDeath(fn)`    | ⬆ MC    | `(entity, killer, tick)`                               | Entity dies; `killer` may be null      |
-| `world.onEntityDamage(fn)`   | ⬆ MC    | `(entity, amount, source, attacker, tick)`             | Entity takes damage (Pre phase)        |
-| `world.onPlayerRespawn(fn)`  | ⬆ MC    | `(entity, tick)`                                       | Player respawns                        |
-| `world.onButtonPressed(fn)`  | ⬆ MC    | `(entity, button, tick)`                               | Player presses a button (see GameButtonType) |
-| `world.onMessage(fn)`        | ⬆ MC    | `(from, data)`                                         | Receives `world.sendMessage()` message |
+| Event                        | Type    | Callback Signature                                     | Trigger                                             |
+| ---------------------------- | ------- | ------------------------------------------------------ | --------------------------------------------------- |
+| `world.onTick(fn)`           | ✅ Box3 | `(info)` → `{tick, prevTick, elapsedTimeMS, skip}`     | Every tick                                          |
+| `world.onPlayerJoin(fn)`     | ✅ Box3 | `(entity, tick)`                                       | Player logs in                                      |
+| `world.onPlayerLeave(fn)`    | ✅ Box3 | `(entity, tick)`                                       | Player leaves                                       |
+| `world.onChat(fn)`           | ✅ Box3 | `(entity, message, tick) => boolean \| void`           | Player sends chat message; return `false` to cancel |
+| `world.onVoxelDestroy(fn)`   | ✅ Box3 | `(entity, x, y, z, voxel, tick)`                       | Player breaks a block                               |
+| `world.onBlockPlace(fn)`     | ⬆ MC    | `(entity, x, y, z, voxel, voxelId, tick)`              | Player places a block                               |
+| `world.onBlockActivate(fn)`  | ⬆ MC    | `(entity, x, y, z, voxel, tick)`                       | Player right-clicks a block                         |
+| `world.onInteract(fn)`       | ✅ Box3 | `(entity, target, tick)`                               | Player right-clicks an entity                       |
+| `world.onVoxelContact(fn)`   | ✅ Box3 | `(entity, voxelId, x, y, z, contactType, force, tick)` | Entity contacts a block                             |
+| `world.onEntityContact(fn)`  | ✅ Box3 | `(entity, other, tick)`                                | Two entities contact                                |
+| `world.onEntitySeparate(fn)` | ✅ Box3 | `(entity, other, tick)`                                | Two entities separate                               |
+| `world.onFluidEnter(fn)`     | ✅ Box3 | `(entity, fluid, x, y, z, tick)`                       | Entity enters a fluid                               |
+| `world.onFluidLeave(fn)`     | ✅ Box3 | `(entity, fluid, x, y, z, tick)`                       | Entity leaves a fluid                               |
+| `world.onEntityDeath(fn)`    | ⬆ MC    | `(entity, killer, tick)`                               | Entity dies; `killer` may be null                   |
+| `world.onEntityDamage(fn)`   | ⬆ MC    | `(entity, amount, source, attacker, tick)`             | Entity takes damage (Pre phase)                     |
+| `world.onPlayerRespawn(fn)`  | ⬆ MC    | `(entity, tick)`                                       | Player respawns                                     |
+| `world.onButtonPressed(fn)`  | ⬆ MC    | `(entity, button, tick)`                               | Player presses a button (see GameButtonType)        |
+| `world.onMessage(fn)`        | ⬆ MC    | `(from, data)`                                         | Receives `world.sendMessage()` message              |
 
 All `onXxx()` methods return `GameEventHandlerToken` — call `.cancel()` to unregister.
 
@@ -778,7 +778,12 @@ world.runCommand("weather clear");
 ⬆ GameVector3 overload.
 
 ```js
-world.placeStructure(0, 100, 0, "minecraft:village/plains/houses/plains_small_house_1");
+world.placeStructure(
+  0,
+  100,
+  0,
+  "minecraft:village/plains/houses/plains_small_house_1",
+);
 world.placeStructure(pos, "box3js:arena");
 ```
 
@@ -825,24 +830,24 @@ world.clearRecipes();
 
 JSON format uses MC component ID prefixes:
 
-| JSON Key | DataComponent | Description |
-|----------|--------------|-------------|
-| `minecraft:custom_model_data` | `CUSTOM_MODEL_DATA` | Model predicate value, matched by paper.json overrides |
-| `minecraft:custom_name` | `CUSTOM_NAME` | Display name |
-| `minecraft:lore` | `LORE` | Lore text array |
-| `minecraft:max_stack_size` | `MAX_STACK_SIZE` | Max stack size (1–64), default 64 |
-| `minecraft:enchantment_glint_override` | `ENCHANTMENT_GLINT_OVERRIDE` | Enchantment foil effect |
-| `minecraft:rarity` | `RARITY` | Rarity: `common`/`uncommon`/`rare`/`epic` |
-| `minecraft:food` | `FOOD` | Food properties (see sub-fields below) |
+| JSON Key                               | DataComponent                | Description                                            |
+| -------------------------------------- | ---------------------------- | ------------------------------------------------------ |
+| `minecraft:custom_model_data`          | `CUSTOM_MODEL_DATA`          | Model predicate value, matched by paper.json overrides |
+| `minecraft:custom_name`                | `CUSTOM_NAME`                | Display name                                           |
+| `minecraft:lore`                       | `LORE`                       | Lore text array                                        |
+| `minecraft:max_stack_size`             | `MAX_STACK_SIZE`             | Max stack size (1–64), default 64                      |
+| `minecraft:enchantment_glint_override` | `ENCHANTMENT_GLINT_OVERRIDE` | Enchantment foil effect                                |
+| `minecraft:rarity`                     | `RARITY`                     | Rarity: `common`/`uncommon`/`rare`/`epic`              |
+| `minecraft:food`                       | `FOOD`                       | Food properties (see sub-fields below)                 |
 
 **`minecraft:food` sub-fields:**
 
-| Sub-field | Type | Description |
-|-----------|------|-------------|
-| `nutrition` | int | Nutrition value (1–20) |
-| `saturation` | float | Saturation modifier |
-| `can_always_eat` | bool | Always edible |
-| `eat_seconds` | float | Eat time in seconds, ≤0.8 = fast |
+| Sub-field        | Type  | Description                      |
+| ---------------- | ----- | -------------------------------- |
+| `nutrition`      | int   | Nutrition value (1–20)           |
+| `saturation`     | float | Saturation modifier              |
+| `can_always_eat` | bool  | Always edible                    |
+| `eat_seconds`    | float | Eat time in seconds, ≤0.8 = fast |
 
 ```js
 world.loadCustomItems("box3js-items");

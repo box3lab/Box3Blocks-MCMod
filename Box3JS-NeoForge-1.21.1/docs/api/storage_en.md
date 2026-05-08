@@ -34,15 +34,10 @@ store.set("config", { difficulty: "hard", maxPlayers: 10 });
 
 var score = store.get("highScore"); // 100 (number)
 var winner = store.get("lastWinner"); // "Steve" (string)
-var cfg = store.get("config"); // "{difficulty:\"hard\",...}" (JSON string)
+var cfg = store.get("config"); // {difficulty: "hard", ...} (object)
 ```
 
-> **Note:** When storing objects, `store.get()` returns a JSON string. Use `JSON.parse()`:
->
-> ```js
-> var cfg = JSON.parse(store.get("config"));
-> console.log(cfg.difficulty); // "hard"
-> ```
+> **Note:** After data is reloaded from disk, complex values are returned as plain JSON objects (for example map-like objects). Avoid relying on original JS prototype methods.
 
 ### store.keys()
 
@@ -70,7 +65,7 @@ store.update("counter", function (current) {
 
 ### store.remove(key)
 
-✅ Box3 API | Deletes the specified key.
+✅ Box3 API | Deletes the specified key and returns the previous value (or `null` if missing).
 
 ### store.destroy()
 
@@ -85,7 +80,7 @@ store.destroy(); // delete all data in this storage
 
 ### store.increment(key, delta)
 
-✅ Box3 API | Increment a numeric value. `delta` defaults to 1.
+✅ Box3 API | Increment a numeric value. `delta` defaults to 1 and returns the new value.
 
 ```js
 store.set("kills", 0);

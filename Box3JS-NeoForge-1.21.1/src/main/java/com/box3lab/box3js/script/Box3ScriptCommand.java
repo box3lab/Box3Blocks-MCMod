@@ -1,23 +1,24 @@
 package com.box3lab.box3js.script;
 
-import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.network.chat.ClickEvent;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.HoverEvent;
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
-
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
-import static net.minecraft.commands.Commands.literal;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+
+import net.minecraft.commands.CommandSourceStack;
 import static net.minecraft.commands.Commands.argument;
+import static net.minecraft.commands.Commands.literal;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 public class Box3ScriptCommand {
 
@@ -25,48 +26,328 @@ public class Box3ScriptCommand {
 
     public static void register(RegisterCommandsEvent event) {
         event.getDispatcher().register(
-            literal("box3script")
-                .requires(src -> src.hasPermission(2))
-                .executes(ctx -> listProjects(ctx.getSource()))
-                .then(createCommand())
-                .then(stopCommand())
-                .then(onCommand())
-                .then(offCommand())
-                .then(reloadCommand())
-                .then(watchCommand())
-                .then(sandboxCommand())
-        );
+                literal("box3script")
+                        .requires(src -> src.hasPermission(2))
+                        .executes(ctx -> showStatus(ctx.getSource()))
+                        .then(createCommand())
+                        .then(startCommand())
+                        .then(stopCommand())
+                        .then(reloadCommand())
+                        .then(watchCommand())
+                        .then(sandboxCommand()));
     }
 
-    private static int listProjects(CommandSourceStack source) {
+    // ═══════════════════════════════════════════════════════════
+    // /box3script — 无参，显示状态
+    // ═══════════════════════════════════════════════════════════
+
+    private static int showStatus(CommandSourceStack source) {
         var config = Box3ScriptConfig.get();
         config.discover(source.getServer());
         var projects = config.listProjects();
         var sandbox = Box3ScriptEngine.get().getSandbox();
+        var engine = Box3ScriptEngine.get();
+        boolean watcherOn = watcher != null && watcher.isRunning();
+
         if (projects.isEmpty()) {
-            source.sendSuccess(
-                () -> Component.literal("No projects found in config/box3/script/"), false);
-        } else {
-            StringBuilder sb = new StringBuilder("§6=== Projects ===\n");
-            projects.forEach((name, enabled) -> {
-                String status = enabled ? "§a[ON]" : "§c[OFF]";
-                String sbx = sandbox.isEnabled(name) ? " §d[SANDBOX]" : "";
-                sb.append("  ").append(status).append(sbx).append("  §f").append(name).append("\n");
-            });
-            source.sendSuccess(
-                () -> Component.literal(sb.toString().trim()), false);
+            source.sendSuccess(() -> Component.literal(
+                    "\n§6  Box3JS Script Engine\n\n"
+                            + "  §7No projects found.\n\n"
+                            + "  §f/box3script create <name>  §7Create a new project\n"
+                            + "  §7Projects live in §fconfig/box3/script/<name>/\n"),
+                    false);
+            return 1;
         }
+
+        // Count stats
+        int enabledCount = 0;
+        int loadedCount = 0;
+        int sandboxCount = 0;
+        for (var entry : projects.entrySet()) {
+            if (Boolean.TRUE.equals(entry.getValue()))
+                enabledCount++;
+            if (engine.isProjectLoaded(entry.getKey()))
+                loadedCount++;
+            if (sandbox.isEnabled(entry.getKey()))
+                sandboxCount++;
+        }
+        int total = projects.size();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n");
+        sb.append("§6  ══ Box3JS Script Engine ══\n");
+        sb.append("\n");
+
+        // Watch + Sandbox status line
+        sb.append("  §7Watch: ");
+        sb.append(watcherOn ? "§a● Active" : "§8○ Inactive");
+        sb.append("    §7Sandbox: ");
+        sb.append(sandboxCount > 0 ? "§d● " + sandboxCount + " project(s)" : "§8○ None");
+        sb.append("\n\n");
+
+        // Summary
+        sb.append("  §7Projects: §f").append(enabledCount).append("§7/").append(total)
+                .append(" enabled  §8|  §f").append(loadedCount)
+                .append(" §7loaded\n\n");
+
+        // Divider
+        sb.append("  §8────────────────────────────\n");
+
+        // Project list
+        projects.forEach((name, enabled) -> {
+            boolean loaded = engine.isProjectLoaded(name);
+            boolean sandboxed = sandbox.isEnabled(name);
+
+            String icon;
+            if (loaded) {
+                icon = "§a◉"; // ◉ running
+            } else if (enabled) {
+                icon = "§e○"; // ○ enabled but not loaded
+            } else {
+                icon = "§8◌"; // ◌ disabled
+            }
+
+            sb.append("  ").append(icon).append(" §f").append(name);
+
+            // Badges
+            if (sandboxed) {
+                sb.append(" §d▐SANDBOX▌");
+            }
+            if (enabled && !loaded) {
+                sb.append(" §7§o(pending)");
+            }
+
+            sb.append("\n");
+        });
+
+        // Footer
+        sb.append("  §8────────────────────────────\n");
+
+        source.sendSuccess(() -> Component.literal(sb.toString()), false);
         return 1;
     }
 
-    // ---- error reporting helpers ----
+    // ═══════════════════════════════════════════════════════════
+    // /box3script create <name>
+    // ═══════════════════════════════════════════════════════════
 
-    /** Returns an error reporter that sends messages to the given command source. */
+    private static LiteralArgumentBuilder<CommandSourceStack> createCommand() {
+        return literal("create")
+                .then(argument("name", StringArgumentType.word())
+                        .executes(ctx -> {
+                            String name = StringArgumentType.getString(ctx, "name");
+                            Path projectDir = scriptDir(ctx.getSource().getServer())
+                                    .resolve(name).normalize();
+                            if (Files.exists(projectDir)) {
+                                ctx.getSource().sendFailure(
+                                        Component.literal("§cAlready exists: " + name));
+                                return 0;
+                            }
+                            try {
+                                Box3ScriptTemplate.copyTo(projectDir, name);
+                                Component msg = Component.literal(
+                                        "§aProject created: §f" + name + "\n")
+                                        .append(clickableCmd("cd config/box3/script/" + name))
+                                        .append(Component.literal(
+                                                "\n§7  1. cd config/box3/script/" + name
+                                                        + "\n  2. npm install && npm run build"
+                                                        + "\n  3. /box3script start " + name
+                                                        + "  §8(enable)"));
+                                ctx.getSource().sendSuccess(() -> msg, false);
+                            } catch (IOException e) {
+                                ctx.getSource().sendFailure(
+                                        Component.literal("§cFailed: " + e.getMessage()));
+                            }
+                            return 1;
+                        }));
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // /box3script start [project|all]
+    // ═══════════════════════════════════════════════════════════
+
+    private static LiteralArgumentBuilder<CommandSourceStack> startCommand() {
+        return literal("start")
+                .executes(ctx -> startAll(ctx.getSource()))
+                .then(literal("all")
+                        .executes(ctx -> startAll(ctx.getSource())))
+                .then(argument("project", StringArgumentType.word())
+                        .suggests(Box3ScriptCommand::suggestProjects)
+                        .executes(ctx -> startOne(ctx.getSource(),
+                                StringArgumentType.getString(ctx, "project"))));
+    }
+
+    private static int startAll(CommandSourceStack source) {
+        Box3ScriptConfig.get().setAllEnabled(true);
+        return safeRun(source, "§aAll projects enabled & loaded", () -> {
+            Box3ScriptEngine engine = Box3ScriptEngine.get();
+            engine.withErrorReporter(chatReporter(source));
+            try {
+                engine.reset();
+                engine.autoLoad(source.getServer());
+            } finally {
+                engine.clearErrorReporter();
+            }
+        });
+    }
+
+    private static int startOne(CommandSourceStack source, String project) {
+        var config = Box3ScriptConfig.get();
+        config.discover(source.getServer());
+        if (!config.listProjects().containsKey(project)) {
+            source.sendFailure(Component.literal("§cUnknown project: " + project));
+            return 0;
+        }
+        config.setEnabled(project, true);
+        return safeRun(source, "§a◉ ON   §7" + project, () -> {
+            Box3ScriptEngine engine = Box3ScriptEngine.get();
+            engine.withErrorReporter(chatReporter(source));
+            engine.setCurrentProject(project);
+            try {
+                engine.eval("require('./app')");
+            } finally {
+                engine.setCurrentProject(null);
+                engine.clearErrorReporter();
+            }
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // /box3script stop [project|all]
+    // ═══════════════════════════════════════════════════════════
+
+    private static LiteralArgumentBuilder<CommandSourceStack> stopCommand() {
+        return literal("stop")
+                .executes(ctx -> stopAll(ctx.getSource()))
+                .then(literal("all")
+                        .executes(ctx -> stopAll(ctx.getSource())))
+                .then(argument("project", StringArgumentType.word())
+                        .suggests(Box3ScriptCommand::suggestProjects)
+                        .executes(ctx -> stopOne(ctx.getSource(),
+                                StringArgumentType.getString(ctx, "project"))));
+    }
+
+    private static int stopAll(CommandSourceStack source) {
+        Box3ScriptConfig.get().setAllEnabled(false);
+        Box3ScriptEngine.get().reset();
+        source.sendSuccess(
+                () -> Component.literal("§cAll projects disabled & unloaded"), false);
+        return 1;
+    }
+
+    private static int stopOne(CommandSourceStack source, String project) {
+        var config = Box3ScriptConfig.get();
+        config.discover(source.getServer());
+        if (!config.listProjects().containsKey(project)) {
+            source.sendFailure(Component.literal("§cUnknown project: " + project));
+            return 0;
+        }
+        config.setEnabled(project, false);
+        Box3ScriptEngine.get().removeProject(project);
+        source.sendSuccess(
+                () -> Component.literal("§c◉ OFF  §7" + project + "  §8(disabled)"), false);
+        return 1;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // /box3script reload [project]
+    // ═══════════════════════════════════════════════════════════
+
+    private static LiteralArgumentBuilder<CommandSourceStack> reloadCommand() {
+        return literal("reload")
+                .executes(ctx -> safeRun(ctx.getSource(), "§aAll enabled projects reloaded", () -> {
+                    Box3ScriptEngine engine = Box3ScriptEngine.get();
+                    engine.withErrorReporter(chatReporter(ctx.getSource()));
+                    try {
+                        engine.reset();
+                        engine.autoLoad(ctx.getSource().getServer());
+                    } finally {
+                        engine.clearErrorReporter();
+                    }
+                }))
+                .then(argument("project", StringArgumentType.word())
+                        .suggests(Box3ScriptCommand::suggestProjects)
+                        .executes(ctx -> {
+                            String project = StringArgumentType.getString(ctx, "project");
+                            Box3ScriptConfig.get().setEnabled(project, true);
+                            return safeRun(ctx.getSource(), "§aReloaded: §f" + project, () -> {
+                                Box3ScriptEngine engine = Box3ScriptEngine.get();
+                                engine.withErrorReporter(chatReporter(ctx.getSource()));
+                                engine.setCurrentProject(project);
+                                try {
+                                    engine.removeProject(project);
+                                    engine.eval("require('./app')");
+                                } finally {
+                                    engine.setCurrentProject(null);
+                                    engine.clearErrorReporter();
+                                }
+                            });
+                        }));
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // /box3script watch — 切换文件监听
+    // ═══════════════════════════════════════════════════════════
+
+    private static LiteralArgumentBuilder<CommandSourceStack> watchCommand() {
+        return literal("watch")
+                .executes(ctx -> {
+                    if (watcher == null) {
+                        watcher = new Box3ScriptWatcher(ctx.getSource().getServer());
+                    }
+                    if (watcher.isRunning()) {
+                        watcher.stop();
+                        ctx.getSource().sendSuccess(
+                                () -> Component.literal("§c◉ File watching stopped"), false);
+                    } else {
+                        watcher.start();
+                        ctx.getSource().sendSuccess(
+                                () -> Component.literal("§a◉ File watching active — auto-reload on change"), false);
+                    }
+                    return 1;
+                });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // /box3script sandbox <project> — 切换沙盒
+    // ═══════════════════════════════════════════════════════════
+
+    private static LiteralArgumentBuilder<CommandSourceStack> sandboxCommand() {
+        return literal("sandbox")
+                .then(argument("project", StringArgumentType.word())
+                        .suggests(Box3ScriptCommand::suggestProjects)
+                        .executes(ctx -> {
+                            String project = StringArgumentType.getString(ctx, "project");
+                            var sb = Box3ScriptEngine.get().getSandbox();
+                            if (sb.isEnabled(project)) {
+                                var summary = sb.disable(project);
+                                String detail = summary.hasAny()
+                                        ? " §8— restored: " + summary.toMessage()
+                                        : "";
+                                ctx.getSource().sendSuccess(
+                                        () -> Component.literal(
+                                                "§c▐SANDBOX▌ OFF §7" + project + detail),
+                                        false);
+                            } else {
+                                sb.enable(project);
+                                ctx.getSource().sendSuccess(
+                                        () -> Component.literal(
+                                                "§d▐SANDBOX▌ ON  §7" + project
+                                                        + " §8— tracking changes for rollback"),
+                                        false);
+                            }
+                            return 1;
+                        }));
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // helpers
+    // ═══════════════════════════════════════════════════════════
+
     private static Consumer<String> chatReporter(CommandSourceStack source) {
         return msg -> source.sendFailure(Component.literal(msg));
     }
 
-    /** Execute an engine operation with error feedback to the command source. */
     private static int safeRun(CommandSourceStack source, String successMsg, Runnable action) {
         try {
             action.run();
@@ -74,203 +355,17 @@ public class Box3ScriptCommand {
             return 1;
         } catch (Exception e) {
             String err = e.getMessage();
-            if (err == null) err = e.getClass().getSimpleName();
-            source.sendFailure(Component.literal(err));
+            if (err == null) {
+                err = e.getClass().getSimpleName();
+            }
+            source.sendFailure(Component.literal("§c" + err));
             Box3ScriptEngine.get().reportError(err);
             return 0;
         }
     }
 
-    // --- create ---
-
-    private static LiteralArgumentBuilder<CommandSourceStack> createCommand() {
-        return literal("create")
-            .then(argument("name", StringArgumentType.word())
-                .executes(ctx -> {
-                    String name = StringArgumentType.getString(ctx, "name");
-                    Path projectDir = scriptDir(ctx.getSource().getServer()).resolve(name).normalize();
-                    if (Files.exists(projectDir)) {
-                        ctx.getSource().sendFailure(Component.literal("Project already exists: " + name));
-                        return 0;
-                    }
-                    try {
-                        Box3ScriptTemplate.copyTo(projectDir, name);
-                        Component msg = Component.literal("Project created: " + name + "\n")
-                            .append(clickablePath(projectDir))
-                            .append(Component.literal("  cd config/box3/script/" + name
-                                + "\n  npm install && npm run build"
-                                + "\nUse /box3script on " + name + " to enable it."));
-                        ctx.getSource().sendSuccess(() -> msg, false);
-                    } catch (Exception e) {
-                        ctx.getSource().sendFailure(Component.literal("Failed to create: " + e.getMessage()));
-                    }
-                    return 1;
-                }));
-    }
-
-    // --- stop ---
-
-    private static LiteralArgumentBuilder<CommandSourceStack> stopCommand() {
-        return literal("stop")
-            .executes(ctx -> safeRun(ctx.getSource(), "All scripts stopped.", () ->
-                Box3ScriptEngine.get().reset()
-            ))
-            .then(argument("project", StringArgumentType.word())
-                    .suggests(Box3ScriptCommand::suggestProjects)
-                .executes(ctx -> {
-                    String project = StringArgumentType.getString(ctx, "project");
-                    Box3ScriptConfig.get().setEnabled(project, false);
-                    return safeRun(ctx.getSource(), "Stopped: " + project, () ->
-                        Box3ScriptEngine.get().removeProject(project)
-                    );
-                }));
-    }
-
-    // --- on ---
-
-    private static LiteralArgumentBuilder<CommandSourceStack> onCommand() {
-        return literal("on")
-            .then(argument("project", StringArgumentType.word())
-                    .suggests(Box3ScriptCommand::suggestProjects)
-                .executes(ctx -> {
-                    String project = StringArgumentType.getString(ctx, "project");
-                    Box3ScriptConfig.get().setEnabled(project, true);
-                    return safeRun(ctx.getSource(), "Enabled and loaded: " + project, () -> {
-                        Box3ScriptEngine engine = Box3ScriptEngine.get();
-                        engine.withErrorReporter(chatReporter(ctx.getSource()));
-                        engine.setCurrentProject(project);
-                        try { engine.eval("require('./app')"); }
-                        finally { engine.setCurrentProject(null); engine.clearErrorReporter(); }
-                    });
-                }))
-            .then(literal("all")
-                .executes(ctx -> {
-                    Box3ScriptConfig.get().setAllEnabled(true);
-                    return safeRun(ctx.getSource(), "All projects enabled.", () -> {
-                        Box3ScriptEngine engine = Box3ScriptEngine.get();
-                        engine.reset();
-                        engine.autoLoad(ctx.getSource().getServer());
-                    });
-                }));
-    }
-
-    // --- off ---
-
-    private static LiteralArgumentBuilder<CommandSourceStack> offCommand() {
-        return literal("off")
-            .then(argument("project", StringArgumentType.word())
-                    .suggests(Box3ScriptCommand::suggestProjects)
-                .executes(ctx -> {
-                    String project = StringArgumentType.getString(ctx, "project");
-                    Box3ScriptConfig.get().setEnabled(project, false);
-                    Box3ScriptEngine.get().removeProject(project);
-                    ctx.getSource().sendSuccess(() -> Component.literal("Disabled: " + project), false);
-                    return 1;
-                }))
-            .then(literal("all")
-                .executes(ctx -> {
-                    Box3ScriptConfig.get().setAllEnabled(false);
-                    ctx.getSource().sendSuccess(() -> Component.literal("All projects disabled."), false);
-                    return 1;
-                }));
-    }
-
-    // --- reload ---
-
-    private static LiteralArgumentBuilder<CommandSourceStack> reloadCommand() {
-        return literal("reload")
-            .executes(ctx -> safeRun(ctx.getSource(), "Scripts reloaded.", () -> {
-                Box3ScriptEngine engine = Box3ScriptEngine.get();
-                engine.withErrorReporter(chatReporter(ctx.getSource()));
-                try {
-                    engine.reset();
-                    engine.autoLoad(ctx.getSource().getServer());
-                } finally {
-                    engine.clearErrorReporter();
-                }
-            }))
-            .then(argument("project", StringArgumentType.word())
-                    .suggests(Box3ScriptCommand::suggestProjects)
-                .executes(ctx -> {
-                    String project = StringArgumentType.getString(ctx, "project");
-                    Box3ScriptConfig.get().setEnabled(project, true);
-                    return safeRun(ctx.getSource(), "Reloaded: " + project, () -> {
-                        Box3ScriptEngine engine = Box3ScriptEngine.get();
-                        engine.withErrorReporter(chatReporter(ctx.getSource()));
-                        engine.setCurrentProject(project);
-                        try {
-                            engine.removeProject(project);
-                            engine.eval("require('./app')");
-                        } finally {
-                            engine.setCurrentProject(null);
-                            engine.clearErrorReporter();
-                        }
-                    });
-                }));
-    }
-
-    // --- watch ---
-
-    private static LiteralArgumentBuilder<CommandSourceStack> watchCommand() {
-        return literal("watch")
-            .executes(ctx -> {
-                if (watcher == null) watcher = new Box3ScriptWatcher(ctx.getSource().getServer());
-                if (watcher.isRunning()) {
-                    watcher.stop();
-                    ctx.getSource().sendSuccess(() -> Component.literal("File watching stopped."), false);
-                } else {
-                    watcher.start();
-                    ctx.getSource().sendSuccess(() -> Component.literal("File watching started. Changes will auto-reload."), false);
-                }
-                return 1;
-            })
-            .then(literal("on")
-                .executes(ctx -> {
-                    if (watcher == null) watcher = new Box3ScriptWatcher(ctx.getSource().getServer());
-                    if (watcher.isRunning()) {
-                        ctx.getSource().sendSuccess(() -> Component.literal("Already watching."), false);
-                    } else {
-                        watcher.start();
-                        ctx.getSource().sendSuccess(() -> Component.literal("File watching started."), false);
-                    }
-                    return 1;
-                }))
-            .then(literal("off")
-                .executes(ctx -> {
-                    if (watcher != null && watcher.isRunning()) {
-                        watcher.stop();
-                        ctx.getSource().sendSuccess(() -> Component.literal("File watching stopped."), false);
-                    } else {
-                        ctx.getSource().sendSuccess(() -> Component.literal("Not watching."), false);
-                    }
-                    return 1;
-                }));
-    }
-
-    // --- sandbox ---
-
-    private static LiteralArgumentBuilder<CommandSourceStack> sandboxCommand() {
-        return literal("sandbox")
-            .then(argument("project", StringArgumentType.word())
-                    .suggests(Box3ScriptCommand::suggestProjects)
-                .executes(ctx -> {
-                    String project = StringArgumentType.getString(ctx, "project");
-                    var sb = Box3ScriptEngine.get().getSandbox();
-                    if (sb.isEnabled(project)) {
-                        var summary = sb.disable(project);
-                        String detail = summary.hasAny() ? " — restored: " + summary.toMessage() : "";
-                        ctx.getSource().sendSuccess(() -> Component.literal("Sandbox OFF for " + project + detail), false);
-                    } else {
-                        sb.enable(project);
-                        ctx.getSource().sendSuccess(() -> Component.literal("Sandbox ON for " + project + " — all changes tracked for rollback."), false);
-                    }
-                    return 1;
-                }));
-    }
-
-    // --- helpers ---
-
-    private static CompletableFuture<Suggestions> suggestProjects(CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder) {
+    private static CompletableFuture<Suggestions> suggestProjects(
+            CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder) {
         var config = Box3ScriptConfig.get();
         config.discover(ctx.getSource().getServer());
         for (String name : config.listProjects().keySet()) {
@@ -281,13 +376,14 @@ public class Box3ScriptCommand {
         return builder.buildFuture();
     }
 
-    private static Component clickablePath(Path path) {
-        String absPath = path.toAbsolutePath().toString();
-        return Component.literal("  §b§n[Copy path]§r\n")
-            .withStyle(style -> style
-                .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, absPath))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                    Component.literal("Click to copy path"))));
+    private static Component clickableCmd(String text) {
+        return Component.literal("  §b§n" + text + "§r")
+                .withStyle(style -> style
+                        .withClickEvent(new ClickEvent(
+                                ClickEvent.Action.COPY_TO_CLIPBOARD, text))
+                        .withHoverEvent(new HoverEvent(
+                                HoverEvent.Action.SHOW_TEXT,
+                                Component.literal("点击复制"))));
     }
 
     private static Path scriptDir(net.minecraft.server.MinecraftServer server) {

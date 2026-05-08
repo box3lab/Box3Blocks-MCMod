@@ -546,14 +546,31 @@ interface TickInfo {
 // ================================================================
 
 /**
+ * JSON 可序列化的值类型。
+ * Represents any JSON‑serializable value.
+ *
+ * @remarks
+ * 用作 `GameDataStorage<T>` 的默认类型参数。
+ * Used as the default type parameter for `GameDataStorage<T>`.
+ */
+type JSONValue = string | number | boolean | null | JSONValue[] | { [key: string]: JSONValue };
+
+/**
  * 数据存储空间 (键值持久化)。
  * A data‑storage namespace — persistent key‑value store backed by JSON files.
  *
  * @remarks
- * 通过 `storage.getDataStorage("name")` 获取。
- * Obtain via `storage.getDataStorage("name")`.
+ * 通过 `storage.getDataStorage<T>("name")` 获取, T 指定后所有读写操作自动获得类型检查。
+ * Obtain via `storage.getDataStorage<T>("name")`; once T is set, all read/write operations are type‑checked.
+ *
+ * @example
+ * ```ts
+ * const coins = storage.getDataStorage<number>("coins");
+ * const balance = coins.get(userId);  // number | null
+ * coins.set(userId, 100);             // value must be number
+ * ```
  */
-interface GameDataStorage {
+interface GameDataStorage<T = JSONValue> {
   /**
    * 获取存储空间名称 (只读)。
    * @en Returns the read‑only namespace name.
@@ -564,16 +581,16 @@ interface GameDataStorage {
    * 存入一个键值对。值必须是可 JSON 序列化的类型。
    * Stores a key‑value pair. Value must be JSON‑serializable.
    * @param key - 键 / key
-   * @param value - 值 (number | string | boolean | object | array | null) / value
+   * @param value - 值 / value (typed to T)
    */
-  set(key: string, value: unknown): void;
+  set(key: string, value: T): void;
 
   /**
    * 读取键对应的值, 不存在则返回 null。
    * Retrieves the value for a key, or null if it does not exist.
    * @returns 存储的值, 或 null
    */
-  get(key: string): unknown;
+  get(key: string): T | null;
 
   /**
    * 获取当前存储空间中的所有键。
@@ -588,15 +605,19 @@ interface GameDataStorage {
    * @param handler - (prevValue) => newValue / callback receiving the old value, returning the new one
    * @remarks 如果键不存在, 不会创建新条目 (遵循 Box3 规范)。
    *          If the key does not exist, nothing happens (per Box3 spec).
+   *
+   * @example
+   * const list = storage.getDataStorage<string[]>("list");
+   * list.update("items", (prev) => prev.concat("newItem"));
    */
-  update(key: string, handler: (prevValue: unknown) => unknown): void;
+  update(key: string, handler: (prevValue: T) => T): void;
 
   /**
    * 删除键, 返回旧值 (不存在则返回 null)。
    * Removes a key and returns its previous value, or null.
    * @returns 被删除的旧值 / the previous value, or null
    */
-  remove(key: string): unknown;
+  remove(key: string): T | null;
 
   /**
    * 原子递增 (delta 默认为 1)。
@@ -628,7 +649,7 @@ interface GameDataStorage {
     max?: number;
     min?: number;
     constraintTarget?: string;
-  }): QueryList;
+  }): QueryList<T>;
 
   /**
    * 销毁该存储空间 (删除对应 JSON 文件)。
@@ -641,7 +662,7 @@ interface GameDataStorage {
  * 分页查询结果 (由 GameDataStorage.list() 返回)。
  * Paginated query result returned by GameDataStorage.list().
  */
-interface QueryList {
+interface QueryList<T = JSONValue> {
   /** 是否已到达最后一页。Whether the last page has been reached. */
   isLastPage: boolean;
 
@@ -649,7 +670,7 @@ interface QueryList {
    * 获取当前页的条目数组。
    * Returns the entries for the current page.
    */
-  getCurrentPage(): ReturnValue[];
+  getCurrentPage(): ReturnValue<T>[];
 
   /**
    * 移动到下一页。
@@ -662,11 +683,11 @@ interface QueryList {
  * 单个存储条目 (包含元数据)。
  * A single stored entry with metadata.
  */
-interface ReturnValue {
+interface ReturnValue<T = JSONValue> {
   /** 键名 / key name */
   key: string;
   /** 值 / stored value */
-  value: unknown;
+  value: T;
   /** 更新时间 (Unix 毫秒) / last‑modified timestamp (Unix ms) */
   updateTime: number;
   /** 创建时间 (Unix 毫秒) / creation timestamp (Unix ms) */
@@ -695,8 +716,12 @@ interface GameStorage {
    * @param name - 命名空间 (可含 "/" 作为目录分隔) / namespace (may contain "/" as directory separator)
    * @remarks 不同项目使用同一 name 会访问不同文件。
    *          Different projects using the same name access different files.
+   *
+   * @example
+   * const coins = storage.getDataStorage<number>("coins");
+   * const balance = coins.get(userId);  // number | null
    */
-  getDataStorage(name: string): GameDataStorage;
+  getDataStorage<T = JSONValue>(name: string): GameDataStorage<T>;
 
   /**
    * 获取跨项目共享存储 — 所有项目通过同一 name 读写同一份数据。
@@ -705,7 +730,117 @@ interface GameStorage {
    * @remarks 底层使用 `__shared__/` 前缀, 适合全服排行榜、全局配置等场景。
    *          Uses `__shared__/` prefix internally; suitable for global leaderboards, shared config, etc.
    */
-  getGroupStorage(name: string): GameDataStorage;
+  getGroupStorage<T = JSONValue>(name: string): GameDataStorage<T>;
+}
+
+/**
+ * SQL 查询结果，支持迭代和 thenable 模式。
+ * SQL query result — supports iteration and thenable pattern.
+ *
+ * @remarks
+ * SELECT 查询返回行数据，INSERT/UPDATE/DELETE 返回受影响行数。
+ * SELECT queries return row data; INSERT/UPDATE/DELETE return affected row count.
+ *
+ * ```ts
+ * // 获取所有行 / Get all rows
+ * const rows = db.sql("SELECT * FROM players").rows;
+ *
+ * // 逐行迭代 / Iterate row by row
+ * const result = db.sql("SELECT * FROM players");
+ * let row;
+ * while (!(row = result.next()).done) {
+ *   console.log(row.value.name);
+ * }
+ *
+ * // Thenable 模式 / Thenable pattern
+ * db.sql("SELECT * FROM players").then((rows) => console.log(rows.length));
+ * ```
+ */
+interface GameQueryResult<T = Record<string, any>> {
+  /** 所有行 / All rows */
+  readonly rows: T[];
+
+  /** 第一行，无结果时返回 null / First row, or null if empty */
+  readonly firstRow: T | null;
+
+  /** 列名数组 / Column name array */
+  readonly columnNames: string[];
+
+  /** 列数 / Column count */
+  readonly columnCount: number;
+
+  /** 行数 (SELECT) / Row count (for SELECT queries) */
+  readonly rowCount: number;
+
+  /**
+   * 受影响行数 (INSERT/UPDATE/DELETE)，SELECT 查询返回 -1。
+   * Affected row count for INSERT/UPDATE/DELETE; -1 for SELECT queries.
+   */
+  readonly affectedRows: number;
+
+  /** 是否为查询 (SELECT) / Whether this is a query (SELECT) */
+  readonly isQuery: boolean;
+
+  /**
+   * 返回下一行: `{done: boolean, value: T}`。
+   * Returns the next row as `{done: boolean, value: T}`.
+   */
+  next(): { done: boolean; value: T };
+
+  /** 重置内部游标到第一行 / Resets internal cursor to first row */
+  reset(): void;
+
+  /**
+   * Thenable 支持 — resolve 接收所有行数组。
+   * Thenable support — resolve receives the full row array.
+   */
+  then(resolve: (rows: T[]) => void, reject?: (err: string) => void): void;
+}
+
+/**
+ * SQLite 数据库 (自动按项目隔离到 `config/box3/data/<project>.db`)。
+ * SQLite database — auto-isolated per project at `config/box3/data/<project>.db`.
+ *
+ * @remarks
+ * 通过全局 `db` 访问，支持两种调用约定：
+ * Access via global `db`, supports two calling conventions:
+ *
+ * ```ts
+ * // 常规查询 / Regular query
+ * db.sql("SELECT * FROM players WHERE score > ?", 100);
+ *
+ * // 模板字面量 (TS 编译后) / Tagged template (after TS compilation)
+ * db.sql(["SELECT * FROM players WHERE id = ", ""], playerId);
+ *
+ * // INSERT / UPDATE / DELETE
+ * db.sql("INSERT INTO log (name, msg) VALUES (?, ?)", "Steve", "hello");
+ * db.sql("DELETE FROM temp WHERE created < ?", Date.now() - 86400000);
+ * ```
+ */
+interface GameDatabase {
+  /**
+   * 执行 SQL 查询或更新。
+   * Executes a SQL query or update.
+   *
+   * @param sql - SQL 字符串 (含 ? 占位符) 或字符串数组 (模板字面量)。
+   *             SQL string (with ? placeholders) or string array (template literal).
+   * @param params - 参数值 (number | string | boolean | null | Uint8Array)
+   *                 Parameter values to bind.
+   * @returns 查询结果 / query result
+   *
+   * @example
+   * // 指定行类型获得完整类型检查 / Specify row type for full type-checking
+   * const rows = db.sql<PlayerRow>("SELECT * FROM players").rows;
+   * // rows: PlayerRow[]
+   *
+   * // 不指定则默认为 Record<string, any> / Defaults to Record<string, any>
+   * const rows = db.sql("SELECT * FROM players").rows;
+   * // rows: Record<string, any>[]
+   */
+  sql<T = Record<string, any>>(
+    sql: string | readonly string[],
+    ...params: (number | string | boolean | null | Uint8Array)[]
+  ): GameQueryResult<T>;
 }
 
 // ================================================================
@@ -2116,11 +2251,17 @@ interface GameWorld {
   /**
    * 注册聊天消息回调 (包括 /me 消息)。
    * Registers a callback for chat messages (including /me).
-   * @param handler - (entity, message, tick) => void
+   * @param handler - (entity, message, tick) => boolean|void
+   *                 返回 false 可取消聊天消息发送。
+   *                 Return false to cancel sending this chat message.
    * @returns GameEventHandlerToken — 调用 .cancel() 取消
    */
   onChat(
-    handler: (entity: GamePlayerEntity, message: string, tick: number) => void,
+    handler: (
+      entity: GamePlayerEntity,
+      message: string,
+      tick: number,
+    ) => boolean | void,
   ): GameEventHandlerToken;
 
   /**
@@ -2610,6 +2751,9 @@ declare const voxels: GameVoxels;
 /** 持久化存储 API / Persistent key‑value storage */
 declare const storage: GameStorage;
 
+/** SQLite 数据库 API / SQLite database */
+declare const db: GameDatabase;
+
 /** 服务端控制台输出 / Server console output */
 declare const console: GameConsole;
 
@@ -2617,8 +2761,8 @@ declare const console: GameConsole;
  * 阻塞当前执行线程 (毫秒级)。
  * Blocks the current execution thread for the specified duration.
  *
- * @warning 会导致服务端卡顿, 谨慎使用。
- *          Will lag the server — use sparingly.
+ * @warning 会导致服务端卡顿, 谨慎使用。当前实现会将 sleep 上限钳制到 10ms。
+ *          Will lag the server — use sparingly. Current runtime clamps sleep to at most 10ms.
  * @param ms - 阻塞毫秒数 / sleep duration in milliseconds
  */
 declare function sleep(ms: number): void;

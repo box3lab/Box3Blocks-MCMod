@@ -121,6 +121,11 @@ dependencies {
     // Rhino JS engine for Box3 script execution — shaded into mod JAR
     implementation 'org.mozilla:rhino:1.9.1'
 
+    // SQLite JDBC is provided externally by minecraft-sqlite-jdbc mod (on-demand)
+    // compileOnly keeps symbols available at compile time but never bundles into final JAR.
+    compileOnly 'org.xerial:sqlite-jdbc:3.53.0.0'
+    // For local dev runtime, place minecraft-sqlite-jdbc into run/mods.
+
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
@@ -204,4 +209,11 @@ idea {
         downloadSources = true
         downloadJavadoc = true
     }
+}
+
+// Some IDE run configurations may invoke the generated devlaunch main task directly
+// (net.neoforged.devlaunch.Main.main()), which requires serverRunVmArgs.txt.
+// Ensure server run files are prepared first.
+tasks.matching { it.name == "net.neoforged.devlaunch.Main.main()" }.configureEach {
+    dependsOn tasks.named('prepareServerRun')
 }
