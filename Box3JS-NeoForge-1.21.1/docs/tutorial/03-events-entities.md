@@ -1,27 +1,10 @@
 # 教程三：事件系统与实体操控
 
-本教程深入讲解事件回调机制、实体生成与控制、以及计分板/队伍等游戏系统。
+本教程深入讲解事件回调、方块交互、实体生成与 AI、战斗事件等。
 
-## 3.1 事件回调基础
+## 3.1 事件回调一览
 
 所有事件通过 `world.onXxx(handler)` 注册，返回 `GameEventHandlerToken`。
-
-```js
-// 注册事件，拿到 token
-const token = world.onTick((info) => {
-  console.log("Tick: " + info.tick);
-});
-
-// 取消监听
-token.cancel();
-
-// 检查是否活跃
-if (token.active()) {
-  console.log("回调仍在运行");
-}
-```
-
-### 事件一览
 
 | 注册方法 | 回调参数 | 触发时机 |
 |----------|---------|------|
@@ -39,95 +22,131 @@ if (token.active()) {
 | `world.onButtonPressed(fn)` | `(entity, button, tick)` | 按钮按下 |
 | `world.onMessage(fn)` | `(from, data)` | 跨脚本消息 |
 
-## 3.2 方块交互
+### Token 操作
 
 ```js
-// 右键方块保护
-world.onBlockActivate((entity, x, y, z, voxel, tick) => {
-  const p = entity.player;
-  if (voxel === "minecraft:chest" && p.opLevel < 2) {
-    p.directMessage("§c你没有权限打开这个箱子！");
-    // 注意: 右键方块事件无法阻止交互, 仅能检测
+const token = world.onTick((info) => {
+  console.log("Tick: " + info.tick);
+});
+
+token.cancel();       // 取消监听
+token.active();       // 检查是否活跃
+```
+
+## 3.2 方块交互事件
+
+```js
+// ── 右键方块检测 ──
+world.onBlockActivate((entity, x, y, z, voxel, _tick) => {
+  if (voxel === "minecraft:chest") {
+    const p = entity.player;
+    p.actionBar(`§e打开了箱子 @ (${x}, ${y}, ${z})`);
+  }
+  if (voxel === "minecraft:crafting_table") {
+    entity.player.playSound("minecraft:block.wood.place", 0.5, 1.0);
   }
 });
 
-// 记录破坏日志
-world.onVoxelDestroy((entity, x, y, z, voxel, tick) => {
-  console.log(entity.player.name + " 破坏了 " + voxel + " 在 (" + x + "," + y + "," + z + ")");
+// ── 破坏记录 ──
+world.onVoxelDestroy((entity, x, y, z, voxel, _tick) => {
+  if (voxel !== "minecraft:air" && voxel !== "minecraft:grass_block") {
+    console.log(`[Demo] ${entity.player.name} 破坏了 ${voxel} @ (${x},${y},${z})`);
+  }
 });
 
-// 禁止放置特定方块
-world.onBlockPlace((entity, x, y, z, voxel, voxelId, tick) => {
+// ── 禁止放置 TNT ──
+world.onBlockPlace((entity, x, y, z, voxel, _voxelId, _tick) => {
   if (voxel === "minecraft:tnt" && entity.player.opLevel < 2) {
-    // 放置后用 voxels 替换为空气
-    voxels.setVoxel(x, y, z, "minecraft:air");
-    entity.player.directMessage("§c禁止放置TNT!");
+    voxels.setVoxel(x, y, z, "minecraft:air");  // 替换为空气
+    entity.player.directMessage("§c禁止放置 TNT！");
+    entity.player.playSound("minecraft:block.note_block.bass", 1.0, 0.5);
   }
 });
 ```
 
-## 3.3 实体交互与战斗
+## 3.3 实体受伤与死亡
 
 ```js
-// 死亡奖励
-world.onEntityDeath((entity, killer, tick) => {
-  if (killer && killer.isPlayer()) {
+// ── 死亡奖励 + Boss 特效 ──
+world.onEntityDeath((entity, killer, _tick) => {
+  if (killer?.isPlayer()) {
     const p = killer.player;
-    p.addExperienceLevels(1);
-    p.actionBar("§e击杀 " + entity.entityType + "! +1 经验等级");
-
-    // 掉落额外物品
     const pos = entity.position;
-    world.dropItem(pos, "minecraft:diamond", 1);
+
+    // 击杀粒子
+    world.spawnParticle(
+      "minecraft:angry_villager",
+      pos.x, pos.y + 1, pos.z,
+      10, 0.3, 0.3, 0.3, 0.05
+    );
+
+    // Boss 击杀特殊奖励
+    if (entity.hasTag("boss")) {
+      p.addExperienceLevels(5);
+      world.dropItem(pos, "minecraft:diamond", 3);
+      world.dropItem(pos, "minecraft:emerald", 5);
+      world.say(
+        `§6${p.name} §f击败了 §c${
+          entity.nameTag || entity.entityType}§f！`
+      );
+      world.launchFirework(pos.x, pos.y + 2, pos.z, "gold", "large_ball");
+    }
   }
 });
 
-// 受伤日志
-world.onEntityDamage((entity, amount, source, attacker, tick) => {
-  if (attacker && attacker.isPlayer()) {
-    const p = attacker.player;
-    p.actionBar("§c造成 " + amount + " 点伤害");
-  }
-});
-
-// 右键实体
-world.onInteract((entity, target, tick) => {
-  const p = entity.player;
-  p.directMessage("§e你点击了: §f" + target.entityType);
-
-  // 如果是村民，显示信息
-  if (target.entityType === "minecraft:villager") {
-    p.directMessage("§7这个村民看起来不想说话...");
+// ── 受伤提示 ──
+world.onEntityDamage((entity, amount, _source, attacker, _tick) => {
+  if (attacker?.isPlayer()) {
+    attacker.player.actionBar(
+      `§c造成 ${amount} 点伤害 → ${entity.nameTag || entity.entityType}`
+    );
   }
 });
 ```
 
-## 3.4 实体生成与属性
+## 3.4 右键实体
 
 ```js
-// 生成僵尸
-const zombie = world.spawnEntity("minecraft:zombie", new GameVector3(0, 100, 0));
+world.onInteract((entity, target, _tick) => {
+  const p = entity.player;
 
-// 自定义属性
-zombie.setNameTag("§c§l精英僵尸");
-zombie.maxHp = 60;
-zombie.hp = 60;
-zombie.walkSpeed = 0.3;
+  if (target.entityType === "minecraft:villager") {
+    p.directMessage("§e这个村民正在忙，不想说话...");
+    // 愤怒粒子
+    world.spawnParticle(
+      "minecraft:angry_villager",
+      target.position.x, target.position.y + 2, target.position.z,
+      3, 0.2, 0.2, 0.2, 0
+    );
+  }
+});
+```
+
+## 3.5 实体生成与配置
+
+```js
+// ── 生成精英僵尸 ──
+const boss = world.spawnEntity(
+  "minecraft:zombie",
+  new GameVector3(x, y, z)
+);
+if (!boss) return;  // spawnEntity 可能返回 null
+
+boss.setNameTag("§c§l精英僵尸");
+boss.maxHp = 100;
+boss.hp = 100;
+boss.addTag("boss");
+boss.setAI(true);
+boss.addEffect("minecraft:resistance", 99999, 0, true);
+boss.addEffect("minecraft:speed", 99999, 1, true);
 
 // 装备
-zombie.setEquipment("mainhand", "minecraft:iron_sword");
-zombie.setEquipment("head", "minecraft:iron_helmet");
-// 槽位: mainhand / offhand / head(helmet/helm) / chest(chestplate) / legs(leggings) / feet(boots)
+boss.setEquipment("mainhand", "minecraft:iron_sword");
+boss.setEquipment("head", "minecraft:iron_helmet");
+// 槽位: mainhand / offhand / head / chest / legs / feet
 
-// 掉落概率
-zombie.setDropChance("mainhand", 0.3);
-zombie.setDropChance("all", 0); // 全部不掉落
-
-// 效果
-zombie.addEffect("minecraft:speed", 99999, 1); // 永久速度 II
-
-// AI
-zombie.setAI(true); // 启用寻路
+boss.setDropChance("mainhand", 0.3);  // 30% 掉落手持物品
+boss.setDropChance("all", 0);          // 全部不掉落
 ```
 
 ### 使用完整配置生成
@@ -136,7 +155,7 @@ zombie.setAI(true); // 启用寻路
 const entity = world.createEntity({
   type: "minecraft:skeleton",
   position: new GameVector3(0, 100, 0),
-  velocity: new GameVector3(0, 0.5, 0), // 向上弹射
+  velocity: new GameVector3(0, 0.5, 0),
   fixed: false,
   gravity: true,
   friction: 0.5,
@@ -147,115 +166,118 @@ const entity = world.createEntity({
 });
 
 entity.setEquipment("mainhand", "minecraft:bow");
+entity.setTarget(somePlayerEntity);   // 设置攻击目标
+entity.clearTarget();                 // 清除目标
+entity.navigateTo(10, 100, 10, 0.5); // 导航到指定位置
+entity.setPersistent(true);           // 持久化（不会被卸载）
 
-// 设置攻击目标
-entity.setTarget(somePlayerEntity);
-entity.clearTarget();
-
-// 让生物导航到指定位置
-entity.navigateTo(10, 100, 10, 0.5);
-
-// 设置死亡回调
-entity.setOnDestroy((e) => {
+// 死亡回调
+entity.setOnDestroy(() => {
   console.log("精英骷髅已被击败");
 });
 ```
 
-## 3.5 计分板
+## 3.6 巡逻守卫（完整实战）
+
+以下代码生成一个在四个路点之间巡逻、遇到玩家自动攻击的骷髅守卫：
 
 ```js
-// 创建计分板
-world.addScoreboard("kills");
-world.addScoreboard("deaths", "deathCount"); // 死亡计数 (自动统计)
+function createPatrol(
+  name: string,
+  startPos: GameVector3,
+  waypoints: GameVector3[],
+  speed: number
+): GameEntity | null {
+  const guard = world.spawnEntity("minecraft:skeleton", startPos);
+  if (!guard) { return null; }
 
-// 设置分数
-world.setScore("Steve", "kills", 5);
-world.setScore(entity, "kills", 10); // 也可以用实体对象
+  guard.setNameTag(name);
+  guard.maxHp = 50;
+  guard.hp = 50;
+  guard.setEquipment("mainhand", "minecraft:bow");
+  guard.setEquipment("head", "minecraft:iron_helmet");
+  guard.setAI(true);
 
-// 读取
-const kills = world.getScore("Steve", "kills");
+  let wpIndex = 0;
+  const tid = world.setInterval(() => {
+    if (guard.destroyed) {
+      world.clearInterval(tid);
+      return;
+    }
+    // 到达当前路点 → 下一个
+    const wp = waypoints[wpIndex];
+    const pos = guard.position;
+    const dx = pos.x - wp.x;
+    const dy = pos.y - wp.y;
+    const dz = pos.z - wp.z;
+    const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    if (dist < 2) {
+      wpIndex = (wpIndex + 1) % waypoints.length;
+    }
+    guard.navigateTo(
+      waypoints[wpIndex].x, waypoints[wpIndex].y, waypoints[wpIndex].z,
+      speed
+    );
+    // 附近有玩家就攻击
+    const nearby = world.entitiesInRadius(pos, 8);
+    nearby.forEach((e) => {
+      if (e.isPlayer() && !guard.getTarget()) {
+        guard.setTarget(e);
+      }
+    });
+  }, 40);  // 每 2 秒更新一次导航
 
-// 显示在屏幕右侧
-world.showScoreboard("sidebar", "kills");
+  return guard;
+}
 
-// 显示在 Tab 列表
-world.showScoreboard("list", "deaths");
-
-// 列出所有分数
-const scores = world.listScores("kills");
-// [{name: "Steve", value: 5}, {name: "Alex", value: 3}, ...]
-
-// 清除显示
-world.hideScoreboard("sidebar");
-world.removeScoreboard("kills");
+// 用法：
+const route = [
+  new GameVector3(0, 70, 0),
+  new GameVector3(10, 70, 0),
+  new GameVector3(10, 70, 10),
+  new GameVector3(0, 70, 10),
+];
+void createPatrol("§e巡逻守卫", route[0], route, 0.8);
 ```
 
-### 实战：击杀计数
+## 3.7 实体标签与碰撞
 
 ```js
-world.addScoreboard("kills");
-world.showScoreboard("sidebar", "kills");
+entity.addTag("boss");
+entity.removeTag("elite");
+if (entity.hasTag("boss")) {
+  // 特殊处理 Boss
+}
+const tags = entity.tags();  // ["boss", "undead"]
 
-world.onEntityDeath((entity, killer, tick) => {
-  if (killer && killer.isPlayer()) {
-    const p = killer.player;
-    const current = world.getScore(p.name, "kills");
-    world.setScore(p.name, "kills", current + 1);
-    p.actionBar("§e击杀: §f" + (current + 1));
-  }
-});
-```
-
-## 3.6 队伍系统
-
-```js
-// 创建队伍
-world.createTeam("red", "red");
-world.createTeam("blue", "blue");
-
-// 划分队伍
-world.onPlayerJoin((entity, tick) => {
-  const online = world.querySelectorAll("*").length;
-  const team = online % 2 === 0 ? "red" : "blue";
-  world.joinTeam(entity, team);
-  entity.player.directMessage("§7你加入了 " + team + " 队");
-});
-
-// 获取队伍
-const team = world.getTeamOf(entity);
-console.log(team); // "red" 或 null
-
-// 移出队伍
-world.leaveTeam(entity);
-
-// 删除队伍
-world.removeTeam("red");
-```
-
-## 3.7 碰撞与标签
-
-```js
 // 实体碰撞
 world.onEntityContact((entityA, entityB, tick) => {
-  // 两个实体开始接触
-  if (entityA.isPlayer() && entityB.entityType === "minecraft:zombie") {
-    entityA.player.actionBar("§c小心僵尸！");
+  if (entityA.isPlayer() && entityB.hasTag("boss")) {
+    entityA.player.actionBar("§c小心 Boss！");
   }
 });
 
 world.onEntitySeparate((entityA, entityB, tick) => {
   // 两个实体分离
 });
+```
 
-// 实体标签
-entity.addTag("boss");
-entity.removeTag("elite");
-if (entity.hasTag("boss")) {
-  // 特殊处理 Boss
-}
-const tags = entity.tags(); // ["boss", "undead"]
+## 3.8 常用实体类型
+
+```
+minecraft:zombie      僵尸
+minecraft:skeleton    骷髅
+minecraft:creeper     苦力怕
+minecraft:spider      蜘蛛
+minecraft:witch       女巫
+minecraft:villager    村民
+minecraft:iron_golem  铁傀儡
+minecraft:slime       史莱姆
+minecraft:wither      凋零
+minecraft:ender_dragon 末影龙
+minecraft:area_effect_cloud  效果云（常用于固定位置标记）
 ```
 
 ## 下一步
 
-教程四将介绍高级游戏系统：BossBar、计时器、粒子/烟花/闪电、定时任务，以及一个完整的 PvP 小游戏示例。
+教程四将介绍高级游戏系统：计分板、BossBar、队伍、世界边界、跨脚本通信。
