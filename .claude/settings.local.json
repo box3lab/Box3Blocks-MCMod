@@ -1,5 +1,8 @@
 {
   "permissions": {
-    "allow": ["Bash(./gradlew build *)"]
+    "allow": [
+      "Bash(./gradlew build *)",
+      "Bash(npm run *)"
+    ]
   }
 }

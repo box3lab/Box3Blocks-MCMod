@@ -78,7 +78,7 @@ npm run build          # 输出 dist/app.js
 
 ### `/box3script off all`
 
-一键禁用所有项目。
+一键禁用所有项目，并立即卸载当前运行中的脚本。
 
 ```
 /box3script off all
@@ -86,7 +86,7 @@ npm run build          # 输出 dist/app.js
 
 ### `/box3script reload`
 
-停止所有脚本，重新加载所有已启用项目的 `app.js`。加载错误会反馈到聊天栏。
+停止所有脚本，重新加载所有已启用项目的入口脚本（优先 `dist/app.js`，其次 `app.js`）。加载错误会反馈到聊天栏。
 
 ```
 /box3script reload
@@ -166,7 +166,7 @@ npm run build          # 输出 dist/app.js
 {
   "mygame": true,
   "siege": false,
-  "mygame": true
+  "demo": true
 }
 ```
 
@@ -177,10 +177,12 @@ config/box3/
   ├── scripts.json        ← 项目开关配置
   ├── script/              ← 脚本目录
   │   ├── mygame/
+  │   │   ├── build.mjs
   │   │   ├── package.json
   │   │   ├── src/app.ts
   │   │   └── dist/app.js  ← 编译产物
-  │   └── mygame/
+  │   └── siege/
+  │       ├── build.mjs
   │       ├── package.json
   │       ├── src/app.ts
   │       └── dist/app.js

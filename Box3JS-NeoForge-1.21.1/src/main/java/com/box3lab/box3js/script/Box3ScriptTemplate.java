@@ -9,11 +9,13 @@ import java.nio.file.StandardCopyOption;
 public class Box3ScriptTemplate {
 
     private static final String[] FILES = {
-        "gitignore.template",
-        "package.json",
-        "tsconfig.json",
-        "src/app.ts",
-        "types/globals.d.ts",
+            "gitignore.template",
+            "package.json",
+            "build.mjs",
+            "tsconfig.json",
+            "eslint.config.mjs",
+            "src/app.ts",
+            "types/globals.d.ts",
     };
 
     public static void copyTo(Path projectDir, String projectName) throws IOException {
@@ -24,7 +26,8 @@ public class Box3ScriptTemplate {
             Files.createDirectories(dest.getParent());
             String resourcePath = "/assets/box3js/template/" + relPath;
             try (InputStream in = Box3ScriptTemplate.class.getResourceAsStream(resourcePath)) {
-                if (in == null) throw new IOException("Template file not found: " + resourcePath);
+                if (in == null)
+                    throw new IOException("Template file not found: " + resourcePath);
                 Files.copy(in, dest, StandardCopyOption.REPLACE_EXISTING);
             }
             if (relPath.equals("src/app.ts")) {

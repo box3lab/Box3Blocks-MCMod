@@ -2116,11 +2116,17 @@ interface GameWorld {
   /**
    * 注册聊天消息回调 (包括 /me 消息)。
    * Registers a callback for chat messages (including /me).
-   * @param handler - (entity, message, tick) => void
+   * @param handler - (entity, message, tick) => boolean|void
+   *                 返回 false 可取消聊天消息发送。
+   *                 Return false to cancel sending this chat message.
    * @returns GameEventHandlerToken — 调用 .cancel() 取消
    */
   onChat(
-    handler: (entity: GamePlayerEntity, message: string, tick: number) => void,
+    handler: (
+      entity: GamePlayerEntity,
+      message: string,
+      tick: number,
+    ) => boolean | void,
   ): GameEventHandlerToken;
 
   /**
@@ -2617,8 +2623,8 @@ declare const console: GameConsole;
  * 阻塞当前执行线程 (毫秒级)。
  * Blocks the current execution thread for the specified duration.
  *
- * @warning 会导致服务端卡顿, 谨慎使用。
- *          Will lag the server — use sparingly.
+ * @warning 会导致服务端卡顿, 谨慎使用。当前实现会将 sleep 上限钳制到 10ms。
+ *          Will lag the server — use sparingly. Current runtime clamps sleep to at most 10ms.
  * @param ms - 阻塞毫秒数 / sleep duration in milliseconds
  */
 declare function sleep(ms: number): void;

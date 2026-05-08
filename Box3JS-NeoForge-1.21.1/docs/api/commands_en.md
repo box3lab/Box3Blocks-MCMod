@@ -78,7 +78,7 @@ Disables the specified project. It won't auto-run on next server restart.
 
 ### `/box3script off all`
 
-Disables all projects at once.
+Disables all projects at once and immediately unloads currently running scripts.
 
 ```
 /box3script off all
@@ -86,7 +86,7 @@ Disables all projects at once.
 
 ### `/box3script reload`
 
-Stops all scripts and reloads `app.js` for all enabled projects. Load errors are reported in chat.
+Stops all scripts and reloads entry scripts for all enabled projects (prefers `dist/app.js`, with legacy root `app.js` fallback). Load errors are reported in chat.
 
 ```
 /box3script reload
@@ -166,7 +166,7 @@ Enable/disable state is saved in `config/box3/scripts.json`:
 {
   "mygame": true,
   "siege": false,
-  "mygame": true
+  "demo": true
 }
 ```
 
@@ -177,10 +177,12 @@ config/box3/
   ├── scripts.json        ← project enable/disable config
   ├── script/              ← scripts directory
   │   ├── mygame/
+  │   │   ├── build.mjs
   │   │   ├── package.json
   │   │   ├── src/app.ts
   │   │   └── dist/app.js  ← compiled output
-  │   └── mygame/
+  │   └── siege/
+  │       ├── build.mjs
   │       ├── package.json
   │       ├── src/app.ts
   │       └── dist/app.js

@@ -173,7 +173,7 @@ var entity = world.createEntity({
   collides: true,
   hp: 30,
   maxHp: 30,
-  tags: ["enemy", "undead"]
+  tags: ["enemy", "undead"],
 });
 ```
 
@@ -181,13 +181,13 @@ var entity = world.createEntity({
 
 ✅ Box3 API | 存储音效路径字符串，设为非空后触发时机如下：
 
-| 属性                 | 触发时机                                              |
-| -------------------- | ----------------------------------------------------- |
-| `ambientSound`       | 每 200 tick（10 秒）在世界出生点以 0.3 音量播放       |
-| `playerJoinSound`    | 玩家加入时在其所在位置以满音量播放                     |
-| `playerLeaveSound`   | 玩家退出时在其所在位置以满音量播放                     |
-| `placeVoxelSound`    | 方块放置时在方块位置以满音量播放                       |
-| `breakVoxelSound`    | 方块破坏时在方块位置以满音量播放                       |
+| 属性               | 触发时机                                        |
+| ------------------ | ----------------------------------------------- |
+| `ambientSound`     | 每 200 tick（10 秒）在世界出生点以 0.3 音量播放 |
+| `playerJoinSound`  | 玩家加入时在其所在位置以满音量播放              |
+| `playerLeaveSound` | 玩家退出时在其所在位置以满音量播放              |
+| `placeVoxelSound`  | 方块放置时在方块位置以满音量播放                |
+| `breakVoxelSound`  | 方块破坏时在方块位置以满音量播放                |
 
 设为 `null` 或空字符串可停止自动播放。
 
@@ -214,7 +214,7 @@ world.sound({
   path: "minecraft:entity.experience_orb.pickup",
   position: new GameVector3(0, 100, 0),
   volume: 0.8,
-  pitch: 1.5
+  pitch: 1.5,
 });
 ```
 
@@ -227,51 +227,51 @@ world.sound({
 ```js
 var bounds = new GameBounds3(
   new GameVector3(-10, 0, -10),
-  new GameVector3(10, 50, 10)
+  new GameVector3(10, 50, 10),
 );
 var entities = world.searchBox(bounds);
 ```
 
 ## 事件回调
 
-所有事件回调由 `world.onXxx(handler)` 注册，返回 `GameEventHandlerToken`。调用 `.cancel()` 取消注册，`.active()` 检查状态。除 `onTick` 外，回调第一个参数通常是触发该事件的 `entity`（`Box3JSEntity`）。
+所有事件回调由 `world.onXxx(handler)` 注册，返回 `GameEventHandlerToken`。调用 `.cancel()` 取消注册，`.active()` 检查状态。除 `onTick` 外，回调第一个参数通常是触发该事件的 `entity`（`Box3JSEntity`）。`world.onChat()` 中若回调返回 `false`，将取消该条聊天消息发送。
 
 ### GameEventHandlerToken
 
-| 方法 | 说明 |
-|--------|-------------|
-| `token.cancel()` | 取消事件监听 |
-| `token.active()` | 返回 `true` 表示监听仍处于活跃状态 |
+| 方法             | 说明                                            |
+| ---------------- | ----------------------------------------------- |
+| `token.cancel()` | 取消事件监听                                    |
+| `token.active()` | 返回 `true` 表示监听仍处于活跃状态              |
 | `token.resume()` | 抛出 UnsupportedOperationException — 请重新注册 |
 
 ```js
-var token = world.onTick(function(info) {
+var token = world.onTick(function (info) {
   if (info.tick > 6000) {
     token.cancel();
   }
 });
 ```
 
-| 事件                         | 类型    | 回调签名                                               | 触发时机                        |
-| ---------------------------- | ------- | ------------------------------------------------------ | ------------------------------- |
-| `world.onTick(fn)`           | ✅ Box3 | `(info)` → `{tick, prevTick, elapsedTimeMS, skip}`     | 每 tick                         |
-| `world.onPlayerJoin(fn)`     | ✅ Box3 | `(entity, tick)`                                       | 玩家登录                        |
-| `world.onPlayerLeave(fn)`    | ✅ Box3 | `(entity, tick)`                                       | 玩家退出                        |
-| `world.onChat(fn)`           | ✅ Box3 | `(entity, message, tick)`                              | 玩家发送聊天消息                |
-| `world.onVoxelDestroy(fn)`   | ✅ Box3 | `(entity, x, y, z, voxel, tick)`                       | 玩家破坏方块                    |
-| `world.onBlockPlace(fn)`     | ⬆ MC    | `(entity, x, y, z, voxel, voxelId, tick)`              | 玩家放置方块                    |
-| `world.onBlockActivate(fn)`  | ⬆ MC    | `(entity, x, y, z, voxel, tick)`                       | 玩家右键方块                    |
-| `world.onInteract(fn)`       | ✅ Box3 | `(entity, target, tick)`                               | 玩家右键实体                    |
-| `world.onVoxelContact(fn)`   | ✅ Box3 | `(entity, voxelId, x, y, z, contactType, force, tick)` | 实体接触方块                    |
-| `world.onEntityContact(fn)`  | ✅ Box3 | `(entity, other, tick)`                                | 两个实体接触                    |
-| `world.onEntitySeparate(fn)` | ✅ Box3 | `(entity, other, tick)`                                | 两个实体分离                    |
-| `world.onFluidEnter(fn)`     | ✅ Box3 | `(entity, fluid, x, y, z, tick)`                       | 实体进入液体                    |
-| `world.onFluidLeave(fn)`     | ✅ Box3 | `(entity, fluid, x, y, z, tick)`                       | 实体离开液体                    |
-| `world.onEntityDeath(fn)`    | ⬆ MC    | `(entity, killer, tick)`                               | 实体死亡；`killer` 可能为 null  |
-| `world.onEntityDamage(fn)`   | ⬆ MC    | `(entity, amount, source, attacker, tick)`             | 实体受伤（Pre 阶段）            |
-| `world.onPlayerRespawn(fn)`  | ⬆ MC    | `(entity, tick)`                                       | 玩家重生                        |
-| `world.onButtonPressed(fn)`  | ⬆ MC    | `(entity, button, tick)`                               | 玩家按下按钮（见 GameButtonType）|
-| `world.onMessage(fn)`        | ⬆ MC    | `(from, data)`                                         | 收到 `world.sendMessage()` 消息 |
+| 事件                         | 类型    | 回调签名                                               | 触发时机                              |
+| ---------------------------- | ------- | ------------------------------------------------------ | ------------------------------------- |
+| `world.onTick(fn)`           | ✅ Box3 | `(info)` → `{tick, prevTick, elapsedTimeMS, skip}`     | 每 tick                               |
+| `world.onPlayerJoin(fn)`     | ✅ Box3 | `(entity, tick)`                                       | 玩家登录                              |
+| `world.onPlayerLeave(fn)`    | ✅ Box3 | `(entity, tick)`                                       | 玩家退出                              |
+| `world.onChat(fn)`           | ✅ Box3 | `(entity, message, tick) => boolean \| void`           | 玩家发送聊天消息；返回 `false` 可取消 |
+| `world.onVoxelDestroy(fn)`   | ✅ Box3 | `(entity, x, y, z, voxel, tick)`                       | 玩家破坏方块                          |
+| `world.onBlockPlace(fn)`     | ⬆ MC    | `(entity, x, y, z, voxel, voxelId, tick)`              | 玩家放置方块                          |
+| `world.onBlockActivate(fn)`  | ⬆ MC    | `(entity, x, y, z, voxel, tick)`                       | 玩家右键方块                          |
+| `world.onInteract(fn)`       | ✅ Box3 | `(entity, target, tick)`                               | 玩家右键实体                          |
+| `world.onVoxelContact(fn)`   | ✅ Box3 | `(entity, voxelId, x, y, z, contactType, force, tick)` | 实体接触方块                          |
+| `world.onEntityContact(fn)`  | ✅ Box3 | `(entity, other, tick)`                                | 两个实体接触                          |
+| `world.onEntitySeparate(fn)` | ✅ Box3 | `(entity, other, tick)`                                | 两个实体分离                          |
+| `world.onFluidEnter(fn)`     | ✅ Box3 | `(entity, fluid, x, y, z, tick)`                       | 实体进入液体                          |
+| `world.onFluidLeave(fn)`     | ✅ Box3 | `(entity, fluid, x, y, z, tick)`                       | 实体离开液体                          |
+| `world.onEntityDeath(fn)`    | ⬆ MC    | `(entity, killer, tick)`                               | 实体死亡；`killer` 可能为 null        |
+| `world.onEntityDamage(fn)`   | ⬆ MC    | `(entity, amount, source, attacker, tick)`             | 实体受伤（Pre 阶段）                  |
+| `world.onPlayerRespawn(fn)`  | ⬆ MC    | `(entity, tick)`                                       | 玩家重生                              |
+| `world.onButtonPressed(fn)`  | ⬆ MC    | `(entity, button, tick)`                               | 玩家按下按钮（见 GameButtonType）     |
+| `world.onMessage(fn)`        | ⬆ MC    | `(from, data)`                                         | 收到 `world.sendMessage()` 消息       |
 
 所有 `onXxx()` 方法返回 `GameEventHandlerToken` — 调用 `.cancel()` 取消监听。
 
@@ -758,24 +758,24 @@ var biome = world.getBiome(entity.position);
 
 JSON 格式使用 MC 原版组件 ID：
 
-| JSON Key | 对应 DataComponent | 说明 |
-|----------|-------------------|------|
-| `minecraft:custom_model_data` | `CUSTOM_MODEL_DATA` | 模型切换值，匹配资源包 paper.json 的 override |
-| `minecraft:custom_name` | `CUSTOM_NAME` | 物品显示名称 |
-| `minecraft:lore` | `LORE` | 描述文字数组 |
-| `minecraft:max_stack_size` | `MAX_STACK_SIZE` | 最大堆叠数 (1–64)，默认 64 |
-| `minecraft:enchantment_glint_override` | `ENCHANTMENT_GLINT_OVERRIDE` | 附魔光效 |
-| `minecraft:rarity` | `RARITY` | 稀有度: `common`/`uncommon`/`rare`/`epic` |
-| `minecraft:food` | `FOOD` | 食物属性，子字段见下 |
+| JSON Key                               | 对应 DataComponent           | 说明                                          |
+| -------------------------------------- | ---------------------------- | --------------------------------------------- |
+| `minecraft:custom_model_data`          | `CUSTOM_MODEL_DATA`          | 模型切换值，匹配资源包 paper.json 的 override |
+| `minecraft:custom_name`                | `CUSTOM_NAME`                | 物品显示名称                                  |
+| `minecraft:lore`                       | `LORE`                       | 描述文字数组                                  |
+| `minecraft:max_stack_size`             | `MAX_STACK_SIZE`             | 最大堆叠数 (1–64)，默认 64                    |
+| `minecraft:enchantment_glint_override` | `ENCHANTMENT_GLINT_OVERRIDE` | 附魔光效                                      |
+| `minecraft:rarity`                     | `RARITY`                     | 稀有度: `common`/`uncommon`/`rare`/`epic`     |
+| `minecraft:food`                       | `FOOD`                       | 食物属性，子字段见下                          |
 
 **`minecraft:food` 子字段：**
 
-| 子字段 | 类型 | 说明 |
-|--------|------|------|
-| `nutrition` | int | 营养值 (1–20) |
-| `saturation` | float | 饱和度修饰符 |
-| `can_always_eat` | bool | 是否始终可食用 |
-| `eat_seconds` | float | 食用时间 (秒)，≤0.8 为快速食用 |
+| 子字段           | 类型  | 说明                           |
+| ---------------- | ----- | ------------------------------ |
+| `nutrition`      | int   | 营养值 (1–20)                  |
+| `saturation`     | float | 饱和度修饰符                   |
+| `can_always_eat` | bool  | 是否始终可食用                 |
+| `eat_seconds`    | float | 食用时间 (秒)，≤0.8 为快速食用 |
 
 ```js
 world.loadCustomItems("box3js-items");
@@ -784,6 +784,7 @@ world.loadCustomItems("box3js-items");
 ```
 
 **资源包结构参考：**
+
 ```
 resourcepacks/box3js-items/
 ├── pack.mcmeta
@@ -830,7 +831,12 @@ world.runCommand("weather clear");
 ⬆ GameVector3 重载。
 
 ```js
-world.placeStructure(0, 100, 0, "minecraft:village/plains/houses/plains_small_house_1");
+world.placeStructure(
+  0,
+  100,
+  0,
+  "minecraft:village/plains/houses/plains_small_house_1",
+);
 world.placeStructure(pos, "box3js:arena");
 ```
 

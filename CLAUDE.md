@@ -4,94 +4,133 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Box3Blocks is a Minecraft mod that imports 372 decorative blocks from the Box3 platform into Minecraft, supporting terrain file import/export and model items. The repository is a **multi-project monorepo** with 7 independent subprojects targeting different mod loaders and Minecraft versions. There is no root build system — each subproject has its own Gradle wrapper and `build.gradle`.
+Box3Blocks is a Minecraft mod that imports 372 decorative blocks from the Box3 platform into Minecraft, supporting terrain file import/export and model items. It also includes **Box3JS**, a server-side TypeScript/JavaScript scripting engine (Rhino) for creating custom gameplay, mini-games, and world interactions.
+
+The repository is a **multi-project monorepo** with 7 independent subprojects targeting different mod loaders and Minecraft versions. There is no root build system — each subproject has its own Gradle wrapper and `build.gradle`.
 
 ## Subprojects
 
-| Directory          | Loader   | MC Version | Java | Key Plugin                       |
-| ------------------ | -------- | ---------- | ---- | -------------------------------- |
-| `Fabric-1.20.1/`   | Fabric   | 1.20.1     | 17   | `fabric-loom-remap`              |
-| `Fabric-1.21.1/`   | Fabric   | 1.21.1     | 21   | `fabric-loom-remap`              |
-| `Fabric-1.21.11/`  | Fabric   | 1.21.11    | 21   | `fabric-loom-remap`              |
-| `Fabric-26.1/`     | Fabric   | 26.1       | 25   | `fabric-loom`                    |
-| `Forge-1.20.1/`    | Forge    | 1.20.1     | 17   | `net.minecraftforge.gradle` v6.x |
-| `NeoForge-1.21.1/` | NeoForge | 1.21.1     | 21   | NeoForge ModDevGradle            |
-| `NeoForge-26.1/`   | NeoForge | 26.1       | 25   | NeoForge ModDevGradle            |
+| Directory          | Loader   | MC Version | Java | Notes                                    |
+| ------------------ | -------- | ---------- | ---- | ---------------------------------------- |
+| `Fabric-1.20.1/`   | Fabric   | 1.20.1     | 17   | `fabric-loom-remap`                      |
+| `Fabric-1.21.1/`   | Fabric   | 1.21.1     | 21   | `fabric-loom-remap`                      |
+| `Fabric-1.21.11/`  | Fabric   | 1.21.11    | 21   | `fabric-loom-remap`                      |
+| `Fabric-26.1/`     | Fabric   | 26.1       | 25   | `fabric-loom`                            |
+| `Forge-1.20.1/`    | Forge    | 1.20.1     | 17   | `net.minecraftforge.gradle` v6.x         |
+| `NeoForge-1.21.1/` | NeoForge | 1.21.1     | 21   | **Box3JS lives here** — NeoForge ModDevGradle |
+| `NeoForge-26.1/`   | NeoForge | 26.1       | 25   | NeoForge ModDevGradle                    |
+
+Only NeoForge-1.21.1 has the Box3JS scripting engine. The other 6 subprojects are purely the Box3Blocks decorative block mod.
 
 ## Build Commands
 
-Each subproject is built independently. The Gradle wrapper exists in each subproject directory:
-
 ```bash
 # Build a single subproject
-cd Fabric-26.1 && ./gradlew build
+cd NeoForge-1.21.1 && ./gradlew build
 
 # Clean build artifacts
-cd Fabric-26.1 && ./gradlew clean
+cd NeoForge-1.21.1 && ./gradlew clean
 
-# Build all in sequence (bash loop)
-for d in Fabric-1.20.1 Fabric-1.21.1 Fabric-1.21.11 Fabric-26.1; do
-  (cd "$d" && ./gradlew build) || break
-done
+# Build Box3JS script (in run/config/box3/script/<project>/)
+cd run/config/box3/script/colorzone
+npm install && npm run build       # esbuild → Babel → Rhino target
 ```
 
-**Important:** Forge-1.20.1 requires Java 17 (ForgeGradle 6.x doesn't support Java 21+). All other subprojects use their respective Java versions as noted in the table above.
+**Important:** Forge-1.20.1 requires Java 17. All other subprojects use Java 21+. NeoForge-26.1 uses Java 25.
 
 There are no existing tests (`src/test` directories are empty).
 
 ## Shared Resources Architecture
 
-To avoid ~20,000 duplicate asset files across subprojects, shared resources are centralized into three directories. Each subproject's `build.gradle` pulls from the appropriate sources:
+Shared resources are centralized to avoid ~20,000 duplicate asset files:
 
-- **`shared-resources/`** — used by ALL subprojects: 2,324 block textures (PNG + mcmeta), 372 block models, 372 blockstates, 372 item model definitions, `icon.png`, worldgen data, `block-id.json`, `block-spec.json`
-- **`shared-resources-fabric/`** — used by all 4 Fabric subprojects: 372 `models/item/` JSONs + lang files (`en_us.json`, `zh_cn.json`)
-- **`shared-resources-forge/`** — used by Forge + both NeoForge subprojects: 372 `models/item/` JSONs + lang files
+- **`shared-resources/`** — used by ALL subprojects: block textures, models, blockstates, item models, worldgen data, `block-id.json`, `block-spec.json`
+- **`shared-resources-fabric/`** — used by all 4 Fabric subprojects: `models/item/` JSONs + lang files
+- **`shared-resources-forge/`** — used by Forge + both NeoForge subprojects: `models/item/` JSONs + lang files
 
-Resource merging uses `DuplicatesStrategy.EXCLUDE` in Fabric/Forge `processResources` (subproject-local files take precedence over shared), and NeoForge uses `srcDir()` in source sets.
+## Block Mod Architecture
 
-Per-subproject files that remain in `src/main/resources/`:
+All subprojects (including NeoForge-1.21.1) share the block mod's runtime generation architecture:
 
-- `fabric.mod.json` (Fabric variants — metadata + mixin configs)
-- `META-INF/mods.toml`, `pack.mcmeta` (Forge/NeoForge)
-- `data/box3/worldgen/visible.json` override (Fabric-1.20.1 only)
-- `assets/box3/lang/` overrides (Fabric-1.21.11, Fabric-26.1 — newer lang format differs from the older Fabric group)
+- `BlockIndexData` / `BlockIndexUtil` reads `block-id.json` and `block-spec.json` at registration time
+- `VoxelBlockFactories` creates `Block` instances dynamically (no per-block Java classes)
+- Only 6 special blocks have dedicated Java classes: `VoxelBlock`, `GlassVoxelBlock`, `BarrierVoxelBlock`, `BouncePadBlock`, `ConveyorBlock`, `SpiderWebBlock`
 
-## Code Architecture
+## Box3JS Scripting Engine (NeoForge-1.21.1 only)
 
-### Two Package Trees
+Box3JS uses Mozilla Rhino to run server-side JavaScript/TypeScript. Scripts live in `run/config/box3/script/<project>/`. Each project has its own isolated scope, callbacks, and tracked state.
 
-Fabric subprojects use the **`com.box3lab`** package. Forge/NeoForge subprojects use **`com.box3lab.box3`**. The Java source under each is structurally similar but uses loader-specific APIs (Fabric's `Registry` vs Forge/NeoForge's `DeferredRegister`).
+### Java Package: `com.box3lab.box3js`
 
-### Runtime Block Generation
+| File | Role |
+|------|------|
+| `Box3JS.java` | `@Mod` entry point, subscribes to NeoForge events, fires callbacks into JS |
+| `script/Box3ScriptEngine.java` | Singleton Rhino engine: load/reload/stop scripts, fire events, manage scopes |
+| `script/Box3ScriptCommand.java` | `/box3script` command handler |
+| `script/Box3ScriptConfig.java` | Config: enabled projects, sandbox state, file watcher |
+| `script/Box3ScriptSandbox.java` | Tracks block/entity/player/world mutations for rollback |
+| `script/Box3ScriptTemplate.java` | Template for `/box3script create` |
+| `script/Box3ScriptWatcher.java` | File watching + auto-reload on `.js` change |
+| `script/Box3JSWorld.java` | `world.*` API: events, entity queries, scoreboard, BossBar, teams, border, particles, fireworks, recipes, structures, custom items |
+| `script/Box3JSEntity.java` | `entity.*` API: position, velocity, HP, tags, AI, equipment, effects |
+| `script/Box3JSPlayer.java` | `player.*` API: inventory, flight, game mode, teleport, XP, food, advancements, tab list |
+| `script/Box3JSVoxels.java` | `voxels.*` API: get/set voxel, fill region, spawner control |
+| `script/Box3JSQuery.java` | `world.querySelectorAll()` / `entitiesInRadius()` etc. |
+| `script/Box3JSEventBus.java` | Per-project callback storage with isolation |
+| `script/Box3JSCallbacks.java` | Callback interface definitions |
+| `script/Box3JSScoreboard.java` | Scoreboard CRUD |
+| `script/Box3JSBossbar.java` | BossBar CRUD |
+| `script/Box3JSTeam.java` | Team CRUD |
+| `script/Box3JSStorage.java` | Per-project JSON file persistence |
+| `script/Box3ScriptUtils.java` | Shared helpers: sound playing, raycast, entity lookAt |
+| `script/GameVector3.java` | 3D vector exposed to JS (`new GameVector3(x, y, z)`) |
+| `script/GameBounds3.java` | AABB bounds |
+| `script/GameRGBColor.java` / `GameRGBAColor.java` | Color types |
+| `script/GameQuaternion.java` | Quaternion math |
+| `script/GameEventHandlerToken.java` | Returned by `world.onXxx()` — has `cancel()` and `active()` |
+| `registries/Box3JSCustomItems.java` | Custom items via Minecraft data components on `minecraft:paper` carrier |
+| `registries/Box3JSRecipeManager.java` | Recipe blacklist via `RecipeManager.replaceRecipes()` |
 
-This mod does **not** define each of the 372 blocks as individual Java classes. Instead, blocks are generated programmatically at registration time:
+### DTS Type Constraints
 
-1. `BlockIndexData` / `BlockIndexUtil` reads `block-id.json` and `block-spec.json` from resources — these define every block's ID, name, category, light level, opacity, etc.
-2. `VoxelBlockFactories` / `VoxelBlockPropertiesFactory` creates `Block` instances dynamically from the spec data.
-3. `ModBlocks` (Fabric) or `Box3Blocks` (Forge/NeoForge) orchestrates registration into Minecraft's registry system.
-4. `CreativeTabRegistrar` groups blocks into 9 creative mode tabs based on category.
+`world.currentTick` and `world.projectName` are **methods** in `globals.d.ts`, not properties:
+```ts
+world.currentTick()  // ✅ returns number
+world.projectName()  // ✅ returns string
+```
 
-Only 6 special blocks have dedicated Java classes: `VoxelBlock`, `GlassVoxelBlock`, `BarrierVoxelBlock`, `BouncePadBlock`, `ConveyorBlock`, `SpiderWebBlock`.
+### Script Build Pipeline
 
-### Key Source Files (in every subproject)
+`build.mjs` in each script project does: `esbuild bundle` → `Babel` (target Rhino 1.9.1) → regex sanitize for Rhino. Entry is always `src/app.ts`, output is `dist/app.js`. Supports `--watch` for hot reload.
 
-- **Entry point**: `Box3.java` (Fabric, implements `ModInitializer`) or `Box3Blocks.java` (Forge/NeoForge, annotated `@Mod`)
-- **Client entry**: `Box3Client.java` (Fabric) or `Box3BlocksClient.java` (Forge/NeoForge)
-- **Commands**: `ModCommands.java` — `/box3import`, `/box3export`, `/box3barrier`, `/box3perm`
-- **Config**: `ConfigUtil.java` (Fabric) or `Box3Config.java` (Forge/NeoForge) — permission level, barrier visibility
-- **Import/Export**: `Box3ImportFiles.java` / `VoxelImport.java` / `VoxelExport.java` — terrain `.gz` file handling
-- **Model items**: `PackModelBlockEntity.java` / `PackModelEntityBlock.java` — resource-pack-loaded custom models
+### Custom Items System
 
-### Version Differences Worth Noting
+Uses `minecraft:paper` as carrier with `DataComponents` (CUSTOM_NAME, LORE, CUSTOM_MODEL_DATA, MAX_STACK_SIZE, ENCHANTMENT_GLINT_OVERRIDE, RARITY, FOOD). Client-side textures via resource pack `paper.json` with `custom_model_data` overrides. **No DeferredRegister** — no registry sync needed.
 
-- `VoxelExport` only exists in Fabric-1.21.11, Fabric-26.1, and all Forge/NeoForge variants (not in older Fabric)
+Config: `resourcepacks/box3js-items/items.json` + textures + model JSONs. Loaded via `world.loadCustomItems("box3js-items")`.
+
+Consumable/Cooldown/Enchantable/JukeboxPlayable components are NOT available in NeoForge 21.1.220 (need MC 1.21.2+).
+
+### Recipe Manager
+
+`Box3JSRecipeManager` uses `RecipeManager.replaceRecipes()` (public API, no reflection):
+- `removeRecipe(id)` — filters via replaceRecipes
+- `clearRecipes()` — restores full original list
+- `listRecipes(filter)` — searches by keyword
+
+### Documentation
+
+- `docs/api/` — Full API reference for world, entity, player, voxels, storage, math, commands (Chinese + English)
+- `docs/tutorial/` — 5-part tutorial series (01-basics → 05-examples) with complete PvP arena and parkour game examples
+
+## Version Differences
+
+- `VoxelExport` only in Fabric-1.21.11, Fabric-26.1, and Forge/NeoForge variants
 - `VoxelFluidRenderHandler` only in Fabric-1.21.11
-- NeoForge-26.1 moved client code from `src/main/java` to `src/client/java`
+- NeoForge-26.1 moved client code to `src/client/java`
 - Fabric-26.1 uses `fabric-loom` (not `fabric-loom-remap`) and Java 25
 
 ## Tools
 
-- **`tools/generate_blocks_fabric.py`** — generates Fabric block registration code
-- **`tools/generate_blocks_forge.py`** — generates Forge/NeoForge block registration code
-- **`tools/strength_blocks.py`** — block property utilities shared by both generators
-- **`tools/box3-texture-cut/`** — TypeScript tool for cutting sprite sheets into individual block textures
+- **`tools/generate_blocks_fabric.py`** / **`tools/generate_blocks_forge.py`** — generates block registration code
+- **`tools/box3-texture-cut/`** — TypeScript tool for cutting sprite sheets into textures

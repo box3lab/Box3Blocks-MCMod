@@ -31,7 +31,7 @@ console.log("脚本已加载");
 | `storage`        | ✅ Box3 | 数据持久化，见 [storage.md](storage.md)                                          |
 | `console`        | ⬆ MC    | `console.log/debug/warn/error/assert/clear`                                      |
 | `require(id)`    | ⬆ MC    | CommonJS 模块导入，见下方模块说明                                                |
-| `sleep(ms)`      | ⬆ MC    | 阻塞线程指定毫秒                                                                 |
+| `sleep(ms)`      | ⬆ MC    | 阻塞线程指定毫秒（运行时会将值限制为最多 10ms）                                  |
 | `GameVector3`    | ✅ Box3 | 三维向量，见 [math.md](math.md)                                                  |
 | `GameBounds3`    | ✅ Box3 | 包围盒，见 [math.md](math.md)                                                    |
 | `GameRGBColor`   | ✅ Box3 | RGB 颜色，见 [math.md](math.md)                                                  |

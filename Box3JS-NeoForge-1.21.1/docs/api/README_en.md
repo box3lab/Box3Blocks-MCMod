@@ -31,7 +31,7 @@ console.log("Script loaded");
 | `storage`        | ✅ Box3 | Data persistence, see [storage.md](storage.md)                                     |
 | `console`        | ⬆ MC    | `console.log/debug/warn/error/assert/clear`                                        |
 | `require(id)`    | ⬆ MC    | CommonJS module import, see module section below                                   |
-| `sleep(ms)`      | ⬆ MC    | Block the thread for the given milliseconds                                        |
+| `sleep(ms)`      | ⬆ MC    | Block the thread for the given milliseconds (runtime clamps to at most 10ms)       |
 | `GameVector3`    | ✅ Box3 | 3D vector, see [math.md](math.md)                                                  |
 | `GameBounds3`    | ✅ Box3 | Bounding box, see [math.md](math.md)                                               |
 | `GameRGBColor`   | ✅ Box3 | RGB color, see [math.md](math.md)                                                  |

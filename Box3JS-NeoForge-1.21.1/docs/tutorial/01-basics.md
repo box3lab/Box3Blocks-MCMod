@@ -12,7 +12,7 @@
 在游戏内执行：
 
 ```
-/box3script sandbox mytutorial
+/box3script create mytutorial
 ```
 
 这会在 `config/box3/script/mytutorial/` 下创建一个 TypeScript 项目模板。如果你想用纯 JavaScript，直接把 `src/app.ts` 当 JS 写即可——构建工具不会检查类型。
@@ -62,10 +62,10 @@ world.onPlayerJoin((entity, tick) => {
 `console` 对象有 4 个级别：
 
 ```js
-console.log("普通日志");       // [Box3JS] [mytutorial] 普通日志
-console.debug("调试信息");     // [Box3JS] [mytutorial] [DEBUG] 调试信息
-console.warn("警告");          // [Box3JS] [mytutorial] [WARN] 警告
-console.error("错误");         // [Box3JS] [mytutorial] [ERROR] 错误
+console.log("普通日志"); // [Box3JS] [mytutorial] 普通日志
+console.debug("调试信息"); // [Box3JS] [mytutorial] [DEBUG] 调试信息
+console.warn("警告"); // [Box3JS] [mytutorial] [WARN] 警告
+console.error("错误"); // [Box3JS] [mytutorial] [ERROR] 错误
 ```
 
 输出会显示在服务端控制台，格式为 `[Box3JS] [项目名] message`。
@@ -92,8 +92,10 @@ world.onChat((entity, message, tick) => {
       const pos = player.position;
       player.directMessage(
         "§e你的位置: §f" +
-          Math.floor(pos.x) + ", " +
-          Math.floor(pos.y) + ", " +
+          Math.floor(pos.x) +
+          ", " +
+          Math.floor(pos.y) +
+          ", " +
           Math.floor(pos.z),
       );
       return false;
@@ -133,21 +135,21 @@ world.setTimeout(() => {
 
 ```js
 // 时间控制
-world.time = 6000;   // 正午 (0=日出, 6000=正午, 12000=日落, 18000=午夜)
+world.time = 6000; // 正午 (0=日出, 6000=正午, 12000=日落, 18000=午夜)
 world.timeScale = 0; // 暂停时间
 world.timeScale = 1; // 恢复
 
 // 天气
-world.rainDensity = 1.0;    // 下雨
+world.rainDensity = 1.0; // 下雨
 world.thunderDensity = 0.5; // 雷暴
-world.clearWeather();       // 晴天
+world.clearWeather(); // 晴天
 
 // 难度
-world.difficulty = "hard";  // peaceful / easy / normal / hard
+world.difficulty = "hard"; // peaceful / easy / normal / hard
 
 // 游戏规则
-world.setGameRule("keepInventory", true);  // 死亡不掉落
-world.setGameRule("doFireTick", false);    // 火焰不蔓延
+world.setGameRule("keepInventory", true); // 死亡不掉落
+world.setGameRule("doFireTick", false); // 火焰不蔓延
 ```
 
 ## 1.7 广播与消息类型
@@ -207,7 +209,14 @@ world.onChat((entity, message, tick) => {
       return false;
     case "!pos":
       const pos = p.position;
-      p.directMessage("§e位置: §f" + Math.floor(pos.x) + " " + Math.floor(pos.y) + " " + Math.floor(pos.z));
+      p.directMessage(
+        "§e位置: §f" +
+          Math.floor(pos.x) +
+          " " +
+          Math.floor(pos.y) +
+          " " +
+          Math.floor(pos.z),
+      );
       return false;
     case "!online":
       p.directMessage("§e在线: §f" + world.querySelectorAll("*").length);
