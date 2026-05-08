@@ -28,6 +28,7 @@ public class Box3ScriptEngine {
     private Box3JSWorld worldBinding;
     private Box3JSVoxels voxelsBinding;
     private Box3JSStorage storageBinding;
+    private Box3JSDatabase dbBinding;
     private Box3ScriptSandbox sandbox;
     private MinecraftServer server;
     private boolean initialized;
@@ -50,6 +51,7 @@ public class Box3ScriptEngine {
         this.worldBinding = new Box3JSWorld(server, this);
         this.voxelsBinding = new Box3JSVoxels(server, sandbox);
         this.storageBinding = new Box3JSStorage(server.getServerDirectory().resolve("config"), this);
+        this.dbBinding = new Box3JSDatabase(server.getServerDirectory().resolve("config"), this);
         setupScope();
         initialized = true;
     }
@@ -93,6 +95,7 @@ public class Box3ScriptEngine {
         if (!initialized)
             throw new IllegalStateException("ScriptEngine not initialized");
         Context cx = Context.enter();
+        cx.setOptimizationLevel(-1); // interpreter mode avoids regex classloader issues
         try {
             return cx.evaluateString(scope, code, "script", 1, null);
         } finally {
@@ -309,6 +312,7 @@ public class Box3ScriptEngine {
         bus.removeProject(project);
         projectRequires.remove(project);
         worldBinding.removeProject(project);
+        dbBinding.closeProject(project);
         var summary = sandbox.restoreProject(project);
         if (summary.hasAny()) {
             Box3JS.LOGGER.info("Sandbox [{}] restored: {}", project, summary.toMessage());
@@ -851,6 +855,10 @@ public class Box3ScriptEngine {
         this.worldBinding = new Box3JSWorld(server, this);
         this.voxelsBinding = new Box3JSVoxels(server, sandbox);
         this.storageBinding = new Box3JSStorage(server.getServerDirectory().resolve("config"), this);
+        if (this.dbBinding != null) {
+            this.dbBinding.closeAll();
+        }
+        this.dbBinding = new Box3JSDatabase(server.getServerDirectory().resolve("config"), this);
         setupScope();
     }
 
@@ -861,6 +869,7 @@ public class Box3ScriptEngine {
             ScriptableObject.putProperty(scope, "world", Context.javaToJS(worldBinding, scope));
             ScriptableObject.putProperty(scope, "voxels", Context.javaToJS(voxelsBinding, scope));
             ScriptableObject.putProperty(scope, "storage", Context.javaToJS(storageBinding, scope));
+            ScriptableObject.putProperty(scope, "db", Context.javaToJS(dbBinding, scope));
             ScriptableObject.putProperty(scope, "_jConsole", Context.javaToJS(new Box3JSConsole(), scope));
             cx.evaluateString(scope,
                     "console = {" +

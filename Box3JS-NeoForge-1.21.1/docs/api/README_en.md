@@ -29,6 +29,7 @@ console.log("Script loaded");
 | `player`         | ✅ Box3 | Player wrapper (via `entity.player`), see [player.md](player.md)                   |
 | `voxels`         | ✅ Box3 | Block operations, see [voxels.md](voxels.md)                                       |
 | `storage`        | ✅ Box3 | Data persistence, see [storage.md](storage.md)                                     |
+| `db`             | ⬆ MC    | SQLite database, see [database_en.md](database_en.md)                              |
 | `console`        | ⬆ MC    | `console.log/debug/warn/error/assert/clear`                                        |
 | `require(id)`    | ⬆ MC    | CommonJS module import, see module section below                                   |
 | `sleep(ms)`      | ⬆ MC    | Block the thread for the given milliseconds (runtime clamps to at most 10ms)       |
@@ -47,15 +48,16 @@ console.log("Script loaded");
 
 ## Document Index
 
-| Document                   | Content                                                                       |
-| -------------------------- | ----------------------------------------------------------------------------- |
-| [world.md](world.md)       | World state, events, scoreboard, bossbar, teams, border, particles, fireworks |
-| [entity.md](entity.md)     | Entity properties, AI, equipment, potions, pathfinding, tags                  |
-| [player.md](player.md)     | Inventory, messaging, flight, gamemode, teleport, commands                    |
-| [voxels.md](voxels.md)     | Block read/write, region fill, spawner control                                |
-| [storage.md](storage.md)   | Persistent data storage                                                       |
-| [math.md](math.md)         | Vector3, Bounds3, Color, Quaternion                                           |
-| [commands.md](commands.md) | `/box3script` command reference                                               |
+| Document                         | Content                                                                       |
+| -------------------------------- | ----------------------------------------------------------------------------- |
+| [world.md](world.md)             | World state, events, scoreboard, bossbar, teams, border, particles, fireworks |
+| [entity.md](entity.md)           | Entity properties, AI, equipment, potions, pathfinding, tags                  |
+| [player.md](player.md)           | Inventory, messaging, flight, gamemode, teleport, commands                    |
+| [voxels.md](voxels.md)           | Block read/write, region fill, spawner control                                |
+| [storage.md](storage.md)         | Persistent data storage                                                       |
+| [database_en.md](database_en.md) | SQLite database API                                                           |
+| [math.md](math.md)               | Vector3, Bounds3, Color, Quaternion                                           |
+| [commands.md](commands.md)       | `/box3script` command reference                                               |
 
 ## File Modules
 

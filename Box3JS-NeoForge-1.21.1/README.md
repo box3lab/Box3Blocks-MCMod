@@ -96,6 +96,7 @@ npm run build          # 输出 dist/app.js
 | `player` | 背包、飞行、游戏模式、传送、消息、经验、成就、音效、标题、BossBar |
 | `voxels` | 方块读写、区域填充、刷怪笼 |
 | `storage` | JSON 数据持久化 |
+| `db` | SQLite 数据库 — SQL 查询、排行榜、玩家数据 |
 | `console` | 日志输出、`require()`、`sleep()` |
 | `GameVector3` / `GameBounds3` / `GameRGBColor` | 数学与颜色类型 |
 
