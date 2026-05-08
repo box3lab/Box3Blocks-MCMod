@@ -29,10 +29,7 @@ console.log("脚本已加载");
 | `player`         | ✅ Box3 | 玩家包装（通过 `entity.player` 获取），见 [player.md](player.md)                 |
 | `voxels`         | ✅ Box3 | 方块操作，见 [voxels.md](voxels.md)                                              |
 | `storage`        | ✅ Box3 | 数据持久化，见 [storage.md](storage.md)                                          |
-| `db`             | ⬆ MC    | SQLite 数据库，见 [database.md](database.md)                                      |
-| `console`        | ⬆ MC    | `console.log/debug/warn/error/assert/clear`                                      |
-| `require(id)`    | ⬆ MC    | CommonJS 模块导入，见下方模块说明                                                |
-| `sleep(ms)`      | ⬆ MC    | 阻塞线程指定毫秒（运行时会将值限制为最多 10ms）                                  |
+| `db`             | ✅ Box3 | SQLite 数据库，见 [database.md](database.md)                                     |
 | `GameVector3`    | ✅ Box3 | 三维向量，见 [math.md](math.md)                                                  |
 | `GameBounds3`    | ✅ Box3 | 包围盒，见 [math.md](math.md)                                                    |
 | `GameRGBColor`   | ✅ Box3 | RGB 颜色，见 [math.md](math.md)                                                  |
@@ -55,7 +52,7 @@ console.log("脚本已加载");
 | [player.md](player.md)     | 背包、消息、飞行、游戏模式、传送、命令                  |
 | [voxels.md](voxels.md)     | 方块读写、区域填充、刷怪笼                              |
 | [storage.md](storage.md)   | 数据持久化存储                                          |
-| [database.md](database.md) | SQLite 数据库                                            |
+| [database.md](database.md) | SQLite 数据库                                           |
 | [math.md](math.md)         | Vector3、Bounds3、Color、Quaternion                     |
 | [commands.md](commands.md) | `/box3script` 命令参考                                  |
 
