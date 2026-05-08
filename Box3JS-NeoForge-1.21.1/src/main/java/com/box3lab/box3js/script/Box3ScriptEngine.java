@@ -316,6 +316,11 @@ public class Box3ScriptEngine {
         Box3JS.LOGGER.info("Removed project: {}", project);
     }
 
+    /** Check if a project is currently loaded and running. */
+    public boolean isProjectLoaded(String project) {
+        return projectRequires.containsKey(project);
+    }
+
     // ---- Message routing ----
 
     public void fireMessage(String sender, String target, Object data) {
