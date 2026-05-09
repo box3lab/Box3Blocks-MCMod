@@ -163,7 +163,7 @@ player.disableFly = true;
 
 ### player.collision
 
-⬆ MC extension | Gets/sets team collision. Set to `false` to prevent players from pushing each other. Backed by the player's team `CollisionRule` (ALWAYS / NEVER).
+⬆ MC Extension | Gets/sets team collision. Set to `false` to prevent players from pushing each other. Backed by the player's team `CollisionRule` (ALWAYS / NEVER).
 
 ```js
 player.collision = false;  // Disable collision
@@ -172,7 +172,7 @@ console.log(player.collision);
 
 ## Health
 
-⬆ MC extension | Gets/sets player health. `ServerPlayer` is a `LivingEntity`, so health is operated on directly.
+⬆ MC Extension | Gets/sets player health. `ServerPlayer` is a `LivingEntity`, so health is operated on directly.
 
 ### player.hp
 
@@ -240,7 +240,7 @@ Readonly `GameVector3`. A point 5 blocks ahead of the player's eyes.
 
 ### player.lookAt(x, y, z)
 
-⬆ MC extension | Makes the player look at the given coordinates.
+⬆ MC Extension | Makes the player look at the given coordinates.
 
 ### player.lookAt(pos)
 
@@ -285,7 +285,7 @@ console.log(player.spawnPoint);
 
 ### player.dimension
 
-⬆ MC extension | Gets/sets the player's dimension. Setting it performs a cross-dimensional teleport.
+⬆ MC Extension | Gets/sets the player's dimension. Setting it performs a cross-dimensional teleport.
 
 ```js
 player.teleport(new GameVector3(0, 100, 0));
@@ -316,6 +316,15 @@ player.kick("You have been removed from the game");
 
 ✅ Box3 API | Sends a chat message visible only to this player (system message).
 
+### player.directMessage(msg, color)
+
+⬆ MC Extension | Sends a colored chat message.
+
+```js
+player.directMessage("Success!", new GameRGBColor(0, 1, 0));   // Green
+player.directMessage("Warning!", new GameRGBColor(1, 0.5, 0)); // Orange
+```
+
 ### player.actionBar(msg)
 
 ✅ Box3 API | Sends a message displayed on the action bar (above the hotbar).
@@ -326,7 +335,7 @@ player.kick("You have been removed from the game");
 
 ### player.title(title, subtitle, fadeIn, stay, fadeOut)
 
-⬆ MC extension | Title with full animation parameters. `fadeIn`/`stay`/`fadeOut` are all in ticks (20 ticks = 1 second).
+⬆ MC Extension | Title with full animation parameters. `fadeIn`/`stay`/`fadeOut` are all in ticks (20 ticks = 1 second).
 
 ### player.dialog(config)
 
@@ -367,19 +376,19 @@ player.onChat(function(entity, msg, tick) {
 
 ### player.xp
 
-⬆ MC extension | Gets/sets experience level.
+⬆ MC Extension | Gets/sets experience level.
 
 ### player.addExperienceLevels(levels)
 
-⬆ MC extension | Adds `levels` experience levels.
+⬆ MC Extension | Adds `levels` experience levels.
 
 ### player.food
 
-⬆ MC extension | Gets/sets food level (0–20).
+⬆ MC Extension | Gets/sets food level (0–20).
 
 ### player.saturation
 
-⬆ MC extension | Gets/sets saturation level (0–20, floating-point).
+⬆ MC Extension | Gets/sets saturation level (0–20, floating-point).
 
 ```js
 player.xp = 10;                 // Set to level 10
@@ -390,7 +399,7 @@ player.saturation = 10;
 
 ## Inventory
 
-All ⬆ MC extension.
+All ⬆ MC Extension.
 
 ### player.giveItem(itemId, count)
 
@@ -420,7 +429,7 @@ player.giveEnchantedItem("minecraft:bow", 1, {
 
 ### player.giveCustomItem(id, count)
 
-⬆ MC extension | Gives a custom item loaded via `world.loadCustomItems()`. Items use `minecraft:paper` as a carrier with DataComponents for name, texture, food, etc.
+⬆ MC Extension | Gives a custom item loaded via `world.loadCustomItems()`. Items use `minecraft:paper` as a carrier with DataComponents for name, texture, food, etc.
 
 ```js
 // Load config first
@@ -468,15 +477,15 @@ player.clearInventory();
 
 ### player.addEffect(effectId, duration, amplifier)
 
-⬆ MC extension | Applies a status effect. `duration` in ticks, `amplifier` starts at 0.
+⬆ MC Extension | Applies a status effect. `duration` in ticks, `amplifier` starts at 0.
 
 ### player.addEffect(effectId, duration, amplifier, hideParticles)
 
-⬆ MC extension | Applies an effect, optionally hiding particles.
+⬆ MC Extension | Applies an effect, optionally hiding particles.
 
 ### player.clearEffects()
 
-⬆ MC extension | Removes all status effects.
+⬆ MC Extension | Removes all status effects.
 
 ```js
 player.addEffect("minecraft:speed", 600, 2);
@@ -488,11 +497,11 @@ player.clearEffects();
 
 ### player.playSound(path, volume, pitch)
 
-⬆ MC extension | Plays a sound to this player only. `path` is a namespace ID (e.g. `"minecraft:block.note_block.pling"`), `volume` 0–1, `pitch` 0.5–2.
+⬆ MC Extension | Plays a sound to this player only. `path` is a namespace ID (e.g. `"minecraft:block.note_block.pling"`), `volume` 0–1, `pitch` 0.5–2.
 
 ### player.runCommand(cmd)
 
-⬆ MC extension | Executes a Minecraft command as this player.
+⬆ MC Extension | Executes a Minecraft command as this player.
 
 ```js
 player.playSound("minecraft:block.note_block.pling", 0.8, 1.5);
@@ -503,11 +512,11 @@ player.runCommand("say hello");
 
 ### player.grantAdvancement(advancementId)
 
-⬆ MC extension | Grants an advancement to this player.
+⬆ MC Extension | Grants an advancement to this player.
 
 ### player.revokeAdvancement(advancementId)
 
-⬆ MC extension | Revokes an advancement from this player.
+⬆ MC Extension | Revokes an advancement from this player.
 
 ```js
 player.grantAdvancement("minecraft:story/mine_stone");
@@ -519,7 +528,7 @@ player.revokeAdvancement("minecraft:story/mine_stone");
 
 ### player.setPlayerListName(name)
 
-⬆ MC extension | Changes the player's display name in the tab list (supports color codes).
+⬆ MC Extension | Changes the player's display name in the tab list (supports color codes).
 
 ```js
 player.setPlayerListName("§e[CP3] §f" + player.name);

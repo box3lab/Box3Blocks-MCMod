@@ -316,6 +316,15 @@ player.kick("你已被移出游戏");
 
 ✅ Box3 API | 向玩家发送聊天栏消息（仅该玩家可见的系统消息）。
 
+### player.directMessage(msg, color)
+
+⬆ MC 扩展 | 发送带颜色的聊天消息。
+
+```js
+player.directMessage("操作成功!", new GameRGBColor(0, 1, 0));   // 绿色
+player.directMessage("警告!", new GameRGBColor(1, 0.5, 0));    // 橙色
+```
+
 ### player.actionBar(msg)
 
 ✅ Box3 API | 向玩家发送快捷栏上方消息（Action Bar）。

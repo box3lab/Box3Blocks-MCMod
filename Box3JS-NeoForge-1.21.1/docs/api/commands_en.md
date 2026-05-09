@@ -112,6 +112,70 @@ Typical workflow:
 
 > **Note:** Sandbox only tracks blocks placed through script APIs (`setVoxel`/`setVoxelId`/`fillVoxel`). Manual mining is unaffected.
 
+### `/box3script compile <project>`
+
+Compiles a script project into a **lightweight standalone JAR mod** (~50KB) that depends on the Box3JS mod for Rhino runtime and API bindings.
+
+```
+/box3script compile mygame
+```
+
+> **Dependency:** Script JARs do not bundle Rhino or Box3JS API classes. Place the Box3JS mod (`box3js`) alongside your script JAR(s) in `mods/`.
+
+The compiler **reads the following `package.json` fields** and writes them to `neoforge.mods.toml`:
+
+| package.json | mods.toml field | Description |
+|-------------|---------------|-------------|
+| `name` | `modId` | Mod identifier |
+| `displayName` | `displayName` | Display name (defaults to `name`) |
+| `version` | `version` | Mod version |
+| `description` | `description` | Mod description |
+| `author` | `credits` | Author / credits |
+| `license` | `license` | License (defaults to `All Rights Reserved`) |
+| `homepage` | `displayURL` | Project homepage link |
+| `bugs.url` | `issueTrackerURL` | Issue tracker link |
+| `logoFile` | `logoFile` | Mod icon (PNG path in project, bundled as `logo.png`) |
+
+> **`logoFile` usage:** Set to a relative path of a PNG file in the project root (e.g. `"logoFile": "logo.png"`). The file is automatically bundled as `logo.png` in the JAR root — no manual `neoforge.mods.toml` config needed. NeoForge recommends 128×128 or 256×256, PNG format only. Leave empty for the default mod icon.
+
+Output filename format: `dist/<name>-<version>.jar`. Compilation runs on a background thread — no server tick blocking. The output path is shown in chat on completion.
+
+**Prerequisites:**
+
+- Project must be built (`npm run build`) — `dist/app.js` must exist
+- Server must run on **JDK** (not JRE), as `javac` is needed to compile the generated `@Mod` entry class
+
+**Output JAR contents:**
+
+```
+mygame-1.0.0.jar
+├── META-INF/neoforge.mods.toml    ← mod metadata (depends on box3js)
+├── logo.png                       ← mod icon (if specified)
+├── box3script/mygame/MygameMod.class ← @Mod entry point (hardcoded metadata)
+└── box3script/mygame/app.js       ← bundled script source
+```
+
+**Deployment:** Place the script JAR alongside the Box3JS mod in `mods/`:
+
+```
+mods/
+├── box3js-1.0.0.jar       ← Box3JS main mod
+└── mygame-1.0.0.jar       ← compiled script mod
+```
+
+**Interpreted vs Compiled:**
+
+| | Interpreted | Compiled |
+|---|---|---|
+| Load via | `/box3script start` | Drop in `mods/`, start server |
+| Command control | `/box3script start/stop/reload` | Not managed by `/box3script` |
+| Enable/disable | `/box3script start/stop` | Add/remove JAR from `mods/`, restart server |
+| Requires Box3JS | Yes | Yes |
+| Hot reload | Yes | No (restart server to update) |
+| Use case | Development & debugging | Distribution & deployment |
+
+> **Note:** Compiled JARs are standard NeoForge mods managed by the NeoForge mod loader. They are **not** controlled by `/box3script start/stop/reload`. Multiple compiled JARs can coexist in `mods/` — each runs independently with its own hardcoded metadata.
+
 ## Configuration File
 
 Enable/disable state is saved in `config/box3/scripts.json`:
@@ -136,6 +200,9 @@ config/box3/
   │       ├── tsconfig.json
   │       ├── types/globals.d.ts
   │       ├── src/app.ts
-  │       └── dist/app.js       ← compiled output
+  │       └── dist/
+│           ├── app.js       ← compiled output
+│           └── <name>-<ver>.jar ← standalone JAR (compile command)
+  ├── data/                      ← SQLite database (db API)
   └── storage/                  ← storage API persistence
 ```

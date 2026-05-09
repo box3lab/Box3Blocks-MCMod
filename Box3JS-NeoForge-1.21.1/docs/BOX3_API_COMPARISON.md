@@ -232,6 +232,10 @@ Zone 可以设置局部天气/光照/力场参数，这在 MC 服务端无法实
 | `world.spawnParticle(type, pos, count, dx, dy, dz, speed)` | `world.spawnParticle(type, pos, count, dx, dy, dz, speed)` | ✅ | GameVector3 重载 |
 | — | `world.spawnParticleCircle(x, y, z, radius, type, count)` | ⬆ | MC 扩展。圆形粒子圈 |
 | — | `world.spawnParticleCircle(pos, radius, type, count)` | ⬆ | GameVector3 重载 |
+| — | `world.spawnParticle(x, y, z, color, count, dx, dy, dz, speed)` | ⬆ | MC 扩展。使用 GameRGBColor 生成彩色 dust 粒子 |
+| — | `world.spawnParticle(pos, color, count, dx, dy, dz, speed)` | ⬆ | GameVector3 + GameRGBColor 重载 |
+| — | `world.launchFirework(x, y, z, colors, shape)` | ⬆ | MC 扩展。colors 为 GameRGBColor[] 数组 |
+| — | `world.launchFirework(pos, colors, shape)` | ⬆ | GameVector3 + GameRGBColor[] 重载 |
 
 ### 1.16 物品与抛射物
 
@@ -325,6 +329,45 @@ Box3 无世界边界概念。
 | `world.shrinkBorder(targetSize, seconds)` | 平滑缩圈 |
 | `world.setBorderDamage(damage)` | 边界外伤害值 |
 | `world.setBorderWarning(blocks)` | 警告距离 |
+
+### 1.26 自定义物品 (全部 MC 扩展)
+
+使用 `minecraft:paper` 作为载体，通过 DataComponents（CUSTOM_NAME, LORE, CUSTOM_MODEL_DATA 等）实现自定义物品，无需注册表同步。客户端贴图通过资源包的 `custom_model_data` override 加载。
+
+| Box3JS API | 说明 |
+|------------|------|
+| `world.loadCustomItems(packName)` | 加载 `resourcepacks/<packName>/items.json` 中的物品定义 |
+| — | 物品支持: 名称、描述、贴图、堆叠上限、附魔光效、稀有度、食物属性 |
+
+### 1.27 合成管理 (全部 MC 扩展)
+
+| Box3JS API | 说明 |
+|------------|------|
+| `world.listRecipes(filter)` | 搜索匹配 filter 的合成配方 ID 列表 |
+| `world.removeRecipe(recipeId)` | 禁用指定配方（加入黑名单） |
+| `world.clearRecipes()` | 清除黑名单，恢复所有原始配方 |
+
+### 1.28 结构与成就 (全部 MC 扩展)
+
+| Box3JS API | 说明 |
+|------------|------|
+| `world.placeStructure(x, y, z, structureId)` | 在指定位置放置数据包结构模板 (NBT) |
+| `world.placeStructure(pos, structureId)` | GameVector3 重载 |
+| `world.grantAdvancement(playerName, advancementId)` | 按玩家名称授予进度 |
+
+### 1.29 数据库 (db 全局对象)
+
+Box3 平台无独立数据库 API。Box3JS 通过 `db` 全局对象提供 SQLite 能力。
+
+| Box3JS API | 说明 |
+|------------|------|
+| `db.sql(sql, ...params)` | 执行 SQL 查询/更新，返回 `GameQueryResult` |
+| `db.sql\`SELECT * FROM t WHERE id = ${id}\`` | Tagged template 语法，自动参数化 |
+
+**GameQueryResult**: `rows` (数组), `firstRow`, `columnNames`, `columnCount`, `rowCount`, `affectedRows`, `isQuery`
+**GameQueryResult 方法**: `next()`, `reset()`, `then(resolve, reject?)`
+
+每个脚本项目拥有独立的数据库文件 `config/box3/data/<project>.db`。
 
 ---
 
@@ -1006,9 +1049,9 @@ Box3 的 `resources.ls(type?)` 浏览资源文件。MC 无对应资源管理 API
 
 ### 7.9 GameEventHandlerToken
 
-**状态**: ❌ 未实现
+**状态**: ✅ 已实现
 
-Box3 的事件注册方法返回 `GameEventHandlerToken`，可调用 `.cancel()` / `.resume()` / `.active()`。Box3JS 没有此机制，回调注册后无法单独取消。
+Box3 的事件注册方法返回 `GameEventHandlerToken`，可调用 `.cancel()` / `.active()`。Box3JS 的所有 `world.onXxx()` 方法均返回 `GameEventHandlerToken`，支持 `.cancel()` 取消注册和 `.active()` 检查状态。`.resume()` 抛出 UnsupportedOperationException（需重新注册）。
 
 ---
 
@@ -1040,9 +1083,16 @@ Box3 的事件注册方法返回 `GameEventHandlerToken`，可调用 `.cancel()`
 - `world.onVoxelDestroy` — 方块破坏事件
 - `world.onBlockPlace` — 方块放置事件
 - `world.onBlockActivate` — 方块右键事件
+- `world.onBlockActivateBegin/onBlockActivateEnd` — 方块右键开始/结束（长按检测）
 - `world.entitiesInArea/entitiesInRadius` — 空间实体查询
 - `world.getBiome` — 生物群系查询
 - `world.spawnParticleCircle` — 圆形粒子
+- `world.spawnParticle/spawnFirework` GameRGBColor 重载 — RGB 彩色粒子/烟花
+- `world.loadCustomItems(packName)` — 自定义物品注册
+- `world.listRecipes/removeRecipe/clearRecipes` — 合成管理
+- `world.placeStructure` — 结构放置
+- `world.grantAdvancement` — 成就授予
+- `world.onButtonPressed` — 按钮点击事件（石质/木质按钮）
 
 ### 9.2 实体管理
 - `entity.nameTag` — 名牌
@@ -1059,6 +1109,8 @@ Box3 的事件注册方法返回 `GameEventHandlerToken`，可调用 `.cancel()`
 - `entity.setPersistent` — 持久化
 - `entity.getAttribute/setAttribute` — 属性修改
 - `entity.lookAt` — 视线方向
+- `entity.setGlowColor(color)` — RGB 发光颜色（GameRGBColor → 最近 ChatFormatting）
+- `entity.setText/setTextColor/setTextBackgroundColor` — 文本显示实体控制
 
 ### 9.3 玩家管理
 - `player.opLevel` — OP 权限
@@ -1070,6 +1122,7 @@ Box3 的事件注册方法返回 `GameEventHandlerToken`，可调用 `.cancel()`
 - `player.actionBar` — ActionBar 消息
 - `player.title` — 标题/副标题
 - `player.giveItem/giveEnchantedItem/giveNamedItem` — 物品给予
+- `player.giveCustomItem(id, count)` — 给予通过 `world.loadCustomItems()` 加载的自定义物品
 - `player.getHeldItem` — 手持物品
 - `player.clearInventory` — 清空背包
 - `player.addEffect/clearEffects` — 药水效果
@@ -1078,6 +1131,8 @@ Box3 的事件注册方法返回 `GameEventHandlerToken`，可调用 `.cancel()`
 - `player.runCommand` — 以玩家身份执行命令
 - `player.lookAt` — 视线方向
 - `player.setPlayerListName` — TAB 列表名称
+- `player.directMessage(msg, color)` — 发送带颜色的系统消息（GameRGBColor 指定颜色）
+- `player.grantAdvancement/revokeAdvancement` — 成就授予/撤销
 
 ### 9.4 系统
 - `world.addScoreboard/removeScoreboard/setScore/getScore/showScoreboard/hideScoreboard/listScores` — 记分板
@@ -1090,6 +1145,12 @@ Box3 的事件注册方法返回 `GameEventHandlerToken`，可调用 `.cancel()`
 ### 9.5 额外事件
 - `world.onEntityDamage` — 实体受伤（Pre 阶段）
 - `world.onMessage` — 跨脚本消息
+- `world.onButtonPressed` — 按钮点击事件（支持石质/木质按钮长按检测）
+
+### 9.6 数据库
+- `db.sql` — SQLite 数据库操作（支持 tagged template 和参数化查询）
+- `GameQueryResult` — 查询结果（rows, firstRow, columnNames, rowCount, affectedRows, isQuery）
+- 每个项目独立数据库文件 `config/box3/data/<project>.db`
 
 ---
 
@@ -1099,14 +1160,15 @@ Box3 的事件注册方法返回 `GameEventHandlerToken`，可调用 `.cancel()`
 
 | 类别 | Box3 API 总数 | 已实现 | 部分实现 | 未实现 | MC 独有扩展 |
 |------|--------------|--------|---------|--------|-------------|
-| GameWorld | ~80 | ~30 | ~6 | ~44 | 27 |
-| GameEntity | ~65 | ~21 | ~1 | ~43 | 17 |
-| GamePlayerEntity | ~72 | ~27 | ~4 | ~41 | 17 |
+| GameWorld | ~80 | ~30 | ~6 | ~44 | 33 |
+| GameEntity | ~65 | ~21 | ~1 | ~43 | 21 |
+| GamePlayerEntity | ~72 | ~27 | ~4 | ~41 | 22 |
 | GameVoxels | 14 | 14 | 0 | 0 | 4 |
 | GameDataStorage | 8 | 8 | 7 (同步化) | 0 | 2 |
 | Math 类型 | ~100 | ~100 | 0 | 0 | 0 |
+| 数据库 (db) | N/A | — | — | — | 1 |
 | 其他服务端 | ~30 | 0 | 0 | ~30 | 0 |
-| **总计** | **~369** | **~200** | **~18** | **~158** | **~67** |
+| **总计** | **~369** | **~200** | **~18** | **~158** | **~83** |
 
 > **2026-05 更新**: 本阶段实现约 54 个新 Box3 API（属性对齐 + math 补全 + 物理属性 + token + 回调签名 + World API 补全），Math 类型现已完全对齐。
 

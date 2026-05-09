@@ -15,9 +15,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.mozilla.javascript.NativeArray;
-
 import com.box3lab.box3js.Box3JS;
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
+import org.mozilla.javascript.NativeArray;
 
 /**
  * Per-project SQLite database exposed to JS as the {@code db} global.
@@ -56,6 +57,8 @@ import com.box3lab.box3js.Box3JS;
  */
 public class Box3JSDatabase {
 
+    private static final Logger LOGGER = LogUtils.getLogger();
+
     private static final String SQLITE_DRIVER_CLASS = "org.sqlite.JDBC";
     private static final String SQLITE_MISSING_HINT = "db API requires SQLite JDBC driver. Install the minecraft-sqlite-jdbc mod, then restart server.";
     private static final boolean SQLITE_AVAILABLE;
@@ -71,7 +74,7 @@ public class Box3JSDatabase {
             ok = true;
         } catch (ClassNotFoundException e) {
             ok = false;
-            Box3JS.LOGGER.warn("{}", SQLITE_MISSING_HINT);
+            LOGGER.warn("{}", SQLITE_MISSING_HINT);
         }
         SQLITE_AVAILABLE = ok;
     }
@@ -157,7 +160,7 @@ public class Box3JSDatabase {
                 return new Box3JSQueryResult(count);
             }
         } catch (SQLException e) {
-            Box3JS.LOGGER.error("SQL error: {}", e.getMessage());
+            LOGGER.error("SQL error: {}", e.getMessage());
             throw new RuntimeException("SQL error: " + e.getMessage(), e);
         }
     }
@@ -173,9 +176,9 @@ public class Box3JSDatabase {
                 if (!conn.isClosed()) {
                     conn.close();
                 }
-                Box3JS.LOGGER.debug("Closed database for project: {}", project);
+                LOGGER.debug("Closed database for project: {}", project);
             } catch (SQLException e) {
-                Box3JS.LOGGER.warn("Error closing database for {}: {}", project, e.getMessage());
+                LOGGER.warn("Error closing database for {}: {}", project, e.getMessage());
             }
         }
     }
@@ -207,10 +210,10 @@ public class Box3JSDatabase {
                 try (Statement stmt = conn.createStatement()) {
                     stmt.execute("PRAGMA journal_mode=WAL");
                 }
-                Box3JS.LOGGER.info("Opened database for project {}: {}", p, dbFile);
+                LOGGER.info("Opened database for project {}: {}", p, dbFile);
                 return conn;
             } catch (IOException | SQLException e) {
-                Box3JS.LOGGER.error("Failed to open database for project {}: {}", p, e.getMessage());
+                LOGGER.error("Failed to open database for project {}: {}", p, e.getMessage());
                 throw new RuntimeException("Failed to open database: " + e.getMessage(), e);
             }
         });

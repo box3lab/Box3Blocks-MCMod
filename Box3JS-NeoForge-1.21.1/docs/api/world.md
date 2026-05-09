@@ -104,11 +104,11 @@ console.log(world.difficulty); // "hard"
 
 ### world.spawnPoint
 
-⬆ MC 扩展 | 只读，返回世界出生点 `GameVector3`。
+✅ Box3 API | 只读，返回世界出生点 `GameVector3`。
 
 ### world.setWorldSpawn(pos)
 
-⬆ MC 扩展 | 设置世界出生点。
+✅ Box3 API | 设置世界出生点。
 
 ```js
 world.setWorldSpawn(new GameVector3(0, 70, 0));
@@ -270,8 +270,30 @@ var token = world.onTick(function (info) {
 | `world.onEntityDeath(fn)`    | ⬆ MC    | `(entity, killer, tick)`                               | 实体死亡；`killer` 可能为 null        |
 | `world.onEntityDamage(fn)`   | ⬆ MC    | `(entity, amount, source, attacker, tick)`             | 实体受伤（Pre 阶段）                  |
 | `world.onPlayerRespawn(fn)`  | ⬆ MC    | `(entity, tick)`                                       | 玩家重生                              |
-| `world.onButtonPressed(fn)`  | ⬆ MC    | `(entity, button, tick)`                               | 玩家按下按钮（见 GameButtonType）     |
+| `world.onButtonPressed(fn)`  | ⬆ MC    | `(entity, button, tick)`                               | 玩家按下按钮                          |
 | `world.onMessage(fn)`        | ⬆ MC    | `(from, data)`                                         | 收到 `world.sendMessage()` 消息       |
+
+### GameButtonType
+
+`world.onButtonPressed` 回调的 `button` 参数为以下字符串常量之一：
+
+| 常量       | 说明       |
+| ---------- | ---------- |
+| `"WALK"`   | 行走（长按） |
+| `"RUN"`    | 奔跑（长按） |
+| `"CROUCH"` | 潜行（长按） |
+| `"JUMP"`   | 跳跃       |
+| `"FLY"`    | 飞行（长按） |
+| `"ACTION0"` | 屏幕按钮0（轻点） |
+| `"ACTION1"` | 屏幕按钮1（轻点） |
+
+```js
+world.onButtonPressed((entity, button, tick) => {
+  if (button === "JUMP") {
+    player.directMessage("你按下了跳跃！");
+  }
+});
+```
 
 所有 `onXxx()` 方法返回 `GameEventHandlerToken` — 调用 `.cancel()` 取消监听。
 
@@ -576,6 +598,18 @@ world.launchFirework(0, 100, 0, "gold", "large_ball");
 world.launchFirework(new GameVector3(0, 100, 0), "red", "star");
 ```
 
+### world.launchFirework(x, y, z, colors, shape)
+
+⬆ MC 扩展 | 使用 `GameRGBColor[]` 数组指定烟花颜色，支持任意 RGB 色彩。
+
+### world.launchFirework(pos, colors, shape)
+
+⬆ GameVector3 + `GameRGBColor[]` 重载。
+
+```js
+world.launchFirework(0, 100, 0, [new GameRGBColor(1, 0, 0), new GameRGBColor(1, 0.5, 0)], "large_ball");
+```
+
 ### world.spawnParticle(type, x, y, z, count, dx, dy, dz, speed)
 
 在坐标生成粒子。粒子类型使用命名空间 ID。
@@ -583,6 +617,22 @@ world.launchFirework(new GameVector3(0, 100, 0), "red", "star");
 ### world.spawnParticle(type, pos, count, dx, dy, dz, speed)
 
 ⬆ GameVector3 重载。
+
+### world.spawnParticle(x, y, z, color, count, dx, dy, dz, speed)
+
+⬆ MC 扩展 | 生成彩色粒子（类型为 `dust`），使用 `GameRGBColor` 指定颜色。
+
+### world.spawnParticle(pos, color, count, dx, dy, dz, speed)
+
+⬆ GameVector3 + `GameRGBColor` 重载。
+
+```js
+// 生成红色粒子
+world.spawnParticle(0, 100, 0, new GameRGBColor(1, 0, 0), 20, 0.5, 0.5, 0.5, 0.1);
+
+// 生成青色粒子
+world.spawnParticle(entity.position, new GameRGBColor(0, 1, 1), 10, 0.2, 0.2, 0.2, 0);
+```
 
 ### world.spawnParticleCircle(x, y, z, radius, type, count)
 

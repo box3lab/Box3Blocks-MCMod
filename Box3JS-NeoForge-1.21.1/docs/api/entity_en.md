@@ -58,7 +58,7 @@ entity.velocity.set(2, 0, 2);  // Horizontal velocity
 
 ### entity.onGround
 
-⬆ MC extension | Readonly. Whether the entity is standing on a block.
+⬆ MC Extension | Readonly. Whether the entity is standing on a block.
 
 ```js
 if (entity.onGround) {
@@ -68,7 +68,7 @@ if (entity.onGround) {
 
 ### entity.eyePosition
 
-⬆ MC extension | Readonly `GameVector3`. Eye position (raycast origin).
+⬆ MC Extension | Readonly `GameVector3`. Eye position (raycast origin).
 
 ```js
 var eye = entity.eyePosition;
@@ -105,7 +105,7 @@ zombie.heal(5);   // Heal 5
 
 ### entity.invulnerable
 
-⬆ MC extension | Gets/sets whether the entity is invulnerable (immune to damage).
+⬆ MC Extension | Gets/sets whether the entity is invulnerable (immune to damage).
 
 ```js
 entity.invulnerable = true;
@@ -181,16 +181,46 @@ console.log(entity.meshInvisible);
 
 ### entity.glowing
 
-⬆ MC extension | Gets/sets the glow outline effect (similar to spectral arrow).
+⬆ MC Extension | Gets/sets the glow outline effect (similar to spectral arrow).
 
 ```js
 entity.glowing = true;
 console.log(entity.glowing);
 ```
 
+### entity.setGlowColor(color)
+
+⬆ MC Extension | Sets the glow outline color via team color, mapping RGB to the nearest `ChatFormatting` (16 colors).
+
+```js
+entity.glowing = true;
+entity.setGlowColor(new GameRGBColor(1, 0, 0));  // Red glow
+entity.setGlowColor(new GameRGBColor(0, 0, 1));  // Blue glow
+```
+
+### entity.setText(text)
+
+⬆ MC Extension | Sets the text content of a text display entity (only effective on `minecraft:text_display` entities).
+
+### entity.setTextColor(color)
+
+⬆ MC Extension | Sets the text color for text display entities.
+
+### entity.setTextBackgroundColor(color)
+
+⬆ MC Extension | Sets the background color for text display entities. `GameRGBAColor` can be used for semi-transparent backgrounds.
+
+```js
+// Create a text display entity
+var textEntity = world.createEntity("minecraft:text_display", pos);
+textEntity.setText("Hello, World!");
+textEntity.setTextColor(new GameRGBColor(1, 1, 1));             // White text
+textEntity.setTextBackgroundColor(new GameRGBAColor(0, 0, 0, 0.5)); // Semi-transparent black background
+```
+
 ### entity.nameTag
 
-⬆ MC extension | Gets/sets the entity's custom display name (supports color codes). Empty string = no name.
+⬆ MC Extension | Gets/sets the entity's custom display name (supports color codes). Empty string = no name.
 
 ```js
 entity.nameTag = "§cBoss Mob";
@@ -240,11 +270,11 @@ var bosses = world.querySelectorAll(".boss");
 
 ### entity.setFire(ticks)
 
-⬆ MC extension | Sets the entity on fire for the given number of ticks. 20 ticks = 1 second.
+⬆ MC Extension | Sets the entity on fire for the given number of ticks. 20 ticks = 1 second.
 
 ### entity.clearFire()
 
-⬆ MC extension | Extinguishes any fire on the entity.
+⬆ MC Extension | Extinguishes any fire on the entity.
 
 ```js
 entity.setFire(100);   // Ignite for 5 seconds
@@ -255,7 +285,7 @@ entity.clearFire();    // Extinguish immediately
 
 ### entity.setAI(enabled)
 
-⬆ MC extension | Enables/disables the entity's AI (Mob only). When disabled, the entity won't move or attack.
+⬆ MC Extension | Enables/disables the entity's AI (Mob only). When disabled, the entity won't move or attack.
 
 ```js
 entity.setAI(false);  // Freeze entity
@@ -263,15 +293,15 @@ entity.setAI(false);  // Freeze entity
 
 ### entity.setTarget(target)
 
-⬆ MC extension | Sets the mob's attack target (Mob only). The mob will pathfind to and attack it.
+⬆ MC Extension | Sets the mob's attack target (Mob only). The mob will pathfind to and attack it.
 
 ### entity.getTarget()
 
-⬆ MC extension | Returns the current attack target, or `null`.
+⬆ MC Extension | Returns the current attack target, or `null`.
 
 ### entity.clearTarget()
 
-⬆ MC extension | Clears the attack target, stopping pursuit.
+⬆ MC Extension | Clears the attack target, stopping pursuit.
 
 ```js
 var boss = world.spawnEntity("minecraft:skeleton", new GameVector3(0, 100, 0));
@@ -283,7 +313,7 @@ boss.clearTarget();
 
 ### entity.navigateTo(x, y, z, speed)
 
-⬆ MC extension | Orders a pathfinder mob to navigate to the given coordinates. Returns `true` if path calculation succeeded.
+⬆ MC Extension | Orders a pathfinder mob to navigate to the given coordinates. Returns `true` if path calculation succeeded.
 
 ### entity.navigateTo(pos, speed)
 
@@ -296,7 +326,7 @@ entity.navigateTo(target.position, 1.0);
 
 ### entity.lookAt(x, y, z)
 
-⬆ MC extension | Makes the entity look at the given coordinates.
+⬆ MC Extension | Makes the entity look at the given coordinates.
 
 ### entity.lookAt(pos)
 
@@ -309,7 +339,7 @@ entity.lookAt(target.position);
 
 ## Status Effects
 
-All ⬆ MC extension.
+All ⬆ MC Extension.
 
 ### entity.addEffect(effectId, duration, amplifier)
 
@@ -333,7 +363,7 @@ entity.addEffect("minecraft:glowing", 200, 0);                  // Glowing 10 se
 
 ## Equipment
 
-All ⬆ MC extension.
+All ⬆ MC Extension.
 
 ### entity.setEquipment(slot, itemId)
 
@@ -366,7 +396,7 @@ entity.setDropChance("all", 0);         // Drop nothing
 
 ## Attributes
 
-All ⬆ MC extension.
+All ⬆ MC Extension.
 
 ### entity.getAttribute(attributeId)
 
@@ -405,7 +435,7 @@ entity.setOnDestroy(function(e) {
 
 ### entity.setPersistent(v)
 
-⬆ MC extension | When `true`, prevents the mob from despawning naturally (Mob only). Write-only method, no getter.
+⬆ MC Extension | When `true`, prevents the mob from despawning naturally (Mob only). Write-only method, no getter.
 
 ```js
 var boss = world.spawnEntity(

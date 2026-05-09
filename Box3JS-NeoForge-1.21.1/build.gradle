@@ -199,6 +199,14 @@ publishing {
     }
 }
 
+// Make the mod JAR executable as a standalone script compiler tool.
+// Usage: java -jar box3js.jar --project <dir> --output <jar> --modId <id> --name <name>
+tasks.named('jar', Jar).configure {
+    manifest {
+        attributes('Main-Class': 'com.box3lab.box3js.standalone.Box3ScriptCompiler')
+    }
+}
+
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }

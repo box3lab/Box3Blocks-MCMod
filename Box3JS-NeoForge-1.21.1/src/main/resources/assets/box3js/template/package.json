@@ -1,6 +1,15 @@
 {
-  "name": "box3js",
+  "name": "PROJECT_NAME",
   "version": "1.0.0",
+  "displayName": "PROJECT_NAME",
+  "description": "A Box3JS script mod",
+  "author": "",
+  "license": "All Rights Reserved",
+  "homepage": "",
+  "bugs": {
+    "url": ""
+  },
+  "logoFile": "",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,7 +21,6 @@
   "devDependencies": {
     "@babel/core": "^7.29.0",
     "@babel/preset-env": "^7.29.5",
-
     "@babel/preset-typescript": "^7.28.5",
     "esbuild": "^0.28.0",
     "eslint": "^10.3.0",

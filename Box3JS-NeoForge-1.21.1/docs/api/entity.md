@@ -188,6 +188,36 @@ entity.glowing = true;
 console.log(entity.glowing);
 ```
 
+### entity.setGlowColor(color)
+
+⬆ MC 扩展 | 设置发光轮廓颜色。通过队伍颜色实现，映射 RGB 到最接近的 `ChatFormatting`（16 色）。
+
+```js
+entity.glowing = true;
+entity.setGlowColor(new GameRGBColor(1, 0, 0));  // 红色发光
+entity.setGlowColor(new GameRGBColor(0, 0, 1));  // 蓝色发光
+```
+
+### entity.setText(text)
+
+⬆ MC 扩展 | 设置文字展示实体的文本内容（仅 `minecraft:text_display` 实体有效）。
+
+### entity.setTextColor(color)
+
+⬆ MC 扩展 | 设置文字展示实体的文本颜色。
+
+### entity.setTextBackgroundColor(color)
+
+⬆ MC 扩展 | 设置文字展示实体的背景颜色，`GameRGBAColor` 可用于半透明背景。
+
+```js
+// 创建文字展示实体
+var textEntity = world.createEntity("minecraft:text_display", pos);
+textEntity.setText("Hello, World!");
+textEntity.setTextColor(new GameRGBColor(1, 1, 1));           // 白色文字
+textEntity.setTextBackgroundColor(new GameRGBAColor(0, 0, 0, 0.5)); // 半透明黑色背景
+```
+
 ### entity.nameTag
 
 ⬆ MC 扩展 | 获取/设置实体的自定义名称（头上显示的名字，支持颜色代码）。空字符串 = 无名称。

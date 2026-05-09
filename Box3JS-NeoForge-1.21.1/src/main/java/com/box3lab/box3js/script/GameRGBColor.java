@@ -58,6 +58,14 @@ public class GameRGBColor {
         return this;
     }
 
+    public GameRGBColor scale(double n) {
+        return new GameRGBColor(r * n, g * n, b * n);
+    }
+
+    public GameRGBColor scaleEq(double n) {
+        r *= n; g *= n; b *= n; return this;
+    }
+
     public GameRGBColor lerp(GameRGBColor o, double n) {
         return new GameRGBColor(r + (o.r - r) * n, g + (o.g - g) * n, b + (o.b - b) * n);
     }

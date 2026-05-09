@@ -1,6 +1,5 @@
 package com.box3lab.box3js.script;
 
-import com.box3lab.box3js.Box3JS;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,10 +18,13 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
+
 public class Box3ScriptEngine {
 
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static final Box3ScriptEngine INSTANCE = new Box3ScriptEngine();
-    private static final int MAX_SCRIPT_SLEEP_MS = 10;
 
     private ScriptableObject scope;
     private Box3JSWorld worldBinding;
@@ -56,6 +58,29 @@ public class Box3ScriptEngine {
         initialized = true;
     }
 
+    /**
+     * Creates a standalone engine for a compiled JAR script.
+     * Each standalone JAR gets its own isolated engine, scope, and bindings.
+     */
+    public static Box3ScriptEngine createStandalone(MinecraftServer server, String projectName, Path storageRoot) {
+        Box3ScriptEngine engine = new Box3ScriptEngine();
+        engine.server = server;
+        engine.currentProject = projectName;
+        engine.sandbox = new Box3ScriptSandbox(server.overworld());
+        engine.worldBinding = new Box3JSWorld(server, engine);
+        engine.voxelsBinding = new Box3JSVoxels(server, engine.sandbox);
+        engine.storageBinding = new Box3JSStorage(storageRoot, engine);
+        engine.dbBinding = new Box3JSDatabase(storageRoot, engine);
+        engine.setupScope();
+        engine.initialized = true;
+        return engine;
+    }
+
+    /** Exposed for standalone JAR bootstrap. */
+    public ScriptableObject getScope() {
+        return scope;
+    }
+
     /** Execute app.js for enabled projects under config/box3/script/ */
     public void autoLoad(MinecraftServer server) {
         init(server);
@@ -79,9 +104,9 @@ public class Box3ScriptEngine {
                             try {
                                 setCurrentProject(name);
                                 eval("require('./app')");
-                                Box3JS.LOGGER.info("Auto-loaded project: {}", name);
+                                LOGGER.info("Auto-loaded project: {}", name);
                             } catch (Exception e) {
-                                Box3JS.LOGGER.error("Failed to auto-load: {}", appJs, e);
+                                LOGGER.error("Failed to auto-load: {}", appJs, e);
                             } finally {
                                 setCurrentProject(null);
                             }
@@ -105,7 +130,7 @@ public class Box3ScriptEngine {
 
     /** Report error to the current errorReporter (player), or just log if none. */
     void reportError(String msg) {
-        Box3JS.LOGGER.error(msg);
+        LOGGER.error(msg);
         if (errorReporter != null)
             errorReporter.accept(msg);
     }
@@ -315,9 +340,9 @@ public class Box3ScriptEngine {
         dbBinding.closeProject(project);
         var summary = sandbox.restoreProject(project);
         if (summary.hasAny()) {
-            Box3JS.LOGGER.info("Sandbox [{}] restored: {}", project, summary.toMessage());
+            LOGGER.info("Sandbox [{}] restored: {}", project, summary.toMessage());
         }
-        Box3JS.LOGGER.info("Removed project: {}", project);
+        LOGGER.info("Removed project: {}", project);
     }
 
     /** Check if a project is currently loaded and running. */
@@ -918,37 +943,6 @@ public class Box3ScriptEngine {
                         }
                     });
                     return req.requireMain(cx, moduleId);
-                }
-            });
-            ScriptableObject.putProperty(scope, "sleep", new BaseFunction() {
-                @Override
-                public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-                    if (args.length == 0 || !(args[0] instanceof Number)) {
-                        throw ScriptRuntime.throwError(cx, scope, "sleep(ms) requires a numeric millisecond argument");
-                    }
-
-                    int requestedMs = ((Number) args[0]).intValue();
-                    if (requestedMs < 0) {
-                        throw ScriptRuntime.throwError(cx, scope, "sleep(ms) cannot be negative");
-                    }
-                    if (requestedMs == 0) {
-                        return Undefined.instance;
-                    }
-
-                    int ms = requestedMs;
-                    if (ms > MAX_SCRIPT_SLEEP_MS) {
-                        String project = currentProject != null ? currentProject : "<unknown>";
-                        Box3JS.LOGGER.warn("sleep({}) in project {} exceeds safe limit; clamped to {}ms",
-                                requestedMs, project, MAX_SCRIPT_SLEEP_MS);
-                        ms = MAX_SCRIPT_SLEEP_MS;
-                    }
-
-                    try {
-                        Thread.sleep(ms);
-                    } catch (InterruptedException ignored) {
-                        Thread.currentThread().interrupt();
-                    }
-                    return Undefined.instance;
                 }
             });
             ScriptableObject.putProperty(scope, "GameVector3", new NativeJavaClass(scope, GameVector3.class));

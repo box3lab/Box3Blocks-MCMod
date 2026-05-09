@@ -106,11 +106,11 @@ console.log(world.difficulty); // "hard"
 
 ### world.spawnPoint
 
-⬆ MC Extension | Read-only, returns the world spawn point as `GameVector3`.
+✅ Box3 API | Read-only, returns the world spawn point as `GameVector3`.
 
 ### world.setWorldSpawn(pos)
 
-⬆ MC Extension | Set the world spawn point.
+✅ Box3 API | Set the world spawn point.
 
 ```js
 world.setWorldSpawn(new GameVector3(0, 70, 0));
@@ -272,8 +272,30 @@ var token = world.onTick(function (info) {
 | `world.onEntityDeath(fn)`    | ⬆ MC    | `(entity, killer, tick)`                               | Entity dies; `killer` may be null                   |
 | `world.onEntityDamage(fn)`   | ⬆ MC    | `(entity, amount, source, attacker, tick)`             | Entity takes damage (Pre phase)                     |
 | `world.onPlayerRespawn(fn)`  | ⬆ MC    | `(entity, tick)`                                       | Player respawns                                     |
-| `world.onButtonPressed(fn)`  | ⬆ MC    | `(entity, button, tick)`                               | Player presses a button (see GameButtonType)        |
+| `world.onButtonPressed(fn)`  | ⬆ MC    | `(entity, button, tick)`                               | Player presses a button                             |
 | `world.onMessage(fn)`        | ⬆ MC    | `(from, data)`                                         | Receives `world.sendMessage()` message              |
+
+### GameButtonType
+
+The `button` parameter in `world.onButtonPressed` callbacks is one of the following string constants:
+
+| Constant    | Description        |
+| ----------- | ------------------ |
+| `"WALK"`    | Walk (hold)        |
+| `"RUN"`     | Run / sprint (hold) |
+| `"CROUCH"`  | Crouch / sneak (hold) |
+| `"JUMP"`    | Jump               |
+| `"FLY"`     | Fly (hold)         |
+| `"ACTION0"` | Screen button 0 (tap) |
+| `"ACTION1"` | Screen button 1 (tap) |
+
+```js
+world.onButtonPressed((entity, button, tick) => {
+  if (button === "JUMP") {
+    player.directMessage("You pressed jump!");
+  }
+});
+```
 
 All `onXxx()` methods return `GameEventHandlerToken` — call `.cancel()` to unregister.
 
@@ -578,6 +600,18 @@ world.launchFirework(0, 100, 0, "gold", "large_ball");
 world.launchFirework(new GameVector3(0, 100, 0), "red", "star");
 ```
 
+### world.launchFirework(x, y, z, colors, shape)
+
+⬆ MC Extension | Launches a firework with an array of `GameRGBColor` values for arbitrary RGB colors.
+
+### world.launchFirework(pos, colors, shape)
+
+⬆ GameVector3 + `GameRGBColor[]` overload.
+
+```js
+world.launchFirework(0, 100, 0, [new GameRGBColor(1, 0, 0), new GameRGBColor(1, 0.5, 0)], "large_ball");
+```
+
 ### world.spawnParticle(type, x, y, z, count, dx, dy, dz, speed)
 
 Spawn particles at coordinates. Particle type uses namespaced ID.
@@ -585,6 +619,22 @@ Spawn particles at coordinates. Particle type uses namespaced ID.
 ### world.spawnParticle(type, pos, count, dx, dy, dz, speed)
 
 ⬆ GameVector3 overload.
+
+### world.spawnParticle(x, y, z, color, count, dx, dy, dz, speed)
+
+⬆ MC Extension | Spawns colored particles (dust type) using `GameRGBColor` to specify the color.
+
+### world.spawnParticle(pos, color, count, dx, dy, dz, speed)
+
+⬆ GameVector3 + `GameRGBColor` overload.
+
+```js
+// Spawn red particles
+world.spawnParticle(0, 100, 0, new GameRGBColor(1, 0, 0), 20, 0.5, 0.5, 0.5, 0.1);
+
+// Spawn cyan particles
+world.spawnParticle(entity.position, new GameRGBColor(0, 1, 1), 10, 0.2, 0.2, 0.2, 0);
+```
 
 ### world.spawnParticleCircle(x, y, z, radius, type, count)
 
@@ -752,81 +802,11 @@ console.log(biome); // "minecraft:plains"
 var biome = world.getBiome(entity.position);
 ```
 
-## Cross-script Messaging
-
-### world.sendMessage(target, data)
-
-⬆ MC Extension | Send a message to another script project. `target` is `"*"` (broadcast) or a project name. Receivers listen via `world.onMessage()`.
-
-### world.runCommand(cmd)
-
-⬆ MC Extension | Execute a command as the server console.
-
-```js
-world.runCommand("time set day");
-world.runCommand("weather clear");
-```
-
-## Structures & Advancements
-
-### world.placeStructure(x, y, z, structureId)
-
-⬆ MC extension | Places a datapack structure template (NBT) at the given position.
-
-### world.placeStructure(pos, structureId)
-
-⬆ GameVector3 overload.
-
-```js
-world.placeStructure(
-  0,
-  100,
-  0,
-  "minecraft:village/plains/houses/plains_small_house_1",
-);
-world.placeStructure(pos, "box3js:arena");
-```
-
-### world.grantAdvancement(playerName, advancementId)
-
-⬆ MC extension | Grants an advancement to a player by name.
-
-```js
-world.grantAdvancement("Steve", "minecraft:story/mine_stone");
-```
-
-## Recipe Management
-
-### world.listRecipes(filter)
-
-⬆ MC extension | Searches recipe IDs matching a keyword.
-
-```js
-var recipes = world.listRecipes("diamond");
-console.log(recipes); // ["minecraft:diamond_sword", "minecraft:diamond_block", ...]
-```
-
-### world.removeRecipe(recipeId)
-
-⬆ MC extension | Blacklists a recipe so it's no longer craftable. Returns whether successful.
-
-```js
-world.removeRecipe("minecraft:iron_pickaxe");
-```
-
-### world.clearRecipes()
-
-⬆ MC extension | Clears the recipe blacklist, restoring all original recipes.
-
-```js
-world.clearRecipes();
-```
-
 ## Custom Items
 
 ### world.loadCustomItems(packName)
 
-⬆ MC extension | Loads custom item definitions from a resource pack's `items.json`. Reads `resourcepacks/<packName>/items.json`, parses item definitions using Minecraft's native data component IDs as JSON keys. All items use `minecraft:paper` as the base, with `DataComponents` providing name, lore, texture, food, etc.
+⬆ MC Extension | Loads custom item definitions from a resource pack's `items.json`. Reads `resourcepacks/<packName>/items.json`, parses item definitions using Minecraft's native data component IDs as JSON keys. All items use `minecraft:paper` as the base, with `DataComponents` providing name, lore, texture, food, etc.
 
 JSON format uses MC component ID prefixes:
 
@@ -855,4 +835,94 @@ world.loadCustomItems("box3js-items");
 // Items can then be given via player.giveCustomItem("arena_trophy", 1)
 ```
 
+**Resource pack structure reference:**
+
+```
+resourcepacks/box3js-items/
+├── pack.mcmeta
+├── items.json                          # Item definitions
+└── assets/
+    ├── minecraft/models/item/
+    │   └── paper.json                  # custom_model_data overrides
+    └── box3js/
+        ├── models/item/                # Model JSONs
+        │   ├── arena_trophy.json
+        │   ├── arena_stew.json
+        │   └── arena_medal.json
+        └── textures/item/              # PNG textures
+            ├── arena_trophy.png
+            ├── arena_stew.png
+            └── arena_medal.png
+```
+
 **Note:** Textures require the client to load the resource pack. Without it, items still function (name/lore/food), but display the default paper texture.
+
+## Cross-script Messaging
+
+### world.sendMessage(target, data)
+
+⬆ MC Extension | Send a message to another script project. `target` is `"*"` (broadcast) or a project name. Receivers listen via `world.onMessage()`.
+
+### world.runCommand(cmd)
+
+⬆ MC Extension | Execute a command as the server console.
+
+```js
+world.runCommand("time set day");
+world.runCommand("weather clear");
+```
+
+## Structures & Advancements
+
+### world.placeStructure(x, y, z, structureId)
+
+⬆ MC Extension | Places a datapack structure template (NBT) at the given position.
+
+### world.placeStructure(pos, structureId)
+
+⬆ GameVector3 overload.
+
+```js
+world.placeStructure(
+  0,
+  100,
+  0,
+  "minecraft:village/plains/houses/plains_small_house_1",
+);
+world.placeStructure(pos, "box3js:arena");
+```
+
+### world.grantAdvancement(playerName, advancementId)
+
+⬆ MC Extension | Grants an advancement to a player by name.
+
+```js
+world.grantAdvancement("Steve", "minecraft:story/mine_stone");
+```
+
+## Recipe Management
+
+### world.listRecipes(filter)
+
+⬆ MC Extension | Searches recipe IDs matching a keyword.
+
+```js
+var recipes = world.listRecipes("diamond");
+console.log(recipes); // ["minecraft:diamond_sword", "minecraft:diamond_block", ...]
+```
+
+### world.removeRecipe(recipeId)
+
+⬆ MC Extension | Blacklists a recipe so it's no longer craftable. Returns whether successful.
+
+```js
+world.removeRecipe("minecraft:iron_pickaxe");
+```
+
+### world.clearRecipes()
+
+⬆ MC Extension | Clears the recipe blacklist, restoring all original recipes.
+
+```js
+world.clearRecipes();
+```

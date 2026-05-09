@@ -19,10 +19,15 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ServerLevelData;
 
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 class Box3ScriptSandbox {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     private static final int MAX_BLOCK_CHANGES = 5_000_000;
     private static final double WARN_THRESHOLD = 0.9;
@@ -57,7 +62,7 @@ class Box3ScriptSandbox {
         if (changes.size() >= MAX_BLOCK_CHANGES) return;
         changes.putIfAbsent(pos.immutable(), level.getBlockState(pos));
         if (changes.size() >= MAX_BLOCK_CHANGES * WARN_THRESHOLD && blockWarnedProjects.add(project)) {
-            com.box3lab.box3js.Box3JS.LOGGER.warn("[Sandbox:{}] Block tracking at {}% ({} / {})",
+            LOGGER.warn("[Sandbox:{}] Block tracking at {}% ({} / {})",
                 project, (int)(WARN_THRESHOLD * 100), changes.size(), MAX_BLOCK_CHANGES);
         }
     }
