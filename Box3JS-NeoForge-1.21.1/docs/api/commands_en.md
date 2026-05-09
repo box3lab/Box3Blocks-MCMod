@@ -137,5 +137,6 @@ config/box3/
   │       ├── types/globals.d.ts
   │       ├── src/app.ts
   │       └── dist/app.js       ← compiled output
+  ├── data/                      ← SQLite database (db API)
   └── storage/                  ← storage API persistence
 ```

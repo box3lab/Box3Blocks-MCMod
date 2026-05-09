@@ -308,6 +308,14 @@ public class Box3JSPlayer {
         player.sendSystemMessage(Component.literal(msg));
     }
 
+    public void directMessage(String msg, GameRGBColor color) {
+        int r = (int) (Math.max(0, Math.min(1, color.r)) * 255);
+        int g = (int) (Math.max(0, Math.min(1, color.g)) * 255);
+        int b = (int) (Math.max(0, Math.min(1, color.b)) * 255);
+        int rgb = (r << 16) | (g << 8) | b;
+        player.sendSystemMessage(Component.literal(msg).withColor(rgb));
+    }
+
     public void actionBar(String message) {
         player.displayClientMessage(Component.literal(message), true);
     }

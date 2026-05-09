@@ -139,5 +139,6 @@ config/box3/
   │       ├── types/globals.d.ts
   │       ├── src/app.ts
   │       └── dist/app.js       ← 编译产物
+  ├── data/                      ← SQLite 数据库 (db API)
   └── storage/                  ← storage API 持久化
 ```

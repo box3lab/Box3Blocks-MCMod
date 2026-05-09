@@ -33,6 +33,8 @@ var v = new GameVector3(x, y, z); // Specified coordinates
 | `v.subEq(w)` | `GameVector3` | In-place subtraction: `v -= w` |
 | `v.mulEq(w)` | `GameVector3` | In-place component-wise multiplication |
 | `v.divEq(w)` | `GameVector3` | In-place component-wise division; divide-by-zero skips that component |
+| `v.scaleEq(n)` | `GameVector3` | In-place scalar multiplication: `v.x *= n` … |
+| `v.negEq()` | `GameVector3` | In-place negation: `v = -v` |
 
 #### Creating New Vectors (does not mutate)
 
@@ -50,6 +52,11 @@ var v = new GameVector3(x, y, z); // Specified coordinates
 | `v.towards(w)` | `GameVector3` | Direction vector pointing toward `w` (normalized) |
 | `v.max(w)` | `GameVector3` | Component-wise maximum |
 | `v.min(w)` | `GameVector3` | Component-wise minimum |
+| `v.neg()` | `GameVector3` | Negation: `-v` |
+| `v.moveTowards(target, maxDelta)` | `GameVector3` | Move toward target by at most `maxDelta` distance |
+| `v.floor()` | `GameVector3` | Component-wise floor |
+| `v.ceil()` | `GameVector3` | Component-wise ceiling |
+| `v.clampLength(max)` | `GameVector3` | Clamp magnitude to `max`, scale down proportionally if exceeded |
 
 #### Numeric Computations
 
@@ -60,6 +67,7 @@ var v = new GameVector3(x, y, z); // Specified coordinates
 | `v.sqrMag()` | `number` | Squared magnitude — faster than `mag()` |
 | `v.distance(w)` | `number` | Euclidean distance to `w` |
 | `v.angle(w)` | `number` | Angle between `v` and `w` (radians, 0–π) |
+| `v.sqrDistance(w)` | `number` | Squared distance to `w` — faster than `distance()` |
 
 #### Comparison
 
@@ -67,6 +75,7 @@ var v = new GameVector3(x, y, z); // Specified coordinates
 |--------|---------|-------------|
 | `v.equals(w)` | `boolean` | Approximate equality, tolerance 1e-6 |
 | `v.exactEquals(w)` | `boolean` | Exact equality — components strictly equal |
+| `v.isZero()` | `boolean` | Whether this is (approximately) a zero vector, tolerance 1e-6 |
 
 ```js
 var pos = new GameVector3(0, 100, 0);
@@ -140,6 +149,14 @@ var bounds = new GameBounds3(
 | `bounds.intersect(other)` | `GameBounds3 \| null` | Intersection bounds, or `null` if no overlap |
 | `bounds.contains(v)` | `boolean` | Whether point `v` is inside (inclusive) |
 | `bounds.containsBounds(b)` | `boolean` | Whether this fully contains `b` |
+| `bounds.center()` | `GameVector3` | Center point of the bounds |
+| `bounds.size()` | `GameVector3` | Size of the bounds (width, height, depth) |
+| `bounds.expand(delta)` | `GameBounds3` | Expand all faces outward by `delta`, returns new bounds |
+| `bounds.expandEq(delta)` | `GameBounds3` | In-place expand all faces outward by `delta`, returns this |
+| `bounds.growToInclude(v)` | `GameBounds3` | In-place grow to include point `v`, returns this |
+| `bounds.closestPoint(v)` | `GameVector3` | Closest point on the bounds to point `v` |
+| `bounds.move(offset)` | `GameBounds3` | Translate by `offset`, returns new bounds |
+| `bounds.moveEq(offset)` | `GameBounds3` | In-place translate by `offset`, returns this |
 
 ### Static Methods
 
@@ -199,6 +216,7 @@ var gray  = new GameRGBColor(0.5, 0.5, 0.5);
 | `c.subEq(o)` | `GameRGBColor` | In-place subtraction: `c -= o` |
 | `c.mulEq(o)` | `GameRGBColor` | In-place channel-wise multiplication |
 | `c.divEq(o)` | `GameRGBColor` | In-place channel-wise division; divide-by-zero skips |
+| `c.scaleEq(n)` | `GameRGBColor` | In-place scalar multiplication: each channel × `n` |
 
 #### Creating New Colors (does not mutate)
 
@@ -210,6 +228,7 @@ var gray  = new GameRGBColor(0.5, 0.5, 0.5);
 | `c.mul(o)` | `GameRGBColor` | Channel-wise multiplication |
 | `c.div(o)` | `GameRGBColor` | Channel-wise division; divide-by-zero → 0 |
 | `c.lerp(o, t)` | `GameRGBColor` | Linear interpolation: `t=0` → this, `t=1` → `o` |
+| `c.scale(n)` | `GameRGBColor` | Scalar multiplication: each channel × `n` |
 | `c.equals(o)` | `boolean` | Approximate equality, tolerance 1e-6 |
 | `c.toRGBA()` | `string` | CSS format string: `"rgba(r,g,b,1.0)"` |
 
@@ -259,6 +278,7 @@ var opaque  = new GameRGBAColor(0, 1, 0, 1.0);
 | `c.subEq(o)` | `GameRGBAColor` | In-place subtraction |
 | `c.mulEq(o)` | `GameRGBAColor` | In-place channel-wise multiplication |
 | `c.divEq(o)` | `GameRGBAColor` | In-place channel-wise division; divide-by-zero skips |
+| `c.scaleEq(n)` | `GameRGBAColor` | In-place scalar multiplication: each channel × `n` |
 
 #### Creating New Colors (does not mutate)
 
@@ -270,6 +290,7 @@ var opaque  = new GameRGBAColor(0, 1, 0, 1.0);
 | `c.mul(o)` | `GameRGBAColor` | Channel-wise multiplication |
 | `c.div(o)` | `GameRGBAColor` | Channel-wise division; divide-by-zero → 0 |
 | `c.lerp(o, t)` | `GameRGBAColor` | Linear interpolation |
+| `c.scale(n)` | `GameRGBAColor` | Scalar multiplication: each channel × `n` |
 | `c.equals(o)` | `boolean` | Approximate equality, tolerance 1e-6 |
 | `c.blendEq(rgb)` | `GameRGBColor` | Alpha-blend onto an RGB background, returns displayed RGB |
 
@@ -352,6 +373,8 @@ var q = new GameQuaternion(w, x, y, z);    // Specified components
 | `q.rotateX(rad)` | `GameQuaternion` | Rotate around X axis |
 | `q.rotateY(rad)` | `GameQuaternion` | Rotate around Y axis |
 | `q.rotateZ(rad)` | `GameQuaternion` | Rotate around Z axis |
+| `q.rotateVector(v)` | `GameVector3` | Rotate vector `v` by this quaternion |
+| `q.toEuler()` | `GameVector3` | Convert to Euler angles (YZX order), returns `(x, y, z)` in radians |
 
 #### Axis-Angle Decomposition
 
@@ -375,6 +398,12 @@ var q2 = GameQuaternion.fromEuler(x, y, z);
 
 // Shortest-arc quaternion rotating from vector a to b
 var q3 = GameQuaternion.rotationBetween(fromVec, toVec);
+
+// Create quaternion from look-at direction (from → to)
+var q4 = GameQuaternion.lookAt(from, to, up);
+// from: GameVector3 — observer position
+// to:   GameVector3 — target point
+// up:   GameVector3 — up direction (default (0,1,0))
 ```
 
 ### toString

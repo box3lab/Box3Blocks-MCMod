@@ -45,6 +45,18 @@ public class GameVector3 {
         return new GameVector3(x * n, y * n, z * n);
     }
 
+    public GameVector3 scaleEq(double n) {
+        x *= n; y *= n; z *= n; return this;
+    }
+
+    public GameVector3 neg() {
+        return new GameVector3(-x, -y, -z);
+    }
+
+    public GameVector3 negEq() {
+        x = -x; y = -y; z = -z; return this;
+    }
+
     public GameVector3 addEq(GameVector3 v) {
         x += v.x; y += v.y; z += v.z; return this;
     }
@@ -91,8 +103,22 @@ public class GameVector3 {
         return Math.sqrt(dx * dx + dy * dy + dz * dz);
     }
 
+    public double sqrDistance(GameVector3 v) {
+        double dx = x - v.x, dy = y - v.y, dz = z - v.z;
+        return dx * dx + dy * dy + dz * dz;
+    }
+
     public GameVector3 lerp(GameVector3 v, double n) {
         return new GameVector3(x + (v.x - x) * n, y + (v.y - y) * n, z + (v.z - z) * n);
+    }
+
+    public GameVector3 moveTowards(GameVector3 target, double maxDelta) {
+        double dx = target.x - x, dy = target.y - y, dz = target.z - z;
+        double d2 = dx * dx + dy * dy + dz * dz;
+        if (d2 <= maxDelta * maxDelta || d2 == 0)
+            return new GameVector3(target.x, target.y, target.z);
+        double t = maxDelta / Math.sqrt(d2);
+        return new GameVector3(x + dx * t, y + dy * t, z + dz * t);
     }
 
     public GameVector3 towards(GameVector3 v) {
@@ -122,6 +148,27 @@ public class GameVector3 {
 
     public GameVector3 min(GameVector3 v) {
         return new GameVector3(Math.min(x, v.x), Math.min(y, v.y), Math.min(z, v.z));
+    }
+
+    public boolean isZero() {
+        return Math.abs(x) < 1e-6 && Math.abs(y) < 1e-6 && Math.abs(z) < 1e-6;
+    }
+
+    public GameVector3 floor() {
+        return new GameVector3(Math.floor(x), Math.floor(y), Math.floor(z));
+    }
+
+    public GameVector3 ceil() {
+        return new GameVector3(Math.ceil(x), Math.ceil(y), Math.ceil(z));
+    }
+
+    public GameVector3 clampLength(double max) {
+        double m2 = x * x + y * y + z * z;
+        if (m2 > max * max) {
+            double s = max / Math.sqrt(m2);
+            return new GameVector3(x * s, y * s, z * s);
+        }
+        return clone();
     }
 
     public static GameVector3 fromPolar(double mag, double phi, double theta) {

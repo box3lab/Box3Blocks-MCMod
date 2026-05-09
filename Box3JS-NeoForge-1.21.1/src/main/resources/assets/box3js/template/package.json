@@ -12,7 +12,6 @@
   "devDependencies": {
     "@babel/core": "^7.29.0",
     "@babel/preset-env": "^7.29.5",
-
     "@babel/preset-typescript": "^7.28.5",
     "esbuild": "^0.28.0",
     "eslint": "^10.3.0",

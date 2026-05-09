@@ -4,20 +4,25 @@ import { fileURLToPath } from "url";
 import { writeFileSync, readFileSync, mkdirSync } from "fs";
 import babel from "@babel/core";
 
-// Get current directory path / 获取当前脚本所在的目录路径
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const entryFile = resolve(__dirname, "src/app.ts");
 const distDir = resolve(__dirname, "dist");
 const outFile = resolve(distDir, "app.js");
 
+// ═══════════════════════════════════════════════════════════════
+//  Babel plugins — Rhino 1.9.1 compatibility transforms
+// ═══════════════════════════════════════════════════════════════
+
 /**
- * Custom Babel plugin: converts tagged and regular template literals into
- * Rhino 1.9.1-compatible code.
+ * Template literal → .concat() calls.
  *
- * Tagged: db.sql`SELECT * FROM t WHERE id = ${id}`
- *   → db.sql(["SELECT * FROM t WHERE id = ", ""], id)
- * Regular: `hello ${name}!`
- *   → "hello ".concat(name, "!")
+ * `hello ${name}!`  →  "hello ".concat(name, "!")
+ * db.sql`...`       →  db.sql(["a", "b"], expr1, expr2)
+ *
+ * Babel's default transform emits Object.defineProperties / Object.freeze
+ * helpers that crash in Rhino 1.9.1.
  */
 function rhinoTemplatePlugin({ types: t }) {
   return {
@@ -27,21 +32,33 @@ function rhinoTemplatePlugin({ types: t }) {
         const strings = quasi.quasis.map((q) =>
           t.stringLiteral(q.value.cooked ?? q.value.raw),
         );
-        const args = [t.arrayExpression(strings), ...quasi.expressions];
-        path.replaceWith(t.callExpression(tag, args));
+        path.replaceWith(
+          t.callExpression(tag, [
+            t.arrayExpression(strings),
+            ...quasi.expressions,
+          ]),
+        );
       },
 
       TemplateLiteral(path) {
         const { quasis, expressions } = path.node;
         if (expressions.length === 0) {
-          path.replaceWith(t.stringLiteral(quasis[0].value.cooked ?? quasis[0].value.raw));
+          path.replaceWith(
+            t.stringLiteral(quasis[0].value.cooked ?? quasis[0].value.raw),
+          );
           return;
         }
-        const base = t.stringLiteral(quasis[0].value.cooked ?? quasis[0].value.raw);
+        const base = t.stringLiteral(
+          quasis[0].value.cooked ?? quasis[0].value.raw,
+        );
         const args = [];
         for (let i = 0; i < expressions.length; i++) {
           args.push(expressions[i]);
-          args.push(t.stringLiteral(quasis[i + 1].value.cooked ?? quasis[i + 1].value.raw));
+          args.push(
+            t.stringLiteral(
+              quasis[i + 1].value.cooked ?? quasis[i + 1].value.raw,
+            ),
+          );
         }
         path.replaceWith(
           t.callExpression(
@@ -55,19 +72,300 @@ function rhinoTemplatePlugin({ types: t }) {
 }
 
 /**
- * Rhino Compatibility Plugin: Invokes Babel during the esbuild process.
- * This avoids the need for manual temporary directory management.
- * Rhino 兼容性插件：在 esbuild 构建过程中调用 Babel。
- * 避免了手动创建和管理临时目录的需求。
+ * for...of → indexed for loop with Java ArrayList detection.
+ *
+ * for (const x of arr) { ... }
+ *   ↓
+ * var _coll = arr;
+ * if (_coll.toArray) _coll = _coll.toArray();
+ * for (var _i = 0; _i < _coll.length; _i++) {
+ *   var x = _coll[_i];
+ *   ...
+ * }
+ *
+ * Babel's _createForEachIteratorHelperLoose calls .call() on the iterable,
+ * which crashes on Java ArrayList. Java lists expose .toArray() → Object[]
+ * (wrapped as NativeJavaArray), which supports .length and [i].
+ */
+function rhinoForOfPlugin({ types: t }) {
+  return {
+    visitor: {
+      ForOfStatement(path) {
+        const { left, right, body } = path.node;
+
+        const collId = path.scope.generateUidIdentifier("coll");
+        const iId = path.scope.generateUidIdentifier("i");
+
+        // var _coll = <right>
+        const collDecl = t.variableDeclaration("var", [
+          t.variableDeclarator(collId, right),
+        ]);
+
+        // if (_coll.toArray) _coll = _coll.toArray();
+        const toArrayCheck = t.memberExpression(
+          collId,
+          t.identifier("toArray"),
+        );
+        const toArrayCall = t.assignmentExpression(
+          "=",
+          collId,
+          t.callExpression(toArrayCheck, []),
+        );
+        const ifToArray = t.ifStatement(
+          toArrayCheck,
+          t.expressionStatement(toArrayCall),
+        );
+
+        // _coll[_i]
+        const elementAccess = t.memberExpression(collId, iId, true);
+
+        // var x = _coll[_i];  (or assignment for non-declaration left)
+        let elementAssign;
+        if (t.isVariableDeclaration(left)) {
+          const decl = left.declarations[0];
+          elementAssign = t.variableDeclaration("var", [
+            t.variableDeclarator(decl.id, elementAccess),
+          ]);
+        } else if (t.isIdentifier(left) || t.isMemberExpression(left)) {
+          elementAssign = t.expressionStatement(
+            t.assignmentExpression("=", left, elementAccess),
+          );
+        } else {
+          elementAssign = t.variableDeclaration("var", [
+            t.variableDeclarator(t.identifier("_v"), elementAccess),
+          ]);
+        }
+
+        const newBody = t.isBlockStatement(body)
+          ? t.blockStatement([elementAssign, ...body.body])
+          : t.blockStatement([elementAssign, t.expressionStatement(body)]);
+
+        // for (var _i = 0; _i < _coll.length; _i++) { ... }
+        const forLoop = t.forStatement(
+          t.variableDeclaration("var", [
+            t.variableDeclarator(iId, t.numericLiteral(0)),
+          ]),
+          t.binaryExpression(
+            "<",
+            iId,
+            t.memberExpression(collId, t.identifier("length")),
+          ),
+          t.updateExpression("++", iId, false),
+          newBody,
+        );
+
+        path.replaceWithMultiple([collDecl, ifToArray, forLoop]);
+      },
+    },
+  };
+}
+
+/**
+ * ES5 array methods → indexed for loops via IIFE.
+ *
+ * arr.map(fn)     → (function(){var _a=arr;var _r=[];for(var _i=0;_i<_a.length;_i++)_r.push(fn.call(null,_a[_i],_i,_a));return _r})()
+ * arr.filter(fn)  → (function(){var _a=arr;var _r=[];for(var _i=0;_i<_a.length;_i++){if(fn.call(null,_a[_i],_i,_a))_r.push(_a[_i])}return _r})()
+ * arr.forEach(fn) → (function(){var _a=arr;for(var _i=0;_i<_a.length;_i++)fn.call(null,_a[_i],_i,_a)})()
+ * arr.find(fn)    → (function(){var _a=arr;for(var _i=0;_i<_a.length;_i++){if(fn.call(null,_a[_i],_i,_a))return _a[_i]}return undefined})()
+ * arr.some(fn)    → (function(){var _a=arr;for(var _i=0;_i<_a.length;_i++){if(fn.call(null,_a[_i],_i,_a))return true}return false})()
+ * arr.every(fn)   → (function(){var _a=arr;for(var _i=0;_i<_a.length;_i++){if(!fn.call(null,_a[_i],_i,_a))return false}return true})()
+ *
+ * Rhino's NativeArray (from Java interop, e.g. db.sql().rows) lacks ES5
+ * Array.prototype methods. The IIFE form preserves chaining (arr.map(f).filter(g)).
+ */
+function rhinoArrayMethodsPlugin({ types: t }) {
+  const METHODS = ["map", "filter", "forEach", "find", "some", "every"];
+
+  function buildIIFE(bodyNodes, returnExpr) {
+    const fnBody = returnExpr
+      ? t.blockStatement([...bodyNodes, t.returnStatement(returnExpr)])
+      : t.blockStatement(bodyNodes);
+    return t.callExpression(t.functionExpression(null, [], fnBody), []);
+  }
+
+  return {
+    visitor: {
+      CallExpression(path) {
+        const { callee } = path.node;
+        if (!t.isMemberExpression(callee)) {
+          return;
+        }
+        if (!t.isIdentifier(callee.property)) {
+          return;
+        }
+        const method = callee.property.name;
+        if (!METHODS.includes(method)) {
+          return;
+        }
+
+        const obj = callee.object;
+        const args = path.node.arguments;
+        const callback = args[0];
+        if (!callback) {
+          return;
+        }
+        const thisArg = args[1] || t.nullLiteral();
+
+        const arrId = path.scope.generateUidIdentifier("arr");
+        const iId = path.scope.generateUidIdentifier("i");
+        const rId = path.scope.generateUidIdentifier("r");
+
+        const arrDecl = t.variableDeclaration("var", [
+          t.variableDeclarator(arrId, obj),
+        ]);
+
+        const element = t.memberExpression(arrId, iId, true);
+
+        // callback.call(thisArg, element, i, arr)
+        const cbCall = t.callExpression(
+          t.memberExpression(callback, t.identifier("call")),
+          [thisArg, element, iId, arrId],
+        );
+
+        const forInit = t.variableDeclaration("var", [
+          t.variableDeclarator(iId, t.numericLiteral(0)),
+        ]);
+        const forTest = t.binaryExpression(
+          "<",
+          iId,
+          t.memberExpression(arrId, t.identifier("length")),
+        );
+        const forUpdate = t.updateExpression("++", iId, false);
+
+        let bodyNodes, returnExpr;
+
+        switch (method) {
+          case "map": {
+            const rDecl = t.variableDeclaration("var", [
+              t.variableDeclarator(rId, t.arrayExpression([])),
+            ]);
+            const pushCall = t.callExpression(
+              t.memberExpression(rId, t.identifier("push")),
+              [cbCall],
+            );
+            bodyNodes = [
+              arrDecl,
+              rDecl,
+              t.forStatement(
+                forInit,
+                forTest,
+                forUpdate,
+                t.blockStatement([t.expressionStatement(pushCall)]),
+              ),
+            ];
+            returnExpr = rId;
+            break;
+          }
+          case "filter": {
+            const rDecl = t.variableDeclaration("var", [
+              t.variableDeclarator(rId, t.arrayExpression([])),
+            ]);
+            const pushCall = t.callExpression(
+              t.memberExpression(rId, t.identifier("push")),
+              [element],
+            );
+            bodyNodes = [
+              arrDecl,
+              rDecl,
+              t.forStatement(
+                forInit,
+                forTest,
+                forUpdate,
+                t.blockStatement([
+                  t.ifStatement(cbCall, t.expressionStatement(pushCall)),
+                ]),
+              ),
+            ];
+            returnExpr = rId;
+            break;
+          }
+          case "forEach": {
+            bodyNodes = [
+              arrDecl,
+              t.forStatement(
+                forInit,
+                forTest,
+                forUpdate,
+                t.blockStatement([t.expressionStatement(cbCall)]),
+              ),
+            ];
+            returnExpr = null;
+            break;
+          }
+          case "find": {
+            bodyNodes = [
+              arrDecl,
+              t.forStatement(
+                forInit,
+                forTest,
+                forUpdate,
+                t.blockStatement([
+                  t.ifStatement(cbCall, t.returnStatement(element)),
+                ]),
+              ),
+            ];
+            returnExpr = t.identifier("undefined");
+            break;
+          }
+          case "some": {
+            bodyNodes = [
+              arrDecl,
+              t.forStatement(
+                forInit,
+                forTest,
+                forUpdate,
+                t.blockStatement([
+                  t.ifStatement(
+                    cbCall,
+                    t.returnStatement(t.booleanLiteral(true)),
+                  ),
+                ]),
+              ),
+            ];
+            returnExpr = t.booleanLiteral(false);
+            break;
+          }
+          case "every": {
+            bodyNodes = [
+              arrDecl,
+              t.forStatement(
+                forInit,
+                forTest,
+                forUpdate,
+                t.blockStatement([
+                  t.ifStatement(
+                    t.unaryExpression("!", cbCall),
+                    t.returnStatement(t.booleanLiteral(false)),
+                  ),
+                ]),
+              ),
+            ];
+            returnExpr = t.booleanLiteral(true);
+            break;
+          }
+          default:
+            return;
+        }
+
+        path.replaceWith(buildIIFE(bodyNodes, returnExpr));
+      },
+    },
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  esbuild plugin
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Routes .ts files through Babel for Rhino downleveling.
+ * esbuild handles bundling; Babel handles precise syntax transforms.
  */
 const babelRhinoPlugin = {
   name: "babel-rhino",
   setup(build) {
     build.onLoad({ filter: /\.ts$/ }, async (args) => {
       const source = readFileSync(args.path, "utf8");
-
-      // Use Babel for precise downleveling targeted at Rhino
-      // 使用 Babel 进行针对 Rhino 环境的精准降级转译
       const result = await babel.transformAsync(source, {
         filename: args.path,
         presets: [
@@ -82,7 +380,11 @@ const babelRhinoPlugin = {
           ],
           "@babel/preset-typescript",
         ],
-        plugins: [rhinoTemplatePlugin],
+        plugins: [
+          rhinoArrayMethodsPlugin,
+          rhinoForOfPlugin,
+          rhinoTemplatePlugin,
+        ],
         configFile: false,
         babelrc: false,
         sourceMaps: false,
@@ -94,15 +396,15 @@ const babelRhinoPlugin = {
   },
 };
 
+// ═══════════════════════════════════════════════════════════════
+//  Post-processing
+// ═══════════════════════════════════════════════════════════════
+
 /**
- * Post-processing function: Fixes regex literals unsupported by Rhino.
- * This is the final defense against specific patterns in Babel's injected helpers.
- * 后处理函数：修复 Rhino 不支持的正则字面量。
- * 这是处理 Babel 注入的辅助函数中特定问题的最后一道防线。
+ * Fixes regex literals in Babel's injected helpers that Rhino cannot parse.
+ * Specific target: TypedArray detection via /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/
  */
 function sanitizeForRhino(code) {
-  // Regex pattern for TypedArray checks that Rhino cannot parse
-  // Rhino 无法解析的 TypedArray 检查正则模式
   const BAD_REGEX =
     /\/\^\(\?:Ui\|I\)nt\(\?:8\|16\|32\)\(\?:Clamped\)\?Array\$\/\.test\((\w+)\)/g;
   return code.replace(BAD_REGEX, (_, varName) => {
@@ -110,7 +412,10 @@ function sanitizeForRhino(code) {
   });
 }
 
-// esbuild configuration options / esbuild 构建配置选项
+// ═══════════════════════════════════════════════════════════════
+//  Build
+// ═══════════════════════════════════════════════════════════════
+
 const buildOptions = {
   entryPoints: [entryFile],
   outfile: outFile,
@@ -122,33 +427,24 @@ const buildOptions = {
   logLevel: "info",
 };
 
-/**
- * Executes a single build pipeline
- * 执行单次构建流程
- */
 async function runBuild() {
   try {
     mkdirSync(distDir, { recursive: true });
 
-    // 1. Run the bundler / 执行打包
-    await esbuild.build({
-      ...buildOptions,
-      metafile: true,
-    });
+    await esbuild.build({ ...buildOptions, metafile: true });
 
-    // 2. Read output and apply Rhino-specific sanitization / 读取产物并进行针对 Rhino 的正则修复
     const code = readFileSync(outFile, "utf8");
-    const sanitizedCode = sanitizeForRhino(code);
-    writeFileSync(outFile, sanitizedCode, "utf-8");
+    writeFileSync(outFile, sanitizeForRhino(code), "utf-8");
   } catch (err) {
-    console.error("❌ Build failed: / 构建失败：", err);
+    console.error("Build failed:", err);
     process.exit(1);
   }
 }
 
-// Main logic: Watch mode or Single build / 主逻辑：监听模式或单次构建
+// ── Entry ──
+
 if (process.argv.includes("--watch")) {
-  console.log("👀 Watch mode enabled... / 监听模式已启用...");
+  console.log("Watch mode enabled...");
 
   const ctx = await esbuild.context({
     ...buildOptions,
@@ -157,7 +453,6 @@ if (process.argv.includes("--watch")) {
       {
         name: "post-process-plugin",
         setup(build) {
-          // Triggered after every rebuild in watch mode / 在监听模式的每次重建后触发
           build.onEnd(() => {
             const code = readFileSync(outFile, "utf8");
             writeFileSync(outFile, sanitizeForRhino(code), "utf-8");

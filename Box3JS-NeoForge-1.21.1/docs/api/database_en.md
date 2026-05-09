@@ -86,17 +86,136 @@ db.sql`INSERT INTO players (name, score, lastLogin) VALUES (${"Steve"}, ${100}, 
 ### Query data
 
 ```js
-// Iterate with for-loop; Rhino NativeArray does not support ES5 array helpers.
+// TypeScript: .map() / .filter() / .forEach() / for...of / arrow functions all work
+// (Babel compiles them to Rhino-compatible indexed for loops)
 var rows = db.sql("SELECT * FROM players WHERE score > ?", 50).rows;
-for (var i = 0; i < rows.length; i++) {
-  console.log(rows[i].name + ": " + rows[i].score);
-}
+rows.forEach((row) => {
+  console.log(`${row.name}: ${row.score}`);
+});
+
+// tagged template + .filter() + .map() chaining
+var scores = db.sql`SELECT name, score FROM players WHERE score > ${50}`.rows
+  .filter((r) => r.score > 20)
+  .map((r) => `${r.name}: ${r.score}`);
+scores.forEach((s) => console.log(s));
 
 var player = db.sql("SELECT * FROM players WHERE name = ?", "Steve").firstRow;
 if (player) {
-  console.log("Score: " + player.score);
+  console.log(`Score: ${player.score}`);
 }
 ```
+
+## Complete Example: Leaderboard
+
+```js
+// Initialize table
+db.sql(
+  "CREATE TABLE IF NOT EXISTS leaderboard (player TEXT PRIMARY KEY, score INTEGER, updated INTEGER)",
+);
+
+// Record a score
+function recordScore(playerName, score) {
+  var existing = db.sql(
+    "SELECT score FROM leaderboard WHERE player = ?",
+    playerName,
+  ).firstRow;
+  if (existing) {
+    if (score > existing.score) {
+      db.sql(
+        "UPDATE leaderboard SET score = ?, updated = ? WHERE player = ?",
+        score,
+        Date.now(),
+        playerName,
+      );
+    }
+  } else {
+    db.sql(
+      "INSERT INTO leaderboard (player, score, updated) VALUES (?, ?, ?)",
+      playerName,
+      score,
+      Date.now(),
+    );
+  }
+}
+
+// Get Top 10
+function getTop10() {
+  return db.sql(
+    "SELECT player, score FROM leaderboard ORDER BY score DESC LIMIT 10",
+  ).rows;
+}
+
+// Get player rank
+function getRank(playerName) {
+  var row = db.sql(
+    "SELECT COUNT(*) + 1 AS rank FROM leaderboard WHERE score > (SELECT score FROM leaderboard WHERE player = ?)",
+    playerName,
+  ).firstRow;
+  return row ? row.rank : 0;
+}
+
+// Usage
+recordScore("Steve", 500);
+recordScore("Alex", 800);
+recordScore("Steve", 600); // update
+
+var top = getTop10();
+for (var i = 0; i < top.length; i++) {
+  console.log(i + 1 + ". " + top[i].player + " - " + top[i].score);
+}
+
+console.log("Steve rank: " + getRank("Steve"));
+```
+
+## Complete Example: Player Data Persistence
+
+```js
+db.sql(
+  "CREATE TABLE IF NOT EXISTS player_data (uuid TEXT PRIMARY KEY, name TEXT, playtime INTEGER, deaths INTEGER, lastSeen INTEGER)",
+);
+
+world.onPlayerJoin(function (entity) {
+  var p = entity.player;
+  var row = db.sql(
+    "SELECT * FROM player_data WHERE uuid = ?",
+    p.userId,
+  ).firstRow;
+  if (row) {
+    db.sql(
+      "UPDATE player_data SET name = ?, lastSeen = ? WHERE uuid = ?",
+      p.name,
+      Date.now(),
+      p.userId,
+    );
+  } else {
+    db.sql(
+      "INSERT INTO player_data (uuid, name, playtime, deaths, lastSeen) VALUES (?, ?, 0, 0, ?)",
+      p.userId,
+      p.name,
+      Date.now(),
+    );
+  }
+});
+
+world.onPlayerLeave(function (entity) {
+  var p = entity.player;
+  db.sql(
+    "UPDATE player_data SET lastSeen = ? WHERE uuid = ?",
+    Date.now(),
+    p.userId,
+  );
+});
+```
+
+## Comparison with storage
+
+|      | `db` (SQLite)                 | `storage` (JSON)                |
+| ---- | ----------------------------- | ------------------------------- |
+| Query | SQL WHERE/JOIN/ORDER BY/LIMIT | Read all, filter in JS          |
+| Write | Single-row atomic             | Full overwrite                  |
+| Best for | Leaderboards, economy, logs, relational data | Config, flags, simple key-value |
+| File | `data/<project>.db`           | `storage/<project>/<name>.json` |
+| Concurrency | Naturally safe (WAL mode)     | Serial per-project is adequate  |
 
 ## Notes
 
@@ -105,6 +224,25 @@ if (player) {
 - Always use placeholders (`?`) instead of string concatenation (SQL injection risk).
 - SQLite uses dynamic typing; integers/floats are adapted automatically.
 - BLOB values are passed as `Uint8Array`/byte-array style data.
+
+## Rhino Compatibility
+
+Box3JS uses the Rhino 1.9.1 engine. **TypeScript projects compiled with `npm run build` can use all modern syntax** — Babel plugins convert it to Rhino-compatible code:
+
+| Feature | Compilation |
+|---------|------------|
+| Arrow functions `(x) => x + 1` | Babel `@babel/preset-env` |
+| Template literals `` `Hello ${name}` `` | `rhinoTemplatePlugin` |
+| `for...of` (JS arrays + Java ArrayList) | `rhinoForOfPlugin` → indexed for + `.toArray()` |
+| `.map()` `.filter()` `.forEach()` `.find()` `.some()` `.every()` | `rhinoArrayMethodsPlugin` → IIFE + for loop |
+| `const` / `let` | Babel `@babel/preset-env` |
+| Destructuring `const { x, y } = obj` | Babel `@babel/preset-env` |
+
+**Plain JS notes:**
+
+- `result.rows` returns a `NativeArray` — use indexed for loops.
+- Avoid regex literals (e.g. `/\s+/`) — use string methods.
+- Arrow functions, template literals, `for...of` require TypeScript compilation.
 
 ## Tagged Template Safety
 

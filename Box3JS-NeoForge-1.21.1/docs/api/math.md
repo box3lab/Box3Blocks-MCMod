@@ -33,6 +33,8 @@ var v = new GameVector3(x, y, z); // 指定坐标
 | `v.subEq(w)` | `GameVector3` | 原地减法：`v -= w` |
 | `v.mulEq(w)` | `GameVector3` | 原地逐分量乘法：`v.x *= w.x` … |
 | `v.divEq(w)` | `GameVector3` | 原地逐分量除法，除以 0 跳过该分量 |
+| `v.scaleEq(n)` | `GameVector3` | 原地标量乘法：`v.x *= n` … |
+| `v.negEq()` | `GameVector3` | 原地取反：`v = -v` |
 
 #### 创建新向量 (不修改自身)
 
@@ -50,6 +52,11 @@ var v = new GameVector3(x, y, z); // 指定坐标
 | `v.towards(w)` | `GameVector3` | 指向 `w` 的方向向量 (已单位化) |
 | `v.max(w)` | `GameVector3` | 逐分量取较大值 |
 | `v.min(w)` | `GameVector3` | 逐分量取较小值 |
+| `v.neg()` | `GameVector3` | 取反：`-v` |
+| `v.moveTowards(target, maxDelta)` | `GameVector3` | 向目标移动不超过 `maxDelta` 距离 |
+| `v.floor()` | `GameVector3` | 逐分量向下取整 |
+| `v.ceil()` | `GameVector3` | 逐分量向上取整 |
+| `v.clampLength(max)` | `GameVector3` | 限制长度至 `max`，超长则等比缩放 |
 
 #### 数值计算
 
@@ -60,6 +67,7 @@ var v = new GameVector3(x, y, z); // 指定坐标
 | `v.sqrMag()` | `number` | 长度平方，比 `mag()` 更快 |
 | `v.distance(w)` | `number` | 与 `w` 的欧几里得距离 |
 | `v.angle(w)` | `number` | 与 `w` 的夹角 (弧度, 0–π) |
+| `v.sqrDistance(w)` | `number` | 与 `w` 的距离平方，比 `distance()` 更快 |
 
 #### 比较
 
@@ -67,6 +75,7 @@ var v = new GameVector3(x, y, z); // 指定坐标
 |------|--------|------|
 | `v.equals(w)` | `boolean` | 近似相等，容差 1e-6 |
 | `v.exactEquals(w)` | `boolean` | 精确相等，分量完全一致 |
+| `v.isZero()` | `boolean` | 是否为 (接近) 零向量，容差 1e-6 |
 
 ```js
 var pos = new GameVector3(0, 100, 0);
@@ -140,6 +149,14 @@ var bounds = new GameBounds3(
 | `bounds.intersect(other)` | `GameBounds3 \| null` | 计算交集包围盒，不相交返回 `null` |
 | `bounds.contains(v)` | `boolean` | 点 `v` 是否在包围盒内 (含边界) |
 | `bounds.containsBounds(b)` | `boolean` | 是否完全包含另一个包围盒 `b` |
+| `bounds.center()` | `GameVector3` | 包围盒中心点 |
+| `bounds.size()` | `GameVector3` | 包围盒尺寸 (宽, 高, 深) |
+| `bounds.expand(delta)` | `GameBounds3` | 各面向外扩展 `delta`，返回新包围盒 |
+| `bounds.expandEq(delta)` | `GameBounds3` | 原地各面向外扩展 `delta`，返回自身 |
+| `bounds.growToInclude(v)` | `GameBounds3` | 原地扩展以包含点 `v`，返回自身 |
+| `bounds.closestPoint(v)` | `GameVector3` | 包围盒上离点 `v` 最近的点 |
+| `bounds.move(offset)` | `GameBounds3` | 平移 `offset`，返回新包围盒 |
+| `bounds.moveEq(offset)` | `GameBounds3` | 原地平移 `offset`，返回自身 |
 
 ### 静态方法
 
@@ -199,6 +216,7 @@ var gray  = new GameRGBColor(0.5, 0.5, 0.5);
 | `c.subEq(o)` | `GameRGBColor` | 原地减法：`c -= o` |
 | `c.mulEq(o)` | `GameRGBColor` | 原地逐通道乘法 |
 | `c.divEq(o)` | `GameRGBColor` | 原地逐通道除法，除以 0 跳过该通道 |
+| `c.scaleEq(n)` | `GameRGBColor` | 原地标量乘法：每个通道乘以 `n` |
 
 #### 创建新颜色 (不修改自身)
 
@@ -210,6 +228,7 @@ var gray  = new GameRGBColor(0.5, 0.5, 0.5);
 | `c.mul(o)` | `GameRGBColor` | 逐通道乘法 |
 | `c.div(o)` | `GameRGBColor` | 逐通道除法，除以 0 得 0 |
 | `c.lerp(o, t)` | `GameRGBColor` | 线性插值：`t=0` 为自身，`t=1` 为 `o` |
+| `c.scale(n)` | `GameRGBColor` | 标量乘法：每个通道乘以 `n` |
 | `c.equals(o)` | `boolean` | 近似相等，容差 1e-6 |
 | `c.toRGBA()` | `string` | 转为 CSS 格式：`"rgba(r,g,b,1.0)"` |
 
@@ -259,6 +278,7 @@ var opaque  = new GameRGBAColor(0, 1, 0, 1.0);
 | `c.subEq(o)` | `GameRGBAColor` | 原地减法 |
 | `c.mulEq(o)` | `GameRGBAColor` | 原地逐通道乘法 |
 | `c.divEq(o)` | `GameRGBAColor` | 原地逐通道除法，除以 0 跳过该通道 |
+| `c.scaleEq(n)` | `GameRGBAColor` | 原地标量乘法：每个通道乘以 `n` |
 
 #### 创建新颜色 (不修改自身)
 
@@ -270,6 +290,7 @@ var opaque  = new GameRGBAColor(0, 1, 0, 1.0);
 | `c.mul(o)` | `GameRGBAColor` | 逐通道乘法 |
 | `c.div(o)` | `GameRGBAColor` | 逐通道除法，除以 0 得 0 |
 | `c.lerp(o, t)` | `GameRGBAColor` | 线性插值 |
+| `c.scale(n)` | `GameRGBAColor` | 标量乘法：每个通道乘以 `n` |
 | `c.equals(o)` | `boolean` | 近似相等，容差 1e-6 |
 | `c.blendEq(rgb)` | `GameRGBColor` | Alpha 混合到 RGB 背景上，返回最终 RGB |
 
@@ -347,6 +368,8 @@ var q = new GameQuaternion(w, x, y, z);    // 指定分量
 | `q.rotateX(rad)` | `GameQuaternion` | 绕 X 轴旋转 |
 | `q.rotateY(rad)` | `GameQuaternion` | 绕 Y 轴旋转 |
 | `q.rotateZ(rad)` | `GameQuaternion` | 绕 Z 轴旋转 |
+| `q.rotateVector(v)` | `GameVector3` | 用此四元数旋转向量 `v` |
+| `q.toEuler()` | `GameVector3` | 转为欧拉角 (YZX 顺序)，返回 `(x, y, z)` 弧度 |
 
 #### 轴角分解
 
@@ -370,6 +393,12 @@ var q2 = GameQuaternion.fromEuler(x, y, z);
 
 // 从向量 a 旋转到向量 b 的最短弧
 var q3 = GameQuaternion.rotationBetween(fromVec, toVec);
+
+// 从观察方向创建四元数 (从 from 看向 to)
+var q4 = GameQuaternion.lookAt(from, to, up);
+// from: GameVector3 — 观察者位置
+// to:   GameVector3 — 目标点
+// up:   GameVector3 — 上方向 (默认 (0,1,0))
 ```
 
 ### toString

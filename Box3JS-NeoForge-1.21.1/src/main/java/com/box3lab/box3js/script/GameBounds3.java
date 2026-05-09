@@ -50,6 +50,56 @@ public class GameBounds3 {
         return contains(b.lo) && contains(b.hi);
     }
 
+    public GameVector3 center() {
+        return new GameVector3(
+            (lo.x + hi.x) / 2, (lo.y + hi.y) / 2, (lo.z + hi.z) / 2);
+    }
+
+    public GameVector3 size() {
+        return new GameVector3(hi.x - lo.x, hi.y - lo.y, hi.z - lo.z);
+    }
+
+    public GameBounds3 expand(double delta) {
+        return new GameBounds3(
+            new GameVector3(lo.x - delta, lo.y - delta, lo.z - delta),
+            new GameVector3(hi.x + delta, hi.y + delta, hi.z + delta));
+    }
+
+    public GameBounds3 expandEq(double delta) {
+        lo.x -= delta; lo.y -= delta; lo.z -= delta;
+        hi.x += delta; hi.y += delta; hi.z += delta;
+        return this;
+    }
+
+    public GameBounds3 growToInclude(GameVector3 v) {
+        if (v.x < lo.x) lo.x = v.x;
+        if (v.y < lo.y) lo.y = v.y;
+        if (v.z < lo.z) lo.z = v.z;
+        if (v.x > hi.x) hi.x = v.x;
+        if (v.y > hi.y) hi.y = v.y;
+        if (v.z > hi.z) hi.z = v.z;
+        return this;
+    }
+
+    public GameVector3 closestPoint(GameVector3 v) {
+        return new GameVector3(
+            Math.max(lo.x, Math.min(hi.x, v.x)),
+            Math.max(lo.y, Math.min(hi.y, v.y)),
+            Math.max(lo.z, Math.min(hi.z, v.z)));
+    }
+
+    public GameBounds3 move(GameVector3 offset) {
+        return new GameBounds3(
+            new GameVector3(lo.x + offset.x, lo.y + offset.y, lo.z + offset.z),
+            new GameVector3(hi.x + offset.x, hi.y + offset.y, hi.z + offset.z));
+    }
+
+    public GameBounds3 moveEq(GameVector3 offset) {
+        lo.x += offset.x; lo.y += offset.y; lo.z += offset.z;
+        hi.x += offset.x; hi.y += offset.y; hi.z += offset.z;
+        return this;
+    }
+
     public static GameBounds3 fromPoints(Object points) {
         if (!(points instanceof NativeArray arr)) return null;
         long len = arr.getLength();

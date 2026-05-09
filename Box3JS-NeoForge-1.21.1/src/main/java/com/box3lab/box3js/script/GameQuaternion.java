@@ -142,6 +142,89 @@ public class GameQuaternion {
         return rz.mul(this);
     }
 
+    /** Rotates a vector by this unit quaternion. */
+    public GameVector3 rotateVector(GameVector3 v) {
+        // v' = v*(w²-|r|²) + 2*r*(r·v) + 2*w*(r × v)
+        GameVector3 r = new GameVector3(x, y, z);
+        double w2mr2 = w * w - (x * x + y * y + z * z);
+        double dot2 = 2 * r.dot(v);
+        GameVector3 term1 = v.scale(w2mr2);
+        GameVector3 term2 = r.scale(dot2);
+        GameVector3 term3 = r.cross(v).scale(2 * w);
+        return new GameVector3(
+            term1.x + term2.x + term3.x,
+            term1.y + term2.y + term3.y,
+            term1.z + term2.z + term3.z
+        );
+    }
+
+    /** Decomposes this quaternion into YZX Euler angles (radians).
+     *  Returns a GameVector3 where x/y/z correspond to rotation angles around the X/Y/Z axes. */
+    public GameVector3 toEuler() {
+        double m10 = 2 * (x * y + w * z);
+        double m00 = 1 - 2 * (y * y + z * z);
+        double m20 = 2 * (x * z - w * y);
+        double m11 = 1 - 2 * (x * x + z * z);
+        double m12 = 2 * (y * z - w * x);
+
+        double ez = Math.asin(Math.max(-1, Math.min(1, m10)));
+        double ey, ex;
+        double cosZ = Math.cos(ez);
+        if (Math.abs(cosZ) < 1e-6) {
+            ex = 0;
+            ey = Math.atan2(-m20, m00);
+        } else {
+            ex = Math.atan2(-m12, m11);
+            ey = Math.atan2(-m20, m00);
+        }
+        return new GameVector3(ex, ey, ez);
+    }
+
+    /** Builds a look-at quaternion rotating the -Z direction toward (to-from). */
+    public static GameQuaternion lookAt(GameVector3 from, GameVector3 to, GameVector3 up) {
+        GameVector3 fwd = to.sub(from).normalize();
+        GameVector3 right = fwd.cross(up).normalize();
+        if (right.mag() < 0.001) {
+            right = new GameVector3(1, 0, 0).cross(fwd).normalize();
+            if (right.mag() < 0.001)
+                right = new GameVector3(0, 1, 0).cross(fwd).normalize();
+        }
+        GameVector3 upCorr = right.cross(fwd).normalize();
+
+        double m00 = right.x, m01 = upCorr.x, m02 = -fwd.x;
+        double m10 = right.y, m11 = upCorr.y, m12 = -fwd.y;
+        double m20 = right.z, m21 = upCorr.z, m22 = -fwd.z;
+
+        double trace = m00 + m11 + m22;
+        double w, x, y, z;
+        if (trace > 0) {
+            double s = Math.sqrt(trace + 1) * 2;
+            w = 0.25 * s;
+            x = (m21 - m12) / s;
+            y = (m02 - m20) / s;
+            z = (m10 - m01) / s;
+        } else if (m00 > m11 && m00 > m22) {
+            double s = Math.sqrt(1 + m00 - m11 - m22) * 2;
+            w = (m21 - m12) / s;
+            x = 0.25 * s;
+            y = (m01 + m10) / s;
+            z = (m02 + m20) / s;
+        } else if (m11 > m22) {
+            double s = Math.sqrt(1 + m11 - m00 - m22) * 2;
+            w = (m02 - m20) / s;
+            x = (m01 + m10) / s;
+            y = 0.25 * s;
+            z = (m12 + m21) / s;
+        } else {
+            double s = Math.sqrt(1 + m22 - m00 - m11) * 2;
+            w = (m10 - m01) / s;
+            x = (m02 + m20) / s;
+            y = (m12 + m21) / s;
+            z = 0.25 * s;
+        }
+        return new GameQuaternion(w, x, y, z);
+    }
+
     // ---- Static constructors ----
 
     public static GameQuaternion fromAxisAngle(GameVector3 axis, double rad) {

@@ -5,6 +5,7 @@ import java.nio.file.Path;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -490,6 +491,34 @@ public class Box3JSWorld {
         launchFirework(pos.x, pos.y, pos.z, color, shape);
     }
 
+    public void launchFirework(double x, double y, double z, GameRGBColor[] colors, String shape) {
+        var colorInts = new it.unimi.dsi.fastutil.ints.IntArrayList();
+        for (GameRGBColor c : colors) {
+            int r = (int) (Math.max(0, Math.min(1, c.r)) * 255);
+            int g = (int) (Math.max(0, Math.min(1, c.g)) * 255);
+            int b = (int) (Math.max(0, Math.min(1, c.b)) * 255);
+            colorInts.add(0xFF000000 | (r << 16) | (g << 8) | b);
+        }
+        if (colorInts.isEmpty()) colorInts.add(0xFFFFFFFF);
+
+        FireworkExplosion.Shape fireworkShape = switch (shape != null ? shape.toLowerCase(java.util.Locale.ROOT) : "ball") {
+            case "large_ball" -> FireworkExplosion.Shape.LARGE_BALL;
+            case "star" -> FireworkExplosion.Shape.STAR;
+            case "creeper" -> FireworkExplosion.Shape.CREEPER;
+            case "burst" -> FireworkExplosion.Shape.BURST;
+            default -> FireworkExplosion.Shape.SMALL_BALL;
+        };
+        var explosion = new FireworkExplosion(fireworkShape, colorInts, colorInts, false, true);
+        var fireworks = new Fireworks(1, java.util.List.of(explosion));
+        ItemStack rocket = new ItemStack(Items.FIREWORK_ROCKET);
+        rocket.set(DataComponents.FIREWORKS, fireworks);
+        var entity = new net.minecraft.world.entity.projectile.FireworkRocketEntity(server.overworld(), x, y, z, rocket);
+        server.overworld().addFreshEntity(entity);
+    }
+    public void launchFirework(GameVector3 pos, GameRGBColor[] colors, String shape) {
+        launchFirework(pos.x, pos.y, pos.z, colors, shape);
+    }
+
     // ---- Particle ----
 
     public void spawnParticle(String type, double x, double y, double z, int count, double dx, double dy, double dz, double speed) {
@@ -498,6 +527,12 @@ public class Box3JSWorld {
     }
     public void spawnParticle(String type, GameVector3 pos, int count, double dx, double dy, double dz, double speed) {
         spawnParticle(type, pos.x, pos.y, pos.z, count, dx, dy, dz, speed);
+    }
+    public void spawnParticle(double x, double y, double z, GameRGBColor color, int count, double dx, double dy, double dz, double speed) {
+        server.overworld().sendParticles(new DustParticleOptions(new org.joml.Vector3f((float) color.r, (float) color.g, (float) color.b), 1.0f), x, y, z, count, dx, dy, dz, speed);
+    }
+    public void spawnParticle(GameVector3 pos, GameRGBColor color, int count, double dx, double dy, double dz, double speed) {
+        spawnParticle(pos.x, pos.y, pos.z, color, count, dx, dy, dz, speed);
     }
     public void spawnParticleCircle(double x, double y, double z, double radius, String type, int count) {
         var particle = Box3ScriptUtils.lookupParticle(type);

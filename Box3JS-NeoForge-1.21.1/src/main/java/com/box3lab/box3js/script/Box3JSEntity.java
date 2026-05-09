@@ -1,6 +1,8 @@
 package com.box3lab.box3js.script;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
@@ -12,6 +14,8 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.scores.PlayerTeam;
+import net.minecraft.world.scores.Scoreboard;
 import org.mozilla.javascript.Function;
 
 import java.util.Map;
@@ -112,6 +116,32 @@ public class Box3JSEntity {
 
     public boolean isGlowing() { return entity.isCurrentlyGlowing(); }
     public void setGlowing(boolean v) { trackIfSandboxed(); entity.setGlowingTag(v); }
+
+    public void setGlowColor(GameRGBColor color) {
+        trackIfSandboxed();
+        Scoreboard sb = server.getScoreboard();
+        String teamName = "b3js_g_" + entity.getStringUUID().replaceAll("-", "");
+        PlayerTeam team = sb.getPlayerTeam(teamName);
+        if (team == null) team = sb.addPlayerTeam(teamName);
+        team.setColor(closestChatFormatting(color));
+        sb.addPlayerToTeam(entity.getScoreboardName(), team);
+        entity.setGlowingTag(true);
+    }
+
+    private static ChatFormatting closestChatFormatting(GameRGBColor c) {
+        ChatFormatting best = ChatFormatting.WHITE;
+        double bestDist = Double.MAX_VALUE;
+        for (ChatFormatting cf : ChatFormatting.values()) {
+            Integer col = cf.getColor();
+            if (col == null) continue;
+            double dr = ((col >> 16) & 0xFF) / 255.0 - c.r;
+            double dg = ((col >> 8) & 0xFF) / 255.0 - c.g;
+            double db = (col & 0xFF) / 255.0 - c.b;
+            double dist = dr * dr + dg * dg + db * db;
+            if (dist < bestDist) { bestDist = dist; best = cf; }
+        }
+        return best;
+    }
 
     // ---- Name tag (MC extension) ----
 
@@ -334,6 +364,55 @@ public class Box3JSEntity {
     public void setPersistent(boolean v) {
         trackIfSandboxed();
         if (entity instanceof Mob mob && v) mob.setPersistenceRequired();
+    }
+
+    // ---- TextDisplay (MC extension) ----
+
+    private static final java.lang.reflect.Method _tdSetText;
+    private static final java.lang.reflect.Method _tdGetText;
+    private static final java.lang.reflect.Method _tdSetBgColor;
+    static {
+        try {
+            Class<?> td = net.minecraft.world.entity.Display.TextDisplay.class;
+            _tdSetText = td.getDeclaredMethod("setText", Component.class);
+            _tdSetText.setAccessible(true);
+            _tdGetText = td.getDeclaredMethod("getText");
+            _tdGetText.setAccessible(true);
+            _tdSetBgColor = td.getDeclaredMethod("setBackgroundColor", int.class);
+            _tdSetBgColor.setAccessible(true);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to access TextDisplay methods", e);
+        }
+    }
+
+    public void setText(String text) {
+        if (entity instanceof net.minecraft.world.entity.Display.TextDisplay td) {
+            try { _tdSetText.invoke(td, Component.literal(text)); } catch (Exception ignored) {}
+        }
+    }
+
+    public void setTextColor(GameRGBColor color) {
+        if (entity instanceof net.minecraft.world.entity.Display.TextDisplay td) {
+            try {
+                Component current = (Component) _tdGetText.invoke(td);
+                String text = current != null ? current.getString() : "";
+                int r = (int) (Math.max(0, Math.min(1, color.r)) * 255);
+                int g = (int) (Math.max(0, Math.min(1, color.g)) * 255);
+                int b = (int) (Math.max(0, Math.min(1, color.b)) * 255);
+                int rgb = (r << 16) | (g << 8) | b;
+                _tdSetText.invoke(td, Component.literal(text).withColor(rgb));
+            } catch (Exception ignored) {}
+        }
+    }
+
+    public void setTextBackgroundColor(GameRGBAColor color) {
+        if (entity instanceof net.minecraft.world.entity.Display.TextDisplay td) {
+            int r = (int) (Math.max(0, Math.min(1, color.r)) * 255);
+            int g = (int) (Math.max(0, Math.min(1, color.g)) * 255);
+            int b = (int) (Math.max(0, Math.min(1, color.b)) * 255);
+            int a = (int) (Math.max(0, Math.min(1, color.a)) * 255);
+            try { _tdSetBgColor.invoke(td, (a << 24) | (r << 16) | (g << 8) | b); } catch (Exception ignored) {}
+        }
     }
 
     // ---- Attributes (MC extension) ----

@@ -22,7 +22,6 @@ import java.util.function.Consumer;
 public class Box3ScriptEngine {
 
     private static final Box3ScriptEngine INSTANCE = new Box3ScriptEngine();
-    private static final int MAX_SCRIPT_SLEEP_MS = 10;
 
     private ScriptableObject scope;
     private Box3JSWorld worldBinding;
@@ -918,37 +917,6 @@ public class Box3ScriptEngine {
                         }
                     });
                     return req.requireMain(cx, moduleId);
-                }
-            });
-            ScriptableObject.putProperty(scope, "sleep", new BaseFunction() {
-                @Override
-                public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-                    if (args.length == 0 || !(args[0] instanceof Number)) {
-                        throw ScriptRuntime.throwError(cx, scope, "sleep(ms) requires a numeric millisecond argument");
-                    }
-
-                    int requestedMs = ((Number) args[0]).intValue();
-                    if (requestedMs < 0) {
-                        throw ScriptRuntime.throwError(cx, scope, "sleep(ms) cannot be negative");
-                    }
-                    if (requestedMs == 0) {
-                        return Undefined.instance;
-                    }
-
-                    int ms = requestedMs;
-                    if (ms > MAX_SCRIPT_SLEEP_MS) {
-                        String project = currentProject != null ? currentProject : "<unknown>";
-                        Box3JS.LOGGER.warn("sleep({}) in project {} exceeds safe limit; clamped to {}ms",
-                                requestedMs, project, MAX_SCRIPT_SLEEP_MS);
-                        ms = MAX_SCRIPT_SLEEP_MS;
-                    }
-
-                    try {
-                        Thread.sleep(ms);
-                    } catch (InterruptedException ignored) {
-                        Thread.currentThread().interrupt();
-                    }
-                    return Undefined.instance;
                 }
             });
             ScriptableObject.putProperty(scope, "GameVector3", new NativeJavaClass(scope, GameVector3.class));

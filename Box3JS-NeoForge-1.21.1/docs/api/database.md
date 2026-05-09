@@ -86,17 +86,18 @@ db.sql`INSERT INTO players (name, score, lastLogin) VALUES (${"Steve"}, ${100}, 
 ### 查询数据
 
 ```js
-// 获取所有行 — 用 for 循环，不要用 .map()（Rhino 的 NativeArray 不支持 ES5 数组方法）
+// TypeScript 可直接用 .map() / .filter() / .forEach() / for...of / 箭头函数
+// (Babel 编译为 Rhino 兼容的 for 循环)
 var rows = db.sql("SELECT * FROM players WHERE score > ?", 50).rows;
-for (var i = 0; i < rows.length; i++) {
-  console.log(rows[i].name + ": " + rows[i].score);
-}
+rows.forEach((row) => {
+  console.log(`${row.name}: ${row.score}`);
+});
 
-// tagged template 风格
-var rows = db.sql`SELECT * FROM players WHERE score > ${50}`.rows;
-for (var i = 0; i < rows.length; i++) {
-  console.log(rows[i].name + ": " + rows[i].score);
-}
+// tagged template + .filter() + .map() 链式调用
+var scores = db.sql`SELECT name, score FROM players WHERE score > ${50}`.rows
+  .filter((r) => r.score > 20)
+  .map((r) => `${r.name}: ${r.score}`);
+scores.forEach((s) => console.log(s));
 
 // 获取第一行
 var player = db.sql("SELECT * FROM players WHERE name = ?", "Steve").firstRow;
@@ -284,11 +285,22 @@ db.sql(
 
 ## Rhino 兼容性注意事项
 
-Box3JS 使用 Rhino 1.9.1 引擎，不支持部分 ES5 特性：
+Box3JS 使用 Rhino 1.9.1 引擎。**TypeScript 项目用 `npm run build` 编译后，以下特性均可直接使用**（Babel 插件自动转为 Rhino 兼容代码）：
 
-- **`result.rows` 返回 `NativeArray`**，不支持 `.map()`、`.filter()`、`.forEach()` 等 ES5 数组方法，请使用 for 循环。
-- **避免正则字面量**（如 `/\s+/`），改用字符串方法（如 `split(" ")` + filter）。
-- **箭头函数、模板字面量、展开运算符** — TypeScript 编译时会自动转成 ES5，但写纯 JS 时注意避开。
+| 特性 | 编译方式 |
+|------|---------|
+| 箭头函数 `(x) => x + 1` | Babel `@babel/preset-env` |
+| 模板字面量 `` `Hello ${name}` `` | `rhinoTemplatePlugin` |
+| `for...of` (JS 数组 + Java ArrayList) | `rhinoForOfPlugin` → 索引 for 循环 + `.toArray()` |
+| `.map()` `.filter()` `.forEach()` `.find()` `.some()` `.every()` | `rhinoArrayMethodsPlugin` → IIFE + for 循环 |
+| `const` / `let` | Babel `@babel/preset-env` |
+| 解构 `const { x, y } = obj` | Babel `@babel/preset-env` |
+
+**纯 JS 脚本注意事项：**
+
+- `result.rows` 返回 `NativeArray`，不支持 ES5 数组方法，请使用 for 循环。
+- 避免正则字面量（如 `/\s+/`），改用字符串方法。
+- 箭头函数、模板字面量、for...of 等需要用 TypeScript 编译后才能使用。
 
 ## 注意事项
 
