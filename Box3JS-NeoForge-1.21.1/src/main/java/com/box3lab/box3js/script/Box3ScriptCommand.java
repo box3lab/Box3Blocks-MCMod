@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
+import com.box3lab.box3js.standalone.Box3ScriptCompiler;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -34,7 +35,8 @@ public class Box3ScriptCommand {
                         .then(stopCommand())
                         .then(reloadCommand())
                         .then(watchCommand())
-                        .then(sandboxCommand()));
+                        .then(sandboxCommand())
+                        .then(compileCommand()));
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -336,6 +338,102 @@ public class Box3ScriptCommand {
                                                         + " §8— tracking changes for rollback"),
                                         false);
                             }
+                            return 1;
+                        }));
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // /box3script compile <project>     — 编译为独立 JAR
+    // /box3script compile runtime       — 构建共享 Rhino 运行时 JAR
+    // ═══════════════════════════════════════════════════════════
+
+    private static LiteralArgumentBuilder<CommandSourceStack> compileCommand() {
+        return literal("compile")
+                .then(argument("project", StringArgumentType.word())
+                        .suggests(Box3ScriptCommand::suggestProjects)
+                        .executes(ctx -> {
+                            String project = StringArgumentType.getString(ctx, "project");
+                            var config = Box3ScriptConfig.get();
+                            config.discover(ctx.getSource().getServer());
+                            if (!config.listProjects().containsKey(project)) {
+                                ctx.getSource().sendFailure(
+                                        Component.literal("§cUnknown project: " + project));
+                                return 0;
+                            }
+
+                            Path projectDir = scriptDir(ctx.getSource().getServer())
+                                    .resolve(project).normalize();
+                            Path appJs = projectDir.resolve("dist/app.js");
+                            if (!Files.exists(appJs)) {
+                                ctx.getSource().sendFailure(
+                                        Component.literal("§cdist/app.js not found — run 'npm run build' first"));
+                                return 0;
+                            }
+
+                            // Read package.json for metadata
+                            String[] info = Box3ScriptCompiler.readPackageInfo(projectDir);
+                            String modId = info[0];
+                            String displayName = info[1];
+                            String modVersion = info[2];
+                            String description = info[3];
+                            String author = info[4];
+                            String license = info[5];
+                            String homepage = info[6];
+                            String bugsUrl = info[7];
+                            String logoFile = info[8];
+
+                            Path outputJar = projectDir.resolve(
+                                    "dist/" + modId + "-" + modVersion + ".jar");
+                            ctx.getSource().sendSuccess(
+                                    () -> Component.literal(
+                                            "§7Compiling §f" + project
+                                                    + " §7→ §f" + modId + "-" + modVersion + ".jar§7..."),
+                                    false);
+
+                            // Get the running Box3JS mod version for dependency range
+                            String box3jsVersion = net.neoforged.fml.ModList.get()
+                                    .getModContainerById(Box3ScriptCompiler.BOX3JS_MOD_ID)
+                                    .map(c -> c.getModInfo().getVersion().toString())
+                                    .orElse("0");
+
+                            String finalModId = modId;
+                            String finalDisplayName = displayName;
+                            String finalModVersion = modVersion;
+                            String finalDescription = description;
+                            String finalAuthor = author;
+                            String finalLicense = license;
+                            String finalHomepage = homepage;
+                            String finalBugsUrl = bugsUrl;
+                            String finalLogoFile = logoFile;
+                            String finalBox3jsVersion = box3jsVersion;
+                            // Run on background thread to avoid blocking server
+                            CompletableFuture.runAsync(() -> {
+                                try {
+                                    new Box3ScriptCompiler(
+                                            projectDir, outputJar, finalModId, finalDisplayName,
+                                            finalModVersion, finalDescription, finalAuthor, finalLicense,
+                                            finalHomepage, finalBugsUrl, finalLogoFile, finalBox3jsVersion)
+                                            .compile();
+                                    ctx.getSource().getServer().execute(() -> {
+                                        String jarPath = outputJar.toAbsolutePath().toString();
+                                        Component msg = Component.literal(
+                                                "§aCompiled: §f" + jarPath + "\n")
+                                                .append(Component.literal(
+                                                        "§7Deploy this JAR alongside box3js in mods/."));
+                                        ctx.getSource().sendSuccess(() -> msg, false);
+                                    });
+                                } catch (Exception e) {
+                                    String err = e.getMessage();
+                                    if (err == null)
+                                        err = e.getClass().getSimpleName();
+                                    String finalErr = err;
+                                    ctx.getSource().getServer().execute(() -> {
+                                        ctx.getSource().sendFailure(
+                                                Component.literal("§cCompile failed: " + finalErr));
+                                    });
+                                }
+                            });
+
                             return 1;
                         }));
     }

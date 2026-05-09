@@ -230,10 +230,23 @@ config/box3/script/mygame/
 │   ├── state.ts          ← 共享游戏状态
 │   └── ...
 └── dist/
-    └── app.js            ← 编译产物（模组实际加载此文件）
+    ├── app.js            ← 编译产物（模组实际加载此文件）
+    └── <name>-<ver>.jar  ← 独立 JAR（/box3script compile）
 ```
 
 `npm run build` 执行构建。`/box3script watch` 开启文件监控自动热重载。
+
+## 发布部署
+
+开发调试完成后，将脚本编译为**独立 JAR 模组**，无需 Box3JS 即可运行在任意 NeoForge 服务器：
+
+```
+/box3script compile <项目名>
+```
+
+生成 `<项目名>-<版本号>.jar`（从 `package.json` 读取 name/displayName/version/description/author/license/homepage/logoFile 等元数据），放入 `mods/` 目录启动即可。
+
+详见 [完整命令参考 →](commands.md#box3script-compile-project)
 
 ## Tick 换算
 

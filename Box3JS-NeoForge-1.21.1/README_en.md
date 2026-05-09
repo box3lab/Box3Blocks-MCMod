@@ -75,6 +75,7 @@ Edit `src/app.ts`, re-run `npm run build`, then `/box3script reload mygame` — 
 | `/box3script reload [project]` | Reload scripts (for development) |
 | `/box3script watch` | Toggle file watching (auto hot-reload) |
 | `/box3script sandbox <project>` | Toggle sandbox (on=track / off=rollback) |
+| `/box3script compile <project>` | Compile to standalone JAR (no Box3JS needed) |
 
 All `<project>` arguments support **Tab completion**. [Full command reference →](docs/api/commands_en.md)
 

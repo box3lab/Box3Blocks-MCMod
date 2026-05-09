@@ -114,6 +114,70 @@ npm install && npm run build
 
 > **注意：** 沙盒仅追踪通过脚本 API 修改的方块（`setVoxel`/`setVoxelId`/`fillVoxel`），手动挖掘不受影响。
 
+### `/box3script compile <project>`
+
+将脚本项目编译为**轻量独立 JAR 模组**（~50KB），依赖 Box3JS 模组提供 Rhino 运行时和 API 绑定。
+
+```
+/box3script compile mygame
+```
+
+> **依赖：** 脚本 JAR 不包含 Rhino 或 Box3JS API 类，需将 Box3JS 模组（`box3js`）一同放入 `mods/`。
+
+编译时**从 `package.json` 读取以下字段**写入 `neoforge.mods.toml`：
+
+| package.json | mods.toml 字段 | 说明 |
+|-------------|---------------|------|
+| `name` | `modId` | 模组 ID |
+| `displayName` | `displayName` | 模组显示名称（默认同 `name`） |
+| `version` | `version` | 版本号 |
+| `description` | `description` | 模组简介 |
+| `author` | `credits` | 作者/致谢 |
+| `license` | `license` | 许可证（默认 `All Rights Reserved`） |
+| `homepage` | `displayURL` | 项目主页链接 |
+| `bugs.url` | `issueTrackerURL` | 问题反馈链接 |
+| `logoFile` | `logoFile` | 模组图标（项目中的 PNG 路径，打包为 `logo.png`） |
+
+> **`logoFile` 使用说明：** 填写项目根目录下的 PNG 文件相对路径（如 `"logoFile": "logo.png"`），编译时自动打包为 JAR 根目录的 `logo.png`，无需在 `neoforge.mods.toml` 中手动配置。NeoForge 建议尺寸 128×128 或 256×256，仅支持 PNG 格式。不填则使用默认模组图标。
+
+输出文件名格式：`dist/<name>-<version>.jar`。编译在后台线程运行，不阻塞服务器 tick，完成后聊天栏通知输出路径。
+
+**前提条件：**
+
+- 已完成 `npm run build`（`dist/app.js` 存在）
+- 服务器运行在 **JDK**（不是 JRE），因为需要调用 `javac` 编译生成的 `@Mod` 入口类
+
+**输出 JAR 内容：**
+
+```
+mygame-1.0.0.jar
+├── META-INF/neoforge.mods.toml    ← 模组元数据（依赖 box3js）
+├── logo.png                       ← 模组图标（如有指定）
+├── box3script/mygame/MygameMod.class ← @Mod 入口（含硬编码元数据）
+└── box3script/mygame/app.js       ← 打包的脚本源码
+```
+
+**部署：** 将脚本 JAR 与 Box3JS 模组一起放入 `mods/`：
+
+```
+mods/
+├── box3js-1.0.0.jar       ← Box3JS 主模组
+└── mygame-1.0.0.jar       ← 编译的脚本模组
+```
+
+**与解释模式的区别：**
+
+| | 解释模式 | 编译模式 |
+|---|---|---|
+| 加载方式 | `/box3script start` | 放入 `mods/` 启动服务器 |
+| 命令管理 | `/box3script start/stop/reload` | 不受 `/box3script` 管理 |
+| 启用/禁用 | `/box3script start/stop` | 增删 `mods/` 下的 JAR，重启服务器 |
+| 需要 Box3JS | 是 | 是 |
+| 热重载 | 支持 | 不支持（JAR 重启才生效） |
+| 适用场景 | 开发调试 | 分发部署 |
+
+> **注意：** 编译后的 JAR 是标准 NeoForge mod，由 NeoForge mod loader 管理，**不受** `/box3script start/stop/reload` 控制。多个编译 JAR 可同时放入 `mods/`，各自独立运行，互不干扰。
+
 ## 配置文件
 
 启用/禁用状态保存在 `config/box3/scripts.json`：
@@ -138,7 +202,9 @@ config/box3/
   │       ├── tsconfig.json
   │       ├── types/globals.d.ts
   │       ├── src/app.ts
-  │       └── dist/app.js       ← 编译产物
+  │       └── dist/
+│           ├── app.js       ← 编译产物
+│           └── <name>-<ver>.jar ← 独立 JAR（compile 命令生成）
   ├── data/                      ← SQLite 数据库 (db API)
   └── storage/                  ← storage API 持久化
 ```

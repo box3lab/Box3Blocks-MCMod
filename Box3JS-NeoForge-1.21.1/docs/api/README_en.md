@@ -230,10 +230,23 @@ config/box3/script/mygame/
 │   ├── state.ts          ← Shared game state
 │   └── ...
 └── dist/
-    └── app.js            ← Compiled output (what the mod actually loads)
+    ├── app.js            ← Compiled output (what the mod actually loads)
+    └── <name>-<ver>.jar  ← Standalone JAR (/box3script compile)
 ```
 
 Run `npm run build` to build. Use `/box3script watch` to enable file watching for auto hot-reload.
+
+## Deployment
+
+When ready to distribute, compile your script into a **standalone JAR mod** that runs on any NeoForge server without Box3JS:
+
+```
+/box3script compile <project>
+```
+
+Outputs `<project>-<version>.jar` (metadata read from `package.json`: name, displayName, version, description, author, license, homepage, logoFile). Drop it into `mods/` and start the server.
+
+See [full command reference →](commands_en.md#box3script-compile-project)
 
 ## Tick Conversion
 

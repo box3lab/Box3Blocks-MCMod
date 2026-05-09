@@ -1,6 +1,15 @@
 {
-  "name": "box3js",
+  "name": "PROJECT_NAME",
   "version": "1.0.0",
+  "displayName": "PROJECT_NAME",
+  "description": "A Box3JS script mod",
+  "author": "",
+  "license": "All Rights Reserved",
+  "homepage": "",
+  "bugs": {
+    "url": ""
+  },
+  "logoFile": "",
   "private": true,
   "type": "module",
   "scripts": {

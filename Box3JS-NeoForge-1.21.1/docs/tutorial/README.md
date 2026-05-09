@@ -28,6 +28,7 @@
 - **语言：** JavaScript/TypeScript。如果你会 JS，直接用 `.ts` 文件当成 JS 写就行。
 - **环境：** 所有代码运行在服务端，不需要客户端安装任何东西。
 - **热重载：** 改完代码 `npm run build` 后 `/box3script reload`，无需重启服务器。
+- **发布部署：** 开发完成后 `/box3script compile` 编译为独立 JAR，丢进任意服务器 `mods/` 即可运行，无需 Box3JS。
 - **API 速查：** 写代码时遇到"这个功能用什么 API"，翻 [API 速查表](../api/README.md) 按任务查找。
 
 ## 最简示例

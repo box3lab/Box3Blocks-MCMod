@@ -1,6 +1,5 @@
 package com.box3lab.box3js.script;
 
-import com.box3lab.box3js.Box3JS;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,8 +18,12 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
+
 public class Box3ScriptEngine {
 
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static final Box3ScriptEngine INSTANCE = new Box3ScriptEngine();
 
     private ScriptableObject scope;
@@ -55,6 +58,29 @@ public class Box3ScriptEngine {
         initialized = true;
     }
 
+    /**
+     * Creates a standalone engine for a compiled JAR script.
+     * Each standalone JAR gets its own isolated engine, scope, and bindings.
+     */
+    public static Box3ScriptEngine createStandalone(MinecraftServer server, String projectName, Path storageRoot) {
+        Box3ScriptEngine engine = new Box3ScriptEngine();
+        engine.server = server;
+        engine.currentProject = projectName;
+        engine.sandbox = new Box3ScriptSandbox(server.overworld());
+        engine.worldBinding = new Box3JSWorld(server, engine);
+        engine.voxelsBinding = new Box3JSVoxels(server, engine.sandbox);
+        engine.storageBinding = new Box3JSStorage(storageRoot, engine);
+        engine.dbBinding = new Box3JSDatabase(storageRoot, engine);
+        engine.setupScope();
+        engine.initialized = true;
+        return engine;
+    }
+
+    /** Exposed for standalone JAR bootstrap. */
+    public ScriptableObject getScope() {
+        return scope;
+    }
+
     /** Execute app.js for enabled projects under config/box3/script/ */
     public void autoLoad(MinecraftServer server) {
         init(server);
@@ -78,9 +104,9 @@ public class Box3ScriptEngine {
                             try {
                                 setCurrentProject(name);
                                 eval("require('./app')");
-                                Box3JS.LOGGER.info("Auto-loaded project: {}", name);
+                                LOGGER.info("Auto-loaded project: {}", name);
                             } catch (Exception e) {
-                                Box3JS.LOGGER.error("Failed to auto-load: {}", appJs, e);
+                                LOGGER.error("Failed to auto-load: {}", appJs, e);
                             } finally {
                                 setCurrentProject(null);
                             }
@@ -104,7 +130,7 @@ public class Box3ScriptEngine {
 
     /** Report error to the current errorReporter (player), or just log if none. */
     void reportError(String msg) {
-        Box3JS.LOGGER.error(msg);
+        LOGGER.error(msg);
         if (errorReporter != null)
             errorReporter.accept(msg);
     }
@@ -314,9 +340,9 @@ public class Box3ScriptEngine {
         dbBinding.closeProject(project);
         var summary = sandbox.restoreProject(project);
         if (summary.hasAny()) {
-            Box3JS.LOGGER.info("Sandbox [{}] restored: {}", project, summary.toMessage());
+            LOGGER.info("Sandbox [{}] restored: {}", project, summary.toMessage());
         }
-        Box3JS.LOGGER.info("Removed project: {}", project);
+        LOGGER.info("Removed project: {}", project);
     }
 
     /** Check if a project is currently loaded and running. */

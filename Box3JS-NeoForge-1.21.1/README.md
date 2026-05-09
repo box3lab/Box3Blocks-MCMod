@@ -75,6 +75,7 @@ npm install && npm run build
 | `/box3script reload [project]` | 重载脚本（开发用） |
 | `/box3script watch` | 切换文件监控（自动热重载） |
 | `/box3script sandbox <project>` | 切换沙盒模式（开=追踪 / 关=回滚） |
+| `/box3script compile <project>` | 编译为独立 JAR 模组（无需 Box3JS） |
 
 所有 `<project>` 参数支持 **Tab 自动补全**。[完整命令文档 →](docs/api/commands.md)
 

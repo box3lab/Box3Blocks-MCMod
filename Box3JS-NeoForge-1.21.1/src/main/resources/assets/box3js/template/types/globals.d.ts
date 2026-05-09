@@ -570,15 +570,15 @@ interface GameDataStorage<T = JSONValue> {
   /**
    * @zh 存入一个键值对。值必须是可 JSON 序列化的类型。
    * @en Stores a key‑value pair. Value must be JSON‑serializable.
-   * @param key - 键 / key
-   * @param value - 值 / value (typed to T)
+   * @param key - @zh 键 @en key
+   * @param value - @zh 值 @en value (typed to T)
    */
   set(key: string, value: T): void;
 
   /**
    * @zh 读取键对应的值, 不存在则返回 null。
    * @en Retrieves the value for a key, or null if it does not exist.
-   * @returns 存储的值, 或 null
+   * @returns @zh 存储的值, 或 null @en The stored value, or null
    */
   get(key: string): T | null;
 
@@ -591,8 +591,8 @@ interface GameDataStorage<T = JSONValue> {
   /**
    * @zh 原子更新: 取出当前值, 用 handler(currentValue) 的结果覆盖。
    * @en Atomically updates a value using a callback.
-   * @param key - 键 / key
-   * @param handler - (prevValue) => newValue / callback receiving the old value, returning the new one
+   * @param key - @zh 键 @en key
+   * @param handler - @zh (prevValue) => newValue @en callback receiving the old value, returning the new one
    * @remarks 如果键不存在, 不会创建新条目 (遵循 Box3 规范)。
    *          If the key does not exist, nothing happens (per Box3 spec).
    *
@@ -605,16 +605,16 @@ interface GameDataStorage<T = JSONValue> {
   /**
    * @zh 删除键, 返回旧值 (不存在则返回 null)。
    * @en Removes a key and returns its previous value, or null.
-   * @returns 被删除的旧值 / the previous value, or null
+   * @returns @zh 被删除的旧值, 或 null @en The previous value, or null
    */
   remove(key: string): T | null;
 
   /**
    * @zh 原子递增 (delta 默认为 1)。
    * @en Atomically increments a numeric value by delta (default 1).
-   * @param key - 键 / key
-   * @param delta - 增量 (可选, 默认 1) / increment amount (optional, default 1)
-   * @returns 递增后的新值 / the new value after incrementing
+   * @param key - @zh 键 @en key
+   * @param delta - @zh 增量（可选，默认 1） @en increment amount (optional, default 1)
+   * @returns @zh 递增后的新值 @en The new value after incrementing
    * @remarks 键不存在时从 0 + delta 开始。
    *          If the key doesn't exist, starts from 0 + delta.
    */
@@ -623,14 +623,14 @@ interface GameDataStorage<T = JSONValue> {
   /**
    * @zh 分页查询存储条目。
    * @en Paginated query of stored entries.
-   * @param options - 查询选项 / query options
-   * @param options.cursor - 起始游标 (页码) / starting cursor (page number * pageSize)
-   * @param options.pageSize - 每页条目数 (1‑100, 默认 100) / items per page (1–100, default 100)
-   * @param options.ascending - 是否升序排列 / sort ascending if true
-   * @param options.max - 值的上限过滤 / maximum value filter
-   * @param options.min - 值的下限过滤 / minimum value filter
-   * @param options.constraintTarget - 排序/过滤的目标路径 (如 "a.b.c") / nested path for sorting/filtering
-   * @returns 分页结果对象 / paginated query result
+   * @param options - @zh 查询选项 @en query options
+   * @param options.cursor - @zh 起始游标（页码） @en starting cursor (page number * pageSize)
+   * @param options.pageSize - @zh 每页条目数（1‑100，默认 100） @en items per page (1–100, default 100)
+   * @param options.ascending - @zh 是否升序排列 @en sort ascending if true
+   * @param options.max - @zh 值的上限过滤 @en maximum value filter
+   * @param options.min - @zh 值的下限过滤 @en minimum value filter
+   * @param options.constraintTarget - @zh 排序/过滤的目标路径（如 "a.b.c"） @en nested path for sorting/filtering
+   * @returns @zh 分页结果对象 @en paginated query result
    */
   list(options?: {
     cursor?: number;
@@ -702,7 +702,7 @@ interface GameStorage {
   /**
    * @zh 打开或创建指定名称的数据存储空间 (项目隔离)。
    * @en Opens or creates a named data‑storage namespace (per‑project isolated).
-   * @param name - 命名空间 (可含 "/" 作为目录分隔) / namespace (may contain "/" as directory separator)
+   * @param name - @zh 命名空间（可含 "/" 作为目录分隔） @en namespace (may contain "/" as directory separator)
    * @remarks 不同项目使用同一 name 会访问不同文件。
    *          Different projects using the same name access different files.
    *
@@ -715,7 +715,7 @@ interface GameStorage {
   /**
    * @zh 获取跨项目共享存储 — 所有项目通过同一 name 读写同一份数据。
    * @en Shared cross‑project storage — all projects read/write the same data by name.
-   * @param name - 命名空间 / namespace
+   * @param name - @zh 命名空间 @en namespace
    * @remarks 底层使用 `__shared__/` 前缀, 适合全服排行榜、全局配置等场景。
    *          Uses `__shared__/` prefix internally; suitable for global leaderboards, shared config, etc.
    */
@@ -811,11 +811,9 @@ interface GameDatabase {
    * @zh 执行 SQL 查询或更新。
    * @en Executes a SQL query or update.
    *
-   * @param sql - SQL 字符串 (含 ? 占位符) 或字符串数组 (模板字面量)。
-   *             SQL string (with ? placeholders) or string array (template literal).
-   * @param params - 参数值 (number | string | boolean | null | Uint8Array)
-   *                 Parameter values to bind.
-   * @returns 查询结果 / query result
+   * @param sql - @zh SQL 字符串（含 ? 占位符）或字符串数组（模板字面量） @en SQL string (with ? placeholders) or string array (template literal)
+   * @param params - @zh 参数值 @en Parameter values to bind (number | string | boolean | null | Uint8Array)
+   * @returns @zh 查询结果 @en query result
    *
    * @example
    * // 指定行类型获得完整类型检查 / Specify row type for full type-checking
@@ -928,14 +926,14 @@ interface GameEntity {
   /**
    * @zh 对实体造成伤害。
    * @en Deals generic damage to the entity.
-   * @param amount - 伤害值 (半心) / damage amount in half‑hearts
+   * @param amount - @zh 伤害值（半心） @en damage amount in half‑hearts
    */
   hurt(amount: number): void;
 
   /**
    * @zh 治疗实体。
    * @en Heals the entity.
-   * @param amount - 治疗量 (半心) / healing amount in half‑hearts
+   * @param amount - @zh 治疗量（半心） @en healing amount in half‑hearts
    */
   heal(amount: number): void;
 
@@ -1055,16 +1053,16 @@ interface GameEntity {
   /**
    * @zh 读取实体属性值。
    * @en Reads a registered entity attribute value.
-   * @param attributeId - 属性 ID (如 "minecraft:generic.max_health")
-   * @returns 当前属性值, 不支持的实体返回 0
+   * @param attributeId - @zh 属性 ID @en attribute ID (e.g. "minecraft:generic.max_health")
+   * @returns @zh 当前属性值，不支持的实体返回 0 @en Current attribute value, 0 for unsupported entities
    */
   getAttribute(attributeId: string): number;
 
   /**
    * @zh 设置实体属性基础值。
    * @en Sets the base value of a registered entity attribute.
-   * @param attributeId - 属性 ID (如 "minecraft:generic.movement_speed")
-   * @param value - 新基础值 / new base value
+   * @param attributeId - @zh 属性 ID @en attribute ID (e.g. "minecraft:generic.movement_speed")
+   * @param value - @zh 新基础值 @en new base value
    * @remarks 仅对 LivingEntity 有效。Only works on living entities.
    */
   setAttribute(attributeId: string, value: number): void;
@@ -1074,7 +1072,7 @@ interface GameEntity {
   /**
    * @zh 给生物设置装备。
    * @en Equips an item onto a mob's equipment slot.
-   * @param slot - 槽位名称 / slot name:
+   * @param slot - @zh 槽位名称 @en slot name:
    *   "mainhand", "offhand", "head"/"helmet"/"helm",
    *   "chest"/"chestplate", "legs"/"leggings", "feet"/"boots"
    * @param itemId - 物品 ID (如 "minecraft:diamond_sword")
@@ -1084,8 +1082,8 @@ interface GameEntity {
   /**
    * @zh 设置装备掉落概率。
    * @en Sets the drop chance for an equipment slot.
-   * @param slot - 槽位名称 或 "all" / slot name or "all" for every slot
-   * @param chance - 掉落概率 (0‑1) / drop chance (0–1)
+   * @param slot - @zh 槽位名称 或 "all"（所有槽位） @en slot name or "all" for every slot
+   * @param chance - @zh 掉落概率（0‑1） @en drop chance (0–1)
    */
   setDropChance(slot: string, chance: number): void;
 
@@ -1094,9 +1092,9 @@ interface GameEntity {
   /**
    * @zh 让生物导航到指定坐标。
    * @en Orders a pathfinder mob to navigate to the given coordinates.
-   * @param x, y, z - 目标坐标
-   * @param speed - 移动速度倍率
-   * @returns 路径计算成功返回 true, 非 PathfinderMob 返回 false
+   * @param x, y, z - @zh 目标坐标 @en target coordinates
+   * @param speed - @zh 移动速度倍率 @en movement speed multiplier
+   * @returns @zh 路径计算成功返回 true，非 PathfinderMob 返回 false @en true if pathfinding succeeded, false for non-PathfinderMob entities
    */
   navigateTo(x: number, y: number, z: number, speed: number): boolean;
   /** @zh GameVector3 重载 @en GameVector3 overload. */
@@ -1428,7 +1426,7 @@ interface GamePlayer {
    * @en Shows a dialog panel — simplified; currently just sends text in MC.
    * @param config.content - 对话内容
    * @param config.options - 选项数组
-   * @returns 用户选择结果 { index, value }
+   * @returns @zh 用户选择结果 { index, value } @en User selection result { index, value }
    */
   dialog(config: { content?: string; options?: string[] }): {
     index: number;
@@ -1677,7 +1675,7 @@ interface GameWorld {
   /**
    * @zh 读取游戏规则。
    * @en Reads a game‑rule value.
-   * @param name - 规则名 / rule name (see setGameRule for the list)
+   * @param name - @zh 规则名 @en rule name (see setGameRule for the list)
    */
   getGameRule(name: string): boolean | null;
 
@@ -1714,7 +1712,7 @@ interface GameWorld {
    * @en Spawns an entity at the given position.
    * @param type - 实体类型 ID (如 "minecraft:zombie")
    * @param pos - 生成坐标
-   * @returns 生成的实体包装, 失败返回 null
+   * @returns @zh 生成的实体包装，失败返回 null @en The spawned entity wrapper, or null on failure
    */
   spawnEntity(type: string, pos: GameVector3): GameEntity | null;
 
@@ -1805,7 +1803,7 @@ interface GameWorld {
    * @zh 移除指定 ID 的配方 (黑名单机制, 服务器重载后需重新移除)。
    * @en Removes a recipe by ID (blacklisted; re‑apply after server reload).
    * @param recipeId - 配方 ID, 例如 "minecraft:iron_pickaxe"
-   * @returns 是否成功加入黑名单
+   * @returns @zh 是否成功加入黑名单 @en Whether the recipe was successfully blacklisted
    */
   removeRecipe(recipeId: string): boolean;
 
@@ -2079,7 +2077,7 @@ interface GameWorld {
    * @en Summons a lightning bolt at the given position.
    * @param x, y, z - 位置
    * @param damage - 伤害值 (可选, 仅对实体造成)
-   * @returns 是否成功
+   * @returns @zh 是否成功 @en Whether the lightning was successfully summoned
    */
   strikeLightning(x: number, y: number, z: number, damage?: number): boolean;
   strikeLightning(pos: GameVector3, damage?: number): boolean;
@@ -2111,7 +2109,7 @@ interface GameWorld {
    * @param x, y, z - 发射位置
    * @param tx, ty, tz - 目标位置
    * @param speed - 速度
-   * @returns 弹射物实体, 失败返回 null
+   * @returns @zh 弹射物实体，失败返回 null @en The projectile entity, or null on failure
    */
   launchProjectile(
     type: string,
@@ -2272,7 +2270,7 @@ interface GameWorld {
    * @en Schedules a one‑shot delayed callback.
    * @param handler - 回调函数
    * @param ticks - 延迟 tick 数
-   * @returns 定时器 ID (可用于 clearTimeout)
+   * @returns @zh 定时器 ID（可用于 clearTimeout） @en Timer ID (can be used with clearTimeout)
    */
   setTimeout(handler: () => void, ticks: number): number;
 
@@ -2281,7 +2279,7 @@ interface GameWorld {
    * @en Schedules a recurring interval callback.
    * @param handler - 回调函数
    * @param ticks - 间隔 tick 数
-   * @returns 定时器 ID (可用于 clearInterval)
+   * @returns @zh 定时器 ID（可用于 clearInterval） @en Timer ID (can be used with clearInterval)
    */
   setInterval(handler: () => void, ticks: number): number;
 
@@ -2307,14 +2305,14 @@ interface GameWorld {
   /**
    * @zh 注册每 tick 回调 (每秒 20 次)。
    * @en Registers a callback invoked every tick (20 times/sec).
-   * @returns GameEventHandlerToken — 调用 .cancel() 取消
+   * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to unsubscribe
    */
   onTick(handler: (info: TickInfo) => void): GameEventHandlerToken;
 
   /**
    * @zh 注册玩家加入回调。
    * @en Registers a callback invoked when a player joins the server.
-   * @returns GameEventHandlerToken — 调用 .cancel() 取消
+   * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to unsubscribe
    */
   onPlayerJoin(
     handler: (entity: GamePlayerEntity, tick: number) => void,
@@ -2323,7 +2321,7 @@ interface GameWorld {
   /**
    * @zh 注册玩家离开回调。
    * @en Registers a callback invoked when a player leaves the server.
-   * @returns GameEventHandlerToken — 调用 .cancel() 取消
+   * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to unsubscribe
    */
   onPlayerLeave(
     handler: (entity: GamePlayerEntity, tick: number) => void,
@@ -2335,7 +2333,7 @@ interface GameWorld {
    * @param handler - (entity, message, tick) => boolean|void
    *                 返回 false 可取消聊天消息发送。
    *                 Return false to cancel sending this chat message.
-   * @returns GameEventHandlerToken — 调用 .cancel() 取消
+   * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to unsubscribe
    */
   onChat(
     handler: (
@@ -2348,7 +2346,7 @@ interface GameWorld {
   /**
    * @zh 注册玩家重生回调。
    * @en Registers a callback invoked when a player respawns.
-   * @returns GameEventHandlerToken — 调用 .cancel() 取消
+   * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to unsubscribe
    */
   onPlayerRespawn(
     handler: (entity: GamePlayerEntity, tick: number) => void,
@@ -2357,7 +2355,7 @@ interface GameWorld {
   /**
    * @zh 注册方块右键激活回调。
    * @en Registers a callback invoked when a player right‑clicks a block.
-   * @returns GameEventHandlerToken — 调用 .cancel() 取消
+   * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to unsubscribe
    */
   onBlockActivate(
     handler: (
@@ -2373,7 +2371,7 @@ interface GameWorld {
   /**
    * @zh 注册方块破坏回调。
    * @en Registers a callback invoked when a player breaks a block.
-   * @returns GameEventHandlerToken — 调用 .cancel() 取消
+   * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to unsubscribe
    */
   onVoxelDestroy(
     handler: (
@@ -2389,7 +2387,7 @@ interface GameWorld {
   /**
    * @zh 注册方块放置回调。
    * @en Registers a callback invoked when a player places a block.
-   * @returns GameEventHandlerToken — 调用 .cancel() 取消
+   * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to unsubscribe
    */
   onBlockPlace(
     handler: (
@@ -2406,7 +2404,7 @@ interface GameWorld {
   /**
    * @zh 注册方块接触回调 (玩家移动到新方块时触发)。
    * @en Registers a callback invoked when a player's block position changes.
-   * @returns GameEventHandlerToken — 调用 .cancel() 取消
+   * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to unsubscribe
    */
   onVoxelContact(
     handler: (
@@ -2424,7 +2422,7 @@ interface GameWorld {
   /**
    * @zh 注册实体交互回调 (玩家右键实体)。
    * @en Registers a callback invoked when a player right‑clicks an entity.
-   * @returns GameEventHandlerToken — 调用 .cancel() 取消
+   * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to unsubscribe
    */
   onInteract(
     handler: (
@@ -2437,7 +2435,7 @@ interface GameWorld {
   /**
    * @zh 注册实体死亡回调。
    * @en Registers a callback invoked when an entity dies.
-   * @returns GameEventHandlerToken — 调用 .cancel() 取消
+   * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to unsubscribe
    */
   onEntityDeath(
     handler: (
@@ -2450,7 +2448,7 @@ interface GameWorld {
   /**
    * @zh 注册实体受伤回调。
    * @en Registers a callback invoked when an entity takes damage.
-   * @returns GameEventHandlerToken — 调用 .cancel() 取消
+   * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to unsubscribe
    */
   onEntityDamage(
     handler: (
@@ -2465,7 +2463,7 @@ interface GameWorld {
   /**
    * @zh 注册流体进入回调 (玩家进入水/熔岩)。
    * @en Registers a callback invoked when a player enters a fluid.
-   * @returns GameEventHandlerToken — 调用 .cancel() 取消
+   * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to unsubscribe
    */
   onFluidEnter(
     handler: (
@@ -2481,7 +2479,7 @@ interface GameWorld {
   /**
    * @zh 注册流体离开回调 (玩家离开水/熔岩)。
    * @en Registers a callback invoked when a player leaves a fluid.
-   * @returns GameEventHandlerToken — 调用 .cancel() 取消
+   * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to unsubscribe
    */
   onFluidLeave(
     handler: (
@@ -2497,7 +2495,7 @@ interface GameWorld {
   /**
    * @zh 注册实体接触回调 (两个实体碰撞)。
    * @en Registers a callback invoked when two entities come into contact.
-   * @returns GameEventHandlerToken — 调用 .cancel() 取消
+   * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to unsubscribe
    */
   onEntityContact(
     handler: (entityA: GameEntity, entityB: GameEntity, tick: number) => void,
@@ -2506,7 +2504,7 @@ interface GameWorld {
   /**
    * @zh 注册实体分离回调 (两个实体不再碰撞)。
    * @en Registers a callback invoked when two entities separate after contact.
-   * @returns GameEventHandlerToken — 调用 .cancel() 取消
+   * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to unsubscribe
    */
   onEntitySeparate(
     handler: (entityA: GameEntity, entityB: GameEntity, tick: number) => void,
@@ -2519,7 +2517,7 @@ interface GameWorld {
    *
    * `button` 参数值是 {@link GameButtonType} 中的字符串常量之一：
    * WALK / RUN / CROUCH / JUMP / FLY / ACTION0 / ACTION1
-   * @returns GameEventHandlerToken — 调用 .cancel() 取消
+   * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to unsubscribe
    */
   onButtonPressed(
     handler: (entity: GamePlayerEntity, button: string, tick: number) => void,
@@ -2528,7 +2526,7 @@ interface GameWorld {
   /**
    * @zh 注册跨项目消息回调。
    * @en Registers a callback for messages from other script projects.
-   * @returns GameEventHandlerToken — 调用 .cancel() 取消
+   * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to unsubscribe
    */
   onMessage(
     handler: (sender: string, data: unknown) => void,
@@ -2589,14 +2587,14 @@ interface GameVoxels {
   /**
    * @zh 将方块名称转为数字 ID。
    * @en Resolves a block name (e.g. "stone" or "minecraft:stone") to its numeric ID.
-   * @returns 数字 ID, 未知方块的返回 0 (air)
+   * @returns @zh 数字 ID，未知方块的返回 0（air） @en Numeric ID, 0 for unknown blocks (air)
    */
   id(name: string): number;
 
   /**
    * @zh 将数字 ID 转为方块名称。
    * @en Resolves a numeric ID back to a block name string.
-   * @returns ResourceLocation 字符串, 未知 ID 返回 "air"
+   * @returns @zh ResourceLocation 字符串，未知 ID 返回 "air" @en ResourceLocation string, "air" for unknown IDs
    */
   name(id: number): string;
 
@@ -2605,7 +2603,7 @@ interface GameVoxels {
   /**
    * @zh 获取方块数字 ID (不含旋转信息的基础 ID)。
    * @en Returns the base numeric block ID at the given position (without rotation encoding).
-   * @returns 基础方块 ID, 空气返回 0 / base block ID, 0 for air
+   * @returns @zh 基础方块 ID，空气返回 0 @en base block ID, 0 for air
    */
   getVoxel(x: number, y: number, z: number): number;
   getVoxel(pos: GameVector3): number;
@@ -2637,7 +2635,7 @@ interface GameVoxels {
    * @zh 放置方块 (名称或 ID)。返回含旋转编码的完整 ID。
    * @en Places a block by name or ID. Returns the full encoded ID (baseId + rotation * 16384).
    * @param voxel - 方块名称 (如 "minecraft:diamond_block") 或数字 ID
-   * @returns 含旋转编码的完整方块 ID, 删除/空气返回 0
+   * @returns @zh 含旋转编码的完整方块 ID，删除/空气返回 0 @en Full encoded block ID (base + rotation * 16384), 0 for remove/air
    */
   setVoxel(x: number, y: number, z: number, voxel: string | number): number;
   setVoxel(pos: GameVector3, voxel: string | number): number;
@@ -2647,7 +2645,7 @@ interface GameVoxels {
    * @en Places a block with explicit rotation.
    * @param voxel - 方块名称或数字 ID
    * @param rotation - 旋转值 0‑3 (或字符串 "0"‑"3")
-   * @returns 含旋转编码的完整 ID
+   * @returns @zh 含旋转编码的完整 ID @en Full encoded block ID (base + rotation * 16384)
    */
   setVoxel(
     x: number,
@@ -2714,7 +2712,7 @@ interface GameVoxels {
   /**
    * @zh 设置刷怪笼的生成实体类型。
    * @en Sets the spawner entity type at the given position.
-   * @param x, y, z - 刷怪笼坐标 / spawner coordinates
+   * @param x, y, z - @zh 刷怪笼坐标 @en spawner coordinates
    * @param entityType - 实体类型 ID (如 "minecraft:zombie")
    */
   setSpawner(x: number, y: number, z: number, entityType: string): void;
@@ -2755,8 +2753,8 @@ interface GameConsole {
   /**
    * @zh 断言: 条件为 false 时输出错误。
    * @en Asserts a condition; logs an error message if the condition is false.
-   * @param condition - 要测试的条件 / the condition to test
-   * @param args - 失败时输出的额外参数 / additional values to log on failure
+   * @param condition - @zh 要测试的条件 @en the condition to test
+   * @param args - @zh 失败时输出的额外参数 @en additional values to log on failure
    */
   assert(condition: boolean, ...args: unknown[]): void;
 }
