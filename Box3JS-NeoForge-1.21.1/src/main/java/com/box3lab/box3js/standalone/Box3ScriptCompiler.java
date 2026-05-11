@@ -33,7 +33,8 @@ import java.util.regex.Pattern;
  *   ├── logo.png                   ← mod icon (if specified)
  *   └── box3script/mygame/
  *       ├── MygameMod.class        ← generated @Mod entry point
- *       └── app.js                 ← bundled JS source
+ *       ├── server.js              ← bundled server JS source
+ *       └── client.js              ← bundled client JS source (if present)
  * }</pre>
  *
  * <h3>Deployment</h3>
@@ -79,9 +80,9 @@ public class Box3ScriptCompiler {
     }
 
     public void compile() throws Exception {
-        Path appJs = projectDir.resolve("dist/app.js");
-        if (!Files.exists(appJs)) {
-            throw new FileNotFoundException("dist/app.js not found in " + projectDir
+        Path serverJs = projectDir.resolve("dist/server.js");
+        if (!Files.exists(serverJs)) {
+            throw new FileNotFoundException("dist/server.js not found in " + projectDir
                     + " — run 'npm run build' first");
         }
 
@@ -90,7 +91,7 @@ public class Box3ScriptCompiler {
         Files.createDirectories(workDir);
 
         System.out.println("[1/4] Bundling JS source ...");
-        bundleJsSource(appJs, workDir);
+        bundleJsSource(serverJs, workDir);
 
         System.out.println("[2/4] Bundling logo ...");
         bundleLogo(workDir);
@@ -111,11 +112,20 @@ public class Box3ScriptCompiler {
     // ── Step 1: Bundle JS source ──
 
     private void bundleJsSource(Path jsFile, Path workDir) throws IOException {
-        String resourcePath = "box3script/" + modId + "/app.js";
+        String resourcePath = "box3script/" + modId + "/server.js";
         Path dest = workDir.resolve(resourcePath);
         Files.createDirectories(dest.getParent());
         Files.copy(jsFile, dest);
         System.out.println("  Bundled " + resourcePath);
+
+        // Also bundle client script if present
+        Path clientJs = projectDir.resolve("dist/client.js");
+        if (Files.exists(clientJs)) {
+            String clientResourcePath = "box3script/" + modId + "/client.js";
+            Path clientDest = workDir.resolve(clientResourcePath);
+            Files.copy(clientJs, clientDest);
+            System.out.println("  Bundled " + clientResourcePath);
+        }
     }
 
     // ── Step 2: Bundle logo ──
@@ -138,7 +148,7 @@ public class Box3ScriptCompiler {
     private void generateModClass(Path genSrcDir) throws IOException {
         String pkg = "box3script." + modId;
         String className = capitalize(modId) + "Mod";
-        String resourcePath = "box3script/" + modId + "/app.js";
+        String resourcePath = "box3script/" + modId + "/server.js";
 
         String src = String.format("""
                 package %s;

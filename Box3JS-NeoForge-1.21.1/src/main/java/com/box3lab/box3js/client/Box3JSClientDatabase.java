@@ -1,71 +1,35 @@
-package com.box3lab.box3js.script;
+package com.box3lab.box3js.client;
+
+import com.box3lab.box3js.script.Box3JSQueryResult;
+import com.mojang.logging.LogUtils;
+import org.mozilla.javascript.NativeArray;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.box3lab.box3js.Box3JS;
-import com.mojang.logging.LogUtils;
-import org.slf4j.Logger;
-import org.mozilla.javascript.NativeArray;
-
 /**
- * Per-project SQLite database exposed to JS as the {@code db} global.
+ * Client-side SQLite database exposed to JS as the {@code db} global.
  *
- * <p>
- * Database files are stored at {@code config/box3/data/<project>.db}.
- * Connections are lazily opened on first use and closed when the project
- * is stopped or removed.
- *
- * <h3>JS Usage</h3>
- * 
- * <pre>{@code
- *   // Regular query with ? placeholders
- *   var result = db.sql("SELECT * FROM players WHERE score > ?", 100);
- *   var all = result.rows;
- *
- *   // Tagged template style (transpiled from TS template literals)
- *   var result = db.sql(["SELECT * FROM players WHERE id = ", ""], playerId);
- *
- *   // INSERT / UPDATE / DELETE
- *   var result = db.sql("INSERT INTO log (name, msg) VALUES (?, ?)", "Steve", "hello");
- *   console.log(result.affectedRows); // 1
- *
- *   // Thenable pattern
- *   db.sql("SELECT * FROM players").then(function(rows) {
- *     console.log(rows.length);
- *   });
- *
- *   // Iteration
- *   var result = db.sql("SELECT * FROM players");
- *   var row;
- *   while (!(row = result.next()).done) {
- *     console.log(row.value.name);
- *   }
- * }</pre>
+ * <p>Database files are stored at {@code <gameDir>/box3/client-db/<project>.db}.
  */
-public class Box3JSDatabase {
+public class Box3JSClientDatabase {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
     private static final String SQLITE_DRIVER_CLASS = "org.sqlite.JDBC";
-    private static final String SQLITE_MISSING_HINT = "db API requires SQLite JDBC driver. Install the minecraft-sqlite-jdbc mod, then restart server.";
+    private static final String SQLITE_MISSING_HINT = "db API requires SQLite JDBC driver. Install the minecraft-sqlite-jdbc mod.";
     private static final boolean SQLITE_AVAILABLE;
 
     private final Path dataDir;
-    private final Box3ScriptEngine engine;
-    private final Map<String, Connection> connections = new LinkedHashMap<>();
+    private String projectName;
+    private Connection connection;
 
     static {
         boolean ok;
@@ -79,31 +43,19 @@ public class Box3JSDatabase {
         SQLITE_AVAILABLE = ok;
     }
 
-    public Box3JSDatabase(Path configDir, Box3ScriptEngine engine) {
-        this.dataDir = configDir.resolve("box3").resolve("data");
-        this.engine = engine;
-        try {
-            Files.createDirectories(dataDir);
-        } catch (java.io.IOException ignored) {
+    public Box3JSClientDatabase(java.io.File gameDir) {
+        this.dataDir = gameDir.toPath().resolve("box3").resolve("client-db");
+        try { Files.createDirectories(dataDir); } catch (IOException ignored) {}
+    }
+
+    public void setProjectName(String name) {
+        if (!name.equals(this.projectName)) {
+            close();
+            this.projectName = name;
+            this.connection = null;
         }
     }
 
-    /**
-     * Executes a SQL query or update.
-     *
-     * <p>
-     * Two calling conventions are supported:
-     * <ol>
-     * <li>Regular: {@code db.sql("SELECT ... WHERE x = ?", value)}</li>
-     * <li>Tagged template: {@code db.sql(["SELECT ... WHERE x = ", ""], value)}
-     * — the string array fragments are joined with {@code ?} placeholders.</li>
-     * </ol>
-     *
-     * @param args first element is either a String (SQL with ? placeholders)
-     *             or a NativeArray of string fragments (tagged template style).
-     *             Remaining elements are parameter values to bind.
-     * @return the query result
-     */
     public Box3JSQueryResult sql(Object... args) {
         ensureSqliteAvailable();
 
@@ -111,7 +63,6 @@ public class Box3JSDatabase {
             throw new IllegalArgumentException("db.sql() requires at least a SQL string argument");
         }
 
-        // Parse SQL and params from args
         String sql;
         Object[] params;
 
@@ -120,7 +71,6 @@ public class Box3JSDatabase {
             params = new Object[args.length - 1];
             System.arraycopy(args, 1, params, 0, params.length);
         } else if (args[0] instanceof NativeArray parts) {
-            // Tagged template literal: join fragments with ? placeholders
             StringBuilder sb = new StringBuilder();
             long len = parts.getLength();
             int paramCount = args.length - 1;
@@ -141,21 +91,16 @@ public class Box3JSDatabase {
         Connection conn = getConnection();
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            // Bind parameters
             for (int i = 0; i < params.length; i++) {
                 bindParam(stmt, i + 1, params[i]);
             }
 
-            // Execute
             boolean isQuery = stmt.execute();
             if (isQuery) {
-                // SELECT or other query that returns a result set
                 try (ResultSet rs = stmt.getResultSet()) {
                     return readResultSet(rs);
                 }
             } else {
-                // INSERT / UPDATE / DELETE
                 int count = stmt.getUpdateCount();
                 return new Box3JSQueryResult(count);
             }
@@ -165,65 +110,58 @@ public class Box3JSDatabase {
         }
     }
 
-    /**
-     * Closes the database connection for the given project.
-     * Called when a project is stopped or removed.
-     */
-    public void closeProject(String project) {
-        Connection conn = connections.remove(project);
-        if (conn != null) {
+    public void close() {
+        if (connection != null) {
             try {
-                if (!conn.isClosed()) {
-                    conn.close();
+                if (!connection.isClosed()) {
+                    connection.close();
                 }
-                LOGGER.debug("Closed database for project: {}", project);
             } catch (SQLException e) {
-                LOGGER.warn("Error closing database for {}: {}", project, e.getMessage());
+                LOGGER.warn("Error closing client database: {}", e.getMessage());
             }
+            connection = null;
         }
     }
-
-    /** Closes all open database connections. */
-    public void closeAll() {
-        for (var entry : new ArrayList<>(connections.entrySet())) {
-            closeProject(entry.getKey());
-        }
-    }
-
-    // ---- Internal ----
 
     private Connection getConnection() {
         ensureSqliteAvailable();
-
-        String project = engine.getCurrentProject();
-        if (project == null) {
+        if (projectName == null) {
             throw new IllegalStateException("db: no active project context");
         }
 
-        return connections.computeIfAbsent(project, p -> {
+        if (connection == null) {
             try {
-                Path dbFile = dataDir.resolve(p + ".db");
+                Path dbFile = dataDir.resolve(projectName + ".db");
                 Files.createDirectories(dbFile.getParent());
                 String url = "jdbc:sqlite:" + dbFile.toAbsolutePath().toString().replace('\\', '/');
-                Connection conn = DriverManager.getConnection(url);
-                // Enable WAL mode for better concurrent read performance
-                try (Statement stmt = conn.createStatement()) {
+                connection = DriverManager.getConnection(url);
+                try (Statement stmt = connection.createStatement()) {
                     stmt.execute("PRAGMA journal_mode=WAL");
                 }
-                LOGGER.info("Opened database for project {}: {}", p, dbFile);
-                return conn;
+                LOGGER.info("Opened client database for project {}: {}", projectName, dbFile);
             } catch (IOException | SQLException e) {
-                LOGGER.error("Failed to open database for project {}: {}", p, e.getMessage());
+                LOGGER.error("Failed to open client database: {}", e.getMessage());
                 throw new RuntimeException("Failed to open database: " + e.getMessage(), e);
             }
-        });
+        }
+
+        try {
+            if (connection.isClosed()) {
+                connection = null;
+                return getConnection();
+            }
+        } catch (SQLException e) {
+            connection = null;
+            return getConnection();
+        }
+
+        return connection;
     }
 
     private void bindParam(PreparedStatement stmt, int index, Object value) throws SQLException {
         if (value == null || value == org.mozilla.javascript.Undefined.instance) {
             stmt.setNull(index, java.sql.Types.NULL);
         } else if (value instanceof Number n) {
-            // Use double for all numbers (SQLite uses dynamic typing)
             double d = n.doubleValue();
             if (d == Math.floor(d) && d <= Long.MAX_VALUE && d >= Long.MIN_VALUE) {
                 stmt.setLong(index, (long) d);
@@ -235,7 +173,6 @@ public class Box3JSDatabase {
         } else if (value instanceof String s) {
             stmt.setString(index, s);
         } else if (value instanceof NativeArray arr) {
-            // Uint8Array / byte array
             byte[] bytes = new byte[(int) arr.getLength()];
             for (int i = 0; i < bytes.length; i++) {
                 Object elem = arr.get(i);
@@ -243,15 +180,11 @@ public class Box3JSDatabase {
             }
             stmt.setBytes(index, bytes);
         } else {
-            // Fallback: convert to string
             stmt.setString(index, value.toString());
         }
     }
 
-    /**
-     * Returns {@code true} if the SQLite JDBC driver ({@code minecraft-sqlite-jdbc})
-     * is present. JS devs should check this before calling {@code db.sql()}.
-     */
+    /** @see Box3JSDatabase#isAvailable() */
     public static boolean isAvailable() {
         return SQLITE_AVAILABLE;
     }
@@ -275,7 +208,6 @@ public class Box3JSDatabase {
             Map<String, Object> row = new LinkedHashMap<>();
             for (int i = 0; i < colCount; i++) {
                 Object value = rs.getObject(i + 1);
-                // SQLite JDBC returns byte[] for BLOB columns; keep as-is for JS
                 row.put(columnNames[i], value);
             }
             rows.add(row);

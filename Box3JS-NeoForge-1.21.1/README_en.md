@@ -31,10 +31,14 @@ config/box3/script/mygame/
 ├── build.mjs             ← build script (esbuild → Babel → Rhino)
 ├── eslint.config.mjs
 ├── types/
-│   └── globals.d.ts      ← full API type declarations (IDE autocomplete)
+│   ├── shared.d.ts       ← types shared by server & client
+│   ├── server.d.ts       ← server-only types
+│   └── client.d.ts       ← client-only types
 └── src/
-    └── app.ts            ← entry point — write your code here
-```
+    ├── server/
+    │   └── app.ts        ← server entry (game logic)
+    └── client/
+        └── app.ts        ← client entry (UI/input/network)
 
 Build and start:
 
@@ -58,11 +62,13 @@ Edit `src/app.ts`, re-run `npm run build`, then `/box3script reload mygame` — 
 | **Hot reload**       | Edit → build → reload in seconds. Enable `watch` for auto-reload                 |
 | **Sandbox**          | Toggle sandbox to track all script changes; disable to fully roll back           |
 | **TypeScript**       | Full `.d.ts` type declarations, esbuild + Babel pipeline, IDE IntelliSense       |
-| **17 events**        | onTick, onPlayerJoin, onChat, onEntityDeath, onBlockActivate, onButtonPressed... |
+| **20+ events**     | onTick, onPlayerJoin, onChat, onEntityDeath, onBlockActivate, onButtonPressed... |
 | **Visual effects**   | 13+ particles, fireworks, lightning, explosions, sounds                          |
+| **Client API**       | Keyboard input, screen UI, chat interception, client storage, SQLite, HTTP, bidirectional events |
 | **Game systems**     | Scoreboards, BossBar, teams, world border, cross-script messaging                |
 | **Custom items**     | JSON-configured items (food, rarity, glint), dynamic recipe management           |
 | **Data persistence** | JSON storage + SQLite database (leaderboards, economy, player data)              |
+| **Standalone JAR**   | `/box3script compile` packages scripts into a standalone JAR mod for distribution |
 
 ## Commands
 
@@ -87,9 +93,12 @@ All `<project>` arguments support **Tab completion**. [Full command reference �
 | `entity`                         | Entity properties, AI pathfinding, equipment, potion effects, tags, navigation                                  |
 | `player`                         | Inventory, flight, game mode, teleport, messaging, XP, sounds                                                   |
 | `voxels`                         | Block read/write, region fill, spawner control                                                                  |
-| `storage`                        | JSON data persistence                                                                                           |
-| `db`                             | SQLite database — SQL queries, leaderboards, player data                                                        |
-| `console`                        | Server console logging (`log`/`warn`/`error`/`debug`)                                                           |
+| `http`                           | HTTP requests (sync + async, GET/POST/JSON)                                                                     |
+| `remoteChannel`                  | Server ↔ client bidirectional event channel                                                                     |
+| `client` · `input` · `ui` · `chat` | Client scripts: lifecycle, keyboard, screen text, chat messages                                               |
+| `storage`                        | JSON data persistence (server & client)                                                                         |
+| `db`                             | SQLite database (server & client)                                                                               |
+| `console`                        | Console logging (`log`/`warn`/`error`/`debug`/`assert`/`clear`)                                                 |
 | `GameVector3`                    | 3D vector (coordinate math)                                                                                     |
 | `GameBounds3`                    | Bounding box                                                                                                    |
 | `GameRGBColor` / `GameRGBAColor` | RGB / RGBA color                                                                                                |
@@ -123,6 +132,8 @@ docs/
 │   ├── voxels.md          Voxels API (read/write, fill, spawner)
 │   ├── storage.md         Storage API (JSON persistence)
 │   ├── database.md        Database API (SQLite)
+│   ├── http.md            HTTP request API
+│   ├── client.md           Client API (UI, input, chat, events)
 │   ├── math.md            Math API (Vector3, Color, Quaternion)
 │   └── commands.md        /box3script command reference
 ├── tutorial/              ← Tutorials
@@ -137,7 +148,7 @@ docs/
 
 ## Example Project
 
-`run/config/box3/script/colorzone/` contains a complete Territory Rush game and 7 verified feature examples covering every tutorial scenario.
+`run/config/box3/script/colorzone/` contains a complete bidirectional communication game and 7 verified feature examples covering every tutorial scenario — from server logic to client UI.
 
 ## Dependencies
 

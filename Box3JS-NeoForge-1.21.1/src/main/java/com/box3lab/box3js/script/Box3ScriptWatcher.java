@@ -126,8 +126,8 @@ class Box3ScriptWatcher {
                 if (!fileName.endsWith(".js"))
                     continue;
 
-                if (kind == ENTRY_DELETE && fileName.equals("app.js")) {
-                    // dist/app.js deleted — allow rebuild to recreate it
+                if (kind == ENTRY_DELETE && fileName.equals("server.js")) {
+                    // dist/server.js deleted — allow rebuild to recreate it
                     // debounce will pick up the next CREATE/MODIFY
                 }
                 debounceReload(project);
@@ -175,7 +175,7 @@ class Box3ScriptWatcher {
                 engine.setCurrentProject(project);
                 try {
                     engine.removeProject(project);
-                    engine.eval("require('./app')");
+                    engine.eval("require('./server')");
                     Box3JS.LOGGER.info("Watcher reloaded: {}", project);
                 } finally {
                     engine.setCurrentProject(null);

@@ -14,7 +14,9 @@
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
-    "check": "tsc --noEmit",
+    "check": "tsc -p tsconfig.server.json --noEmit && tsc -p tsconfig.client.json --noEmit",
+    "check:server": "tsc -p tsconfig.server.json --noEmit",
+    "check:client": "tsc -p tsconfig.client.json --noEmit",
     "lint": "eslint src/",
     "dev": "node build.mjs --watch"
   },

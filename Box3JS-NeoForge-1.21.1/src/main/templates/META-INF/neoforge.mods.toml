@@ -46,7 +46,7 @@ authors="神岛实验室"
 
 # The description text for the mod (multi line!) (#mandatory)
 description='''
-Box3JS 为 Minecraft 引入神奇代码岛风格的 JavaScript 脚本运行时，支持约 200 项 Box3 API 与 90 余项 Minecraft 扩展 API。无需 Java 基础即可编写服务端脚本。
+Box3JS 为 Minecraft 引入神奇代码岛风格的 JavaScript 脚本运行时，支持约 150 项 Box3 API 与 120 余项 Minecraft 扩展 API。无需 Java 基础即可编写服务端脚本。
 '''
 
 # The [[mixins]] block allows you to declare your mixin config to FML so that it gets loaded.

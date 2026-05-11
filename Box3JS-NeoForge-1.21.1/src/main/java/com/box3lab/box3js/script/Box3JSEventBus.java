@@ -28,6 +28,7 @@ class Box3JSEventBus {
     final Map<String, List<EntityDamageCallback>> entityDamageCallbacks = new ConcurrentHashMap<>();
     final Map<String, List<ButtonPressedCallback>> buttonPressedCallbacks = new ConcurrentHashMap<>();
     final Map<String, List<MessageCallback>> messageCallbacks = new ConcurrentHashMap<>();
+    final Map<String, List<Function>> serverEventHandlers = new ConcurrentHashMap<>();
 
     // Tracking state — per-project
     final Map<String, Map<UUID, BlockPos>> voxelContactTracked = new ConcurrentHashMap<>();
@@ -85,6 +86,20 @@ class Box3JSEventBus {
         return cb;
     }
 
+    // ---- Server event handlers (remoteChannel) ----
+
+    Function addServerEventHandler(String project, Function handler) {
+        return add(serverEventHandlers, project, handler);
+    }
+
+    void removeServerEventHandler(String project, Function handler) {
+        remove(serverEventHandlers, project, handler);
+    }
+
+    List<Function> getServerEventHandlers(String project) {
+        return serverEventHandlers.getOrDefault(project, List.of());
+    }
+
     // ---- Remove single callbacks ----
 
     void removeTick(String project, Runnable cb) { remove(tickCallbacks, project, cb); }
@@ -132,6 +147,7 @@ class Box3JSEventBus {
         entityDamageCallbacks.remove(project);
         buttonPressedCallbacks.remove(project);
         messageCallbacks.remove(project);
+        serverEventHandlers.remove(project);
         voxelContactTracked.remove(project);
         fluidStateTracked.remove(project);
         entityContactPairs.remove(project);
@@ -161,6 +177,7 @@ class Box3JSEventBus {
         entityDamageCallbacks.clear();
         buttonPressedCallbacks.clear();
         messageCallbacks.clear();
+        serverEventHandlers.clear();
         previousButtonStates.clear();
         voxelContactTracked.clear();
         fluidStateTracked.clear();

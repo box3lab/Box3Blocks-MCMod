@@ -32,6 +32,7 @@ public class Box3ScriptEngine {
     private Box3JSStorage storageBinding;
     private Box3JSDatabase dbBinding;
     private Box3JSHttp httpBinding;
+    private Box3JSRemoteChannel remoteChannel;
     private Box3ScriptSandbox sandbox;
     private MinecraftServer server;
     private boolean initialized;
@@ -41,6 +42,7 @@ public class Box3ScriptEngine {
     private long currentTick, prevTick;
     private Consumer<String> errorReporter;
     private final Map<String, Require> projectRequires = new HashMap<>();
+    private boolean dbWarningShown;
 
     public static Box3ScriptEngine get() {
         return INSTANCE;
@@ -57,6 +59,7 @@ public class Box3ScriptEngine {
         this.dbBinding = new Box3JSDatabase(server.getServerDirectory().resolve("config"), this);
         this.httpBinding = new Box3JSHttp(server);
         this.httpBinding.setEngine(this);
+        this.remoteChannel = new Box3JSRemoteChannel(this);
         setupScope();
         initialized = true;
     }
@@ -76,6 +79,7 @@ public class Box3ScriptEngine {
         engine.dbBinding = new Box3JSDatabase(storageRoot, engine);
         engine.httpBinding = new Box3JSHttp(server);
         engine.httpBinding.setEngine(engine);
+        engine.remoteChannel = new Box3JSRemoteChannel(engine);
         engine.setupScope();
         engine.initialized = true;
         return engine;
@@ -84,6 +88,33 @@ public class Box3ScriptEngine {
     /** Exposed for standalone JAR bootstrap. */
     public ScriptableObject getScope() {
         return scope;
+    }
+
+    /** Exposed for remoteChannel payload handler. */
+    public MinecraftServer getServer() {
+        return server;
+    }
+
+    /** Exposed for remoteChannel. */
+    public long getCurrentTick() {
+        return currentTick;
+    }
+
+    /**
+     * Handle an incoming {@code ClientEventPayload} from a player.
+     * Dispatches to the server thread, sets project context, fires handlers.
+     */
+    public void handleClientEvent(ServerPlayer sender, String projectName, String eventJson) {
+        server.execute(() -> {
+            String prev = currentProject;
+            setCurrentProject(projectName);
+            try {
+                var entity = new Box3JSPlayer(sender, server, this);
+                remoteChannel.fireFromClient(entity, currentTick, eventJson);
+            } finally {
+                setCurrentProject(prev);
+            }
+        });
     }
 
     /** Execute app.js for enabled projects under config/box3/script/ */
@@ -101,17 +132,17 @@ public class Box3ScriptEngine {
                     .sorted()
                     .forEach(project -> {
                         String name = project.getFileName().toString();
-                        Path appJs = project.resolve("dist/app.js");
-                        if (!Files.exists(appJs)) {
-                            appJs = project.resolve("app.js");
+                        Path serverJs = project.resolve("dist/server.js");
+                        if (!Files.exists(serverJs)) {
+                            serverJs = project.resolve("server.js");
                         }
-                        if (Files.exists(appJs) && config.isEnabled(name)) {
+                        if (Files.exists(serverJs) && config.isEnabled(name)) {
                             try {
                                 setCurrentProject(name);
-                                eval("require('./app')");
+                                eval("require('./server')");
                                 LOGGER.info("Auto-loaded project: {}", name);
                             } catch (Exception e) {
-                                LOGGER.error("Failed to auto-load: {}", appJs, e);
+                                LOGGER.error("Failed to auto-load: {}", serverJs, e);
                             } finally {
                                 setCurrentProject(null);
                             }
@@ -901,8 +932,36 @@ public class Box3ScriptEngine {
             ScriptableObject.putProperty(scope, "world", Context.javaToJS(worldBinding, scope));
             ScriptableObject.putProperty(scope, "voxels", Context.javaToJS(voxelsBinding, scope));
             ScriptableObject.putProperty(scope, "storage", Context.javaToJS(storageBinding, scope));
-            ScriptableObject.putProperty(scope, "db", Context.javaToJS(dbBinding, scope));
+            // -- db — wrapped for graceful fallback if SQLite driver missing --
+            ScriptableObject dbObj = (ScriptableObject) cx.newObject(scope);
+            ScriptableObject.putProperty(dbObj, "isAvailable", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    return Box3JSDatabase.isAvailable();
+                }
+            });
+            ScriptableObject.putProperty(dbObj, "sql", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    try {
+                        return dbBinding.sql(args);
+                    } catch (RuntimeException e) {
+                        if (!dbWarningShown) {
+                            dbWarningShown = true;
+                            LOGGER.warn("db.sql() failed: {}", e.getMessage());
+                            if (errorReporter != null) {
+                                errorReporter.accept("db unavailable — install minecraft-sqlite-jdbc mod");
+                            }
+                        }
+                        return new Box3JSQueryResult(0);
+                    }
+                }
+            });
+            ScriptableObject.putProperty(scope, "db", dbObj);
             ScriptableObject.putProperty(scope, "http", Context.javaToJS(httpBinding, scope));
+            ScriptableObject.putProperty(scope, "remoteChannel", Context.javaToJS(remoteChannel, scope));
             ScriptableObject.putProperty(scope, "_jConsole", Context.javaToJS(new Box3JSConsole(), scope));
             cx.evaluateString(scope,
                     "console = {" +
