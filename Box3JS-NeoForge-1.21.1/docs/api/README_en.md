@@ -143,6 +143,16 @@ Find APIs by what you want to do, not by which global object they live on.
 | SQL query | `db.sql("SELECT ...")` |
 | SQL write | `db.sql("INSERT INTO ...")` |
 
+### HTTP Requests
+
+| I want to... | Use this |
+|-------------|----------|
+| GET request | `http.fetch("https://...")` |
+| POST JSON | `http.fetch(url, { method: "POST", headers, body })` |
+| Parse JSON | `resp.json()` or `{ responseType: "json" }` |
+| Read text | `resp.text()` |
+| Set timeout | `http.fetch(url, { timeout: 5000 })` |
+
 ### Game Systems
 
 | I want to... | Use this |
@@ -187,6 +197,7 @@ Find APIs by what you want to do, not by which global object they live on.
 | `voxels` | ✅ Box3 | Block operations, see [voxels_en.md](voxels_en.md) |
 | `storage` | ✅ Box3 | Data persistence, see [storage_en.md](storage_en.md) |
 | `db` | ✅ Box3 | SQLite database, see [database_en.md](database_en.md) |
+| `http` | 🆕 MC Extension | HTTP requests, see [http_en.md](http_en.md) |
 | `console` | ✅ Box3 | Console logging (`log`/`warn`/`error`/`debug`) |
 | `GameVector3` | ✅ Box3 | 3D vector, see [math_en.md](math_en.md) |
 | `GameBounds3` | ✅ Box3 | Bounding box, see [math_en.md](math_en.md) |
@@ -211,6 +222,7 @@ Find APIs by what you want to do, not by which global object they live on.
 | [voxels_en.md](voxels_en.md) | Block read/write, region fill, spawner control |
 | [storage_en.md](storage_en.md) | Persistent data storage |
 | [database_en.md](database_en.md) | SQLite database API |
+| [http_en.md](http_en.md) | HTTP request API |
 | [math_en.md](math_en.md) | GameVector3, GameBounds3, GameRGBColor, GameRGBAColor, GameQuaternion |
 | [commands_en.md](commands_en.md) | `/box3script` command reference |
 

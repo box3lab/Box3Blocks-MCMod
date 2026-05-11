@@ -143,6 +143,16 @@ console.log("脚本已加载");
 | SQL 查询 | `db.sql("SELECT ...")` |
 | SQL 写入 | `db.sql("INSERT INTO ...")` |
 
+### 网络请求
+
+| 我想... | 用这个 |
+|---------|--------|
+| GET 请求 | `http.fetch("https://...")` |
+| POST JSON | `http.fetch(url, { method: "POST", headers, body })` |
+| 解析 JSON | `resp.json()` 或 `{ responseType: "json" }` |
+| 读取文本 | `resp.text()` |
+| 设置超时 | `http.fetch(url, { timeout: 5000 })` |
+
 ### 游戏系统
 
 | 我想... | 用这个 |
@@ -187,6 +197,7 @@ console.log("脚本已加载");
 | `voxels` | ✅ Box3 | 方块操作，见 [voxels.md](voxels.md) |
 | `storage` | ✅ Box3 | 数据持久化，见 [storage.md](storage.md) |
 | `db` | ✅ Box3 | SQLite 数据库，见 [database.md](database.md) |
+| `http` | 🆕 MC 扩展 | HTTP 请求，见 [http.md](http.md) |
 | `console` | ✅ Box3 | 控制台日志输出（`log`/`warn`/`error`/`debug`） |
 | `GameVector3` | ✅ Box3 | 三维向量，见 [math.md](math.md) |
 | `GameBounds3` | ✅ Box3 | 包围盒，见 [math.md](math.md) |
@@ -211,6 +222,7 @@ console.log("脚本已加载");
 | [voxels.md](voxels.md) | 方块读写、区域填充、刷怪笼 |
 | [storage.md](storage.md) | 数据持久化存储 |
 | [database.md](database.md) | SQLite 数据库 |
+| [http.md](http.md) | HTTP 网络请求 |
 | [math.md](math.md) | GameVector3、GameBounds3、GameRGBColor、GameRGBAColor、GameQuaternion |
 | [commands.md](commands.md) | `/box3script` 命令参考 |
 

@@ -31,6 +31,7 @@ public class Box3ScriptEngine {
     private Box3JSVoxels voxelsBinding;
     private Box3JSStorage storageBinding;
     private Box3JSDatabase dbBinding;
+    private Box3JSHttp httpBinding;
     private Box3ScriptSandbox sandbox;
     private MinecraftServer server;
     private boolean initialized;
@@ -54,6 +55,7 @@ public class Box3ScriptEngine {
         this.voxelsBinding = new Box3JSVoxels(server, sandbox);
         this.storageBinding = new Box3JSStorage(server.getServerDirectory().resolve("config"), this);
         this.dbBinding = new Box3JSDatabase(server.getServerDirectory().resolve("config"), this);
+        this.httpBinding = new Box3JSHttp();
         setupScope();
         initialized = true;
     }
@@ -71,6 +73,7 @@ public class Box3ScriptEngine {
         engine.voxelsBinding = new Box3JSVoxels(server, engine.sandbox);
         engine.storageBinding = new Box3JSStorage(storageRoot, engine);
         engine.dbBinding = new Box3JSDatabase(storageRoot, engine);
+        engine.httpBinding = new Box3JSHttp();
         engine.setupScope();
         engine.initialized = true;
         return engine;
@@ -884,6 +887,7 @@ public class Box3ScriptEngine {
             this.dbBinding.closeAll();
         }
         this.dbBinding = new Box3JSDatabase(server.getServerDirectory().resolve("config"), this);
+        this.httpBinding = new Box3JSHttp();
         setupScope();
     }
 
@@ -895,6 +899,7 @@ public class Box3ScriptEngine {
             ScriptableObject.putProperty(scope, "voxels", Context.javaToJS(voxelsBinding, scope));
             ScriptableObject.putProperty(scope, "storage", Context.javaToJS(storageBinding, scope));
             ScriptableObject.putProperty(scope, "db", Context.javaToJS(dbBinding, scope));
+            ScriptableObject.putProperty(scope, "http", Context.javaToJS(httpBinding, scope));
             ScriptableObject.putProperty(scope, "_jConsole", Context.javaToJS(new Box3JSConsole(), scope));
             cx.evaluateString(scope,
                     "console = {" +
@@ -960,6 +965,136 @@ public class Box3ScriptEngine {
                             "  JUMP: 'JUMP' }; " +
                             "GamePlayerWalkState = { NONE: 'NONE', CROUCH: 'CROUCH', WALK: 'WALK', RUN: 'RUN' };",
                     "enums", 1, null);
+            // Pure-JS regex helpers — Rhino can't load NativeRegExp in MC classloader
+            cx.evaluateString(scope,
+                "(function(){" +
+                "function isSp(c){return c==' '||c=='\\t'||c=='\\n'||c=='\\r'||c=='\\f'||c=='\\v';}" +
+                "function isDi(c){return c>='0'&&c<='9';}" +
+                "function isWo(c){return(c>='a'&&c<='z')||(c>='A'&&c<='Z')||(c>='0'&&c<='9')||c=='_';}" +
+                "function parse(p,f){" +
+                "var a=[];var i=0;var ic=f.indexOf('i')>=0;" +
+                "while(i<p.length){" +
+                "var ch=p.charAt(i);var m;" +
+                "if(ch=='\\\\'){" +
+                "i++;var e=p.charAt(i);" +
+                "if(e=='s')m=isSp;" +
+                "else if(e=='S')m=function(c){return !isSp(c);};" +
+                "else if(e=='d')m=isDi;" +
+                "else if(e=='D')m=function(c){return !isDi(c);};" +
+                "else if(e=='w')m=isWo;" +
+                "else if(e=='W')m=function(c){return !isWo(c);};" +
+                "else m=function(c){return c==e;};" +
+                "i++;" +
+                "}else if(ch=='.'){" +
+                "m=function(c){return c!='\\n'&&c!='\\r';};i++;" +
+                "}else if(ch=='['){" +
+                "i++;var ne=false;if(p.charAt(i)=='^'){ne=true;i++;}" +
+                "var cs='';" +
+                "while(i<p.length&&p.charAt(i)!=']'){" +
+                "if(p.charAt(i)=='\\\\'){" +
+                "i++;var e2=p.charAt(i);" +
+                "if(e2=='s')cs+=' \\t\\n\\r\\f\\v';" +
+                "else if(e2=='d')cs+='0123456789';" +
+                "else if(e2=='w')cs+='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_';" +
+                "else cs+=e2;" +
+                "}else if(p.charAt(i)=='-'&&i+1<p.length&&p.charAt(i+1)!=']'){" +
+                "var sc=p.charCodeAt(i-1);var ec=p.charCodeAt(i+1);" +
+                "for(var cc=sc+1;cc<=ec;cc++)cs+=String.fromCharCode(cc);" +
+                "i+=2;continue;" +
+                "}else{cs+=p.charAt(i);}" +
+                "i++;" +
+                "}" +
+                "i++;" +
+                "if(ne)m=function(c){return cs.indexOf(c)<0;};" +
+                "else m=function(c){return cs.indexOf(c)>=0;};" +
+                "}else{" +
+                "var lit=ch;var low=ic?lit.toLowerCase():lit;var up=ic?lit.toUpperCase():lit;" +
+                "if(ic)m=function(c){return c==low||c==up;};" +
+                "else m=function(c){return c==lit;};" +
+                "i++;" +
+                "}" +
+                "var min=1,max=1;" +
+                "if(i<p.length){" +
+                "var q=p.charAt(i);" +
+                "if(q=='+'){min=1;max=-1;i++;}" +
+                "else if(q=='*'){min=0;max=-1;i++;}" +
+                "else if(q=='?'){min=0;max=1;i++;}" +
+                "}" +
+                "a.push({m:m,min:min,max:max});" +
+                "}" +
+                "return a;" +
+                "}" +
+                "function matchAt(s,a,pos){" +
+                "var p=pos;" +
+                "for(var ai=0;ai<a.length;ai++){" +
+                "var at=a[ai];var cnt=0;" +
+                "while(p<s.length&&at.m(s.charAt(p))){" +
+                "cnt++;p++;if(at.max>=0&&cnt>=at.max)break;" +
+                "}" +
+                "if(cnt<at.min)return -1;" +
+                "}" +
+                "return p-pos;" +
+                "}" +
+                "function findNext(s,a,pos){" +
+                "for(var i=pos;i<s.length;i++){" +
+                "var len=matchAt(s,a,i);" +
+                "if(len>0)return {index:i,length:len};" +
+                "}" +
+                "return null;" +
+                "}" +
+                "function findAll(s,a){" +
+                "var ms=[];var pos=0;" +
+                "while(pos<s.length){" +
+                "var m=findNext(s,a,pos);" +
+                "if(!m)break;" +
+                "ms.push(m);pos=m.index+m.length;" +
+                "if(m.length===0)pos++;" +
+                "}" +
+                "return ms;" +
+                "}" +
+                "var _ref={parse:parse,findNext:findNext,findAll:findAll};var _esc='\\\\';" +
+                // __regexSplit(str, pattern, flags)
+                "__regexSplit=function(s,p,f){" +
+                "var a=_ref.parse(p,f||'');var r=[];var pos=0;" +
+                "var ms=_ref.findAll(s,a);" +
+                "for(var i=0;i<ms.length;i++){" +
+                "var m=ms[i];r.push(s.substring(pos,m.index));" +
+                "pos=m.index+m.length;" +
+                "}" +
+                "r.push(s.substring(pos));return r;" +
+                "};" +
+                // __regexMatch(str, pattern, flags)
+                "__regexMatch=function(s,p,f){" +
+                "var a=_ref.parse(p,f||'');" +
+                "var m=_ref.findNext(s,a,0);" +
+                "if(!m)return null;" +
+                "var r=[s.substring(m.index,m.index+m.length)];" +
+                "r.index=m.index;r.input=s;return r;" +
+                "};" +
+                // __regexReplace(str, pattern, flags, replacement)
+                "__regexReplace=function(s,p,f,rp){" +
+                "var a=_ref.parse(p,f||'');" +
+                "var gl=(f||'').indexOf('g')>=0;" +
+                "var ms=_ref.findAll(s,a);var rs='';var pos=0;" +
+                "for(var i=0;i<ms.length;i++){" +
+                "var m=ms[i];rs+=s.substring(pos,m.index);" +
+                "if(typeof rp==='function')rs+=rp(s.substring(m.index,m.index+m.length));" +
+                "else rs+=rp;" +
+                "pos=m.index+m.length;if(!gl)break;" +
+                "}" +
+                "rs+=s.substring(pos);return rs;" +
+                "};" +
+                // __regexTest(pattern, flags, str)
+                "__regexTest=function(p,f,s){" +
+                "var a=_ref.parse(p,f||'');" +
+                "return _ref.findNext(s,a,0)!==null;" +
+                "};" +
+                // __regexExec(pattern, flags, str)
+                "__regexExec=function(p,f,s){" +
+                "return __regexMatch(s,p,f);" +
+                "};" +
+                "})();",
+                "regex-helpers", 1, null);
         } finally {
             Context.exit();
         }

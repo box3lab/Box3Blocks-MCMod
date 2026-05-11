@@ -482,7 +482,11 @@ declare class GameQuaternion {
   static rotationBetween(a: GameVector3, b: GameVector3): GameQuaternion;
 
   /** @zh 构造从 from 看向 to 的朝向四元数（up 为上方向）。 @en Builds a look‑at quaternion orienting -Z from `from` toward `to`. */
-  static lookAt(from: GameVector3, to: GameVector3, up: GameVector3): GameQuaternion;
+  static lookAt(
+    from: GameVector3,
+    to: GameVector3,
+    up: GameVector3,
+  ): GameQuaternion;
 
   /** @zh 近似相等检查（容差 1e‑6）。 @en Approximate equality check within 1e‑6 tolerance. */
   equals(v: GameQuaternion): boolean;
@@ -544,7 +548,13 @@ interface TickInfo {
  * @en Represents any JSON‑serializable value.
  * Used as the default type parameter for `GameDataStorage<T>`.
  */
-type JSONValue = string | number | boolean | null | JSONValue[] | { [key: string]: JSONValue };
+type JSONValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JSONValue[]
+  | { [key: string]: JSONValue };
 
 /**
  * @zh 数据存储空间（键值持久化），通过 `storage.getDataStorage<T>("name")` 获取。
@@ -2001,10 +2011,14 @@ interface GameWorld {
 
   /** @zh 彩色粒子 (DustParticleOptions)。 @en Colored dust particle. */
   spawnParticle(
-    x: number, y: number, z: number,
+    x: number,
+    y: number,
+    z: number,
     color: GameRGBColor,
     count: number,
-    dx: number, dy: number, dz: number,
+    dx: number,
+    dy: number,
+    dz: number,
     speed: number,
   ): void;
   /** @zh 彩色粒子，GameVector3 重载。 @en Colored dust particle, GameVector3 overload. */
@@ -2012,7 +2026,9 @@ interface GameWorld {
     pos: GameVector3,
     color: GameRGBColor,
     count: number,
-    dx: number, dy: number, dz: number,
+    dx: number,
+    dy: number,
+    dz: number,
     speed: number,
   ): void;
 
@@ -2059,16 +2075,14 @@ interface GameWorld {
 
   /** @zh 彩色烟花，GameRGBColor 数组。 @en Colored firework with GameRGBColor array. */
   launchFirework(
-    x: number, y: number, z: number,
+    x: number,
+    y: number,
+    z: number,
     colors: GameRGBColor[],
     shape: string,
   ): void;
   /** @zh 彩色烟花，GameVector3 + GameRGBColor[] 重载。 @en Colored firework, GameVector3 overload. */
-  launchFirework(
-    pos: GameVector3,
-    colors: GameRGBColor[],
-    shape: string,
-  ): void;
+  launchFirework(pos: GameVector3, colors: GameRGBColor[], shape: string): void;
 
   // ── @zh 闪电 @en Lightning ──
 
@@ -2807,6 +2821,165 @@ declare const GamePlayerWalkState: {
   readonly RUN: "RUN";
 };
 
+// ── @zh HTTP 请求 @en HTTP Request ──
+
+/** @zh HTTP 请求头 @en HTTP request headers */
+type GameHttpFetchHeaders = {
+  [name: string]: string | string[];
+};
+
+/**
+ * @zh HTTP 请求选项
+ * @en HTTP request options
+ */
+type GameHttpFetchRequestOptions = {
+  /** @zh 请求超时时间，单位为毫秒（默认 10000） @en Request timeout in milliseconds (default 10000) */
+  timeout?: number;
+  /** @zh 请求方法（默认 GET，fetch 时生效；便捷方法自动设置） @en Request method (default GET; auto-set by convenience methods) */
+  method?: "OPTIONS" | "GET" | "HEAD" | "PUT" | "POST" | "DELETE" | "PATCH";
+  /** @zh 请求头 @en Request headers */
+  headers?: GameHttpFetchHeaders;
+  /** @zh 请求体（字符串或 ArrayBuffer） @en Request body (string or ArrayBuffer) */
+  body?: string | ArrayBuffer;
+  /**
+   * @zh 自动解析响应体（"json" | "text" | "arrayBuffer"），结果见 resp.data
+   * @en Auto-parse response body ("json" | "text" | "arrayBuffer"), result in resp.data
+   */
+  responseType?: "json" | "text" | "arrayBuffer";
+  /**
+   * @zh 响应体最大字节数（0 表示不限制）。超出截断，resp.truncated 设为 true
+   * @en Max response body bytes (0 = no limit). Exceeding content is truncated, resp.truncated is set to true
+   */
+  maxBodySize?: number;
+};
+
+/**
+ * @zh HTTP 请求响应
+ *
+ * 所有请求均为同步调用（阻塞服务器 tick），请避免在 tick 回调中执行长时间请求。
+ *
+ * @en HTTP request response
+ *
+ * All requests are synchronous (block the server tick). Avoid long-running requests in tick callbacks.
+ */
+declare class GameHttpFetchResponse {
+  /** @zh 状态码 @en Status code */
+  readonly status: number;
+  /** @zh 状态码描述 @en Status text description */
+  readonly statusText: string;
+  /** @zh 是否请求成功（状态码 200-299） @en Whether the request was successful (status 200-299) */
+  readonly ok: boolean;
+  /** @zh 错误信息（仅在请求失败时有值） @en Error message (only set on failure) */
+  readonly errorMessage: string;
+  /** @zh 所有响应头（键值对） @en All response headers (key-value map) */
+  readonly headers: GameHttpFetchHeaders;
+  /**
+   * @zh 自动解析的结果（设置了 responseType 时） @en Auto-parsed result (when responseType was set)
+   */
+  readonly data: any;
+  /**
+   * @zh 响应体是否因超过 maxBodySize 被截断 @en Whether the response body was truncated due to maxBodySize
+   */
+  readonly truncated: boolean;
+
+  /**
+   * @zh 获取指定响应头的值
+   * @en Get a single response header value
+   * @param name - @zh 响应头名称（大小写不敏感） @en Header name (case-insensitive)
+   * @returns @zh 响应头值，不存在返回 null @en Header value, or null if absent
+   */
+  getHeader(name: string): string | null;
+
+  /**
+   * @zh 将响应体解析为 JSON 对象
+   * @en Parse the response body as a JSON object
+   * @returns @zh 解析后的对象，解析失败返回 null @en Parsed object, or null on parse failure
+   */
+  json(): any;
+
+  /**
+   * @zh 返回响应体的文本内容
+   * @en Return the response body as text
+   */
+  text(): string;
+
+  /**
+   * @zh 返回响应体的字节数组
+   * @en Return the response body as a byte array
+   */
+  arrayBuffer(): ArrayBuffer;
+
+  /**
+   * @zh 关闭连接（同步实现中为空操作，提供 API 兼容性）
+   * @en Close the connection (no-op in synchronous impl, provided for API compatibility)
+   */
+  close(): void;
+
+  private constructor();
+}
+
+/**
+ * @zh HTTP 请求 API
+ *
+ * 提供同步 HTTP 请求能力，支持全部 HTTP 方法、超时、自定义请求头、自动解析、二进制上传。
+ *
+ * @en HTTP request API
+ *
+ * Provides synchronous HTTP request capabilities with all HTTP methods, timeout, custom headers, auto-parsing, and binary upload.
+ *
+ * @example
+ * // Simple GET
+ * const resp = http.get("https://api.example.com/data");
+ * if (resp.ok) console.log(resp.json());
+ *
+ * // POST JSON with auto-parse
+ * const resp2 = http.post("https://api.example.com/submit", {
+ *   headers: { "Content-Type": "application/json" },
+ *   body: JSON.stringify({ name: "test" }),
+ *   responseType: "json"
+ * });
+ * console.log(resp2.data);
+ *
+ * // PUT / PATCH / DELETE
+ * http.put("https://api.example.com/item/1", { body: JSON.stringify({ v: 2 }) });
+ * http.patch("https://api.example.com/item/1", { body: JSON.stringify({ v: 3 }) });
+ * http.delete("https://api.example.com/item/1");
+ */
+declare class GameHttpAPI {
+  /**
+   * @zh 发送 HTTP 请求
+   * @en Send an HTTP request
+   *
+   * @example
+   * // GET
+   * const resp = http.fetch("https://api.example.com/data");
+   *
+   * // POST JSON with auto-parse
+   * const resp2 = http.fetch("https://api.example.com/submit", {
+   *   method: "POST",
+   *   headers: { "Content-Type": "application/json" },
+   *   body: JSON.stringify({ name: "test" }),
+   *   responseType: "json"
+   * });
+   * console.log(resp2.data);
+   *
+   * // PUT / PATCH / DELETE
+   * http.fetch("https://api.example.com/item/1", { method: "PUT", body: JSON.stringify({ v: 2 }) });
+   * http.fetch("https://api.example.com/item/1", { method: "PATCH", body: JSON.stringify({ v: 3 }) });
+   * http.fetch("https://api.example.com/item/1", { method: "DELETE" });
+   *
+   * @param url - @zh 请求地址 @en The request URL
+   * @param options - @zh 请求配置 @en The request options
+   * @returns @zh 请求结果 @en The request result
+   */
+  fetch(
+    url: string,
+    options?: GameHttpFetchRequestOptions,
+  ): GameHttpFetchResponse;
+
+  private constructor();
+}
+
 // ── §9 @zh 全局声明 @en Global Declarations ──
 
 /** @zh 世界控制与事件 API @en World control & events */
@@ -2835,3 +3008,6 @@ declare const db: GameDatabase;
 
 /** @zh 服务端控制台输出 @en Server console output */
 declare const console: GameConsole;
+
+/** @zh HTTP 请求 API @en HTTP request API */
+declare const http: GameHttpAPI;
