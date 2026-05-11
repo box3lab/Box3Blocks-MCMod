@@ -1,8 +1,8 @@
 # HTTP API
 
-Box3JS 通过全局 `http` 对象提供同步 HTTP 请求能力，通过 `method` 选项支持全部 HTTP 方法，以及超时、自定义请求头、自动解析、二进制上传。
+Box3JS 通过全局 `http` 对象提供 HTTP 请求能力，支持全部 HTTP 方法、超时、自定义请求头、自动解析、二进制上传，以及同步/异步两种调用方式。
 
-> **注意：** 所有 HTTP 请求均为**同步调用**，会阻塞服务器 tick。请避免在 `world.onTick()` 等高频回调中执行长时间请求。
+> **同步请求**会阻塞服务器 tick，避免在高频回调中执行长时间请求。**异步请求**（`async: true`）不阻塞 tick，通过回调接收结果。
 
 ## `http.fetch(url, options?)`
 
@@ -23,8 +23,13 @@ Box3JS 通过全局 `http` 对象提供同步 HTTP 请求能力，通过 `method
 | `timeout` | `number` | `10000` | 超时时间（毫秒） |
 | `responseType` | `string` | — | 自动解析：`"json"` / `"text"` / `"arrayBuffer"` |
 | `maxBodySize` | `number` | `0` | 响应体最大字节数，`0` = 不限制。超出部分截断，`resp.truncated = true` |
+| `async` | `boolean` | `false` | 设为 `true` 启用异步请求（不阻塞 tick），需同时提供 `onResponse` / `onError` |
+| `onResponse` | `function` | — | 异步请求成功回调，参数为 `GameHttpFetchResponse` |
+| `onError` | `function` | — | 异步请求失败回调，参数为错误信息字符串 |
 
 > 设置 `responseType` 后，解析结果可直接通过 `resp.data` 获取，无需手动调 `resp.json()` 等。
+>
+> 异步模式下 `fetch()` 返回 `null`，结果通过回调接收。
 
 ## GameHttpFetchResponse
 
@@ -113,4 +118,17 @@ const resp4 = http.fetch("https://invalid.example.com");
 if (!resp4.ok) {
   console.log("请求失败:", resp4.errorMessage);
 }
+
+// 异步请求（不阻塞 tick）
+http.fetch("https://api.example.com/data", {
+  async: true,
+  responseType: "json",
+  onResponse: function(resp) {
+    console.log("异步响应:", resp.status, resp.data);
+  },
+  onError: function(err) {
+    console.log("异步失败:", err);
+  }
+});
+console.log("请求已发出，代码继续执行");
 ```

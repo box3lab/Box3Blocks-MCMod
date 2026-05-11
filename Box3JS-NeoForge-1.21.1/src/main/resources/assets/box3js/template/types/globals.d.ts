@@ -2851,16 +2851,34 @@ type GameHttpFetchRequestOptions = {
    * @en Max response body bytes (0 = no limit). Exceeding content is truncated, resp.truncated is set to true
    */
   maxBodySize?: number;
+  /**
+   * @zh 设为 true 启用异步请求（不阻塞 tick）。必须同时提供 onResponse / onError 回调
+   * @en Set to true for async request (non-blocking). Must provide onResponse / onError callbacks
+   */
+  async?: boolean;
+  /**
+   * @zh 异步请求成功时的回调，参数为 GameHttpFetchResponse
+   * @en Callback on async request success, receives GameHttpFetchResponse
+   */
+  onResponse?: (resp: GameHttpFetchResponse) => void;
+  /**
+   * @zh 异步请求失败时的回调，参数为错误信息字符串
+   * @en Callback on async request error, receives error message string
+   */
+  onError?: (err: string) => void;
 };
 
 /**
  * @zh HTTP 请求响应
  *
- * 所有请求均为同步调用（阻塞服务器 tick），请避免在 tick 回调中执行长时间请求。
+ * 同步请求阻塞服务器 tick；异步请求（设置 `async: true`）不阻塞，
+ * 通过 `onResponse` / `onError` 回调在主线程接收结果。
  *
  * @en HTTP request response
  *
- * All requests are synchronous (block the server tick). Avoid long-running requests in tick callbacks.
+ * Synchronous requests block the server tick. Async requests (`async: true`)
+ * are non-blocking and deliver results via `onResponse` / `onError` callbacks
+ * on the main thread.
  */
 declare class GameHttpFetchResponse {
   /** @zh 状态码 @en Status code */
@@ -2921,18 +2939,19 @@ declare class GameHttpFetchResponse {
 /**
  * @zh HTTP 请求 API
  *
- * 提供同步 HTTP 请求能力，支持全部 HTTP 方法、超时、自定义请求头、自动解析、二进制上传。
+ * 提供同步和异步 HTTP 请求能力，支持全部 HTTP 方法、超时、自定义请求头、自动解析、二进制上传。
  *
  * @en HTTP request API
  *
- * Provides synchronous HTTP request capabilities with all HTTP methods, timeout, custom headers, auto-parsing, and binary upload.
+ * Provides synchronous and asynchronous HTTP request capabilities with all HTTP methods, timeout,
+ * custom headers, auto-parsing, and binary upload.
  *
  * @example
- * // Simple GET
+ * // Simple GET (sync)
  * const resp = http.get("https://api.example.com/data");
  * if (resp.ok) console.log(resp.json());
  *
- * // POST JSON with auto-parse
+ * // POST JSON with auto-parse (sync)
  * const resp2 = http.post("https://api.example.com/submit", {
  *   headers: { "Content-Type": "application/json" },
  *   body: JSON.stringify({ name: "test" }),
@@ -2940,10 +2959,12 @@ declare class GameHttpFetchResponse {
  * });
  * console.log(resp2.data);
  *
- * // PUT / PATCH / DELETE
- * http.put("https://api.example.com/item/1", { body: JSON.stringify({ v: 2 }) });
- * http.patch("https://api.example.com/item/1", { body: JSON.stringify({ v: 3 }) });
- * http.delete("https://api.example.com/item/1");
+ * // Async request (non-blocking)
+ * http.fetch("https://api.example.com/data", {
+ *   async: true,
+ *   onResponse: function(r) { console.log("Got: " + r.text()); },
+ *   onError: function(e) { console.log("Failed: " + e); }
+ * });
  */
 declare class GameHttpAPI {
   /**
@@ -2969,8 +2990,8 @@ declare class GameHttpAPI {
    * http.fetch("https://api.example.com/item/1", { method: "DELETE" });
    *
    * @param url - @zh 请求地址 @en The request URL
-   * @param options - @zh 请求配置 @en The request options
-   * @returns @zh 请求结果 @en The request result
+   * @param options - @zh 请求配置。设置 `async: true` + `onResponse`/`onError` 回调进行异步请求 @en Request options. Set `async: true` + `onResponse`/`onError` for async
+   * @returns @zh 同步返回结果，异步返回 null @en Response for sync, null for async
    */
   fetch(
     url: string,

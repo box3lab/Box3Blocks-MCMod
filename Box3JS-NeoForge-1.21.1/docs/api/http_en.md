@@ -1,8 +1,8 @@
 # HTTP API
 
-Box3JS provides synchronous HTTP request capabilities via the global `http` object, supporting all HTTP methods through the `method` option, plus timeout, custom headers, auto-parsing, and binary uploads.
+Box3JS provides HTTP request capabilities via the global `http` object, supporting all HTTP methods, timeout, custom headers, auto-parsing, binary uploads, and both synchronous and asynchronous calling modes.
 
-> **Note:** All HTTP requests are **synchronous** and will block the server tick. Avoid long-running requests in high-frequency callbacks like `world.onTick()`.
+> **Synchronous requests** block the server tick — avoid long-running requests in high-frequency callbacks. **Async requests** (`async: true`) are non-blocking and deliver results via callbacks.
 
 ## `http.fetch(url, options?)`
 
@@ -23,8 +23,13 @@ Sends an HTTP request and returns `GameHttpFetchResponse`.
 | `timeout` | `number` | `10000` | Timeout in milliseconds |
 | `responseType` | `string` | — | Auto-parse: `"json"` / `"text"` / `"arrayBuffer"` |
 | `maxBodySize` | `number` | `0` | Max response body bytes, `0` = no limit. Exceeding part is truncated, `resp.truncated = true` |
+| `async` | `boolean` | `false` | Set to `true` for non-blocking async request. Must provide `onResponse` / `onError` callbacks |
+| `onResponse` | `function` | — | Callback on async success, receives `GameHttpFetchResponse` |
+| `onError` | `function` | — | Callback on async failure, receives error message string |
 
 > When `responseType` is set, the parsed result is available via `resp.data` — no need to call `resp.json()` manually.
+>
+> In async mode `fetch()` returns `null`. Results are delivered via callbacks.
 
 ## GameHttpFetchResponse
 
@@ -113,4 +118,17 @@ const resp4 = http.fetch("https://invalid.example.com");
 if (!resp4.ok) {
   console.log("Request failed:", resp4.errorMessage);
 }
+
+// Async request (non-blocking)
+http.fetch("https://api.example.com/data", {
+  async: true,
+  responseType: "json",
+  onResponse: function(resp) {
+    console.log("Async response:", resp.status, resp.data);
+  },
+  onError: function(err) {
+    console.log("Async failed:", err);
+  }
+});
+console.log("Request sent, code continues immediately");
 ```

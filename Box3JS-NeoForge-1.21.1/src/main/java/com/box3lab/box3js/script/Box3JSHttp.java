@@ -10,39 +10,59 @@ import java.time.Duration;
 import java.util.*;
 
 import com.mojang.logging.LogUtils;
+import net.minecraft.server.MinecraftServer;
+import org.mozilla.javascript.Function;
 import org.slf4j.Logger;
 
 /**
  * HTTP fetch API exposed to JS as the global {@code http} object.
  *
- * <p>All requests are synchronous (block the server tick). Scripts should
- * avoid long-running requests in tick callbacks.
+ * <p>Supports both synchronous (blocking) and async (callback-based) requests.
+ * Async requests use {@link HttpClient#sendAsync} and deliver callbacks via
+ * {@link MinecraftServer#execute}.
  */
 public class Box3JSHttp {
 
     private static final Logger LOGGER = LogUtils.getLogger();
     private final HttpClient client;
+    private final MinecraftServer server;
+    private Box3ScriptEngine engine;
 
-    public Box3JSHttp() {
+    public Box3JSHttp(MinecraftServer server) {
+        this.server = server;
         this.client = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
     }
 
+    void setEngine(Box3ScriptEngine engine) {
+        this.engine = engine;
+    }
+
     /**
-     * Performs an HTTP request synchronously.
+     * Performs an HTTP request.
+     *
+     * <p>By default the request is synchronous (blocks the server tick).
+     * Pass {@code async: true} and {@code onResponse} / {@code onError} callbacks
+     * for non-blocking behaviour.
      *
      * @param url     the request URL
-     * @param options optional JS object with keys: method, headers, body, timeout, responseType
-     * @return a {@link Response} wrapping status, headers, and body
+     * @param options optional JS object with keys:
+     *                method, headers, body, timeout, responseType, maxBodySize,
+     *                async, onResponse, onError
+     * @return Response for sync, null for async
      */
     public Response fetch(String url, Map<String, Object> options) {
+        // ── extract common options ──
         String method = "GET";
         Map<String, Object> headers = Collections.emptyMap();
         byte[] body = null;
         long timeoutMs = 10_000;
         String responseType = null;
         long maxBodySize = 0;
+        boolean async = false;
+        Function onResponse = null;
+        Function onError = null;
 
         if (options != null) {
             if (options.get("method") instanceof String m)
@@ -63,8 +83,16 @@ public class Box3JSHttp {
             }
             if (options.get("timeout") instanceof Number n)
                 timeoutMs = n.longValue();
+            if (options.get("async") instanceof Boolean b)
+                async = b;
+            if (options.get("onResponse") instanceof Function f)
+                onResponse = f;
+            if (options.get("onError") instanceof Function f)
+                onError = f;
         }
 
+        // ── build request ──
+        HttpRequest request;
         try {
             HttpRequest.Builder builder = HttpRequest.newBuilder()
                     .uri(URI.create(url))
@@ -87,11 +115,54 @@ public class Box3JSHttp {
                 bp = HttpRequest.BodyPublishers.noBody();
             }
             builder.method(method, bp);
+            request = builder.build();
+        } catch (Exception e) {
+            LOGGER.warn("HTTP fetch failed to build request for {}: {}", url, e.getMessage());
+            if (async) {
+                final String errMsg = e.getMessage();
+                final Function errCb = onError;
+                if (errCb != null) {
+                    server.execute(() -> {
+                        if (engine != null) engine.callFunction(errCb, errMsg);
+                    });
+                }
+            }
+            return async ? null : Response.error(e.getMessage());
+        }
 
-            HttpResponse<byte[]> response = client.send(builder.build(),
+        // ── async path ──
+        if (async) {
+            final String rt = responseType;
+            final long mbs = maxBodySize;
+            final Function onResp = onResponse;
+            final Function onErr = onError;
+
+            client.sendAsync(request, HttpResponse.BodyHandlers.ofByteArray())
+                    .thenAccept(response -> {
+                        Response resp = new Response(response, rt, mbs);
+                        server.execute(() -> {
+                            if (onResp != null && engine != null)
+                                engine.callFunction(onResp, resp);
+                        });
+                    })
+                    .exceptionally(ex -> {
+                        server.execute(() -> {
+                            String msg = ex.getCause() instanceof HttpTimeoutException
+                                    ? "Request timed out"
+                                    : ex.getMessage();
+                            if (onErr != null && engine != null)
+                                engine.callFunction(onErr, msg);
+                        });
+                        return null;
+                    });
+            return null;
+        }
+
+        // ── sync path ──
+        try {
+            HttpResponse<byte[]> response = client.send(request,
                     HttpResponse.BodyHandlers.ofByteArray());
             return new Response(response, responseType, maxBodySize);
-
         } catch (HttpTimeoutException e) {
             LOGGER.warn("HTTP fetch timed out after {}ms: {}", timeoutMs, url);
             return Response.timeout();
@@ -159,7 +230,8 @@ public class Box3JSHttp {
                     case "json" -> {
                         try {
                             this.parsedBody = json();
-                        } catch (Exception ignored) {}
+                        } catch (Exception ignored) {
+                        }
                     }
                     case "text" -> this.parsedBody = text();
                     case "arrayBuffer" -> this.parsedBody = arrayBuffer();
@@ -185,10 +257,21 @@ public class Box3JSHttp {
             return new Response(0, "Error", msg);
         }
 
-        public int getStatus() { return status; }
-        public String getStatusText() { return statusText; }
-        public boolean getOk() { return ok; }
-        public boolean getTruncated() { return truncated; }
+        public int getStatus() {
+            return status;
+        }
+
+        public String getStatusText() {
+            return statusText;
+        }
+
+        public boolean getOk() {
+            return ok;
+        }
+
+        public boolean getTruncated() {
+            return truncated;
+        }
 
         /** Returns the auto-parsed body when {@code responseType} was set, otherwise null. */
         public Object getData() {

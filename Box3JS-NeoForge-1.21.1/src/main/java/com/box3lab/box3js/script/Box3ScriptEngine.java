@@ -55,7 +55,8 @@ public class Box3ScriptEngine {
         this.voxelsBinding = new Box3JSVoxels(server, sandbox);
         this.storageBinding = new Box3JSStorage(server.getServerDirectory().resolve("config"), this);
         this.dbBinding = new Box3JSDatabase(server.getServerDirectory().resolve("config"), this);
-        this.httpBinding = new Box3JSHttp();
+        this.httpBinding = new Box3JSHttp(server);
+        this.httpBinding.setEngine(this);
         setupScope();
         initialized = true;
     }
@@ -73,7 +74,8 @@ public class Box3ScriptEngine {
         engine.voxelsBinding = new Box3JSVoxels(server, engine.sandbox);
         engine.storageBinding = new Box3JSStorage(storageRoot, engine);
         engine.dbBinding = new Box3JSDatabase(storageRoot, engine);
-        engine.httpBinding = new Box3JSHttp();
+        engine.httpBinding = new Box3JSHttp(server);
+        engine.httpBinding.setEngine(engine);
         engine.setupScope();
         engine.initialized = true;
         return engine;
@@ -887,7 +889,8 @@ public class Box3ScriptEngine {
             this.dbBinding.closeAll();
         }
         this.dbBinding = new Box3JSDatabase(server.getServerDirectory().resolve("config"), this);
-        this.httpBinding = new Box3JSHttp();
+        this.httpBinding = new Box3JSHttp(server);
+        this.httpBinding.setEngine(this);
         setupScope();
     }
 
