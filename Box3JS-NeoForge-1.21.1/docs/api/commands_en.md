@@ -142,7 +142,7 @@ Output filename format: `dist/<name>-<version>.jar`. Compilation runs on a backg
 
 **Prerequisites:**
 
-- Project must be built (`npm run build`) — `dist/app.js` must exist
+- Project must be built (`npm run build`) — `dist/server.js` must exist
 - Server must run on **JDK** (not JRE), as `javac` is needed to compile the generated `@Mod` entry class
 
 **Output JAR contents:**
@@ -152,7 +152,7 @@ mygame-1.0.0.jar
 ├── META-INF/neoforge.mods.toml    ← mod metadata (depends on box3js)
 ├── logo.png                       ← mod icon (if specified)
 ├── box3script/mygame/MygameMod.class ← @Mod entry point (hardcoded metadata)
-└── box3script/mygame/app.js       ← bundled script source
+└── box3script/mygame/server.js       ← bundled script source
 ```
 
 **Deployment:** Place the script JAR alongside the Box3JS mod in `mods/`:
@@ -201,7 +201,7 @@ config/box3/
   │       ├── types/globals.d.ts
   │       ├── src/app.ts
   │       └── dist/
-│           ├── app.js       ← compiled output
+│           ├── server.js       ← compiled output
 │           └── <name>-<ver>.jar ← standalone JAR (compile command)
   ├── data/                      ← SQLite database (db API)
   └── storage/                  ← storage API persistence

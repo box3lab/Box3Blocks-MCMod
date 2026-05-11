@@ -82,9 +82,9 @@ public class Box3ScriptConfig {
             return;
         try (var dirs = Files.list(scriptDir)) {
             dirs.filter(Files::isDirectory).forEach(dir -> {
-                Path distAppJs = dir.resolve("dist/app.js");
-                Path legacyAppJs = dir.resolve("app.js");
-                if (Files.exists(distAppJs) || Files.exists(legacyAppJs)) {
+                Path distServerJs = dir.resolve("dist/server.js");
+                Path legacyServerJs = dir.resolve("server.js");
+                if (Files.exists(distServerJs) || Files.exists(legacyServerJs)) {
                     String name = dir.getFileName().toString();
                     projects.putIfAbsent(name, false);
                 }

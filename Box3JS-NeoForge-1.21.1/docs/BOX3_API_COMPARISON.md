@@ -1031,9 +1031,34 @@ MC 无内置语音通信，无法实现。
 
 ### 7.6 GameHttpAPI (http)
 
-**状态**: ❌ 未实现
+**状态**: ✅ 已实现（同步调用）
 
-Box3 的 `http.fetch(url, options?)` 用于服务端发起 HTTP 请求。Box3JS 暂未实现。
+Box3 的 `http.fetch(url, options?)` 用于服务端发起 HTTP 请求。
+
+| Box3 API | Box3JS 实现 | 状态 | 差异说明 |
+|----------|-------------|------|---------|
+| `http.fetch(url, options?)` → `Promise<Response>` | `http.fetch(url, options?)` → `Response` | ⚠️ | Box3 异步返回 Promise；Box3JS 同步阻塞调用 |
+| `options.method` | ✅ | ✅ | GET/POST/PUT/DELETE/PATCH/HEAD/OPTIONS |
+| `options.headers` | ✅ | ✅ | 键值对 |
+| `options.body` (string) | ✅ | ✅ | 文本请求体 |
+| `options.body` (ArrayBuffer) | ✅ | ✅ | 二进制请求体 |
+| `options.timeout` | ✅ | ✅ | 超时毫秒 |
+| — | `options.responseType` | ⬆ | 自动解析：`"json"` / `"text"` / `"arrayBuffer"`，结果见 `resp.data` |
+| — | `options.maxBodySize` | ⬆ | 响应体最大字节数，超出截断并标记 `resp.truncated` |
+| `Response.ok` | ✅ | ✅ | 状态码 200-299 |
+| `Response.status` | ✅ | ✅ | HTTP 状态码 |
+| `Response.statusText` | ✅ | ✅ | 状态描述 |
+| `Response.headers` | ✅ | ✅ | 响应头键值对 |
+| `Response.json()` → `Promise<any>` | `Response.json()` → `any` | ⚠️ | Box3 异步；Box3JS 同步返回，解析失败返回 `null` |
+| `Response.text()` → `Promise<string>` | `Response.text()` → `string` | ⚠️ | Box3 异步；Box3JS 同步返回 |
+| `Response.arrayBuffer()` → `Promise<ArrayBuffer>` | `Response.arrayBuffer()` → `ArrayBuffer` | ⚠️ | Box3 异步；Box3JS 同步返回 |
+| — | `Response.getHeader(name)` | ⬆ | 获取单个响应头值 |
+| — | `Response.errorMessage` | ⬆ | 请求失败时的错误信息 |
+| — | `Response.truncated` | ⬆ | 响应体是否因 maxBodySize 被截断 |
+| — | `Response.data` | ⬆ | responseType 自动解析的结果 |
+| `Response.close()` | ✅ | ✅ | 关闭连接（Box3JS 为空操作） |
+
+> **⚠️ 重要差异：** Box3JS 的 `http.fetch()` 是**同步阻塞**调用（Rhino 引擎限制），会阻塞服务器 tick。Box3 原版是异步 Promise。请避免在高频回调（`world.onTick()` 等）中使用。
 
 ### 7.7 GameAnalytics (analytics)
 
@@ -1151,6 +1176,13 @@ Box3 的事件注册方法返回 `GameEventHandlerToken`，可调用 `.cancel()`
 - `db.sql` — SQLite 数据库操作（支持 tagged template 和参数化查询）
 - `GameQueryResult` — 查询结果（rows, firstRow, columnNames, rowCount, affectedRows, isQuery）
 - 每个项目独立数据库文件 `config/box3/data/<project>.db`
+
+### 9.7 HTTP 请求
+- `http.fetch(url, options?)` — 同步 HTTP 请求，支持 GET/POST/PUT/DELETE/PATCH/HEAD/OPTIONS
+- `options.responseType` — 自动解析响应体（`"json"` / `"text"` / `"arrayBuffer"`），结果见 `resp.data`
+- `options.maxBodySize` — 响应体大小限制，超出截断并标记 `resp.truncated`
+- `Response.getHeader(name)` — 获取单个响应头值
+- `Response.errorMessage` — 请求失败时的错误信息
 
 ---
 

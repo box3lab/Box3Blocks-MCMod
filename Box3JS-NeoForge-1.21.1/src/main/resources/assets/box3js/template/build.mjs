@@ -1,15 +1,17 @@
 import * as esbuild from "esbuild";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
-import { writeFileSync, readFileSync, mkdirSync } from "fs";
+import { writeFileSync, readFileSync, mkdirSync, existsSync } from "fs";
 import babel from "@babel/core";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const entryFile = resolve(__dirname, "src/app.ts");
+const entryFile = resolve(__dirname, "src/server/app.ts");
 const distDir = resolve(__dirname, "dist");
-const outFile = resolve(distDir, "app.js");
+const outFile = resolve(distDir, "server.js");
+const clientEntry = resolve(__dirname, "src/client/app.ts");
+const clientOutFile = resolve(distDir, "client.js");
 
 // ═══════════════════════════════════════════════════════════════
 //  Babel plugins — Rhino 1.9.1 compatibility transforms
@@ -441,6 +443,34 @@ async function runBuild() {
   }
 }
 
+const clientBuildOptions = {
+  entryPoints: [clientEntry],
+  outfile: clientOutFile,
+  bundle: true,
+  format: "cjs",
+  platform: "neutral",
+  target: ["rhino1.9.1"],
+  plugins: [babelRhinoPlugin],
+  logLevel: "info",
+};
+
+async function buildClient() {
+  if (!existsSync(clientEntry)) {
+    console.log("No src/client/app.ts found, skipping client build.");
+    return;
+  }
+  try {
+    await esbuild.build({ ...clientBuildOptions, metafile: true });
+
+    const code = readFileSync(clientOutFile, "utf8");
+    writeFileSync(clientOutFile, sanitizeForRhino(code), "utf-8");
+    console.log("Client build complete:", clientOutFile);
+  } catch (err) {
+    console.error("Client build failed:", err);
+    process.exit(1);
+  }
+}
+
 // ── Entry ──
 
 if (process.argv.includes("--watch")) {
@@ -463,6 +493,27 @@ if (process.argv.includes("--watch")) {
   });
 
   await ctx.watch();
+
+  if (existsSync(clientEntry)) {
+    console.log("Client watch mode enabled...");
+    const clientCtx = await esbuild.context({
+      ...clientBuildOptions,
+      plugins: [
+        babelRhinoPlugin,
+        {
+          name: "post-process-plugin",
+          setup(build) {
+            build.onEnd(() => {
+              const code = readFileSync(clientOutFile, "utf8");
+              writeFileSync(clientOutFile, sanitizeForRhino(code), "utf-8");
+            });
+          },
+        },
+      ],
+    });
+    await clientCtx.watch();
+  }
 } else {
-  runBuild();
+  await runBuild();
+  await buildClient();
 }

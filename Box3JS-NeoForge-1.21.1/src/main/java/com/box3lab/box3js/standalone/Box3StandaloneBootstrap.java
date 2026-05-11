@@ -1,5 +1,6 @@
 package com.box3lab.box3js.standalone;
 
+import com.box3lab.box3js.Box3JSNetwork;
 import com.box3lab.box3js.script.Box3ScriptEngine;
 import com.mojang.logging.LogUtils;
 import net.minecraft.server.level.ServerPlayer;
@@ -15,6 +16,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.mozilla.javascript.Context;
 import org.slf4j.Logger;
 
@@ -29,7 +31,7 @@ import java.nio.file.Path;
  * class with hardcoded {@code scriptResource} and {@code projectName}.
  * The JAR bundles:
  * <ul>
- *   <li>Bundled JS source ({@code box3script/<modId>/app.js})</li>
+ *   <li>Bundled JS source ({@code box3script/<modId>/server.js})</li>
  *   <li>{@code META-INF/neoforge.mods.toml} declaring a dependency on box3js</li>
  *   <li>Optional {@code logo.png} for the mod icon</li>
  * </ul>
@@ -44,13 +46,14 @@ public class Box3StandaloneBootstrap {
     private final String scriptResource;
     private final String projectName;
     private Box3ScriptEngine engine;
+    private String clientScriptSource;
 
     /**
      * Called by the generated {@code @Mod} subclass with hardcoded metadata.
      *
      * @param modEventBus    the mod's event bus (unused; we use NeoForge.EVENT_BUS)
      * @param modContainer   the mod container (for display name, etc.)
-     * @param scriptResource resource path to the bundled JS (e.g. {@code box3script/a/app.js})
+     * @param scriptResource resource path to the bundled JS (e.g. {@code box3script/a/server.js})
      * @param projectName    unique project name for scope isolation
      */
     protected Box3StandaloneBootstrap(IEventBus modEventBus, ModContainer modContainer,
@@ -64,8 +67,10 @@ public class Box3StandaloneBootstrap {
 
         // ── Player join / leave ──
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent event) -> {
-            if (engine != null && event.getEntity() instanceof ServerPlayer sp)
+            if (engine != null && event.getEntity() instanceof ServerPlayer sp) {
                 engine.firePlayerJoin(sp);
+                sendClientScript(sp);
+            }
         });
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent event) -> {
             if (engine != null && event.getEntity() instanceof ServerPlayer sp)
@@ -160,6 +165,17 @@ public class Box3StandaloneBootstrap {
             return;
         }
 
+        // Read client script from JAR resource (optional)
+        String clientResource = "box3script/" + projectName + "/client.js";
+        try (InputStream is = getClass().getClassLoader().getResourceAsStream(clientResource)) {
+            if (is != null) {
+                clientScriptSource = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+                LOGGER.info("Client script bundled in JAR, will send to joining players");
+            }
+        } catch (Exception e) {
+            LOGGER.debug("No client script in JAR: {}", e.getMessage());
+        }
+
         Context cx = Context.enter();
         try {
             // esbuild cjs output references module.exports; define the CJS globals
@@ -173,6 +189,20 @@ public class Box3StandaloneBootstrap {
         } finally {
             Context.exit();
         }
+
+        // Send client script to already-connected players
+        if (clientScriptSource != null) {
+            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                sendClientScript(player);
+            }
+        }
+    }
+
+    private void sendClientScript(ServerPlayer player) {
+        if (clientScriptSource == null) return;
+        PacketDistributor.sendToPlayer(player,
+                new Box3JSNetwork.ClientScriptPayload(projectName, clientScriptSource));
+        LOGGER.debug("Sent client script '{}' to {}", projectName, player.getName().getString());
     }
 
     private void onServerTick(ServerTickEvent.Post event) {

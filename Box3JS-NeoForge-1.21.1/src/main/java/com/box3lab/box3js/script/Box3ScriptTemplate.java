@@ -14,7 +14,8 @@ public class Box3ScriptTemplate {
             "build.mjs",
             "tsconfig.json",
             "eslint.config.mjs",
-            "src/app.ts",
+            "src/server/app.ts",
+            "src/client/app.ts",
             "types/globals.d.ts",
     };
 
@@ -30,7 +31,7 @@ public class Box3ScriptTemplate {
                     throw new IOException("Template file not found: " + resourcePath);
                 Files.copy(in, dest, StandardCopyOption.REPLACE_EXISTING);
             }
-            if (relPath.equals("src/app.ts")) {
+            if (relPath.equals("src/server/app.ts")) {
                 String content = Files.readString(dest);
                 Files.writeString(dest, content.replace("PROJECT_NAME", projectName));
             }

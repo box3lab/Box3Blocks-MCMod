@@ -144,7 +144,7 @@ npm install && npm run build
 
 **前提条件：**
 
-- 已完成 `npm run build`（`dist/app.js` 存在）
+- 已完成 `npm run build`（`dist/server.js` 存在）
 - 服务器运行在 **JDK**（不是 JRE），因为需要调用 `javac` 编译生成的 `@Mod` 入口类
 
 **输出 JAR 内容：**
@@ -154,7 +154,7 @@ mygame-1.0.0.jar
 ├── META-INF/neoforge.mods.toml    ← 模组元数据（依赖 box3js）
 ├── logo.png                       ← 模组图标（如有指定）
 ├── box3script/mygame/MygameMod.class ← @Mod 入口（含硬编码元数据）
-└── box3script/mygame/app.js       ← 打包的脚本源码
+└── box3script/mygame/server.js       ← 打包的脚本源码
 ```
 
 **部署：** 将脚本 JAR 与 Box3JS 模组一起放入 `mods/`：
@@ -203,7 +203,7 @@ config/box3/
   │       ├── types/globals.d.ts
   │       ├── src/app.ts
   │       └── dist/
-│           ├── app.js       ← 编译产物
+│           ├── server.js       ← 编译产物
 │           └── <name>-<ver>.jar ← 独立 JAR（compile 命令生成）
   ├── data/                      ← SQLite 数据库 (db API)
   └── storage/                  ← storage API 持久化

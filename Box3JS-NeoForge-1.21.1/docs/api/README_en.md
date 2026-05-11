@@ -98,6 +98,22 @@ Find APIs by what you want to do, not by which global object they live on.
 | Query nearby entities | `world.entitiesInRadius(pos, radius)` |
 | Query all entities | `world.querySelectorAll("*")` |
 
+### Client-side Features (requires Box3JS client mod)
+
+| I want to... | Use this |
+|--------------|----------|
+| Run every client tick | `client.onTick(() => { ... })` |
+| Check key held down | `input.isKeyDown("space")` |
+| Listen for key press | `input.onKeyPress("f", () => { ... })` |
+| Play sound on client | `client.playSound("pling", 1.0, 1.0)` |
+| Show action bar text | `ui.showOverlay("text")` |
+| Show screen title | `ui.showTitle("Title", "Subtitle")` |
+| Send chat message | `chat.sendMessage("message")` |
+| Receive chat messages | `chat.onMessage((msg, sender, isSystem) => { ... })` |
+| Send event to server | `remoteChannel.sendServerEvent({ ... })` |
+| Receive event from server | `remoteChannel.onClientEvent((event) => { ... })` |
+| Client-side local storage | `storage.getDataStorage("key")` |
+
 ### Visual Effects
 
 | I want to... | Use this |
@@ -143,6 +159,16 @@ Find APIs by what you want to do, not by which global object they live on.
 | SQL query | `db.sql("SELECT ...")` |
 | SQL write | `db.sql("INSERT INTO ...")` |
 
+### HTTP Requests
+
+| I want to... | Use this |
+|-------------|----------|
+| GET request | `http.fetch("https://...")` |
+| POST JSON | `http.fetch(url, { method: "POST", headers, body })` |
+| Parse JSON | `resp.json()` or `{ responseType: "json" }` |
+| Read text | `resp.text()` |
+| Set timeout | `http.fetch(url, { timeout: 5000 })` |
+
 ### Game Systems
 
 | I want to... | Use this |
@@ -187,6 +213,12 @@ Find APIs by what you want to do, not by which global object they live on.
 | `voxels` | ✅ Box3 | Block operations, see [voxels_en.md](voxels_en.md) |
 | `storage` | ✅ Box3 | Data persistence, see [storage_en.md](storage_en.md) |
 | `db` | ✅ Box3 | SQLite database, see [database_en.md](database_en.md) |
+| `http` | 🆕 MC Extension | HTTP requests, see [http_en.md](http_en.md) |
+| `client` | 🆕 MC Extension | Client lifecycle & sound, see [client_en.md](client_en.md) |
+| `input` | 🆕 MC Extension | Client keyboard input, see [client_en.md](client_en.md) |
+| `ui` | 🆕 MC Extension | Client screen UI, see [client_en.md](client_en.md) |
+| `chat` | 🆕 MC Extension | Client chat send/receive, see [client_en.md](client_en.md) |
+| `remoteChannel` | 🆕 MC Extension | Server↔client event channel, see [client_en.md](client_en.md) |
 | `console` | ✅ Box3 | Console logging (`log`/`warn`/`error`/`debug`) |
 | `GameVector3` | ✅ Box3 | 3D vector, see [math_en.md](math_en.md) |
 | `GameBounds3` | ✅ Box3 | Bounding box, see [math_en.md](math_en.md) |
@@ -211,6 +243,8 @@ Find APIs by what you want to do, not by which global object they live on.
 | [voxels_en.md](voxels_en.md) | Block read/write, region fill, spawner control |
 | [storage_en.md](storage_en.md) | Persistent data storage |
 | [database_en.md](database_en.md) | SQLite database API |
+| [http_en.md](http_en.md) | HTTP request API |
+| [client_en.md](client_en.md) | Client scripts: lifecycle, keyboard, screen UI, chat, remoteChannel, client-side storage |
 | [math_en.md](math_en.md) | GameVector3, GameBounds3, GameRGBColor, GameRGBAColor, GameQuaternion |
 | [commands_en.md](commands_en.md) | `/box3script` command reference |
 
@@ -221,16 +255,24 @@ Projects created with `/box3script create` come with a complete TS build environ
 ```
 config/box3/script/mygame/
 ├── package.json          ← esbuild + Babel + @babel/preset-typescript
-├── tsconfig.json
+├── tsconfig.base.json    ← Shared TS compiler options
+├── tsconfig.server.json  ← Server-side TS config
+├── tsconfig.client.json  ← Client-side TS config
 ├── build.mjs             ← Babel TS→JS → esbuild bundle → dist/
 ├── types/
-│   └── globals.d.ts      ← Full API type declarations (IDE autocomplete)
+│   ├── shared.d.ts       ← Shared types (server & client)
+│   ├── server.d.ts       ← Server-only types
+│   └── client.d.ts       ← Client-only types
 ├── src/
-│   ├── app.ts            ← Entry point, require() other modules
-│   ├── state.ts          ← Shared game state
-│   └── ...
+│   ├── server/
+│   │   ├── app.ts        ← Server entry point
+│   │   └── ...
+│   └── client/
+│       ├── app.ts        ← Client entry point
+│       └── ...
 └── dist/
-    ├── app.js            ← Compiled output (what the mod actually loads)
+    ├── server.js          ← Server compiled output
+    ├── client.js          ← Client compiled output
     └── <name>-<ver>.jar  ← Standalone JAR (/box3script compile)
 ```
 
@@ -238,7 +280,7 @@ Run `npm run build` to build. Use `/box3script watch` to enable file watching fo
 
 ## Deployment
 
-When ready to distribute, compile your script into a **standalone JAR mod** that runs on any NeoForge server without Box3JS:
+When ready to distribute, compile your script into a **standalone JAR mod** that runs on any NeoForge server alongside Box3JS:
 
 ```
 /box3script compile <project>

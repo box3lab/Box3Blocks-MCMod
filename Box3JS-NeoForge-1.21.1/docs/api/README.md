@@ -98,6 +98,22 @@ console.log("脚本已加载");
 | 查询附近实体 | `world.entitiesInRadius(pos, radius)` |
 | 查询所有实体 | `world.querySelectorAll("*")` |
 
+### 客户端本地功能（需 Box3JS 客户端 Mod）
+
+| 我想... | 用这个 |
+|---------|--------|
+| 客户端每帧执行 | `client.onTick(() => { ... })` |
+| 检测按键按下 | `input.isKeyDown("space")` |
+| 监听按键事件 | `input.onKeyPress("f", () => { ... })` |
+| 客户端播放音效 | `client.playSound("pling", 1.0, 1.0)` |
+| 快捷栏上方显示文字 | `ui.showOverlay("文字")` |
+| 显示屏幕大标题 | `ui.showTitle("标题", "副标题")` |
+| 发送聊天消息 | `chat.sendMessage("消息")` |
+| 接收聊天消息 | `chat.onMessage((msg, sender, isSystem) => { ... })` |
+| 发送服务端事件 | `remoteChannel.sendServerEvent({ ... })` |
+| 接收服务端事件 | `remoteChannel.onClientEvent((event) => { ... })` |
+| 客户端本地存储 | `storage.getDataStorage("key")` |
+
 ### 视觉效果
 
 | 我想... | 用这个 |
@@ -143,6 +159,16 @@ console.log("脚本已加载");
 | SQL 查询 | `db.sql("SELECT ...")` |
 | SQL 写入 | `db.sql("INSERT INTO ...")` |
 
+### 网络请求
+
+| 我想... | 用这个 |
+|---------|--------|
+| GET 请求 | `http.fetch("https://...")` |
+| POST JSON | `http.fetch(url, { method: "POST", headers, body })` |
+| 解析 JSON | `resp.json()` 或 `{ responseType: "json" }` |
+| 读取文本 | `resp.text()` |
+| 设置超时 | `http.fetch(url, { timeout: 5000 })` |
+
 ### 游戏系统
 
 | 我想... | 用这个 |
@@ -187,6 +213,12 @@ console.log("脚本已加载");
 | `voxels` | ✅ Box3 | 方块操作，见 [voxels.md](voxels.md) |
 | `storage` | ✅ Box3 | 数据持久化，见 [storage.md](storage.md) |
 | `db` | ✅ Box3 | SQLite 数据库，见 [database.md](database.md) |
+| `http` | 🆕 MC 扩展 | HTTP 请求，见 [http.md](http.md) |
+| `client` | 🆕 MC 扩展 | 客户端生命周期与音效，见 [client.md](client.md) |
+| `input` | 🆕 MC 扩展 | 客户端键盘输入，见 [client.md](client.md) |
+| `ui` | 🆕 MC 扩展 | 客户端屏幕 UI，见 [client.md](client.md) |
+| `chat` | 🆕 MC 扩展 | 客户端聊天收发，见 [client.md](client.md) |
+| `remoteChannel` | 🆕 MC 扩展 | 服务端↔客户端事件通信，见 [client.md](client.md) |
 | `console` | ✅ Box3 | 控制台日志输出（`log`/`warn`/`error`/`debug`） |
 | `GameVector3` | ✅ Box3 | 三维向量，见 [math.md](math.md) |
 | `GameBounds3` | ✅ Box3 | 包围盒，见 [math.md](math.md) |
@@ -211,6 +243,8 @@ console.log("脚本已加载");
 | [voxels.md](voxels.md) | 方块读写、区域填充、刷怪笼 |
 | [storage.md](storage.md) | 数据持久化存储 |
 | [database.md](database.md) | SQLite 数据库 |
+| [http.md](http.md) | HTTP 网络请求 |
+| [client.md](client.md) | 客户端脚本：生命周期、键盘输入、屏幕 UI、聊天、remoteChannel、客户端本地存储 |
 | [math.md](math.md) | GameVector3、GameBounds3、GameRGBColor、GameRGBAColor、GameQuaternion |
 | [commands.md](commands.md) | `/box3script` 命令参考 |
 
@@ -221,16 +255,24 @@ console.log("脚本已加载");
 ```
 config/box3/script/mygame/
 ├── package.json          ← esbuild + Babel + @babel/preset-typescript
-├── tsconfig.json
+├── tsconfig.base.json    ← 公共 TS 编译选项
+├── tsconfig.server.json  ← 服务端 TS 配置
+├── tsconfig.client.json  ← 客户端 TS 配置
 ├── build.mjs             ← Babel TS→JS → esbuild bundle → dist/
 ├── types/
-│   └── globals.d.ts      ← 完整 API 类型声明（IDE 自动补全）
+│   ├── shared.d.ts       ← 服务端&客户端共享类型
+│   ├── server.d.ts       ← 服务端专属类型
+│   └── client.d.ts       ← 客户端专属类型
 ├── src/
-│   ├── app.ts            ← 入口，require() 其他模块
-│   ├── state.ts          ← 共享游戏状态
-│   └── ...
+│   ├── server/
+│   │   ├── app.ts        ← 服务端入口
+│   │   └── ...
+│   └── client/
+│       ├── app.ts        ← 客户端入口
+│       └── ...
 └── dist/
-    ├── app.js            ← 编译产物（模组实际加载此文件）
+    ├── server.js            ← 服务端编译产物
+    ├── client.js          ← 客户端编译产物
     └── <name>-<ver>.jar  ← 独立 JAR（/box3script compile）
 ```
 
@@ -238,7 +280,7 @@ config/box3/script/mygame/
 
 ## 发布部署
 
-开发调试完成后，将脚本编译为**独立 JAR 模组**，无需 Box3JS 即可运行在任意 NeoForge 服务器：
+开发调试完成后，将脚本编译为**独立 JAR 模组**，需与 Box3JS 一同部署在 NeoForge 服务器：
 
 ```
 /box3script compile <项目名>

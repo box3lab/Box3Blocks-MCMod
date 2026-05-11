@@ -206,7 +206,7 @@ public class Box3ScriptCommand {
             engine.withErrorReporter(chatReporter(source));
             engine.setCurrentProject(project);
             try {
-                engine.eval("require('./app')");
+                engine.eval("require('./server')");
             } finally {
                 engine.setCurrentProject(null);
                 engine.clearErrorReporter();
@@ -278,7 +278,7 @@ public class Box3ScriptCommand {
                                 engine.setCurrentProject(project);
                                 try {
                                     engine.removeProject(project);
-                                    engine.eval("require('./app')");
+                                    engine.eval("require('./server')");
                                 } finally {
                                     engine.setCurrentProject(null);
                                     engine.clearErrorReporter();
@@ -363,10 +363,10 @@ public class Box3ScriptCommand {
 
                             Path projectDir = scriptDir(ctx.getSource().getServer())
                                     .resolve(project).normalize();
-                            Path appJs = projectDir.resolve("dist/app.js");
-                            if (!Files.exists(appJs)) {
+                            Path serverJs = projectDir.resolve("dist/server.js");
+                            if (!Files.exists(serverJs)) {
                                 ctx.getSource().sendFailure(
-                                        Component.literal("§cdist/app.js not found — run 'npm run build' first"));
+                                        Component.literal("§cdist/server.js not found — run 'npm run build' first"));
                                 return 0;
                             }
 

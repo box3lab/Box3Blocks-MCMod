@@ -1,5 +1,6 @@
 package com.box3lab.box3js;
 
+import com.box3lab.box3js.client.Box3JSClientEngine;
 import com.box3lab.box3js.registries.Box3JSCustomItems;
 import com.box3lab.box3js.registries.Box3JSRecipeManager;
 import com.box3lab.box3js.script.Box3ScriptCommand;
@@ -10,8 +11,12 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
 import java.nio.file.Path;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import net.neoforged.neoforge.event.ServerChatEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -28,9 +33,46 @@ public class Box3JS {
     public static final String MODID = "box3js";
     public static final Logger LOGGER = LogUtils.getLogger();
 
+    /** Tracks which connected players have Box3JS installed on their client. */
+    public static final Set<UUID> clientsWithBox3JS = ConcurrentHashMap.newKeySet();
+
     public Box3JS(IEventBus modEventBus, ModContainer modContainer) {
         // Custom items via data components + resource pack (no DeferredRegister, no registry sync)
         Box3JSCustomItems.init(Path.of(".").toAbsolutePath().normalize());
+
+        // Register custom payloads
+        modEventBus.addListener(RegisterPayloadHandlersEvent.class, event -> {
+            var registrar = event.registrar("1");
+
+            // Server → Client: send client scripts on join (optional — client without mod can still connect)
+            registrar.optional().playToClient(
+                Box3JSNetwork.ClientScriptPayload.TYPE,
+                Box3JSNetwork.ClientScriptPayload.STREAM_CODEC,
+                (payload, context) -> Box3JSClientEngine.get()
+                        .loadScript(payload.projectName(), payload.scriptSource())
+            );
+
+            // Server → Client: remote event from server (optional)
+            registrar.optional().playToClient(
+                Box3JSNetwork.ServerEventPayload.TYPE,
+                Box3JSNetwork.ServerEventPayload.STREAM_CODEC,
+                (payload, context) -> Box3JSClientEngine.get()
+                        .fireClientEvent(payload.projectName(), payload.tick(), payload.eventJson())
+            );
+
+            // Client → Server: remote event from client (optional)
+            registrar.optional().playToServer(
+                Box3JSNetwork.ClientEventPayload.TYPE,
+                Box3JSNetwork.ClientEventPayload.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer sp) {
+                        clientsWithBox3JS.add(sp.getUUID());
+                        Box3ScriptEngine.get().handleClientEvent(
+                                sp, payload.projectName(), payload.eventJson());
+                    }
+                }
+            );
+        });
 
         // Script commands
         NeoForge.EVENT_BUS.addListener(Box3ScriptCommand::register);
@@ -42,9 +84,13 @@ public class Box3JS {
 
         // Player join / leave
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent event) -> {
+            Box3JSNetwork.sendClientScripts((ServerPlayer) event.getEntity());
             Box3ScriptEngine.get().firePlayerJoin((ServerPlayer) event.getEntity());
         });
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent event) -> {
+            if (event.getEntity() instanceof ServerPlayer sp) {
+                clientsWithBox3JS.remove(sp.getUUID());
+            }
             Box3ScriptEngine.get().firePlayerLeave((ServerPlayer) event.getEntity());
         });
 
