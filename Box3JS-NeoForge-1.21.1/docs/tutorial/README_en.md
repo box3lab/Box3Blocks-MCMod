@@ -34,6 +34,7 @@ Beginner                  Intermediate              Advanced
 | 3 | [Events & Entities](03-events-entities_en.md) | All event callbacks, spawn entities, AI control, patrol guards, collision |
 | 4 | [Advanced Systems](04-advanced-systems_en.md) | Scoreboards, BossBars, teams, world border, cross-script messaging |
 | 5 | [Real Mini-Games](05-examples_en.md) | Full PvP arena, particle effects, fireworks, wave spawning, home TP |
+| 6 | [Client-Side Scripting](06-client-scripting_en.md) | Keyboard input, screen UI, sound/music, local storage, SQLite, HTTP, remoteChannel |
 
 ## Prerequisites
 

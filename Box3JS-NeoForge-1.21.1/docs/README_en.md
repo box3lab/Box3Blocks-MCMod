@@ -11,8 +11,10 @@ Learn what Box3JS is, how to use it, and the principles behind it — from zero.
 | Doc | Content |
 |------|------|
 | [Quick Start](guide/getting-started_en.md) | Setup → first script → dev cycle → debugging → deployment |
+| [Common Recipes](guide/recipes_en.md) | Feature templates: economy, teleport, shop, daily rewards, leaderboards, webhooks |
 | [Architecture](guide/architecture_en.md) | Rhino engine, scope management, build pipeline, network communication |
 | [JS vs Java](guide/js-vs-java_en.md) | Box3JS scripting vs native Java modding — pros, cons & when to choose |
+| [FAQ](guide/faq_en.md) | Loading, build, runtime, database, HTTP, client, deployment |
 
 ### Tutorials
 
@@ -20,11 +22,12 @@ Learn what Box3JS is, how to use it, and the principles behind it — from zero.
 
 | # | Tutorial | You'll learn |
 |---|---------|-------------|
-| 1 | [From Zero](tutorial/01-basics.md) | Create project → build → first script → chat commands → timers |
-| 2 | [Players & Items](tutorial/02-player-items.md) | Teleport, flight, give items, enchantments, potion effects, game modes |
-| 3 | [Events & Entities](tutorial/03-events-entities.md) | All event callbacks, spawn entities, AI control, patrol guards, collision |
-| 4 | [Advanced Systems](tutorial/04-advanced-systems.md) | Scoreboards, BossBars, teams, world border, cross-script messaging |
-| 5 | [Real Mini-Games](tutorial/05-examples.md) | Full PvP arena, particle effects, fireworks, wave spawning |
+| 1 | [From Zero](tutorial/01-basics_en.md) | Create project → build → first script → chat commands → timers |
+| 2 | [Players & Items](tutorial/02-player-items_en.md) | Teleport, flight, give items, enchantments, potion effects, game modes |
+| 3 | [Events & Entities](tutorial/03-events-entities_en.md) | All event callbacks, spawn entities, AI control, patrol guards, collision |
+| 4 | [Advanced Systems](tutorial/04-advanced-systems_en.md) | Scoreboards, BossBars, teams, world border, cross-script messaging |
+| 5 | [Real Mini-Games](tutorial/05-examples_en.md) | Full PvP arena, particle effects, fireworks, wave spawning |
+| 6 | [Client-Side Scripting](tutorial/06-client-scripting_en.md) | Keyboard input, screen UI, sound/music, local storage, SQLite, HTTP, remoteChannel |
 | 📋 | [Tutorial Overview](tutorial/README_en.md) | Learning roadmap, prerequisites, pro tips |
 
 ### API Reference
@@ -63,4 +66,4 @@ Complete API docs organized by functional category. One document per global obje
 - **I want to do X, which API?**: [API by Task →](api/README_en.md)
 - **Why Box3JS over Java modding?**: [JS vs Java →](guide/js-vs-java_en.md)
 - **How does Box3JS work internally?**: [Architecture →](guide/architecture_en.md)
-- **Learn Box3JS scripting from zero**: [Tutorial 1 →](tutorial/01-basics.md)
+- **Learn Box3JS scripting from zero**: [Tutorial 1 →](tutorial/01-basics_en.md)

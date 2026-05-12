@@ -6,6 +6,6 @@
     "saturation": 0.6,
     "alwaysEdible": true,
     "maxStackSize": 64,
-    "creativeTab": "my_items"
+    "creativeTab": "my_blocks"
   }
 }

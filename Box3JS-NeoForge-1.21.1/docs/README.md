@@ -11,8 +11,10 @@ Box3JS 是 Minecraft NeoForge 1.21.1 的 JavaScript/TypeScript 脚本引擎模�
 | 文档 | 内容 |
 |------|------|
 | [快速开始](guide/getting-started.md) | 环境搭建 → 第一个脚本 → 开发循环 → 调试 → 发布 |
+| [常用配方](guide/recipes.md) | 功能模板：经济系统、传送、商店、每日奖励、排行榜、Webhook |
 | [运行原理](guide/architecture.md) | Rhino 引擎、作用域管理、构建管线、网络通信 |
 | [JS vs Java 对比](guide/js-vs-java.md) | Box3JS 脚本开发 vs 原生 Java 模组开发的优势与劣势 |
+| [常见问题](guide/faq.md) | 加载、构建、运行时、数据库、HTTP、客户端、部署 |
 
 ### 教程
 
@@ -25,6 +27,7 @@ Box3JS 是 Minecraft NeoForge 1.21.1 的 JavaScript/TypeScript 脚本引擎模�
 | 3 | [事件系统与实体操控](tutorial/03-events-entities.md) | 全部事件回调、生成实体、AI 控制、巡逻守卫、碰撞检测 |
 | 4 | [高级游戏系统](tutorial/04-advanced-systems.md) | 计分板排名、BossBar 倒计时、队伍分组、世界边界缩圈、跨脚本通信 |
 | 5 | [实战小游戏](tutorial/05-examples.md) | PvP 竞技场（完整可玩）、粒子特效大全、烟花秀、波次刷怪 |
+| 6 | [客户端脚本开发](tutorial/06-client-scripting.md) | 键盘输入、屏幕 UI、音效/音乐、本地存储、SQLite、HTTP、remoteChannel |
 | 📋 | [教程总览](tutorial/README.md) | 学习路径图、前置知识、开发技巧 |
 
 ### API 参考

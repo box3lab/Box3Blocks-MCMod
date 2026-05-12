@@ -7,8 +7,10 @@
 | 我想... | 读这个 |
 |---------|--------|
 | 10 分钟写出第一个脚本 | [快速开始](getting-started.md) |
+| 看现成模板改一改就实现功能 | [常用配方](recipes.md) |
 | 理解 Box3JS 内部怎么运作 | [运行原理](architecture.md) |
 | 判断该用 Box3JS 还是写 Java 模组 | [JS vs Java 对比](js-vs-java.md) |
+| 遇到问题怎么解决 | [常见问题](faq.md) |
 
 ## 学习路径
 

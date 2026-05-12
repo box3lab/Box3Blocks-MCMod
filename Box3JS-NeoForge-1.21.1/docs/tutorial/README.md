@@ -22,6 +22,7 @@
 | 3 | [事件系统与实体操控](03-events-entities.md) | 全部事件回调、生成实体、AI 控制、巡逻守卫、碰撞检测 |
 | 4 | [高级游戏系统](04-advanced-systems.md) | 计分板排名、BossBar 倒计时、队伍分组、世界边界缩圈、跨脚本通信 |
 | 5 | [实战小游戏](05-examples.md) | PvP 竞技场（完整可玩）、粒子特效大全、烟花秀、波次刷怪、家传送 |
+| 6 | [客户端脚本开发](06-client-scripting.md) | 键盘输入、屏幕 UI、音效/音乐、本地存储、SQLite、HTTP、remoteChannel |
 
 ## 你需要知道
 

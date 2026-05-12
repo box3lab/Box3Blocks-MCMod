@@ -7,8 +7,10 @@ Start here whether you want to get your hands dirty quickly or dive deep into in
 | I want to... | Read this |
 |-------------|----------|
 | Write my first script in 10 minutes | [Quick Start](getting-started_en.md) |
+| Use ready-made templates to implement features | [Common Recipes](recipes_en.md) |
 | Understand how Box3JS works internally | [Architecture](architecture_en.md) |
 | Decide between Box3JS and Java modding | [JS vs Java](js-vs-java_en.md) |
+| Troubleshoot problems | [FAQ](faq_en.md) |
 
 ## Learning Path
 

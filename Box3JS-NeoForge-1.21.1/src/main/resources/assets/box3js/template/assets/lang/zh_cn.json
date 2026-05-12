@@ -1,13 +1,5 @@
 {
   "block.mymod.ruby_block": "红宝石块",
-  "block.mymod.glass_block": "玻璃块",
   "item.mymod.chocolate": "巧克力棒",
-  "item.mymod.trophy": "金质奖杯",
-  "item.mymod.my_sword": "我的剑",
-  "item.mymod.my_pickaxe": "我的镐",
-  "item.mymod.my_chestplate": "我的胸甲",
-  "item.mymod.my_helmet": "我的头盔",
-  "item.mymod.my_leggings": "我的护腿",
-  "item.mymod.my_boots": "我的靴子",
   "itemGroup.mymod.my_blocks": "我的方块"
 }
