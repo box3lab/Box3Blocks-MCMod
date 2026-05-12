@@ -27,13 +27,15 @@ This creates a TypeScript project:
 ```
 config/box3/script/mygame/
 ├── package.json          ← npm dependencies (esbuild, Babel, TypeScript)
-├── tsconfig.json
+├── tsconfig.base.json     ← Shared TS compiler options
+├── tsconfig.server.json   ← Server-side TS config
+├── tsconfig.client.json   ← Client-side TS config
 ├── build.mjs             ← build script (esbuild → Babel → Rhino)
 ├── eslint.config.mjs
 ├── types/
 │   ├── shared.d.ts       ← types shared by server & client
-│   ├── server.d.ts       ← server-only types
-│   └── client.d.ts       ← client-only types
+│   ├── server/           ← server-only types (server/entity/player/world/voxels)
+│   └── client/           ← client-only types (client/audio/input/ui/chat)
 └── src/
     ├── server/
     │   └── app.ts        ← server entry (game logic)
@@ -64,9 +66,9 @@ Edit `src/app.ts`, re-run `npm run build`, then `/box3script reload mygame` — 
 | **TypeScript**       | Full `.d.ts` type declarations, esbuild + Babel pipeline, IDE IntelliSense       |
 | **20+ events**     | onTick, onPlayerJoin, onChat, onEntityDeath, onBlockActivate, onButtonPressed... |
 | **Visual effects**   | 13+ particles, fireworks, lightning, explosions, sounds                          |
-| **Client API**       | Keyboard input, screen UI, chat interception, client storage, SQLite, HTTP, bidirectional events |
+| **Client API**       | Keyboard input, screen UI, chat interception, sound/music control, client storage, SQLite, HTTP, bidirectional events |
 | **Game systems**     | Scoreboards, BossBar, teams, world border, cross-script messaging                |
-| **Custom items**     | JSON-configured items (food, rarity, glint), dynamic recipe management           |
+| **Custom registries** | JSON-configured blocks, items (food/tools/armor), sounds & creative tabs, compiled to standalone JAR |
 | **Data persistence** | JSON storage + SQLite database (leaderboards, economy, player data)              |
 | **Standalone JAR**   | `/box3script compile` packages scripts into a standalone JAR mod for distribution |
 
@@ -89,13 +91,14 @@ All `<project>` arguments support **Tab completion**. [Full command reference �
 
 | Global                           | Purpose                                                                                                         |
 | -------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `world`                          | World state, events, particles, fireworks, lightning, sounds, scoreboards, BossBar, teams, border, custom items |
+| `world`                          | World state, events, particles, fireworks, lightning, sounds, scoreboards, BossBar, teams, border |
 | `entity`                         | Entity properties, AI pathfinding, equipment, potion effects, tags, navigation                                  |
 | `player`                         | Inventory, flight, game mode, teleport, messaging, XP, sounds                                                   |
 | `voxels`                         | Block read/write, region fill, spawner control                                                                  |
 | `http`                           | HTTP requests (sync + async, GET/POST/JSON)                                                                     |
 | `remoteChannel`                  | Server ↔ client bidirectional event channel                                                                     |
-| `client` · `input` · `ui` · `chat` | Client scripts: lifecycle, keyboard, screen text, chat messages                                               |
+| `registries`                     | Custom blocks, items & sounds (compiled JAR mode), see [registries_en.md](docs/api/registries_en.md) |
+| `client` · `input` · `ui` · `chat` · `audio` | Client scripts: lifecycle, keyboard, screen text, chat, audio control                                          |
 | `storage`                        | JSON data persistence (server & client)                                                                         |
 | `db`                             | SQLite database (server & client)                                                                               |
 | `console`                        | Console logging (`log`/`warn`/`error`/`debug`/`assert`/`clear`)                                                 |
@@ -104,7 +107,7 @@ All `<project>` arguments support **Tab completion**. [Full command reference �
 | `GameRGBColor` / `GameRGBAColor` | RGB / RGBA color                                                                                                |
 | `GameQuaternion`                 | Quaternion (rotation math)                                                                                      |
 
-[API Overview →](docs/api/README_en.md) · [Find by Task →](docs/api/README_en.md#find-by-task--i-want-to)
+[Docs Home →](docs/README_en.md) · [API Overview →](docs/api/README_en.md) · [Find by Task →](docs/api/README_en.md#find-by-task--i-want-to)
 
 ## Tutorials
 
@@ -113,7 +116,7 @@ From zero to full mini-games. Every example is TypeScript-compiled and ESLint-ve
 | #   | Tutorial                                                 | Time   | What you'll learn                                                 |
 | --- | -------------------------------------------------------- | ------ | ----------------------------------------------------------------- |
 | 1   | [Getting Started](docs/tutorial/01-basics.md)            | 10 min | Project setup, first script, chat commands, timers                |
-| 2   | [Players & Items](docs/tutorial/02-player-items.md)      | 15 min | Teleport, flight, items, enchantments, potions, custom items      |
+| 2   | [Players & Items](docs/tutorial/02-player-items.md)      | 15 min | Teleport, flight, items, enchantments, potions      |
 | 3   | [Events & Entities](docs/tutorial/03-events-entities.md) | 15 min | Event callbacks, entity spawning, AI, combat, patrols             |
 | 4   | [Advanced Systems](docs/tutorial/04-advanced-systems.md) | 15 min | Scoreboards, BossBar, teams, world border, cross-script messaging |
 | 5   | [Mini-Games](docs/tutorial/05-examples.md)               | 20 min | PvP arena, particles & fireworks, wave mobs, visual effects       |
@@ -124,6 +127,11 @@ From zero to full mini-games. Every example is TypeScript-compiled and ESLint-ve
 
 ```
 docs/
+├── guide/                  ← Getting Started
+│   ├── README.md           Guide overview
+│   ├── getting-started.md  From zero (setup, first script, debug, deploy)
+│   ├── architecture.md     Internals (Rhino engine, scopes, build pipeline)
+│   └── js-vs-java.md       JS vs Java modding comparison
 ├── api/                   ← API Reference
 │   ├── README.md          Overview + find by task
 │   ├── world.md           World API (events, particles, fireworks, scoreboards...)
@@ -134,6 +142,7 @@ docs/
 │   ├── database.md        Database API (SQLite)
 │   ├── http.md            HTTP request API
 │   ├── client.md           Client API (UI, input, chat, events)
+│   ├── registries.md        Custom blocks, items & sounds
 │   ├── math.md            Math API (Vector3, Color, Quaternion)
 │   └── commands.md        /box3script command reference
 ├── tutorial/              ← Tutorials

@@ -171,50 +171,7 @@ world.onChat((entity, message, _tick) => {
 });
 ```
 
-## 2.6 自定义物品
-
-自定义物品通过资源包 + JSON 配置实现，无需修改 Java 代码。
-
-**第一步：** 在 `resourcepacks/mypack/items.json` 定义物品：
-
-```json
-{
-  "base_item": "minecraft:paper",
-  "items": {
-    "magic_wand": {
-      "minecraft:custom_model_data": 12001,
-      "minecraft:custom_name": "§d§l魔法杖 §r§5★",
-      "minecraft:lore": ["§7蕴藏着神秘力量的魔法杖", "", "§6稀有度: §5史诗"],
-      "minecraft:max_stack_size": 1,
-      "minecraft:enchantment_glint_override": true,
-      "minecraft:rarity": "epic"
-    },
-    "energy_drink": {
-      "minecraft:custom_model_data": 12002,
-      "minecraft:custom_name": "§b能量饮料",
-      "minecraft:lore": ["§7恢复少量生命值", "§7§o咕噜咕噜..."],
-      "minecraft:food": {
-        "nutrition": 4,
-        "saturation": 0.6,
-        "can_always_eat": true,
-        "eat_seconds": 0.8
-      }
-    }
-  }
-}
-```
-
-**第二步：** 准备资源包结构（贴图 + 模型 JSON）。
-
-**第三步：** 在脚本中加载并给予：
-
-```js
-world.loadCustomItems("mypack");
-p.giveCustomItem("magic_wand", 1);
-p.giveCustomItem("energy_drink", 8);
-```
-
-## 2.7 经验、音效、标题
+## 2.6 经验、音效、标题
 
 ```js
 // 经验值
@@ -237,7 +194,7 @@ p.title("§c§lBOSS 来袭", "§7远古巨龙 · 生命值 200/200", 10, 60, 10)
 - `minecraft:entity.ender_dragon.growl` — 末影龙吼
 - `minecraft:entity.witch.throw` — 药水投掷
 
-## 2.8 踢出与管理
+## 2.7 踢出与管理
 
 ```js
 p.kick("你已被移出游戏");
@@ -248,7 +205,7 @@ console.log(p.opLevel);    // 0=普通, 1-4=管理员级别
 p.runCommand("say 大家好"); // 以玩家身份执行命令
 ```
 
-## 2.9 完整示例：新手大礼包
+## 2.8 完整示例：新手大礼包
 
 ```js
 world.onPlayerJoin((entity, _tick) => {

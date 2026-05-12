@@ -1,7 +1,6 @@
 package com.box3lab.box3js;
 
 import com.box3lab.box3js.client.Box3JSClientEngine;
-import com.box3lab.box3js.registries.Box3JSCustomItems;
 import com.box3lab.box3js.registries.Box3JSRecipeManager;
 import com.box3lab.box3js.script.Box3ScriptCommand;
 import com.box3lab.box3js.script.Box3ScriptEngine;
@@ -37,9 +36,6 @@ public class Box3JS {
     public static final Set<UUID> clientsWithBox3JS = ConcurrentHashMap.newKeySet();
 
     public Box3JS(IEventBus modEventBus, ModContainer modContainer) {
-        // Custom items via data components + resource pack (no DeferredRegister, no registry sync)
-        Box3JSCustomItems.init(Path.of(".").toAbsolutePath().normalize());
-
         // Register custom payloads
         modEventBus.addListener(RegisterPayloadHandlersEvent.class, event -> {
             var registrar = event.registrar("1");

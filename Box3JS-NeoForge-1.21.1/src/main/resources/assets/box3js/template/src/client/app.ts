@@ -11,7 +11,7 @@ client.onTick(() => {
 // ui.showOverlay("Hello from client script!");
 
 // Play a sound on the client.
-// client.playSound("minecraft:block.note_block.pling", 1.0, 1.0);
+// audio.playSound("minecraft:block.note_block.pling", 1.0, 1.0);
 
 // Poll keyboard state.
 // if (input.isKeyDown("space")) { ... }

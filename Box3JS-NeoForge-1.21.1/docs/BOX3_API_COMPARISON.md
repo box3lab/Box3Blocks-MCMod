@@ -330,16 +330,7 @@ Box3 无世界边界概念。
 | `world.setBorderDamage(damage)` | 边界外伤害值 |
 | `world.setBorderWarning(blocks)` | 警告距离 |
 
-### 1.26 自定义物品 (全部 MC 扩展)
-
-使用 `minecraft:paper` 作为载体，通过 DataComponents（CUSTOM_NAME, LORE, CUSTOM_MODEL_DATA 等）实现自定义物品，无需注册表同步。客户端贴图通过资源包的 `custom_model_data` override 加载。
-
-| Box3JS API | 说明 |
-|------------|------|
-| `world.loadCustomItems(packName)` | 加载 `resourcepacks/<packName>/items.json` 中的物品定义 |
-| — | 物品支持: 名称、描述、贴图、堆叠上限、附魔光效、稀有度、食物属性 |
-
-### 1.27 合成管理 (全部 MC 扩展)
+### 1.26 合成管理 (全部 MC 扩展)
 
 | Box3JS API | 说明 |
 |------------|------|
@@ -1113,7 +1104,6 @@ Box3 的事件注册方法返回 `GameEventHandlerToken`，可调用 `.cancel()`
 - `world.getBiome` — 生物群系查询
 - `world.spawnParticleCircle` — 圆形粒子
 - `world.spawnParticle/spawnFirework` GameRGBColor 重载 — RGB 彩色粒子/烟花
-- `world.loadCustomItems(packName)` — 自定义物品注册
 - `world.listRecipes/removeRecipe/clearRecipes` — 合成管理
 - `world.placeStructure` — 结构放置
 - `world.grantAdvancement` — 成就授予
@@ -1147,7 +1137,6 @@ Box3 的事件注册方法返回 `GameEventHandlerToken`，可调用 `.cancel()`
 - `player.actionBar` — ActionBar 消息
 - `player.title` — 标题/副标题
 - `player.giveItem/giveEnchantedItem/giveNamedItem` — 物品给予
-- `player.giveCustomItem(id, count)` — 给予通过 `world.loadCustomItems()` 加载的自定义物品
 - `player.getHeldItem` — 手持物品
 - `player.clearInventory` — 清空背包
 - `player.addEffect/clearEffects` — 药水效果

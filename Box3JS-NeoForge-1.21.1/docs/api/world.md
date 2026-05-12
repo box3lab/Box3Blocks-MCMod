@@ -800,61 +800,6 @@ console.log(biome); // "minecraft:plains"
 var biome = world.getBiome(entity.position);
 ```
 
-## 自定义物品
-
-### world.loadCustomItems(packName)
-
-⬆ MC 扩展 | 从资源包加载自定义物品配置。读取 `resourcepacks/<packName>/items.json`，解析其中以 Minecraft 原生数据组件 ID 为 key 的物品定义。所有自定义物品以 `minecraft:paper` 为载体，通过 `DataComponents` 实现名称、描述、贴图、食物等功能。
-
-JSON 格式使用 MC 原版组件 ID：
-
-| JSON Key                               | 对应 DataComponent           | 说明                                          |
-| -------------------------------------- | ---------------------------- | --------------------------------------------- |
-| `minecraft:custom_model_data`          | `CUSTOM_MODEL_DATA`          | 模型切换值，匹配资源包 paper.json 的 override |
-| `minecraft:custom_name`                | `CUSTOM_NAME`                | 物品显示名称                                  |
-| `minecraft:lore`                       | `LORE`                       | 描述文字数组                                  |
-| `minecraft:max_stack_size`             | `MAX_STACK_SIZE`             | 最大堆叠数 (1–64)，默认 64                    |
-| `minecraft:enchantment_glint_override` | `ENCHANTMENT_GLINT_OVERRIDE` | 附魔光效                                      |
-| `minecraft:rarity`                     | `RARITY`                     | 稀有度: `common`/`uncommon`/`rare`/`epic`     |
-| `minecraft:food`                       | `FOOD`                       | 食物属性，子字段见下                          |
-
-**`minecraft:food` 子字段：**
-
-| 子字段           | 类型  | 说明                           |
-| ---------------- | ----- | ------------------------------ |
-| `nutrition`      | int   | 营养值 (1–20)                  |
-| `saturation`     | float | 饱和度修饰符                   |
-| `can_always_eat` | bool  | 是否始终可食用                 |
-| `eat_seconds`    | float | 食用时间 (秒)，≤0.8 为快速食用 |
-
-```js
-world.loadCustomItems("box3js-items");
-// 加载 resourcepacks/box3js-items/items.json 中定义的所有物品
-// 之后可通过 player.giveCustomItem("arena_trophy", 1) 给予
-```
-
-**资源包结构参考：**
-
-```
-resourcepacks/box3js-items/
-├── pack.mcmeta
-├── items.json                          # 物品定义
-└── assets/
-    ├── minecraft/models/item/
-    │   └── paper.json                  # custom_model_data overrides
-    └── box3js/
-        ├── models/item/                # 模型 JSON
-        │   ├── arena_trophy.json
-        │   ├── arena_stew.json
-        │   └── arena_medal.json
-        └── textures/item/              # PNG 贴图
-            ├── arena_trophy.png
-            ├── arena_stew.png
-            └── arena_medal.png
-```
-
-**注意：** 贴图依赖客户端加载资源包。未加载时物品功能正常（名称/描述/食物），仅显示为 paper 默认外观。
-
 ## 跨脚本消息
 
 ### world.sendMessage(target, data)

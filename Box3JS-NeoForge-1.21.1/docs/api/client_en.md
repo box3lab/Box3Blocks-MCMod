@@ -1,13 +1,14 @@
 # client — Client-side API
 
-Client scripts run locally on the player's Minecraft client and are accessed through four globals:
+Client scripts run locally on the player's Minecraft client and are accessed through five globals:
 
 | Object | Type | Purpose |
 |--------|------|---------|
-| `client` | `GameClient` | Lifecycle callbacks, sound playback, command sending |
+| `audio` | `GameAudio` | Sound & music playback, volume control |
+| `client` | `GameClient` | Lifecycle callbacks |
 | `input` | `GameInput` | Keyboard input detection |
 | `ui` | `GameUI` | On-screen text (ActionBar, titles) |
-| `chat` | `GameChat` | Send and receive chat messages |
+| `chat` | `GameChat` | Send/receive chat, send commands |
 | `storage` | `GameStorage` | Client-side persistent key-value storage |
 | `db` | `GameDatabase` | Client-side SQLite database |
 | `http` | `GameHttpAPI` | HTTP requests (sync/async) |
@@ -16,7 +17,81 @@ Client scripts run locally on the player's Minecraft client and are accessed thr
 > **Prerequisite:** The client must have the Box3JS mod installed. The server must enable the project's client script, which is automatically sent to connecting players.
 > Client scripts go in `src/client/`, server scripts in `src/server/`.
 
-## client — Lifecycle & Server Interaction
+## audio — Sound Playback
+
+### audio.playSound(path, volume, pitch)
+
+🆕 MC Extension | Plays a sound effect (SoundSource.PLAYERS category).
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `path` | string | (required) | Sound ID, e.g. `"minecraft:block.note_block.pling"` |
+| `volume` | number | `1.0` | Volume (0–1) |
+| `pitch` | number | `1.0` | Pitch (0.5–2) |
+
+```js
+audio.playSound("minecraft:block.note_block.pling", 1.0, 1.0);
+audio.playSound("minecraft:entity.experience_orb.pickup", 0.5, 1.5);
+```
+
+### audio.playMusic(path, volume, pitch)
+
+🆕 MC Extension | Plays music (SoundSource.MUSIC category). Same parameters as `playSound`.
+
+```js
+audio.playMusic("minecraft:music.creative", 0.5, 1.0);
+```
+
+### audio.stopAll()
+
+🆕 MC Extension | Stops all currently playing sounds and music.
+
+```js
+audio.stopAll();
+```
+
+### audio.getVolume(category)
+
+🆕 MC Extension | Gets the volume of a specific audio category.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `category` | string | Category name, see list below |
+
+```js
+var musicVol = audio.getVolume("music"); // 0.0–1.0
+```
+
+### audio.setVolume(category, value)
+
+🆕 MC Extension | Sets the volume of a specific audio category.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `category` | string | Category name |
+| `value` | number | Volume (0–1) |
+
+```js
+audio.setVolume("music", 0.5);
+audio.setVolume("player", 0.8);
+```
+
+### Audio Categories
+
+| Category | Description |
+|----------|-------------|
+| `master` | Master volume |
+| `music` | Music |
+| `record` | Records/note blocks |
+| `weather` | Weather (rain) |
+| `block` | Blocks |
+| `hostile` | Hostile mobs |
+| `neutral` | Neutral mobs |
+| `player` | Players |
+| `ambient` | Ambient |
+| `voice` | Voice |
+
+## client — Lifecycle
 
 ### client.onTick(callback)
 
@@ -29,30 +104,6 @@ client.onTick(() => {
 ```
 
 > **Note:** Server-side `world.onTick()` receives a `TickInfo` object. Client-side `client.onTick()` receives nothing.
-
-### client.playSound(path, volume, pitch)
-
-🆕 MC Extension | Plays a sound on the client.
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `path` | string | (required) | Sound ID, e.g. `"minecraft:block.note_block.pling"` |
-| `volume` | number | `1.0` | Volume (0–1) |
-| `pitch` | number | `1.0` | Pitch (0.5–2) |
-
-```js
-client.playSound("minecraft:block.note_block.pling", 1.0, 1.0);
-client.playSound("minecraft:entity.experience_orb.pickup", 0.5, 1.5);
-```
-
-### client.sendCommand(cmd)
-
-🆕 MC Extension | Sends a command to the server (equivalent to typing a `/` command in chat).
-
-```js
-client.sendCommand("spawn");
-client.sendCommand("home");
-```
 
 ## input — Keyboard Input
 
@@ -76,7 +127,7 @@ if (input.isKeyDown("space")) {
 
 ```js
 var token = input.onKeyPress("f", () => {
-  client.sendCommand("fly");
+  chat.sendCommand("fly");
 });
 
 // Unregister
@@ -129,7 +180,7 @@ ui.showTitle("§cGame Over", "§7Try again");
 ui.showActionBar("§ePress F to use ability");
 ```
 
-## chat — Chat Messages
+## chat — Chat Messages & Commands
 
 ### chat.sendMessage(text)
 
@@ -137,6 +188,15 @@ ui.showActionBar("§ePress F to use ability");
 
 ```js
 chat.sendMessage("Hello everyone!");
+```
+
+### chat.sendCommand(cmd)
+
+🆕 MC Extension | Sends a command to the server (equivalent to typing a `/` command in chat).
+
+```js
+chat.sendCommand("spawn");
+chat.sendCommand("home");
 ```
 
 ### chat.onMessage(handler)
@@ -226,7 +286,7 @@ client.onTick(() => {
 
 // Key-triggered command
 input.onKeyPress("g", () => {
-  client.sendCommand("gamemode creative");
+  chat.sendCommand("gamemode creative");
 });
 
 // Welcome title
@@ -245,7 +305,7 @@ remoteChannel.sendServerEvent({ type: "clientLoaded" });
 
 remoteChannel.onClientEvent((event) => {
   if (event.args.type === "alert") {
-    client.playSound("minecraft:block.note_block.pling", 1.0, 1.0);
+    audio.playSound("minecraft:block.note_block.pling", 1.0, 1.0);
     ui.showOverlay("§c" + event.args.message);
   }
 });

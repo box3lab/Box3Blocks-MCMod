@@ -18,18 +18,53 @@
 | # | 教程 | 你会学到 |
 |---|------|---------|
 | 1 | [从零开始](01-basics.md) | 创建项目 → 构建 → 第一个脚本 → 聊天命令 → 定时任务 |
-| 2 | [玩家操控与物品](02-player-items.md) | 传送、飞行、物品给予、附魔、药水效果、游戏模式、自定义物品 |
+| 2 | [玩家操控与物品](02-player-items.md) | 传送、飞行、物品给予、附魔、药水效果、游戏模式 |
 | 3 | [事件系统与实体操控](03-events-entities.md) | 全部事件回调、生成实体、AI 控制、巡逻守卫、碰撞检测 |
 | 4 | [高级游戏系统](04-advanced-systems.md) | 计分板排名、BossBar 倒计时、队伍分组、世界边界缩圈、跨脚本通信 |
 | 5 | [实战小游戏](05-examples.md) | PvP 竞技场（完整可玩）、粒子特效大全、烟花秀、波次刷怪、家传送 |
+| 6 | [客户端脚本开发](06-client-scripting.md) | 键盘输入、屏幕 UI、音效/音乐、本地存储、SQLite、HTTP、remoteChannel |
 
 ## 你需要知道
 
 - **语言：** JavaScript/TypeScript。如果你会 JS，直接用 `.ts` 文件当成 JS 写就行。
-- **环境：** 所有代码运行在服务端，不需要客户端安装任何东西。
+- **环境：** 所有服务端代码运行在服务端，不需要客户端安装任何东西。客户端脚本需要 Box3JS 客户端 Mod。
 - **热重载：** 改完代码 `npm run build` 后 `/box3script reload`，无需重启服务器。
-- **发布部署：** 开发完成后 `/box3script compile` 编译为独立 JAR，丢进任意服务器 `mods/` 即可运行，无需 Box3JS。
+- **发布部署：** 开发完成后 `/box3script compile` 编译为独立 JAR，放入 `mods/` 目录即可运行。需要 Box3JS 作为依赖提供运行时。
 - **API 速查：** 写代码时遇到"这个功能用什么 API"，翻 [API 速查表](../api/README.md) 按任务查找。
+
+## 技能进阶路线
+
+```
+入门                      进阶                      高级
+│                          │                          │
+│ 教程一: 从零开始          │ 教程三: 事件与实体       │ 教程五: 实战小游戏
+│ - 创建项目               │ - 全部事件回调           │ - 完整 PvP 竞技场
+│ - 聊天命令               │ - 生成实体/AI            │ - 粒子/烟花/特效
+│ - 定时任务               │ - 碰撞检测               │ - 波次刷怪
+│ - 消息系统               │                          │
+│                          │ 教程四: 高级系统         │
+│ 教程二: 玩家操控          │ - 计分板/BossBar        │
+│ - 传送/飞行              │ - 队伍/世界边界          │
+│ - 物品/附魔/药水         │ - 跨脚本通信            │
+│ - 游戏模式/生命值        │                          │
+└──────────┬───────────────┴──────────────────────────┘
+           │
+           ▼
+    想深入原理？
+    → [运行原理](../guide/architecture.md)
+    → [JS vs Java 对比](../guide/js-vs-java.md)
+```
+
+## 学完教程之后
+
+| 我想... | 读这个 |
+|---------|--------|
+| 查某个 API 的具体用法 | [API 文档](../api/README.md) |
+| 理解 Box3JS 内部怎么运作 | [运行原理](../guide/architecture.md) |
+| 发布我的脚本为独立模组 | [快速开始 - 发布部署](../guide/getting-started.md#发布部署) |
+| 注册自定义方块/物品/音效 | [registries API](../api/registries.md) |
+| 写客户端脚本（UI/输入/音效） | [client API](../api/client.md) |
+| 判断该用 Box3JS 还是写 Java | [JS vs Java 对比](../guide/js-vs-java.md) |
 
 ## 最简示例
 
@@ -62,5 +97,8 @@ world.setInterval(() => {
 | [voxels](../api/voxels.md) | 方块读写、区域填充 |
 | [storage](../api/storage.md) | JSON 数据持久化 |
 | [database](../api/database.md) | SQLite 数据库 |
+| [http](../api/http.md) | HTTP 网络请求 |
+| [client](../api/client.md) | 客户端脚本（UI/输入/聊天/音效） |
+| [registries](../api/registries.md) | 自定义方块/物品/音效 |
 | [math](../api/math.md) | GameVector3、Color、Quaternion |
 | [commands](../api/commands.md) | `/box3script` 命令参考 |

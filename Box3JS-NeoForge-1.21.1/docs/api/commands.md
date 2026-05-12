@@ -124,6 +124,8 @@ npm install && npm run build
 
 > **依赖：** 脚本 JAR 不包含 Rhino 或 Box3JS API 类，需将 Box3JS 模组（`box3js`）一同放入 `mods/`。
 
+> **自定义注册表：** 如果存在 `registries/blocks.json`、`items.json`、`sounds.json`、`creativeTabs.json` 和 `assets/`，编译时会自动注册方块/物品/音效，并将资源打包进 JAR。客户端也需安装该 JAR 才能正常渲染。详见 [registries.md](registries.md)。
+
 编译时**从 `package.json` 读取以下字段**写入 `neoforge.mods.toml`：
 
 | package.json | mods.toml 字段 | 说明 |
@@ -151,10 +153,17 @@ npm install && npm run build
 
 ```
 mygame-1.0.0.jar
-├── META-INF/neoforge.mods.toml    ← 模组元数据（依赖 box3js）
-├── logo.png                       ← 模组图标（如有指定）
-├── box3script/mygame/MygameMod.class ← @Mod 入口（含硬编码元数据）
-└── box3script/mygame/server.js       ← 打包的脚本源码
+├── META-INF/neoforge.mods.toml      ← 模组元数据（依赖 box3js）
+├── logo.png                         ← 模组图标（如有指定）
+├── assets/mygame/                   ← 方块模型、纹理、blockstate（如有）
+│   ├── lang/en_us.json              ← 语言文件（自动生成）
+│   ├── blockstates/*.json
+│   ├── models/block/*.json
+│   ├── models/item/*.json
+│   └── textures/block/*.png
+├── box3script/mygame/MygameMod.class ← @Mod 入口（含 DeferredRegister）
+├── box3script/mygame/server.js       ← 打包的服务端脚本
+└── box3script/mygame/client.js       ← 打包的客户端脚本（如有）
 ```
 
 **部署：** 将脚本 JAR 与 Box3JS 模组一起放入 `mods/`：
@@ -200,11 +209,19 @@ config/box3/
   │       ├── package.json
   │       ├── eslint.config.mjs
   │       ├── tsconfig.json
-  │       ├── types/globals.d.ts
-  │       ├── src/app.ts
+  │       ├── types/
+  │       ├── src/
+  │       │   ├── server/app.ts
+  │       │   └── client/app.ts
+  │       ├── registries/         ← 方块/物品/音效注册（编译模式）
+  │       │   ├── blocks.json
+  │       │   └── creativeTabs.json
+  │       ├── assets/             ← 模型/纹理/音效/语言（编译模式）
+  │       │   └── textures/block/
   │       └── dist/
-│           ├── server.js       ← 编译产物
-│           └── <name>-<ver>.jar ← 独立 JAR（compile 命令生成）
+  │           ├── server.js       ← 编译产物
+  │           ├── client.js       ← 客户端编译产物
+  │           └── <name>-<ver>.jar ← 独立 JAR（compile 命令生成）
   ├── data/                      ← SQLite 数据库 (db API)
   └── storage/                  ← storage API 持久化
 ```

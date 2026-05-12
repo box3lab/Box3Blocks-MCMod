@@ -32,6 +32,26 @@ console.log("Script loaded");
 
 After each edit, re-run `npm run build`, then use `/box3script reload mygame` to hot-reload.
 
+> **New here?** [Quick Start Guide](../guide/getting-started_en.md) | **How it works:** [Architecture](../guide/architecture_en.md) | **JS vs Java:** [Comparison](../guide/js-vs-java_en.md)
+
+## API Domain Map
+
+Box3JS APIs are divided by runtime environment:
+
+| Domain | Runtime | Globals | Description |
+|--------|---------|---------|-------------|
+| **World & Entities** (server) | Server | `world` `voxels` | World control, blocks, event callbacks |
+| **Players & Data** (server) | Server | `player` `entity` `storage` `db` `http` | Accessed via `entity.player` |
+| **Client Interaction** (client) | Client | `audio` `client` `input` `ui` `chat` | Requires Box3JS client mod |
+| **Cross-Side** | Both | `remoteChannel` | Server↔Client event communication |
+| **Registries** | Compile-time | `registries` | Only in `/box3script compile` JAR mode |
+| **Math & Utilities** | Both | `GameVector3` `GameBounds3` `GameRGBColor` `GameRGBAColor` `GameQuaternion` | Constructed with `new` |
+| **Global Tools** | Both | `console` | Log output |
+
+> **Server APIs** manipulate the world, entities, players, and blocks. Scripts run on the server by default.  
+> **Client APIs** are only available with the Box3JS client mod installed, for UI, input, and audio.  
+> **Registry APIs** are only available in compiled JAR mode (`registries` is `undefined` in interpreted mode).
+
 ## Find by Task — I want to...
 
 Find APIs by what you want to do, not by which global object they live on.
@@ -66,11 +86,27 @@ Find APIs by what you want to do, not by which global object they live on.
 | Give a basic item | `player.giveItem("minecraft:diamond", 1)` |
 | Give enchanted item | `player.giveEnchantedItem(...)` |
 | Give named item | `player.giveNamedItem(...)` |
-| Give custom mod item | `player.giveCustomItem("my_item", 1)` |
 | Get held item | `player.getHeldItem()` |
 | Clear inventory | `player.clearInventory()` |
 | Set entity equipment | `entity.setEquipment("head", "iron_helmet")` |
-| Load custom item pack | `world.loadCustomItems("mypack")` |
+
+### Custom Registries (Blocks, Items & Sounds) 🆕
+
+| I want to... | Use this |
+|-------------|----------|
+| Register custom blocks | `registries/blocks.json` (at compile time) |
+| Register custom items | `registries/items.json` (at compile time) |
+| Register custom sounds | `registries/sounds.json` (at compile time) |
+| Register creative tabs | `registries/creativeTabs.json` (at compile time) |
+| Get a registered block | `registries.getBlock("my_block")` |
+| Get a registered item | `registries.getItem("chocolate")` |
+| Get a registered sound | `registries.getSound("victory_fanfare")` |
+| Give a custom block/item | `player.giveItem(block.itemId, 1)` |
+| Place a custom block | `voxels.setVoxel(x, y, z, block.block)` |
+| Play a custom sound (server) | `world.playSound(sound.soundId, x, y, z, 1, 1)` |
+| Play a custom sound (client) | `audio.playSound("modId:soundId", 1.0, 1.0)` |
+
+> **Server-side only.** `registries` is `undefined` in client scripts. **Only available in `/box3script compile` JAR mode.** Client must also install the JAR for textures/models. See [registries_en.md](registries_en.md)
 
 ### Block Operations
 
@@ -105,7 +141,10 @@ Find APIs by what you want to do, not by which global object they live on.
 | Run every client tick | `client.onTick(() => { ... })` |
 | Check key held down | `input.isKeyDown("space")` |
 | Listen for key press | `input.onKeyPress("f", () => { ... })` |
-| Play sound on client | `client.playSound("pling", 1.0, 1.0)` |
+| Play sound effect | `audio.playSound("pling", 1.0, 1.0)` |
+| Play music | `audio.playMusic("minecraft:music.game", 0.5, 1.0)` |
+| Stop all sounds | `audio.stopAll()` |
+| Get/set volume | `audio.getVolume("music")` / `audio.setVolume("player", 0.8)` |
 | Show action bar text | `ui.showOverlay("text")` |
 | Show screen title | `ui.showTitle("Title", "Subtitle")` |
 | Send chat message | `chat.sendMessage("message")` |
@@ -214,11 +253,13 @@ Find APIs by what you want to do, not by which global object they live on.
 | `storage` | ✅ Box3 | Data persistence, see [storage_en.md](storage_en.md) |
 | `db` | ✅ Box3 | SQLite database, see [database_en.md](database_en.md) |
 | `http` | 🆕 MC Extension | HTTP requests, see [http_en.md](http_en.md) |
-| `client` | 🆕 MC Extension | Client lifecycle & sound, see [client_en.md](client_en.md) |
+| `audio` | 🆕 MC Extension | Client sound, music, volume control, see [client_en.md](client_en.md) |
+| `client` | 🆕 MC Extension | Client lifecycle, see [client_en.md](client_en.md) |
 | `input` | 🆕 MC Extension | Client keyboard input, see [client_en.md](client_en.md) |
 | `ui` | 🆕 MC Extension | Client screen UI, see [client_en.md](client_en.md) |
 | `chat` | 🆕 MC Extension | Client chat send/receive, see [client_en.md](client_en.md) |
 | `remoteChannel` | 🆕 MC Extension | Server↔client event channel, see [client_en.md](client_en.md) |
+| `registries` | 🆕 MC Extension | Custom blocks, items & sounds (compiled mode), see [registries_en.md](registries_en.md) |
 | `console` | ✅ Box3 | Console logging (`log`/`warn`/`error`/`debug`) |
 | `GameVector3` | ✅ Box3 | 3D vector, see [math_en.md](math_en.md) |
 | `GameBounds3` | ✅ Box3 | Bounding box, see [math_en.md](math_en.md) |
@@ -245,6 +286,7 @@ Find APIs by what you want to do, not by which global object they live on.
 | [database_en.md](database_en.md) | SQLite database API |
 | [http_en.md](http_en.md) | HTTP request API |
 | [client_en.md](client_en.md) | Client scripts: lifecycle, keyboard, screen UI, chat, remoteChannel, client-side storage |
+| [registries_en.md](registries_en.md) | Custom blocks, items & sounds (blocks.json, items.json, sounds.json, creativeTabs.json) |
 | [math_en.md](math_en.md) | GameVector3, GameBounds3, GameRGBColor, GameRGBAColor, GameQuaternion |
 | [commands_en.md](commands_en.md) | `/box3script` command reference |
 
@@ -261,8 +303,18 @@ config/box3/script/mygame/
 ├── build.mjs             ← Babel TS→JS → esbuild bundle → dist/
 ├── types/
 │   ├── shared.d.ts       ← Shared types (server & client)
-│   ├── server.d.ts       ← Server-only types
-│   └── client.d.ts       ← Client-only types
+│   ├── server/
+│   │   ├── server.d.ts   ← Server entry point
+│   │   ├── entity.d.ts
+│   │   ├── player.d.ts
+│   │   ├── world.d.ts
+│   │   └── voxels.d.ts
+│   └── client/
+│       ├── client.d.ts   ← Client entry point
+│       ├── audio.d.ts
+│       ├── input.d.ts
+│       ├── ui.d.ts
+│       └── chat.d.ts
 ├── src/
 │   ├── server/
 │   │   ├── app.ts        ← Server entry point
@@ -299,6 +351,14 @@ See [full command reference →](commands_en.md#box3script-compile-project)
 | 30 seconds | 600 |
 | 1 minute | 1200 |
 | 5 minutes | 6000 |
+
+## Deep Dive
+
+| Doc | Content |
+|-----|---------|
+| [Quick Start](../guide/getting-started_en.md) | Setup, first script, dev cycle, debugging, deployment |
+| [Architecture](../guide/architecture_en.md) | Rhino engine, scopes, event callbacks, build pipeline, network |
+| [JS vs Java](../guide/js-vs-java_en.md) | Box3JS scripting vs native Java modding comparison |
 
 ## Tutorials
 

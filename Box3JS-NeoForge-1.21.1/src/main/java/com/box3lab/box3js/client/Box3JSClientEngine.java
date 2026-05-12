@@ -116,44 +116,9 @@ public class Box3JSClientEngine {
 
             // -- console --------------------------------------------------
             ScriptableObject.putProperty(scope, "_jConsole",
-                    Context.javaToJS(new Box3JSClientConsole(), scope));
-            cx.evaluateString(scope, """
-                    var console = {
-                        log: function() {
-                            var msg = [];
-                            for (var i = 0; i < arguments.length; i++)
-                                msg.push(String(arguments[i]));
-                            _jConsole.log(msg.join(' '));
-                        },
-                        debug: function() {
-                            var msg = [];
-                            for (var i = 0; i < arguments.length; i++)
-                                msg.push(String(arguments[i]));
-                            _jConsole.debug(msg.join(' '));
-                        },
-                        warn: function() {
-                            var msg = [];
-                            for (var i = 0; i < arguments.length; i++)
-                                msg.push(String(arguments[i]));
-                            _jConsole.warn(msg.join(' '));
-                        },
-                        error: function() {
-                            var msg = [];
-                            for (var i = 0; i < arguments.length; i++)
-                                msg.push(String(arguments[i]));
-                            _jConsole.error(msg.join(' '));
-                        },
-                        clear: function() {},
-                        assert: function(condition) {
-                            if (!condition) {
-                                var msg = ['Assertion failed:'];
-                                for (var i = 1; i < arguments.length; i++)
-                                    msg.push(String(arguments[i]));
-                                _jConsole.error(msg.join(' '));
-                            }
-                        }
-                    };
-                    """, "console-init", 1, null);
+                    Context.javaToJS(new Box3JSConsole(), scope));
+            cx.evaluateString(scope, com.box3lab.box3js.script.Box3ScriptUtils.CONSOLE_INIT_JS,
+                    "console-init", 1, null);
 
             // -- math types (same bindings as server engine) ---------------
             ScriptableObject.putProperty(scope, "GameVector3",
@@ -195,8 +160,13 @@ public class Box3JSClientEngine {
                 }
             });
 
-            // client.playSound(path, volume, pitch)
-            ScriptableObject.putProperty(clientObj, "playSound", new BaseFunction() {
+            ScriptableObject.putProperty(scope, "client", clientObj);
+
+            // -- audio global (sound playback) ------------------------------
+            ScriptableObject audioObj = (ScriptableObject) cx.newObject(scope);
+
+            // audio.playSound(path, volume, pitch)
+            ScriptableObject.putProperty(audioObj, "playSound", new BaseFunction() {
                 @Override
                 public Object call(Context cx, Scriptable scope,
                                    Scriptable thisObj, Object[] args) {
@@ -216,22 +186,70 @@ public class Box3JSClientEngine {
                 }
             });
 
-            // client.sendCommand(cmd)
-            ScriptableObject.putProperty(clientObj, "sendCommand", new BaseFunction() {
+            // audio.playMusic(path, volume, pitch)
+            ScriptableObject.putProperty(audioObj, "playMusic", new BaseFunction() {
                 @Override
                 public Object call(Context cx, Scriptable scope,
                                    Scriptable thisObj, Object[] args) {
                     if (args.length < 1) return Undefined.instance;
-                    String cmd = args[0].toString();
+                    String path = args[0].toString();
+                    float volume = args.length > 1 && args[1] instanceof Number n ? n.floatValue() : 1f;
+                    float pitch = args.length > 2 && args[2] instanceof Number n ? n.floatValue() : 1f;
                     Minecraft.getInstance().execute(() -> {
-                        var conn = Minecraft.getInstance().getConnection();
-                        if (conn != null) conn.sendCommand(cmd);
+                        var player = Minecraft.getInstance().player;
+                        if (player == null) return;
+                        var rl = net.minecraft.resources.ResourceLocation.tryParse(path);
+                        if (rl == null) return;
+                        var holder = BuiltInRegistries.SOUND_EVENT.getHolder(rl);
+                        holder.ifPresent(h -> player.playNotifySound(h.value(), SoundSource.MUSIC, volume, pitch));
                     });
                     return Undefined.instance;
                 }
             });
 
-            ScriptableObject.putProperty(scope, "client", clientObj);
+            // audio.stopAll()
+            ScriptableObject.putProperty(audioObj, "stopAll", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    Minecraft.getInstance().execute(() -> {
+                        Minecraft.getInstance().getSoundManager().stop();
+                    });
+                    return Undefined.instance;
+                }
+            });
+
+            // audio.getVolume(category)
+            ScriptableObject.putProperty(audioObj, "getVolume", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    if (args.length < 1) return 0f;
+                    SoundSource src = mapSoundCategory(args[0].toString());
+                    if (src == null) return 0f;
+                    return Minecraft.getInstance().options.getSoundSourceVolume(src);
+                }
+            });
+
+            // audio.setVolume(category, value)
+            ScriptableObject.putProperty(audioObj, "setVolume", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    if (args.length < 2) return Undefined.instance;
+                    SoundSource src = mapSoundCategory(args[0].toString());
+                    if (src == null) return Undefined.instance;
+                    float value = args[1] instanceof Number n ? n.floatValue() : 1f;
+                    Minecraft.getInstance().execute(() -> {
+                        var options = Minecraft.getInstance().options;
+                        options.getSoundSourceOptionInstance(src).set((double) value);
+                        options.save();
+                    });
+                    return Undefined.instance;
+                }
+            });
+
+            ScriptableObject.putProperty(scope, "audio", audioObj);
 
             // -- input global (keyboard) -----------------------------------
             ScriptableObject inputObj = (ScriptableObject) cx.newObject(scope);
@@ -358,6 +376,21 @@ public class Box3JSClientEngine {
                 }
             });
 
+            // chat.sendCommand(cmd)
+            ScriptableObject.putProperty(chatObj, "sendCommand", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    if (args.length < 1) return Undefined.instance;
+                    String cmd = args[0].toString();
+                    Minecraft.getInstance().execute(() -> {
+                        var conn = Minecraft.getInstance().getConnection();
+                        if (conn != null) conn.sendCommand(cmd);
+                    });
+                    return Undefined.instance;
+                }
+            });
+
             // chat.onMessage(handler) — returns GameEventHandlerToken
             ScriptableObject.putProperty(chatObj, "onMessage", new BaseFunction() {
                 @Override
@@ -473,130 +506,8 @@ public class Box3JSClientEngine {
             });
             ScriptableObject.putProperty(scope, "http", httpObj);
 
-            // -- regex helpers (pure JS, mirrored from server engine) ----
-            cx.evaluateString(scope,
-                "(function(){" +
-                "function isSp(c){return c==' '||c=='\\t'||c=='\\n'||c=='\\r'||c=='\\f'||c=='\\v';}" +
-                "function isDi(c){return c>='0'&&c<='9';}" +
-                "function isWo(c){return(c>='a'&&c<='z')||(c>='A'&&c<='Z')||(c>='0'&&c<='9')||c=='_';}" +
-                "function parse(p,f){" +
-                "var a=[];var i=0;var ic=f.indexOf('i')>=0;" +
-                "while(i<p.length){" +
-                "var ch=p.charAt(i);var m;" +
-                "if(ch=='\\\\'){" +
-                "i++;var e=p.charAt(i);" +
-                "if(e=='s')m=isSp;" +
-                "else if(e=='S')m=function(c){return !isSp(c);};" +
-                "else if(e=='d')m=isDi;" +
-                "else if(e=='D')m=function(c){return !isDi(c);};" +
-                "else if(e=='w')m=isWo;" +
-                "else if(e=='W')m=function(c){return !isWo(c);};" +
-                "else m=function(c){return c==e;};" +
-                "i++;" +
-                "}else if(ch=='.'){" +
-                "m=function(c){return c!='\\n'&&c!='\\r';};i++;" +
-                "}else if(ch=='['){" +
-                "i++;var ne=false;if(p.charAt(i)=='^'){ne=true;i++;}" +
-                "var cs='';" +
-                "while(i<p.length&&p.charAt(i)!=']'){" +
-                "if(p.charAt(i)=='\\\\'){" +
-                "i++;var e2=p.charAt(i);" +
-                "if(e2=='s')cs+=' \\t\\n\\r\\f\\v';" +
-                "else if(e2=='d')cs+='0123456789';" +
-                "else if(e2=='w')cs+='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_';" +
-                "else cs+=e2;" +
-                "}else if(p.charAt(i)=='-'&&i+1<p.length&&p.charAt(i+1)!=']'){" +
-                "var sc=p.charCodeAt(i-1);var ec=p.charCodeAt(i+1);" +
-                "for(var cc=sc+1;cc<=ec;cc++)cs+=String.fromCharCode(cc);" +
-                "i+=2;continue;" +
-                "}else{cs+=p.charAt(i);}" +
-                "i++;" +
-                "}" +
-                "i++;" +
-                "if(ne)m=function(c){return cs.indexOf(c)<0;};" +
-                "else m=function(c){return cs.indexOf(c)>=0;};" +
-                "}else{" +
-                "var lit=ch;var low=ic?lit.toLowerCase():lit;var up=ic?lit.toUpperCase():lit;" +
-                "if(ic)m=function(c){return c==low||c==up;};" +
-                "else m=function(c){return c==lit;};" +
-                "i++;" +
-                "}" +
-                "var min=1,max=1;" +
-                "if(i<p.length){" +
-                "var q=p.charAt(i);" +
-                "if(q=='+'){min=1;max=-1;i++;}" +
-                "else if(q=='*'){min=0;max=-1;i++;}" +
-                "else if(q=='?'){min=0;max=1;i++;}" +
-                "}" +
-                "a.push({m:m,min:min,max:max});" +
-                "}" +
-                "return a;" +
-                "}" +
-                "function matchAt(s,a,pos){" +
-                "var p=pos;" +
-                "for(var ai=0;ai<a.length;ai++){" +
-                "var at=a[ai];var cnt=0;" +
-                "while(p<s.length&&at.m(s.charAt(p))){" +
-                "cnt++;p++;if(at.max>=0&&cnt>=at.max)break;" +
-                "}" +
-                "if(cnt<at.min)return -1;" +
-                "}" +
-                "return p-pos;" +
-                "}" +
-                "function findNext(s,a,pos){" +
-                "for(var i=pos;i<s.length;i++){" +
-                "var len=matchAt(s,a,i);" +
-                "if(len>0)return {index:i,length:len};" +
-                "}" +
-                "return null;" +
-                "}" +
-                "function findAll(s,a){" +
-                "var ms=[];var pos=0;" +
-                "while(pos<s.length){" +
-                "var m=findNext(s,a,pos);" +
-                "if(!m)break;" +
-                "ms.push(m);pos=m.index+m.length;" +
-                "if(m.length===0)pos++;" +
-                "}" +
-                "return ms;" +
-                "}" +
-                "var _ref={parse:parse,findNext:findNext,findAll:findAll};" +
-                "__regexSplit=function(s,p,f){" +
-                "var a=_ref.parse(p,f||'');var r=[];var pos=0;" +
-                "var ms=_ref.findAll(s,a);" +
-                "for(var i=0;i<ms.length;i++){" +
-                "var m=ms[i];r.push(s.substring(pos,m.index));" +
-                "pos=m.index+m.length;" +
-                "}" +
-                "r.push(s.substring(pos));return r;" +
-                "};" +
-                "__regexMatch=function(s,p,f){" +
-                "var a=_ref.parse(p,f||'');" +
-                "var m=_ref.findNext(s,a,0);" +
-                "if(!m)return null;" +
-                "var r=[s.substring(m.index,m.index+m.length)];" +
-                "r.index=m.index;r.input=s;return r;" +
-                "};" +
-                "__regexReplace=function(s,p,f,rp){" +
-                "var a=_ref.parse(p,f||'');" +
-                "var gl=(f||'').indexOf('g')>=0;" +
-                "var ms=_ref.findAll(s,a);var rs='';var pos=0;" +
-                "for(var i=0;i<ms.length;i++){" +
-                "var m=ms[i];rs+=s.substring(pos,m.index);" +
-                "if(typeof rp==='function')rs+=rp(s.substring(m.index,m.index+m.length));" +
-                "else rs+=rp;" +
-                "pos=m.index+m.length;if(!gl)break;" +
-                "}" +
-                "rs+=s.substring(pos);return rs;" +
-                "};" +
-                "__regexTest=function(p,f,s){" +
-                "var a=_ref.parse(p,f||'');" +
-                "return _ref.findNext(s,a,0)!==null;" +
-                "};" +
-                "__regexExec=function(p,f,s){" +
-                "return __regexMatch(s,p,f);" +
-                "};" +
-                "})();",
+            // -- regex helpers (shared pure JS, from Box3ScriptUtils) ---------
+            cx.evaluateString(scope, com.box3lab.box3js.script.Box3ScriptUtils.REGEX_HELPERS_JS,
                 "regex-helpers", 1, null);
 
         } finally {
@@ -754,25 +665,44 @@ public class Box3JSClientEngine {
         });
     }
 
+    private static SoundSource mapSoundCategory(String name) {
+        return switch (name.toLowerCase()) {
+            case "master"  -> SoundSource.MASTER;
+            case "music"   -> SoundSource.MUSIC;
+            case "record"  -> SoundSource.RECORDS;
+            case "weather" -> SoundSource.WEATHER;
+            case "block"   -> SoundSource.BLOCKS;
+            case "hostile" -> SoundSource.HOSTILE;
+            case "neutral" -> SoundSource.NEUTRAL;
+            case "player"  -> SoundSource.PLAYERS;
+            case "ambient" -> SoundSource.AMBIENT;
+            case "voice"   -> SoundSource.VOICE;
+            default -> null;
+        };
+    }
+
     private static String stringify(Context cx, Scriptable scope, Object value) {
-        try {
-            scope.put("_arg", scope, value);
-            Object result = cx.evaluateString(scope,
-                    "JSON.stringify(_arg)", "json", 1, null);
-            scope.delete("_arg");
-            return result instanceof String s ? s : null;
-        } catch (Exception e) {
-            LOGGER.error("Failed to stringify event", e);
-            return null;
-        }
+        return com.box3lab.box3js.script.Box3ScriptUtils.stringify(cx, scope, value);
     }
 
     // ── Console backend ──
 
-    public static class Box3JSClientConsole {
-        public void log(String msg)   { LOGGER.info("[client] {}", msg); }
-        public void debug(String msg) { LOGGER.debug("[client] {}", msg); }
-        public void warn(String msg)  { LOGGER.warn("[client] {}", msg); }
-        public void error(String msg) { LOGGER.error("[client] {}", msg); }
+    public static class Box3JSConsole {
+        private void log(String level, Object... args) {
+            StringBuilder sb = new StringBuilder();
+            for (Object a : args) sb.append(a).append(' ');
+            String msg = sb.toString().trim();
+            switch (level) {
+                case "debug" -> LOGGER.debug("[client] {}", msg);
+                case "warn"  -> LOGGER.warn("[client] {}", msg);
+                case "error" -> LOGGER.error("[client] {}", msg);
+                default      -> LOGGER.info("[client] {}", msg);
+            }
+        }
+        public void log(Object... args)   { log("info", args); }
+        public void debug(Object... args) { log("debug", args); }
+        public void warn(Object... args)  { log("warn", args); }
+        public void error(Object... args) { log("error", args); }
+        public void clear() {}
     }
 }

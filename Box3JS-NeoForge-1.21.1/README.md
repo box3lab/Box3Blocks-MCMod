@@ -27,13 +27,15 @@ Box3JS 是一个内置于 NeoForge 模组的服务端脚本引擎（Mozilla Rhin
 ```
 config/box3/script/mygame/
 ├── package.json          ← npm 依赖（esbuild、Babel、TypeScript）
-├── tsconfig.json
+├── tsconfig.base.json     ← 公共 TS 编译选项
+├── tsconfig.server.json   ← 服务端 TS 配置
+├── tsconfig.client.json   ← 客户端 TS 配置
 ├── build.mjs             ← 构建脚本（esbuild → Babel → Rhino）
 ├── eslint.config.mjs
 ├── types/
 │   ├── shared.d.ts       ← 服务端&客户端共享类型
-│   ├── server.d.ts       ← 服务端专属类型
-│   └── client.d.ts       ← 客户端专属类型
+│   ├── server/           ← 服务端专属类型（server/entity/player/world/voxels）
+│   └── client/           ← 客户端专属类型（client/audio/input/ui/chat）
 └── src/
     ├── server/
     │   └── app.ts        ← 服务端入口（游戏逻辑）
@@ -64,9 +66,9 @@ npm install && npm run build
 | **TypeScript** | 完整 `.d.ts` 类型声明，esbuild + Babel 编译管线，享受智能提示                    |
 | **20+ 种事件** | onTick、onPlayerJoin、onChat、onEntityDeath、onBlockActivate、onButtonPressed... |
 | **视觉效果**   | 13+ 粒子、烟花、闪电、爆炸、音效                                                 |
-| **客户端 API**  | 键盘输入、屏幕 UI、聊天拦截、客户端存储、SQLite、HTTP、双向事件通道               |
+| **客户端 API**  | 键盘输入、屏幕 UI、聊天拦截、音效/音乐控制、客户端存储、SQLite、HTTP、双向事件通道 |
 | **游戏系统**   | 计分板、BossBar、队伍、世界边界、跨脚本通信                                      |
-| **自定义物品** | JSON 配置注册自定义物品（食物、稀有度、附魔光效），动态管理配方                  |
+| **自定义注册表** | JSON 配置注册方块、物品（食物/工具/盔甲）、音效与创造标签页，编译为独立 JAR    |
 | **数据持久化** | JSON 存储 + SQLite 数据库（排行榜、经济、玩家数据）                              |
 | **独立打包**   | `/box3script compile` 将脚本编译为独立 JAR 模组，便于分发部署                    |
 
@@ -89,13 +91,14 @@ npm install && npm run build
 
 | 全局对象                         | 用途                                                                                |
 | -------------------------------- | ----------------------------------------------------------------------------------- |
-| `world`                          | 世界状态、事件回调、粒子、烟花、闪电、音效、计分板、BossBar、队伍、边界、自定义物品 |
+| `world`                          | 世界状态、事件回调、粒子、烟花、闪电、音效、计分板、BossBar、队伍、边界 |
 | `entity`                         | 实体属性、AI 寻路、装备、药水效果、标签、导航                                       |
 | `player`                         | 背包、飞行、游戏模式、传送、消息、经验、音效                                        |
 | `voxels`                         | 方块读写、区域填充、刷怪笼                                                          |
 | `http`                           | HTTP 网络请求（同步 + 异步，GET/POST/JSON）                                         |
 | `remoteChannel`                  | 服务端 ↔ 客户端双向事件通讯                                                         |
-| `client` · `input` · `ui` · `chat` | 客户端脚本：生命周期、键盘、屏幕文字、聊天消息                                    |
+| `registries`                     | 自定义方块/物品/音效（编译 JAR 模式），见 [registries.md](docs/api/registries.md) |
+| `client` · `input` · `ui` · `chat` · `audio` | 客户端脚本：生命周期、键盘、屏幕文字、聊天、音频控制                    |
 | `storage`                        | JSON 数据持久化（服务端 & 客户端）                                                  |
 | `db`                             | SQLite 数据库（服务端 & 客户端）                                                    |
 | `console`                        | 控制台日志输出（`log`/`warn`/`error`/`debug`/`assert`/`clear`）                     |
@@ -104,7 +107,7 @@ npm install && npm run build
 | `GameRGBColor` / `GameRGBAColor` | RGB/RGBA 颜色                                                                       |
 | `GameQuaternion`                 | 四元数（旋转运算）                                                                  |
 
-[API 总览 →](docs/api/README.md) · [按任务速查 →](docs/api/README.md#功能速查---我想) · [English](docs/api/README_en.md)
+[文档首页 →](docs/README.md) · [API 总览 →](docs/api/README.md) · [按任务速查 →](docs/api/README.md#功能速查---我想)
 
 ## 教程
 
@@ -113,7 +116,7 @@ npm install && npm run build
 | #   | 教程                                                  | 时长   | 学什么                                   |
 | --- | ----------------------------------------------------- | ------ | ---------------------------------------- |
 | 1   | [从零开始](docs/tutorial/01-basics.md)                | 10 min | 创建项目、第一个脚本、聊天命令、定时任务 |
-| 2   | [玩家操控与物品](docs/tutorial/02-player-items.md)    | 15 min | 传送、飞行、物品、附魔、药水、自定义物品 |
+| 2   | [玩家操控与物品](docs/tutorial/02-player-items.md)    | 15 min | 传送、飞行、物品、附魔、药水 |
 | 3   | [事件系统与实体](docs/tutorial/03-events-entities.md) | 15 min | 事件回调、实体生成、AI、战斗、巡逻       |
 | 4   | [高级游戏系统](docs/tutorial/04-advanced-systems.md)  | 15 min | 计分板、BossBar、队伍、边界、跨脚本通信  |
 | 5   | [实战小游戏](docs/tutorial/05-examples.md)            | 20 min | PvP 竞技场、粒子烟花、波次刷怪、特效大全 |
@@ -124,6 +127,11 @@ npm install && npm run build
 
 ```
 docs/
+├── guide/                  ← 入门指南
+│   ├── README.md           指南总览
+│   ├── getting-started.md  从零开始（环境、第一个脚本、调试、发布）
+│   ├── architecture.md     运行原理（Rhino 引擎、作用域、构建管线）
+│   └── js-vs-java.md       JS vs Java 模组开发对比
 ├── api/                   ← API 参考
 │   ├── README.md          总览 + 功能速查
 │   ├── world.md           世界 API（事件、粒子、烟花、计分板...）
@@ -134,6 +142,7 @@ docs/
 │   ├── database.md        数据库 API（SQLite）
 │   ├── http.md            HTTP 请求 API
 │   ├── client.md          客户端 API（UI、输入、聊天、通讯）
+│   ├── registries.md       自定义方块/物品/音效
 │   ├── math.md            数学 API（Vector3、Color、Quaternion）
 │   └── commands.md        /box3script 命令参考
 ├── tutorial/              ← 入门教程

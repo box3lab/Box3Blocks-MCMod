@@ -1,0 +1,11 @@
+{
+  "chocolate": {
+    "displayName": "Chocolate Bar",
+    "type": "food",
+    "nutrition": 4,
+    "saturation": 0.6,
+    "alwaysEdible": true,
+    "maxStackSize": 64,
+    "creativeTab": "my_blocks"
+  }
+}

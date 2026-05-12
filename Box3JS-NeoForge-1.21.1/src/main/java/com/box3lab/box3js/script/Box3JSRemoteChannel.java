@@ -83,12 +83,7 @@ public class Box3JSRemoteChannel {
     private String stringify(Object value) {
         Context cx = Context.enter();
         try {
-            Scriptable scope = engine.getScope();
-            scope.put("_arg", scope, value);
-            Object result = cx.evaluateString(scope,
-                    "JSON.stringify(_arg)", "json", 1, null);
-            scope.delete("_arg");
-            return result instanceof String s ? s : null;
+            return Box3ScriptUtils.stringify(cx, engine.getScope(), value);
         } finally {
             Context.exit();
         }

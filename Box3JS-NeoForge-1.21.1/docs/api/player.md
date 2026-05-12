@@ -427,19 +427,6 @@ player.giveEnchantedItem("minecraft:bow", 1, {
 });
 ```
 
-### player.giveCustomItem(id, count)
-
-⬆ MC 扩展 | 给予通过 `world.loadCustomItems()` 加载的自定义物品。物品以 `minecraft:paper` 为载体，通过 DataComponents 获得名称、贴图、食物等属性。
-
-```js
-// 先加载配置
-world.loadCustomItems("box3js-items");
-// 再给予物品
-player.giveCustomItem("arena_trophy", 1);
-player.giveCustomItem("arena_stew", 4);
-player.giveCustomItem("arena_medal", 16);
-```
-
 ### player.giveNamedItem(itemId, count, name, lore)
 
 给予带自定义名称和描述的物品。`lore` 为字符串数组，每项一行描述文字。

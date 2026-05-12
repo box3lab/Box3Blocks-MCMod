@@ -32,6 +32,26 @@ console.log("脚本已加载");
 
 每次修改后重新 `npm run build`，然后用 `/box3script reload mygame` 热重载。
 
+> **新手上路**: [快速开始指南](../guide/getting-started.md) | **原理深入**: [运行原理](../guide/architecture.md) | **JS vs Java**: [技术选型对比](../guide/js-vs-java.md)
+
+## API 领域分类
+
+Box3JS API 按运行环境分为三大类：
+
+| 领域 | 运行环境 | 全局对象 | 说明 |
+|------|---------|---------|------|
+| **世界与实体** (服务端) | 服务端 | `world` `voxels` | 世界控制、方块操作、事件回调 |
+| **玩家与数据** (服务端) | 服务端 | `player` `entity` `storage` `db` `http` | 通过 `entity.player` 访问 |
+| **客户端交互** (客户端) | 客户端 | `audio` `client` `input` `ui` `chat` | 需 Box3JS 客户端 Mod |
+| **跨端通信** | 双端 | `remoteChannel` | 服务端↔客户端事件通信 |
+| **注册与编译** | 编译时 | `registries` | 仅在 `/box3script compile` JAR 模式可用 |
+| **数学与工具** | 双端 | `GameVector3` `GameBounds3` `GameRGBColor` `GameRGBAColor` `GameQuaternion` | 通过 `new` 构造 |
+| **全局工具** | 双端 | `console` | 日志输出 |
+
+> **服务端 API** 操作世界、实体、玩家、方块。脚本默认运行在服务端。  
+> **客户端 API** 仅在安装了 Box3JS 客户端 Mod 时可用，用于 UI、输入、音效。  
+> **注册 API** 仅在编译 JAR 模式下可用（`/box3script start` 解释模式中 `registries` 为 `undefined`）。
+
 ## 功能速查 — 我想...
 
 按你想做的事情查找对应 API，而非按全局对象记。
@@ -66,11 +86,27 @@ console.log("脚本已加载");
 | 给玩家普通物品 | `player.giveItem("minecraft:diamond", 1)` |
 | 给带附魔的物品 | `player.giveEnchantedItem(...)` |
 | 给带自定义名称的物品 | `player.giveNamedItem(...)` |
-| 给自定义模组物品 | `player.giveCustomItem("my_item", 1)` |
 | 获取手持物品 | `player.getHeldItem()` |
 | 清空背包 | `player.clearInventory()` |
 | 设置实体装备 | `entity.setEquipment("head", "iron_helmet")` |
-| 加载自定义物品包 | `world.loadCustomItems("mypack")` |
+
+### 自定义注册表（方块/物品/音效） 🆕
+
+| 我想... | 用这个 |
+|---------|--------|
+| 注册自定义方块 | `registries/blocks.json`（编译时） |
+| 注册自定义物品 | `registries/items.json`（编译时） |
+| 注册自定义音效 | `registries/sounds.json`（编译时） |
+| 注册创造标签页 | `registries/creativeTabs.json`（编译时） |
+| 获取注册的方块 | `registries.getBlock("my_block")` |
+| 获取注册的物品 | `registries.getItem("chocolate")` |
+| 获取注册的音效 | `registries.getSound("victory_fanfare")` |
+| 给予自定义方块/物品 | `player.giveItem(block.itemId, 1)` |
+| 放置自定义方块 | `voxels.setVoxel(x, y, z, block.block)` |
+| 播放自定义音效（服务端） | `world.playSound(sound.soundId, x, y, z, 1, 1)` |
+| 播放自定义音效（客户端） | `audio.playSound("modId:soundId", 1.0, 1.0)` |
+
+> **仅服务端可用。** 客户端脚本中 `registries` 为 `undefined`。**仅在 `/box3script compile` 编译的 JAR 模式下可用。** 需客户端也安装该 JAR 以正确渲染纹理/模型。详见 [registries.md](registries.md)
 
 ### 方块操作
 
@@ -105,7 +141,10 @@ console.log("脚本已加载");
 | 客户端每帧执行 | `client.onTick(() => { ... })` |
 | 检测按键按下 | `input.isKeyDown("space")` |
 | 监听按键事件 | `input.onKeyPress("f", () => { ... })` |
-| 客户端播放音效 | `client.playSound("pling", 1.0, 1.0)` |
+| 播放客户端音效 | `audio.playSound("pling", 1.0, 1.0)` |
+| 播放客户端音乐 | `audio.playMusic("minecraft:music.game", 0.5, 1.0)` |
+| 停止所有声音 | `audio.stopAll()` |
+| 获取/设置音量 | `audio.getVolume("music")` / `audio.setVolume("player", 0.8)` |
 | 快捷栏上方显示文字 | `ui.showOverlay("文字")` |
 | 显示屏幕大标题 | `ui.showTitle("标题", "副标题")` |
 | 发送聊天消息 | `chat.sendMessage("消息")` |
@@ -214,11 +253,13 @@ console.log("脚本已加载");
 | `storage` | ✅ Box3 | 数据持久化，见 [storage.md](storage.md) |
 | `db` | ✅ Box3 | SQLite 数据库，见 [database.md](database.md) |
 | `http` | 🆕 MC 扩展 | HTTP 请求，见 [http.md](http.md) |
-| `client` | 🆕 MC 扩展 | 客户端生命周期与音效，见 [client.md](client.md) |
+| `audio` | 🆕 MC 扩展 | 客户端音效、音乐、音量控制，见 [client.md](client.md) |
+| `client` | 🆕 MC 扩展 | 客户端生命周期，见 [client.md](client.md) |
 | `input` | 🆕 MC 扩展 | 客户端键盘输入，见 [client.md](client.md) |
 | `ui` | 🆕 MC 扩展 | 客户端屏幕 UI，见 [client.md](client.md) |
 | `chat` | 🆕 MC 扩展 | 客户端聊天收发，见 [client.md](client.md) |
 | `remoteChannel` | 🆕 MC 扩展 | 服务端↔客户端事件通信，见 [client.md](client.md) |
+| `registries` | 🆕 MC 扩展 | 自定义方块/物品/音效（编译模式），见 [registries.md](registries.md) |
 | `console` | ✅ Box3 | 控制台日志输出（`log`/`warn`/`error`/`debug`） |
 | `GameVector3` | ✅ Box3 | 三维向量，见 [math.md](math.md) |
 | `GameBounds3` | ✅ Box3 | 包围盒，见 [math.md](math.md) |
@@ -245,6 +286,7 @@ console.log("脚本已加载");
 | [database.md](database.md) | SQLite 数据库 |
 | [http.md](http.md) | HTTP 网络请求 |
 | [client.md](client.md) | 客户端脚本：生命周期、键盘输入、屏幕 UI、聊天、remoteChannel、客户端本地存储 |
+| [registries.md](registries.md) | 自定义方块/物品/音效（blocks.json、items.json、sounds.json、creativeTabs.json） |
 | [math.md](math.md) | GameVector3、GameBounds3、GameRGBColor、GameRGBAColor、GameQuaternion |
 | [commands.md](commands.md) | `/box3script` 命令参考 |
 
@@ -299,6 +341,14 @@ config/box3/script/mygame/
 | 30 秒 | 600 |
 | 1 分钟 | 1200 |
 | 5 分钟 | 6000 |
+
+## 深入学习
+
+| 文档 | 内容 |
+|------|------|
+| [快速开始](../guide/getting-started.md) | 环境搭建、第一个脚本、开发循环、调试、发布 |
+| [运行原理](../guide/architecture.md) | Rhino 引擎、作用域、事件回调、构建管线、网络通信 |
+| [JS vs Java](../guide/js-vs-java.md) | Box3JS 脚本开发 vs 原生 Java 模组开发对比 |
 
 ## 教程
 
