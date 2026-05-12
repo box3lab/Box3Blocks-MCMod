@@ -29,11 +29,11 @@ Beginner                  Intermediate              Advanced
 
 | # | Tutorial | You'll learn |
 |---|---------|-------------|
-| 1 | [From Zero](01-basics.md) | Create project → build → first script → chat commands → timers |
-| 2 | [Players & Items](02-player-items.md) | Teleport, flight, give items, enchantments, potion effects, game modes |
-| 3 | [Events & Entities](03-events-entities.md) | All event callbacks, spawn entities, AI control, patrol guards, collision |
-| 4 | [Advanced Systems](04-advanced-systems.md) | Scoreboards, BossBars, teams, world border, cross-script messaging |
-| 5 | [Real Mini-Games](05-examples.md) | Full PvP arena, particle effects, fireworks, wave spawning, home TP |
+| 1 | [From Zero](01-basics_en.md) | Create project → build → first script → chat commands → timers |
+| 2 | [Players & Items](02-player-items_en.md) | Teleport, flight, give items, enchantments, potion effects, game modes |
+| 3 | [Events & Entities](03-events-entities_en.md) | All event callbacks, spawn entities, AI control, patrol guards, collision |
+| 4 | [Advanced Systems](04-advanced-systems_en.md) | Scoreboards, BossBars, teams, world border, cross-script messaging |
+| 5 | [Real Mini-Games](05-examples_en.md) | Full PvP arena, particle effects, fireworks, wave spawning, home TP |
 
 ## Prerequisites
 
