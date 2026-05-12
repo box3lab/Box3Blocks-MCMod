@@ -34,8 +34,8 @@ config/box3/script/mygame/
 ├── eslint.config.mjs
 ├── types/
 │   ├── shared.d.ts       ← types shared by server & client
-│   ├── server.d.ts       ← server-only types
-│   └── client.d.ts       ← client-only types
+│   ├── server/           ← server-only types (server/entity/player/world/voxels)
+│   └── client/           ← client-only types (client/audio/input/ui/chat)
 └── src/
     ├── server/
     │   └── app.ts        ← server entry (game logic)
@@ -107,7 +107,7 @@ All `<project>` arguments support **Tab completion**. [Full command reference �
 | `GameRGBColor` / `GameRGBAColor` | RGB / RGBA color                                                                                                |
 | `GameQuaternion`                 | Quaternion (rotation math)                                                                                      |
 
-[API Overview →](docs/api/README_en.md) · [Find by Task →](docs/api/README_en.md#find-by-task--i-want-to)
+[Docs Home →](docs/README_en.md) · [API Overview →](docs/api/README_en.md) · [Find by Task →](docs/api/README_en.md#find-by-task--i-want-to)
 
 ## Tutorials
 
@@ -127,6 +127,11 @@ From zero to full mini-games. Every example is TypeScript-compiled and ESLint-ve
 
 ```
 docs/
+├── guide/                  ← Getting Started
+│   ├── README.md           Guide overview
+│   ├── getting-started.md  From zero (setup, first script, debug, deploy)
+│   ├── architecture.md     Internals (Rhino engine, scopes, build pipeline)
+│   └── js-vs-java.md       JS vs Java modding comparison
 ├── api/                   ← API Reference
 │   ├── README.md          Overview + find by task
 │   ├── world.md           World API (events, particles, fireworks, scoreboards...)

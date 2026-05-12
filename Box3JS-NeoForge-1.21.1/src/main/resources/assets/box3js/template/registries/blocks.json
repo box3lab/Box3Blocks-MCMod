@@ -7,12 +7,5 @@
     "mapColor": "color_red",
     "requiresTool": true,
     "creativeTab": "my_blocks"
-  },
-  "glass_block": {
-    "hardness": 0.3,
-    "resistance": 0.3,
-    "sound": "glass",
-    "noOcclusion": true,
-    "creativeTab": "my_blocks"
   }
 }

@@ -32,6 +32,26 @@ console.log("脚本已加载");
 
 每次修改后重新 `npm run build`，然后用 `/box3script reload mygame` 热重载。
 
+> **新手上路**: [快速开始指南](../guide/getting-started.md) | **原理深入**: [运行原理](../guide/architecture.md) | **JS vs Java**: [技术选型对比](../guide/js-vs-java.md)
+
+## API 领域分类
+
+Box3JS API 按运行环境分为三大类：
+
+| 领域 | 运行环境 | 全局对象 | 说明 |
+|------|---------|---------|------|
+| **世界与实体** (服务端) | 服务端 | `world` `voxels` | 世界控制、方块操作、事件回调 |
+| **玩家与数据** (服务端) | 服务端 | `player` `entity` `storage` `db` `http` | 通过 `entity.player` 访问 |
+| **客户端交互** (客户端) | 客户端 | `audio` `client` `input` `ui` `chat` | 需 Box3JS 客户端 Mod |
+| **跨端通信** | 双端 | `remoteChannel` | 服务端↔客户端事件通信 |
+| **注册与编译** | 编译时 | `registries` | 仅在 `/box3script compile` JAR 模式可用 |
+| **数学与工具** | 双端 | `GameVector3` `GameBounds3` `GameRGBColor` `GameRGBAColor` `GameQuaternion` | 通过 `new` 构造 |
+| **全局工具** | 双端 | `console` | 日志输出 |
+
+> **服务端 API** 操作世界、实体、玩家、方块。脚本默认运行在服务端。  
+> **客户端 API** 仅在安装了 Box3JS 客户端 Mod 时可用，用于 UI、输入、音效。  
+> **注册 API** 仅在编译 JAR 模式下可用（`/box3script start` 解释模式中 `registries` 为 `undefined`）。
+
 ## 功能速查 — 我想...
 
 按你想做的事情查找对应 API，而非按全局对象记。
@@ -321,6 +341,14 @@ config/box3/script/mygame/
 | 30 秒 | 600 |
 | 1 分钟 | 1200 |
 | 5 分钟 | 6000 |
+
+## 深入学习
+
+| 文档 | 内容 |
+|------|------|
+| [快速开始](../guide/getting-started.md) | 环境搭建、第一个脚本、开发循环、调试、发布 |
+| [运行原理](../guide/architecture.md) | Rhino 引擎、作用域、事件回调、构建管线、网络通信 |
+| [JS vs Java](../guide/js-vs-java.md) | Box3JS 脚本开发 vs 原生 Java 模组开发对比 |
 
 ## 教程
 

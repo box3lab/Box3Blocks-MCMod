@@ -34,8 +34,8 @@ config/box3/script/mygame/
 ├── eslint.config.mjs
 ├── types/
 │   ├── shared.d.ts       ← 服务端&客户端共享类型
-│   ├── server.d.ts       ← 服务端专属类型
-│   └── client.d.ts       ← 客户端专属类型
+│   ├── server/           ← 服务端专属类型（server/entity/player/world/voxels）
+│   └── client/           ← 客户端专属类型（client/audio/input/ui/chat）
 └── src/
     ├── server/
     │   └── app.ts        ← 服务端入口（游戏逻辑）
@@ -107,7 +107,7 @@ npm install && npm run build
 | `GameRGBColor` / `GameRGBAColor` | RGB/RGBA 颜色                                                                       |
 | `GameQuaternion`                 | 四元数（旋转运算）                                                                  |
 
-[API 总览 →](docs/api/README.md) · [按任务速查 →](docs/api/README.md#功能速查---我想) · [English](docs/api/README_en.md)
+[文档首页 →](docs/README.md) · [API 总览 →](docs/api/README.md) · [按任务速查 →](docs/api/README.md#功能速查---我想)
 
 ## 教程
 
@@ -127,6 +127,11 @@ npm install && npm run build
 
 ```
 docs/
+├── guide/                  ← 入门指南
+│   ├── README.md           指南总览
+│   ├── getting-started.md  从零开始（环境、第一个脚本、调试、发布）
+│   ├── architecture.md     运行原理（Rhino 引擎、作用域、构建管线）
+│   └── js-vs-java.md       JS vs Java 模组开发对比
 ├── api/                   ← API 参考
 │   ├── README.md          总览 + 功能速查
 │   ├── world.md           世界 API（事件、粒子、烟花、计分板...）
