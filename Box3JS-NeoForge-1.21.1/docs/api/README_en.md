@@ -66,11 +66,27 @@ Find APIs by what you want to do, not by which global object they live on.
 | Give a basic item | `player.giveItem("minecraft:diamond", 1)` |
 | Give enchanted item | `player.giveEnchantedItem(...)` |
 | Give named item | `player.giveNamedItem(...)` |
-| Give custom mod item | `player.giveCustomItem("my_item", 1)` |
 | Get held item | `player.getHeldItem()` |
 | Clear inventory | `player.clearInventory()` |
 | Set entity equipment | `entity.setEquipment("head", "iron_helmet")` |
-| Load custom item pack | `world.loadCustomItems("mypack")` |
+
+### Custom Registries (Blocks, Items & Sounds) 🆕
+
+| I want to... | Use this |
+|-------------|----------|
+| Register custom blocks | `registries/blocks.json` (at compile time) |
+| Register custom items | `registries/items.json` (at compile time) |
+| Register custom sounds | `registries/sounds.json` (at compile time) |
+| Register creative tabs | `registries/creativeTabs.json` (at compile time) |
+| Get a registered block | `registries.getBlock("my_block")` |
+| Get a registered item | `registries.getItem("chocolate")` |
+| Get a registered sound | `registries.getSound("victory_fanfare")` |
+| Give a custom block/item | `player.giveItem(block.itemId, 1)` |
+| Place a custom block | `voxels.setVoxel(x, y, z, block.block)` |
+| Play a custom sound (server) | `world.playSound(sound.soundId, x, y, z, 1, 1)` |
+| Play a custom sound (client) | `audio.playSound("modId:soundId", 1.0, 1.0)` |
+
+> **Server-side only.** `registries` is `undefined` in client scripts. **Only available in `/box3script compile` JAR mode.** Client must also install the JAR for textures/models. See [registries_en.md](registries_en.md)
 
 ### Block Operations
 
@@ -223,6 +239,7 @@ Find APIs by what you want to do, not by which global object they live on.
 | `ui` | 🆕 MC Extension | Client screen UI, see [client_en.md](client_en.md) |
 | `chat` | 🆕 MC Extension | Client chat send/receive, see [client_en.md](client_en.md) |
 | `remoteChannel` | 🆕 MC Extension | Server↔client event channel, see [client_en.md](client_en.md) |
+| `registries` | 🆕 MC Extension | Custom blocks, items & sounds (compiled mode), see [registries_en.md](registries_en.md) |
 | `console` | ✅ Box3 | Console logging (`log`/`warn`/`error`/`debug`) |
 | `GameVector3` | ✅ Box3 | 3D vector, see [math_en.md](math_en.md) |
 | `GameBounds3` | ✅ Box3 | Bounding box, see [math_en.md](math_en.md) |
@@ -249,6 +266,7 @@ Find APIs by what you want to do, not by which global object they live on.
 | [database_en.md](database_en.md) | SQLite database API |
 | [http_en.md](http_en.md) | HTTP request API |
 | [client_en.md](client_en.md) | Client scripts: lifecycle, keyboard, screen UI, chat, remoteChannel, client-side storage |
+| [registries_en.md](registries_en.md) | Custom blocks, items & sounds (blocks.json, items.json, sounds.json, creativeTabs.json) |
 | [math_en.md](math_en.md) | GameVector3, GameBounds3, GameRGBColor, GameRGBAColor, GameQuaternion |
 | [commands_en.md](commands_en.md) | `/box3script` command reference |
 

@@ -1,0 +1,61 @@
+{
+  "chocolate": {
+    "displayName": "Chocolate Bar",
+    "type": "food",
+    "nutrition": 4,
+    "saturation": 0.6,
+    "alwaysEdible": true,
+    "maxStackSize": 64,
+    "creativeTab": "my_items"
+  },
+  "trophy": {
+    "displayName": "Golden Trophy",
+    "type": "item",
+    "rarity": "uncommon",
+    "maxStackSize": 1,
+    "glint": true,
+    "creativeTab": "my_items"
+  },
+  "my_sword": {
+    "displayName": "My Sword",
+    "type": "sword",
+    "tier": "iron",
+    "rarity": "common",
+    "creativeTab": "my_items"
+  },
+  "my_pickaxe": {
+    "displayName": "My Pickaxe",
+    "type": "pickaxe",
+    "tier": "iron",
+    "rarity": "common",
+    "creativeTab": "my_items"
+  },
+  "my_chestplate": {
+    "displayName": "My Chestplate",
+    "type": "chestplate",
+    "tier": "iron",
+    "rarity": "common",
+    "creativeTab": "my_items"
+  },
+  "my_helmet": {
+    "displayName": "My Helmet",
+    "type": "helmet",
+    "tier": "iron",
+    "rarity": "common",
+    "creativeTab": "my_items"
+  },
+  "my_leggings": {
+    "displayName": "My Leggings",
+    "type": "leggings",
+    "tier": "iron",
+    "rarity": "common",
+    "creativeTab": "my_items"
+  },
+  "my_boots": {
+    "displayName": "My Boots",
+    "type": "boots",
+    "tier": "iron",
+    "rarity": "common",
+    "creativeTab": "my_items"
+  }
+}

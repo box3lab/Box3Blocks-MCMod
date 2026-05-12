@@ -66,11 +66,27 @@ console.log("脚本已加载");
 | 给玩家普通物品 | `player.giveItem("minecraft:diamond", 1)` |
 | 给带附魔的物品 | `player.giveEnchantedItem(...)` |
 | 给带自定义名称的物品 | `player.giveNamedItem(...)` |
-| 给自定义模组物品 | `player.giveCustomItem("my_item", 1)` |
 | 获取手持物品 | `player.getHeldItem()` |
 | 清空背包 | `player.clearInventory()` |
 | 设置实体装备 | `entity.setEquipment("head", "iron_helmet")` |
-| 加载自定义物品包 | `world.loadCustomItems("mypack")` |
+
+### 自定义注册表（方块/物品/音效） 🆕
+
+| 我想... | 用这个 |
+|---------|--------|
+| 注册自定义方块 | `registries/blocks.json`（编译时） |
+| 注册自定义物品 | `registries/items.json`（编译时） |
+| 注册自定义音效 | `registries/sounds.json`（编译时） |
+| 注册创造标签页 | `registries/creativeTabs.json`（编译时） |
+| 获取注册的方块 | `registries.getBlock("my_block")` |
+| 获取注册的物品 | `registries.getItem("chocolate")` |
+| 获取注册的音效 | `registries.getSound("victory_fanfare")` |
+| 给予自定义方块/物品 | `player.giveItem(block.itemId, 1)` |
+| 放置自定义方块 | `voxels.setVoxel(x, y, z, block.block)` |
+| 播放自定义音效（服务端） | `world.playSound(sound.soundId, x, y, z, 1, 1)` |
+| 播放自定义音效（客户端） | `audio.playSound("modId:soundId", 1.0, 1.0)` |
+
+> **仅服务端可用。** 客户端脚本中 `registries` 为 `undefined`。**仅在 `/box3script compile` 编译的 JAR 模式下可用。** 需客户端也安装该 JAR 以正确渲染纹理/模型。详见 [registries.md](registries.md)
 
 ### 方块操作
 
@@ -223,6 +239,7 @@ console.log("脚本已加载");
 | `ui` | 🆕 MC 扩展 | 客户端屏幕 UI，见 [client.md](client.md) |
 | `chat` | 🆕 MC 扩展 | 客户端聊天收发，见 [client.md](client.md) |
 | `remoteChannel` | 🆕 MC 扩展 | 服务端↔客户端事件通信，见 [client.md](client.md) |
+| `registries` | 🆕 MC 扩展 | 自定义方块/物品/音效（编译模式），见 [registries.md](registries.md) |
 | `console` | ✅ Box3 | 控制台日志输出（`log`/`warn`/`error`/`debug`） |
 | `GameVector3` | ✅ Box3 | 三维向量，见 [math.md](math.md) |
 | `GameBounds3` | ✅ Box3 | 包围盒，见 [math.md](math.md) |
@@ -249,6 +266,7 @@ console.log("脚本已加载");
 | [database.md](database.md) | SQLite 数据库 |
 | [http.md](http.md) | HTTP 网络请求 |
 | [client.md](client.md) | 客户端脚本：生命周期、键盘输入、屏幕 UI、聊天、remoteChannel、客户端本地存储 |
+| [registries.md](registries.md) | 自定义方块/物品/音效（blocks.json、items.json、sounds.json、creativeTabs.json） |
 | [math.md](math.md) | GameVector3、GameBounds3、GameRGBColor、GameRGBAColor、GameQuaternion |
 | [commands.md](commands.md) | `/box3script` 命令参考 |
 

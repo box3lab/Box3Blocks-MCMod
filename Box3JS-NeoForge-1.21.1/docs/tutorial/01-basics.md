@@ -321,4 +321,4 @@ world.onChat((entity, message) => {
 
 ## 下一步
 
-[教程二：玩家操控与物品](../tutorial/02-player-items.md) — 传送、物品给予、药水效果、游戏模式、生命值、自定义物品。
+[教程二：玩家操控与物品](../tutorial/02-player-items.md) — 传送、物品给予、药水效果、游戏模式、生命值。

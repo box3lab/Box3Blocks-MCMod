@@ -427,19 +427,6 @@ player.giveEnchantedItem("minecraft:bow", 1, {
 });
 ```
 
-### player.giveCustomItem(id, count)
-
-⬆ MC Extension | Gives a custom item loaded via `world.loadCustomItems()`. Items use `minecraft:paper` as a carrier with DataComponents for name, texture, food, etc.
-
-```js
-// Load config first
-world.loadCustomItems("box3js-items");
-// Then give items
-player.giveCustomItem("arena_trophy", 1);
-player.giveCustomItem("arena_stew", 4);
-player.giveCustomItem("arena_medal", 16);
-```
-
 ### player.giveNamedItem(itemId, count, name, lore)
 
 Gives an item with a custom name and lore. `lore` is a string array, one line per entry.

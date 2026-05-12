@@ -448,13 +448,6 @@ public class Box3JSPlayer {
         if (stack != null) player.getInventory().add(stack);
     }
 
-    public void giveCustomItem(String id, int count) {
-        ItemStack stack = com.box3lab.box3js.registries.Box3JSCustomItems.createStack(id, count);
-        if (stack != null) {
-            player.getInventory().add(stack);
-        }
-    }
-
     public void giveEnchantedItem(String itemId, int count, NativeObject enchants) {
         ItemStack stack = makeItemStack(itemId, count, enchants);
         if (stack != null) player.getInventory().add(stack);

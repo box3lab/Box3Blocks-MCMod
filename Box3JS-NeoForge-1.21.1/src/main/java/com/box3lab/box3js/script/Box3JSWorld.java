@@ -621,15 +621,6 @@ public class Box3JSWorld {
         }
     }
 
-    // ---- Custom Items ----
-
-    /** Load custom items from a resource pack's items.json using MC component IDs. */
-    public void loadCustomItems(String packName) {
-        Path itemsFile = Path.of(".").toAbsolutePath().normalize()
-            .resolve("resourcepacks").resolve(packName).resolve("items.json");
-        com.box3lab.box3js.registries.Box3JSCustomItems.loadFromPack(itemsFile);
-    }
-
     // ---- Recipe ----
 
     public List<String> listRecipes(String filter) {

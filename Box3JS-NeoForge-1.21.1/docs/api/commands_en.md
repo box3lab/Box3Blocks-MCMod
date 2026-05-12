@@ -122,6 +122,8 @@ Compiles a script project into a **lightweight standalone JAR mod** (~50KB) that
 
 > **Dependency:** Script JARs do not bundle Rhino or Box3JS API classes. Place the Box3JS mod (`box3js`) alongside your script JAR(s) in `mods/`.
 
+> **Custom registries:** If `registries/blocks.json`, `items.json`, `sounds.json`, `creativeTabs.json` and `assets/` are present, blocks/items/sounds are registered and resources are bundled into the JAR. The client must also install the JAR for rendering. See [registries_en.md](registries_en.md).
+
 The compiler **reads the following `package.json` fields** and writes them to `neoforge.mods.toml`:
 
 | package.json | mods.toml field | Description |
@@ -149,10 +151,17 @@ Output filename format: `dist/<name>-<version>.jar`. Compilation runs on a backg
 
 ```
 mygame-1.0.0.jar
-├── META-INF/neoforge.mods.toml    ← mod metadata (depends on box3js)
-├── logo.png                       ← mod icon (if specified)
-├── box3script/mygame/MygameMod.class ← @Mod entry point (hardcoded metadata)
-└── box3script/mygame/server.js       ← bundled script source
+├── META-INF/neoforge.mods.toml      ← mod metadata (depends on box3js)
+├── logo.png                         ← mod icon (if specified)
+├── assets/mygame/                   ← block models, textures, blockstates (if present)
+│   ├── lang/en_us.json              ← language file (auto-generated)
+│   ├── blockstates/*.json
+│   ├── models/block/*.json
+│   ├── models/item/*.json
+│   └── textures/block/*.png
+├── box3script/mygame/MygameMod.class ← @Mod entry (with DeferredRegister)
+├── box3script/mygame/server.js       ← bundled server script
+└── box3script/mygame/client.js       ← bundled client script (if present)
 ```
 
 **Deployment:** Place the script JAR alongside the Box3JS mod in `mods/`:
@@ -198,11 +207,19 @@ config/box3/
   │       ├── package.json
   │       ├── eslint.config.mjs
   │       ├── tsconfig.json
-  │       ├── types/globals.d.ts
-  │       ├── src/app.ts
+  │       ├── types/
+  │       ├── src/
+  │       │   ├── server/app.ts
+  │       │   └── client/app.ts
+  │       ├── registries/         ← block/item/sound registration (compiled mode)
+  │       │   ├── blocks.json
+  │       │   └── creativeTabs.json
+  │       ├── assets/             ← models/textures/sounds/lang (compiled mode)
+  │       │   └── textures/block/
   │       └── dist/
-│           ├── server.js       ← compiled output
-│           └── <name>-<ver>.jar ← standalone JAR (compile command)
+  │           ├── server.js       ← compiled output
+  │           ├── client.js       ← client compiled output
+  │           └── <name>-<ver>.jar ← standalone JAR (compile command)
   ├── data/                      ← SQLite database (db API)
   └── storage/                  ← storage API persistence
 ```

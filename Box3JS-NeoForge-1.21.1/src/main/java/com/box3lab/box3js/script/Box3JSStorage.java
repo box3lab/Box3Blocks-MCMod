@@ -14,11 +14,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Box3JSStorage {
 
     private static final Gson GSON = new Gson();
-    private static final Type MAP_TYPE = new TypeToken<Map<String, ValueEntry>>() {}.getType();
+    private static final Type MAP_TYPE = new TypeToken<Map<String, Box3StorageTypes.ValueEntry>>() {}.getType();
 
     private final Path baseDir;
     private final Box3ScriptEngine engine;
-    private final Map<Path, Map<String, ValueEntry>> cache = new ConcurrentHashMap<>();
+    private final Map<Path, Map<String, Box3StorageTypes.ValueEntry>> cache = new ConcurrentHashMap<>();
 
     public Box3JSStorage(Path configDir, Box3ScriptEngine engine) {
         this.baseDir = configDir.resolve("box3").resolve("storage");
@@ -45,74 +45,13 @@ public class Box3JSStorage {
         return project != null ? project + "/" + name : name;
     }
 
-    // ---- ValueEntry ----
-
-    private static class ValueEntry {
-        Object value;
-        long updateTime;
-        long createTime;
-        String version;
-
-        ValueEntry(Object value, long createTime) {
-            this.value = value;
-            this.createTime = createTime;
-            this.updateTime = createTime;
-            this.version = Long.toHexString(createTime) + "-" + Integer.toHexString(new Random().nextInt());
-        }
-    }
-
-    // ---- ReturnValue ----
-
-    public static class ReturnValue {
-        public String key;
-        public Object value;
-        public double updateTime;
-        public double createTime;
-        public String version;
-
-        ReturnValue(String key, ValueEntry entry) {
-            this.key = key;
-            this.value = entry.value;
-            this.updateTime = entry.updateTime;
-            this.createTime = entry.createTime;
-            this.version = entry.version;
-        }
-    }
-
-    // ---- QueryList ----
-
-    public static class QueryList {
-        public boolean isLastPage;
-        private final List<ReturnValue> all;
-        private final int pageSize;
-        private int cursor;
-
-        QueryList(List<ReturnValue> all, int pageSize, int cursor) {
-            this.all = all;
-            this.pageSize = pageSize;
-            this.cursor = Math.max(0, cursor);
-            this.isLastPage = this.cursor >= all.size();
-        }
-
-        public ReturnValue[] getCurrentPage() {
-            int end = Math.min(cursor + pageSize, all.size());
-            if (cursor >= all.size()) return new ReturnValue[0];
-            return all.subList(cursor, end).toArray(new ReturnValue[0]);
-        }
-
-        public void nextPage() {
-            cursor += pageSize;
-            isLastPage = cursor >= all.size();
-        }
-    }
-
     // ---- GameDataStorage ----
 
     public class GameDataStorage {
 
         private final String name;
         private final Path path;
-        private final Map<String, ValueEntry> data;
+        private final Map<String, Box3StorageTypes.ValueEntry> data;
 
         GameDataStorage(String name) {
             this.name = name;
@@ -129,7 +68,7 @@ public class Box3JSStorage {
                 if (Files.exists(p)) {
                     try {
                         String json = Files.readString(p);
-                        Map<String, ValueEntry> map = GSON.fromJson(json, MAP_TYPE);
+                        Map<String, Box3StorageTypes.ValueEntry> map = GSON.fromJson(json, MAP_TYPE);
                         return map != null ? Collections.synchronizedMap(new LinkedHashMap<>(map))
                                            : Collections.synchronizedMap(new LinkedHashMap<>());
                     } catch (IOException e) {
@@ -161,13 +100,13 @@ public class Box3JSStorage {
             if (key == null) return;
             long now = System.currentTimeMillis();
             synchronized (data) {
-                ValueEntry existing = data.get(key);
+                Box3StorageTypes.ValueEntry existing = data.get(key);
                 if (existing != null) {
                     existing.value = value;
                     existing.updateTime = now;
                     existing.version = Long.toHexString(now) + "-" + Integer.toHexString(new Random().nextInt());
                 } else {
-                    data.put(key, new ValueEntry(value, now));
+                    data.put(key, new Box3StorageTypes.ValueEntry(value, now));
                 }
                 persist();
             }
@@ -176,7 +115,7 @@ public class Box3JSStorage {
         public Object get(String key) {
             if (key == null) return null;
             synchronized (data) {
-                ValueEntry entry = data.get(key);
+                Box3StorageTypes.ValueEntry entry = data.get(key);
                 return entry != null ? entry.value : null;
             }
         }
@@ -190,7 +129,7 @@ public class Box3JSStorage {
         public void update(String key, Function handler) {
             if (key == null || handler == null) return;
             synchronized (data) {
-                ValueEntry entry = data.get(key);
+                Box3StorageTypes.ValueEntry entry = data.get(key);
                 if (entry == null) return;
                 long now = System.currentTimeMillis();
                 entry.value = engine.callFunction(handler, entry.value);
@@ -203,7 +142,7 @@ public class Box3JSStorage {
         public Object remove(String key) {
             if (key == null) return null;
             synchronized (data) {
-                ValueEntry entry = data.remove(key);
+                Box3StorageTypes.ValueEntry entry = data.remove(key);
                 if (entry != null) {
                     persist();
                     return entry.value;
@@ -217,7 +156,7 @@ public class Box3JSStorage {
             double delta = Double.isNaN(value) ? 1.0 : value;
             long now = System.currentTimeMillis();
             synchronized (data) {
-                ValueEntry entry = data.get(key);
+                Box3StorageTypes.ValueEntry entry = data.get(key);
                 if (entry != null) {
                     if (entry.value instanceof Number n) {
                         entry.value = n.doubleValue() + delta;
@@ -227,7 +166,7 @@ public class Box3JSStorage {
                     entry.updateTime = now;
                     entry.version = Long.toHexString(now) + "-" + Integer.toHexString(new Random().nextInt());
                 } else {
-                    entry = new ValueEntry(delta, now);
+                    entry = new Box3StorageTypes.ValueEntry(delta, now);
                     data.put(key, entry);
                 }
                 persist();
@@ -239,12 +178,12 @@ public class Box3JSStorage {
             return increment(key, 1.0);
         }
 
-        public QueryList list(Map<String, Object> options) {
-            List<ReturnValue> results;
+        public Box3StorageTypes.QueryList list(Map<String, Object> options) {
+            List<Box3StorageTypes.ReturnValue> results;
             synchronized (data) {
                 results = new ArrayList<>();
-                for (Map.Entry<String, ValueEntry> e : data.entrySet()) {
-                    results.add(new ReturnValue(e.getKey(), e.getValue()));
+                for (Map.Entry<String, Box3StorageTypes.ValueEntry> e : data.entrySet()) {
+                    results.add(new Box3StorageTypes.ReturnValue(e.getKey(), e.getValue()));
                 }
             }
 
@@ -282,8 +221,8 @@ public class Box3JSStorage {
             }
 
             if (max != null || min != null) {
-                List<ReturnValue> filtered = new ArrayList<>();
-                for (ReturnValue rv : results) {
+                List<Box3StorageTypes.ReturnValue> filtered = new ArrayList<>();
+                for (Box3StorageTypes.ReturnValue rv : results) {
                     double v = extractSortValue(rv.value, target);
                     if (min != null && v < min) continue;
                     if (max != null && v > max) continue;
@@ -292,7 +231,7 @@ public class Box3JSStorage {
                 results = filtered;
             }
 
-            return new QueryList(results, pageSize, Math.max(0, cursor));
+            return new Box3StorageTypes.QueryList(results, pageSize, Math.max(0, cursor));
         }
 
         private double extractSortValue(Object value, String target) {

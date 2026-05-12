@@ -1,0 +1,18 @@
+{
+  "ruby_block": {
+    "hardness": 5.0,
+    "resistance": 6.0,
+    "sound": "metal",
+    "lightLevel": 7,
+    "mapColor": "color_red",
+    "requiresTool": true,
+    "creativeTab": "my_blocks"
+  },
+  "glass_block": {
+    "hardness": 0.3,
+    "resistance": 0.3,
+    "sound": "glass",
+    "noOcclusion": true,
+    "creativeTab": "my_blocks"
+  }
+}

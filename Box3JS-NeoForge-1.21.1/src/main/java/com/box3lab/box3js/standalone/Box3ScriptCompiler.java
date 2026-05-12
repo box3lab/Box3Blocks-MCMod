@@ -10,6 +10,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -93,12 +94,20 @@ public class Box3ScriptCompiler {
         System.out.println("[1/4] Bundling JS source ...");
         bundleJsSource(serverJs, workDir);
 
-        System.out.println("[2/4] Bundling logo ...");
+        System.out.println("[2/4] Bundling assets ...");
         bundleLogo(workDir);
+        // Generate sounds first as defaults, then bundle user assets
+        // so user-provided files in assets/ override auto-generated ones
+        var blocks = Box3JSRegistryGen.readBlocks(projectDir);
+        var tabs = Box3JSRegistryGen.readCreativeTabs(projectDir);
+        var items = Box3JSRegistryGen.readItems(projectDir);
+        var sounds = Box3JSRegistryGen.readSounds(projectDir);
+        generateSoundsFile(workDir, sounds);
+        bundleAssets(workDir);
 
         System.out.println("[3/4] Generating & compiling @Mod entry point ...");
         Path genSrcDir = workDir.resolve("gen-src");
-        generateModClass(genSrcDir);
+        generateModClass(genSrcDir, blocks, tabs, items, sounds);
         compileJava(genSrcDir, workDir);
 
         System.out.println("[4/4] Creating metadata + packaging ...");
@@ -143,12 +152,117 @@ public class Box3ScriptCompiler {
         System.out.println("  Bundled logo.png");
     }
 
+    // ── Step 2b: Bundle assets (models/textures/blockstates) into JAR ──
+
+    private void bundleAssets(Path workDir) throws IOException {
+        Path src = projectDir.resolve("assets");
+        if (!Files.isDirectory(src)) return;
+
+        Path dest = workDir.resolve("assets/" + modId);
+        copyDir(src, dest);
+        System.out.println("  Bundled assets/ → assets/" + modId);
+    }
+
+    private void generateSoundsFile(Path workDir,
+            java.util.List<Box3JSRegistryGen.SoundDef> sounds) throws IOException {
+        String soundsJson = Box3JSRegistryGen.generateSoundsJson(modId, sounds);
+        if (soundsJson == null) return;
+        Path assetsDir = workDir.resolve("assets/" + modId);
+        Files.createDirectories(assetsDir);
+        Files.writeString(assetsDir.resolve("sounds.json"), soundsJson);
+        System.out.println("  Generated assets/" + modId + "/sounds.json");
+    }
+
     // ── Step 3: Generate @Mod entry point ──
 
-    private void generateModClass(Path genSrcDir) throws IOException {
+    private void generateModClass(Path genSrcDir,
+            java.util.List<Box3JSRegistryGen.BlockDef> blocks,
+            java.util.List<Box3JSRegistryGen.CreativeTabDef> tabs,
+            java.util.List<Box3JSRegistryGen.ItemDef> items,
+            java.util.List<Box3JSRegistryGen.SoundDef> sounds) throws IOException {
         String pkg = "box3script." + modId;
         String className = capitalize(modId) + "Mod";
         String resourcePath = "box3script/" + modId + "/server.js";
+
+        boolean hasBlocks = !blocks.isEmpty();
+        boolean hasTabs = !tabs.isEmpty();
+        boolean hasItems = !items.isEmpty();
+        boolean hasSounds = !sounds.isEmpty();
+        boolean hasTools = items.stream().anyMatch(Box3JSRegistryGen.ItemDef::isTool);
+        boolean hasArmor = items.stream().anyMatch(Box3JSRegistryGen.ItemDef::isArmor);
+
+        // Generate registry Java code
+        String[] registryCode = Box3JSRegistryGen.generateJavaCode(modId, blocks, tabs, items, sounds);
+        String fieldDecls = registryCode[0];
+        String constructorRegs = registryCode[1];
+        String extraImports = Box3JSRegistryGen.generateImports(hasBlocks, hasTabs, hasItems, hasSounds, hasTools, hasArmor);
+
+        // Generate supplier map builder methods
+        StringBuilder mapMethods = new StringBuilder();
+        if (hasBlocks) {
+            mapMethods.append("""
+
+                    private static java.util.Map<String, java.util.function.Supplier<Block>> buildBlockMap() {
+                        java.util.Map<String, java.util.function.Supplier<Block>> map = new java.util.HashMap<>();
+                """);
+            for (var b : blocks) {
+                String field = b.id().toUpperCase();
+                mapMethods.append("        map.put(\"").append(b.id())
+                    .append("\", () -> ").append(field).append(".get());\n");
+            }
+            mapMethods.append("        return map;\n    }\n");
+
+            mapMethods.append("""
+
+                    private static java.util.Map<String, java.util.function.Supplier<BlockItem>> buildBlockItemMap() {
+                        java.util.Map<String, java.util.function.Supplier<BlockItem>> map = new java.util.HashMap<>();
+                """);
+            for (var b : blocks) {
+                String field = b.id().toUpperCase();
+                mapMethods.append("        map.put(\"").append(b.id())
+                    .append("\", () -> ").append(field).append("_ITEM.get());\n");
+            }
+            mapMethods.append("        return map;\n    }\n");
+        }
+
+        if (hasItems) {
+            mapMethods.append("""
+
+                    private static java.util.Map<String, java.util.function.Supplier<Item>> buildItemMap() {
+                        java.util.Map<String, java.util.function.Supplier<Item>> map = new java.util.HashMap<>();
+                """);
+            for (var it : items) {
+                String field = it.id().toUpperCase();
+                mapMethods.append("        map.put(\"").append(it.id())
+                    .append("\", () -> ").append(field).append(".get());\n");
+            }
+            mapMethods.append("        return map;\n    }\n");
+        }
+
+        if (hasSounds) {
+            mapMethods.append("""
+
+                    private static java.util.Map<String, java.util.function.Supplier<SoundEvent>> buildSoundMap() {
+                        java.util.Map<String, java.util.function.Supplier<SoundEvent>> map = new java.util.HashMap<>();
+                """);
+            for (var s : sounds) {
+                String field = s.id().toUpperCase();
+                mapMethods.append("        map.put(\"").append(s.id())
+                    .append("\", () -> ").append(field).append(".get());\n");
+            }
+            mapMethods.append("        return map;\n    }\n");
+        }
+
+        // Build super() arguments
+        StringBuilder superArgs = new StringBuilder();
+        superArgs.append(", ").append(hasBlocks ? "buildBlockMap()" : "null");
+        superArgs.append(", ").append(hasBlocks ? "buildBlockItemMap()" : "null");
+        superArgs.append(", ").append(hasItems ? "buildItemMap()" : "null");
+        superArgs.append(", ").append(hasSounds ? "buildSoundMap()" : "null");
+
+        var hardcodedImports = new StringBuilder();
+        if (hasItems) hardcodedImports.append("import net.minecraft.world.item.Item;\n");
+        if (hasSounds) hardcodedImports.append("import net.minecraft.sounds.SoundEvent;\n");
 
         String src = String.format("""
                 package %s;
@@ -157,14 +271,21 @@ public class Box3ScriptCompiler {
                 import net.neoforged.bus.api.IEventBus;
                 import net.neoforged.fml.ModContainer;
                 import net.neoforged.fml.common.Mod;
-
+                import net.minecraft.world.level.block.Block;
+                import net.minecraft.world.item.BlockItem;
+                %s
+                %s
                 @Mod("%s")
                 public class %s extends Box3StandaloneBootstrap {
+                    %s
+                    %s
                     public %s(IEventBus modEventBus, ModContainer modContainer) {
-                        super(modEventBus, modContainer, "%s", "%s");
+                        super(modEventBus, modContainer, "%s", "%s"%s);
+                        %s
                     }
                 }
-                """, pkg, modId, className, className, resourcePath, modId);
+                """, pkg, hardcodedImports, extraImports, modId, className, fieldDecls, mapMethods,
+                className, resourcePath, modId, superArgs.toString(), constructorRegs);
 
         Path out = genSrcDir.resolve(pkg.replace('.', '/')).resolve(className + ".java");
         Files.createDirectories(out.getParent());
@@ -302,12 +423,20 @@ public class Box3ScriptCompiler {
             if (Files.isDirectory(box3scriptDir)) {
                 addDirToJar(jos, workDir, box3scriptDir);
             }
+
+            // Assets (models, textures, blockstates)
+            Path assetsDir = workDir.resolve("assets");
+            if (Files.isDirectory(assetsDir)) {
+                addDirToJar(jos, workDir, assetsDir);
+            }
         }
     }
 
     private void addDirToJar(JarOutputStream jos, Path root, Path dir) throws IOException {
         try (var stream = Files.walk(dir)) {
-            stream.filter(Files::isRegularFile).forEach(file -> {
+            stream.filter(Files::isRegularFile)
+                .filter(f -> !f.getFileName().toString().equals(".DS_Store"))
+                .forEach(file -> {
                 try {
                     String entryName = root.relativize(file).toString().replace('\\', '/');
                     jos.putNextEntry(new JarEntry(entryName));
@@ -328,6 +457,27 @@ public class Box3ScriptCompiler {
         if (s.isEmpty())
             return s;
         return Character.toUpperCase(s.charAt(0)) + s.substring(1);
+    }
+
+    private static void copyDir(Path src, Path dest) throws IOException {
+        try (var stream = Files.walk(src)) {
+            stream.forEach(source -> {
+                try {
+                    Path target = dest.resolve(src.relativize(source));
+                    if (Files.isDirectory(source)) {
+                        Files.createDirectories(target);
+                    } else {
+                        Files.createDirectories(target.getParent());
+                        if (!source.getFileName().toString().equals(".DS_Store"))
+                            Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+                    }
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
+        } catch (UncheckedIOException e) {
+            throw e.getCause();
+        }
     }
 
     private static void deleteRecursive(Path path) throws IOException {

@@ -1,0 +1,13 @@
+{
+  "block.mymod.ruby_block": "Ruby Block",
+  "block.mymod.glass_block": "Glass Block",
+  "item.mymod.chocolate": "Chocolate Bar",
+  "item.mymod.trophy": "Golden Trophy",
+  "item.mymod.my_sword": "My Sword",
+  "item.mymod.my_pickaxe": "My Pickaxe",
+  "item.mymod.my_chestplate": "My Chestplate",
+  "item.mymod.my_helmet": "My Helmet",
+  "item.mymod.my_leggings": "My Leggings",
+  "item.mymod.my_boots": "My Boots",
+  "itemGroup.mymod.my_blocks": "My Blocks"
+}

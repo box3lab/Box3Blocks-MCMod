@@ -15,10 +15,21 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class Box3JSNetwork {
 
     private Box3JSNetwork() {}
+
+    /** Standalone JARs register their (projectName → clientScriptSource) here so the
+     *  main mod can send them — avoids the standalone mod sending a box3js-namespaced payload. */
+    private static final Map<String, String> STANDALONE_CLIENT_SCRIPTS = new ConcurrentHashMap<>();
+
+    public static void registerStandaloneClientScript(String projectName, String source) {
+        STANDALONE_CLIENT_SCRIPTS.put(projectName, source);
+        Box3JS.LOGGER.debug("Registered standalone client script: {}", projectName);
+    }
 
     // ── Payloads ──
 
@@ -99,6 +110,14 @@ public final class Box3JSNetwork {
         var server = player.getServer();
         if (server == null) return;
 
+        // Send standalone JAR client scripts (registered via registerStandaloneClientScript)
+        for (var entry : STANDALONE_CLIENT_SCRIPTS.entrySet()) {
+            PacketDistributor.sendToPlayer(player,
+                    new ClientScriptPayload(entry.getKey(), entry.getValue()));
+            Box3JS.LOGGER.debug("Sent standalone client script '{}' to {}", entry.getKey(), player.getName().getString());
+        }
+
+        // Send file-system project client scripts
         Path scriptDir = Box3ScriptConfig.get().getScriptDir(server);
         if (!Files.exists(scriptDir)) return;
 

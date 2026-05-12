@@ -27,7 +27,9 @@ This creates a TypeScript project:
 ```
 config/box3/script/mygame/
 ├── package.json          ← npm dependencies (esbuild, Babel, TypeScript)
-├── tsconfig.json
+├── tsconfig.base.json     ← Shared TS compiler options
+├── tsconfig.server.json   ← Server-side TS config
+├── tsconfig.client.json   ← Client-side TS config
 ├── build.mjs             ← build script (esbuild → Babel → Rhino)
 ├── eslint.config.mjs
 ├── types/
@@ -66,7 +68,7 @@ Edit `src/app.ts`, re-run `npm run build`, then `/box3script reload mygame` — 
 | **Visual effects**   | 13+ particles, fireworks, lightning, explosions, sounds                          |
 | **Client API**       | Keyboard input, screen UI, chat interception, sound/music control, client storage, SQLite, HTTP, bidirectional events |
 | **Game systems**     | Scoreboards, BossBar, teams, world border, cross-script messaging                |
-| **Custom items**     | JSON-configured items (food, rarity, glint), dynamic recipe management           |
+| **Custom registries** | JSON-configured blocks, items (food/tools/armor), sounds & creative tabs, compiled to standalone JAR |
 | **Data persistence** | JSON storage + SQLite database (leaderboards, economy, player data)              |
 | **Standalone JAR**   | `/box3script compile` packages scripts into a standalone JAR mod for distribution |
 
@@ -89,12 +91,13 @@ All `<project>` arguments support **Tab completion**. [Full command reference �
 
 | Global                           | Purpose                                                                                                         |
 | -------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `world`                          | World state, events, particles, fireworks, lightning, sounds, scoreboards, BossBar, teams, border, custom items |
+| `world`                          | World state, events, particles, fireworks, lightning, sounds, scoreboards, BossBar, teams, border |
 | `entity`                         | Entity properties, AI pathfinding, equipment, potion effects, tags, navigation                                  |
 | `player`                         | Inventory, flight, game mode, teleport, messaging, XP, sounds                                                   |
 | `voxels`                         | Block read/write, region fill, spawner control                                                                  |
 | `http`                           | HTTP requests (sync + async, GET/POST/JSON)                                                                     |
 | `remoteChannel`                  | Server ↔ client bidirectional event channel                                                                     |
+| `registries`                     | Custom blocks, items & sounds (compiled JAR mode), see [registries_en.md](docs/api/registries_en.md) |
 | `client` · `input` · `ui` · `chat` · `audio` | Client scripts: lifecycle, keyboard, screen text, chat, audio control                                          |
 | `storage`                        | JSON data persistence (server & client)                                                                         |
 | `db`                             | SQLite database (server & client)                                                                               |
@@ -113,7 +116,7 @@ From zero to full mini-games. Every example is TypeScript-compiled and ESLint-ve
 | #   | Tutorial                                                 | Time   | What you'll learn                                                 |
 | --- | -------------------------------------------------------- | ------ | ----------------------------------------------------------------- |
 | 1   | [Getting Started](docs/tutorial/01-basics.md)            | 10 min | Project setup, first script, chat commands, timers                |
-| 2   | [Players & Items](docs/tutorial/02-player-items.md)      | 15 min | Teleport, flight, items, enchantments, potions, custom items      |
+| 2   | [Players & Items](docs/tutorial/02-player-items.md)      | 15 min | Teleport, flight, items, enchantments, potions      |
 | 3   | [Events & Entities](docs/tutorial/03-events-entities.md) | 15 min | Event callbacks, entity spawning, AI, combat, patrols             |
 | 4   | [Advanced Systems](docs/tutorial/04-advanced-systems.md) | 15 min | Scoreboards, BossBar, teams, world border, cross-script messaging |
 | 5   | [Mini-Games](docs/tutorial/05-examples.md)               | 20 min | PvP arena, particles & fireworks, wave mobs, visual effects       |
@@ -134,6 +137,7 @@ docs/
 │   ├── database.md        Database API (SQLite)
 │   ├── http.md            HTTP request API
 │   ├── client.md           Client API (UI, input, chat, events)
+│   ├── registries.md        Custom blocks, items & sounds
 │   ├── math.md            Math API (Vector3, Color, Quaternion)
 │   └── commands.md        /box3script command reference
 ├── tutorial/              ← Tutorials
