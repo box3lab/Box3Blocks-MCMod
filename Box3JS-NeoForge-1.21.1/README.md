@@ -64,7 +64,7 @@ npm install && npm run build
 | **TypeScript** | 完整 `.d.ts` 类型声明，esbuild + Babel 编译管线，享受智能提示                    |
 | **20+ 种事件** | onTick、onPlayerJoin、onChat、onEntityDeath、onBlockActivate、onButtonPressed... |
 | **视觉效果**   | 13+ 粒子、烟花、闪电、爆炸、音效                                                 |
-| **客户端 API**  | 键盘输入、屏幕 UI、聊天拦截、客户端存储、SQLite、HTTP、双向事件通道               |
+| **客户端 API**  | 键盘输入、屏幕 UI、聊天拦截、音效/音乐控制、客户端存储、SQLite、HTTP、双向事件通道 |
 | **游戏系统**   | 计分板、BossBar、队伍、世界边界、跨脚本通信                                      |
 | **自定义物品** | JSON 配置注册自定义物品（食物、稀有度、附魔光效），动态管理配方                  |
 | **数据持久化** | JSON 存储 + SQLite 数据库（排行榜、经济、玩家数据）                              |
@@ -95,7 +95,7 @@ npm install && npm run build
 | `voxels`                         | 方块读写、区域填充、刷怪笼                                                          |
 | `http`                           | HTTP 网络请求（同步 + 异步，GET/POST/JSON）                                         |
 | `remoteChannel`                  | 服务端 ↔ 客户端双向事件通讯                                                         |
-| `client` · `input` · `ui` · `chat` | 客户端脚本：生命周期、键盘、屏幕文字、聊天消息                                    |
+| `client` · `input` · `ui` · `chat` · `audio` | 客户端脚本：生命周期、键盘、屏幕文字、聊天、音频控制                    |
 | `storage`                        | JSON 数据持久化（服务端 & 客户端）                                                  |
 | `db`                             | SQLite 数据库（服务端 & 客户端）                                                    |
 | `console`                        | 控制台日志输出（`log`/`warn`/`error`/`debug`/`assert`/`clear`）                     |

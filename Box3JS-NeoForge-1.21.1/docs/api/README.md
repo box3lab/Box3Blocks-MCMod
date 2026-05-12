@@ -105,7 +105,10 @@ console.log("脚本已加载");
 | 客户端每帧执行 | `client.onTick(() => { ... })` |
 | 检测按键按下 | `input.isKeyDown("space")` |
 | 监听按键事件 | `input.onKeyPress("f", () => { ... })` |
-| 客户端播放音效 | `client.playSound("pling", 1.0, 1.0)` |
+| 播放客户端音效 | `audio.playSound("pling", 1.0, 1.0)` |
+| 播放客户端音乐 | `audio.playMusic("minecraft:music.game", 0.5, 1.0)` |
+| 停止所有声音 | `audio.stopAll()` |
+| 获取/设置音量 | `audio.getVolume("music")` / `audio.setVolume("player", 0.8)` |
 | 快捷栏上方显示文字 | `ui.showOverlay("文字")` |
 | 显示屏幕大标题 | `ui.showTitle("标题", "副标题")` |
 | 发送聊天消息 | `chat.sendMessage("消息")` |
@@ -214,7 +217,8 @@ console.log("脚本已加载");
 | `storage` | ✅ Box3 | 数据持久化，见 [storage.md](storage.md) |
 | `db` | ✅ Box3 | SQLite 数据库，见 [database.md](database.md) |
 | `http` | 🆕 MC 扩展 | HTTP 请求，见 [http.md](http.md) |
-| `client` | 🆕 MC 扩展 | 客户端生命周期与音效，见 [client.md](client.md) |
+| `audio` | 🆕 MC 扩展 | 客户端音效、音乐、音量控制，见 [client.md](client.md) |
+| `client` | 🆕 MC 扩展 | 客户端生命周期，见 [client.md](client.md) |
 | `input` | 🆕 MC 扩展 | 客户端键盘输入，见 [client.md](client.md) |
 | `ui` | 🆕 MC 扩展 | 客户端屏幕 UI，见 [client.md](client.md) |
 | `chat` | 🆕 MC 扩展 | 客户端聊天收发，见 [client.md](client.md) |

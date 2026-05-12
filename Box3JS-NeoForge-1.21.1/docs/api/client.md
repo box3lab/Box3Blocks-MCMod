@@ -1,13 +1,14 @@
 # client — 客户端 API
 
-客户端脚本运行在玩家本地 Minecraft 客户端上，通过以下四个全局对象访问：
+客户端脚本运行在玩家本地 Minecraft 客户端上，通过以下五个全局对象访问：
 
 | 对象 | 类型 | 用途 |
 |------|------|------|
-| `client` | `GameClient` | 生命周期回调、音效、命令发送 |
+| `audio` | `GameAudio` | 音效、音乐播放与音量控制 |
+| `client` | `GameClient` | 生命周期回调 |
 | `input` | `GameInput` | 键盘输入检测 |
 | `ui` | `GameUI` | 屏幕文字显示（ActionBar、标题） |
-| `chat` | `GameChat` | 收发聊天消息 |
+| `chat` | `GameChat` | 收发聊天消息、发送命令 |
 | `storage` | `GameStorage` | 客户端本地持久化存储 |
 | `db` | `GameDatabase` | 客户端本地 SQLite 数据库 |
 | `http` | `GameHttpAPI` | HTTP 请求（同步/异步） |
@@ -16,7 +17,81 @@
 > **前置条件：** 客户端必须安装 Box3JS mod，服务端必须启用该项目的客户端脚本并通过网络自动下发。
 > 客户端脚本放在 `src/client/` 目录下，服务端脚本放在 `src/server/` 目录下。
 
-## client — 生命周期 & 服务端交互
+## audio — 音频播放
+
+### audio.playSound(path, volume, pitch)
+
+🆕 MC 扩展 | 播放音效（SoundSource.PLAYERS 类别）。
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `path` | string | (必需) | 声音 ID，如 `"minecraft:block.note_block.pling"` |
+| `volume` | number | `1.0` | 音量 (0–1) |
+| `pitch` | number | `1.0` | 音高 (0.5–2) |
+
+```js
+audio.playSound("minecraft:block.note_block.pling", 1.0, 1.0);
+audio.playSound("minecraft:entity.experience_orb.pickup", 0.5, 1.5);
+```
+
+### audio.playMusic(path, volume, pitch)
+
+🆕 MC 扩展 | 播放音乐（SoundSource.MUSIC 类别）。参数同 `playSound`。
+
+```js
+audio.playMusic("minecraft:music.creative", 0.5, 1.0);
+```
+
+### audio.stopAll()
+
+🆕 MC 扩展 | 停止所有正在播放的声音和音乐。
+
+```js
+audio.stopAll();
+```
+
+### audio.getVolume(category)
+
+🆕 MC 扩展 | 获取指定音频类别的音量。
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `category` | string | 类别名称，见下方列表 |
+
+```js
+var musicVol = audio.getVolume("music"); // 0.0–1.0
+```
+
+### audio.setVolume(category, value)
+
+🆕 MC 扩展 | 设置指定音频类别的音量。
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `category` | string | 类别名称 |
+| `value` | number | 音量值 (0–1) |
+
+```js
+audio.setVolume("music", 0.5);
+audio.setVolume("player", 0.8);
+```
+
+### 音频类别
+
+| 类别 | 说明 |
+|------|------|
+| `master` | 主音量 |
+| `music` | 音乐 |
+| `record` | 唱片/音符盒 |
+| `weather` | 天气（雨） |
+| `block` | 方块 |
+| `hostile` | 敌对生物 |
+| `neutral` | 中立生物 |
+| `player` | 玩家 |
+| `ambient` | 环境 |
+| `voice` | 语音 |
+
+## client — 生命周期
 
 ### client.onTick(callback)
 
@@ -29,30 +104,6 @@ client.onTick(() => {
 ```
 
 > **注意：** 服务端也有 `world.onTick()`，但参数为 `TickInfo` 对象。客户端 `client.onTick()` 无参数。
-
-### client.playSound(path, volume, pitch)
-
-🆕 MC 扩展 | 向当前客户端播放声音。
-
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `path` | string | (必需) | 声音 ID，如 `"minecraft:block.note_block.pling"` |
-| `volume` | number | `1.0` | 音量 (0–1) |
-| `pitch` | number | `1.0` | 音高 (0.5–2) |
-
-```js
-client.playSound("minecraft:block.note_block.pling", 1.0, 1.0);
-client.playSound("minecraft:entity.experience_orb.pickup", 0.5, 1.5);
-```
-
-### client.sendCommand(cmd)
-
-🆕 MC 扩展 | 向服务端发送命令（等同于在聊天框输入 `/` 前缀的命令）。
-
-```js
-client.sendCommand("spawn");
-client.sendCommand("home");
-```
 
 ## input — 键盘输入
 
@@ -76,7 +127,7 @@ if (input.isKeyDown("space")) {
 
 ```js
 var token = input.onKeyPress("f", () => {
-  client.sendCommand("fly");
+  chat.sendCommand("fly");
 });
 
 // 取消监听
@@ -129,7 +180,7 @@ ui.showTitle("§c游戏结束", "§7再接再厉");
 ui.showActionBar("§e按 F 键使用技能");
 ```
 
-## chat — 聊天消息
+## chat — 聊天消息与命令
 
 ### chat.sendMessage(text)
 
@@ -137,6 +188,15 @@ ui.showActionBar("§e按 F 键使用技能");
 
 ```js
 chat.sendMessage("大家好！");
+```
+
+### chat.sendCommand(cmd)
+
+🆕 MC 扩展 | 向服务端发送命令（等同于在聊天框输入 `/` 前缀的命令）。
+
+```js
+chat.sendCommand("spawn");
+chat.sendCommand("home");
 ```
 
 ### chat.onMessage(handler)
@@ -226,7 +286,7 @@ client.onTick(() => {
 
 // 按键触发命令
 input.onKeyPress("g", () => {
-  client.sendCommand("gamemode creative");
+  chat.sendCommand("gamemode creative");
 });
 
 // 显示欢迎标题
@@ -245,7 +305,7 @@ remoteChannel.sendServerEvent({ type: "clientLoaded" });
 
 remoteChannel.onClientEvent((event) => {
   if (event.args.type === "alert") {
-    client.playSound("minecraft:block.note_block.pling", 1.0, 1.0);
+    audio.playSound("minecraft:block.note_block.pling", 1.0, 1.0);
     ui.showOverlay("§c" + event.args.message);
   }
 });

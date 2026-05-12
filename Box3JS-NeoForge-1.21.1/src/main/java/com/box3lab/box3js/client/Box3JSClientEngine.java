@@ -195,8 +195,13 @@ public class Box3JSClientEngine {
                 }
             });
 
-            // client.playSound(path, volume, pitch)
-            ScriptableObject.putProperty(clientObj, "playSound", new BaseFunction() {
+            ScriptableObject.putProperty(scope, "client", clientObj);
+
+            // -- audio global (sound playback) ------------------------------
+            ScriptableObject audioObj = (ScriptableObject) cx.newObject(scope);
+
+            // audio.playSound(path, volume, pitch)
+            ScriptableObject.putProperty(audioObj, "playSound", new BaseFunction() {
                 @Override
                 public Object call(Context cx, Scriptable scope,
                                    Scriptable thisObj, Object[] args) {
@@ -216,22 +221,70 @@ public class Box3JSClientEngine {
                 }
             });
 
-            // client.sendCommand(cmd)
-            ScriptableObject.putProperty(clientObj, "sendCommand", new BaseFunction() {
+            // audio.playMusic(path, volume, pitch)
+            ScriptableObject.putProperty(audioObj, "playMusic", new BaseFunction() {
                 @Override
                 public Object call(Context cx, Scriptable scope,
                                    Scriptable thisObj, Object[] args) {
                     if (args.length < 1) return Undefined.instance;
-                    String cmd = args[0].toString();
+                    String path = args[0].toString();
+                    float volume = args.length > 1 && args[1] instanceof Number n ? n.floatValue() : 1f;
+                    float pitch = args.length > 2 && args[2] instanceof Number n ? n.floatValue() : 1f;
                     Minecraft.getInstance().execute(() -> {
-                        var conn = Minecraft.getInstance().getConnection();
-                        if (conn != null) conn.sendCommand(cmd);
+                        var player = Minecraft.getInstance().player;
+                        if (player == null) return;
+                        var rl = net.minecraft.resources.ResourceLocation.tryParse(path);
+                        if (rl == null) return;
+                        var holder = BuiltInRegistries.SOUND_EVENT.getHolder(rl);
+                        holder.ifPresent(h -> player.playNotifySound(h.value(), SoundSource.MUSIC, volume, pitch));
                     });
                     return Undefined.instance;
                 }
             });
 
-            ScriptableObject.putProperty(scope, "client", clientObj);
+            // audio.stopAll()
+            ScriptableObject.putProperty(audioObj, "stopAll", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    Minecraft.getInstance().execute(() -> {
+                        Minecraft.getInstance().getSoundManager().stop();
+                    });
+                    return Undefined.instance;
+                }
+            });
+
+            // audio.getVolume(category)
+            ScriptableObject.putProperty(audioObj, "getVolume", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    if (args.length < 1) return 0f;
+                    SoundSource src = mapSoundCategory(args[0].toString());
+                    if (src == null) return 0f;
+                    return Minecraft.getInstance().options.getSoundSourceVolume(src);
+                }
+            });
+
+            // audio.setVolume(category, value)
+            ScriptableObject.putProperty(audioObj, "setVolume", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    if (args.length < 2) return Undefined.instance;
+                    SoundSource src = mapSoundCategory(args[0].toString());
+                    if (src == null) return Undefined.instance;
+                    float value = args[1] instanceof Number n ? n.floatValue() : 1f;
+                    Minecraft.getInstance().execute(() -> {
+                        var options = Minecraft.getInstance().options;
+                        options.getSoundSourceOptionInstance(src).set((double) value);
+                        options.save();
+                    });
+                    return Undefined.instance;
+                }
+            });
+
+            ScriptableObject.putProperty(scope, "audio", audioObj);
 
             // -- input global (keyboard) -----------------------------------
             ScriptableObject inputObj = (ScriptableObject) cx.newObject(scope);
@@ -353,6 +406,21 @@ public class Box3JSClientEngine {
                     Minecraft.getInstance().execute(() -> {
                         var conn = Minecraft.getInstance().getConnection();
                         if (conn != null) conn.sendChat(text);
+                    });
+                    return Undefined.instance;
+                }
+            });
+
+            // chat.sendCommand(cmd)
+            ScriptableObject.putProperty(chatObj, "sendCommand", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    if (args.length < 1) return Undefined.instance;
+                    String cmd = args[0].toString();
+                    Minecraft.getInstance().execute(() -> {
+                        var conn = Minecraft.getInstance().getConnection();
+                        if (conn != null) conn.sendCommand(cmd);
                     });
                     return Undefined.instance;
                 }
@@ -752,6 +820,22 @@ public class Box3JSClientEngine {
                 Context.exit();
             }
         });
+    }
+
+    private static SoundSource mapSoundCategory(String name) {
+        return switch (name.toLowerCase()) {
+            case "master"  -> SoundSource.MASTER;
+            case "music"   -> SoundSource.MUSIC;
+            case "record"  -> SoundSource.RECORDS;
+            case "weather" -> SoundSource.WEATHER;
+            case "block"   -> SoundSource.BLOCKS;
+            case "hostile" -> SoundSource.HOSTILE;
+            case "neutral" -> SoundSource.NEUTRAL;
+            case "player"  -> SoundSource.PLAYERS;
+            case "ambient" -> SoundSource.AMBIENT;
+            case "voice"   -> SoundSource.VOICE;
+            default -> null;
+        };
     }
 
     private static String stringify(Context cx, Scriptable scope, Object value) {

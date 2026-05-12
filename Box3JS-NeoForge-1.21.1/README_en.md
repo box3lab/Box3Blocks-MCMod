@@ -64,7 +64,7 @@ Edit `src/app.ts`, re-run `npm run build`, then `/box3script reload mygame` — 
 | **TypeScript**       | Full `.d.ts` type declarations, esbuild + Babel pipeline, IDE IntelliSense       |
 | **20+ events**     | onTick, onPlayerJoin, onChat, onEntityDeath, onBlockActivate, onButtonPressed... |
 | **Visual effects**   | 13+ particles, fireworks, lightning, explosions, sounds                          |
-| **Client API**       | Keyboard input, screen UI, chat interception, client storage, SQLite, HTTP, bidirectional events |
+| **Client API**       | Keyboard input, screen UI, chat interception, sound/music control, client storage, SQLite, HTTP, bidirectional events |
 | **Game systems**     | Scoreboards, BossBar, teams, world border, cross-script messaging                |
 | **Custom items**     | JSON-configured items (food, rarity, glint), dynamic recipe management           |
 | **Data persistence** | JSON storage + SQLite database (leaderboards, economy, player data)              |
@@ -95,7 +95,7 @@ All `<project>` arguments support **Tab completion**. [Full command reference �
 | `voxels`                         | Block read/write, region fill, spawner control                                                                  |
 | `http`                           | HTTP requests (sync + async, GET/POST/JSON)                                                                     |
 | `remoteChannel`                  | Server ↔ client bidirectional event channel                                                                     |
-| `client` · `input` · `ui` · `chat` | Client scripts: lifecycle, keyboard, screen text, chat messages                                               |
+| `client` · `input` · `ui` · `chat` · `audio` | Client scripts: lifecycle, keyboard, screen text, chat, audio control                                          |
 | `storage`                        | JSON data persistence (server & client)                                                                         |
 | `db`                             | SQLite database (server & client)                                                                               |
 | `console`                        | Console logging (`log`/`warn`/`error`/`debug`/`assert`/`clear`)                                                 |

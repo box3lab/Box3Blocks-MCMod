@@ -105,7 +105,10 @@ Find APIs by what you want to do, not by which global object they live on.
 | Run every client tick | `client.onTick(() => { ... })` |
 | Check key held down | `input.isKeyDown("space")` |
 | Listen for key press | `input.onKeyPress("f", () => { ... })` |
-| Play sound on client | `client.playSound("pling", 1.0, 1.0)` |
+| Play sound effect | `audio.playSound("pling", 1.0, 1.0)` |
+| Play music | `audio.playMusic("minecraft:music.game", 0.5, 1.0)` |
+| Stop all sounds | `audio.stopAll()` |
+| Get/set volume | `audio.getVolume("music")` / `audio.setVolume("player", 0.8)` |
 | Show action bar text | `ui.showOverlay("text")` |
 | Show screen title | `ui.showTitle("Title", "Subtitle")` |
 | Send chat message | `chat.sendMessage("message")` |
@@ -214,7 +217,8 @@ Find APIs by what you want to do, not by which global object they live on.
 | `storage` | ✅ Box3 | Data persistence, see [storage_en.md](storage_en.md) |
 | `db` | ✅ Box3 | SQLite database, see [database_en.md](database_en.md) |
 | `http` | 🆕 MC Extension | HTTP requests, see [http_en.md](http_en.md) |
-| `client` | 🆕 MC Extension | Client lifecycle & sound, see [client_en.md](client_en.md) |
+| `audio` | 🆕 MC Extension | Client sound, music, volume control, see [client_en.md](client_en.md) |
+| `client` | 🆕 MC Extension | Client lifecycle, see [client_en.md](client_en.md) |
 | `input` | 🆕 MC Extension | Client keyboard input, see [client_en.md](client_en.md) |
 | `ui` | 🆕 MC Extension | Client screen UI, see [client_en.md](client_en.md) |
 | `chat` | 🆕 MC Extension | Client chat send/receive, see [client_en.md](client_en.md) |
