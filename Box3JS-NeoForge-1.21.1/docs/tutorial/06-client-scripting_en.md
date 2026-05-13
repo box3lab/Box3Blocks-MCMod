@@ -361,16 +361,7 @@ remoteChannel.onServerEvent((event) => {
 
 ### Detecting Client Compatibility
 
-```js
-// Server-side: check if a player has Box3JS client mod installed
-if (entity.player.hasBox3JSClientMod()) {
-  // Can send client events
-  remoteChannel.sendClientEvent(entity, { type: "custom_ui", ... });
-} else {
-  // Fallback to chat messages
-  entity.player.directMessage("Install Box3JS client for the full experience");
-}
-```
+No manual detection is needed. `remoteChannel.sendClientEvent()` uses optional payloads — players without the Box3JS client mod will silently ignore them without errors or disconnects. You can safely send events to all players.
 
 ### Data Format
 

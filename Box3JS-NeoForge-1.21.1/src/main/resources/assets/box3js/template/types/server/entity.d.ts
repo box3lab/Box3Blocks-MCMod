@@ -323,4 +323,4 @@ interface GameEntity {
  * @zh 玩家实体 — `GameEntity` 的子类型，保证 `player` 属性非 null。
  * @en A player entity — subtype of `GameEntity` with a guaranteed non‑null `player`.
  */
-type GamePlayerEntity = GameEntity & { player: GamePlayer; hasBox3JSClient(): boolean };
+type GamePlayerEntity = GameEntity & { player: GamePlayer };

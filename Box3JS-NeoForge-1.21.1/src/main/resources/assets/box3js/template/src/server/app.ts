@@ -6,12 +6,10 @@ world.onPlayerJoin((entity: GamePlayerEntity) => {
   p.directMessage("§6Welcome to §ePROJECT_NAME§6!");
   p.directMessage("§7Type §e!hello §7to say hi");
 
-  if (entity.hasBox3JSClient()) {
-    remoteChannel.sendClientEvent(entity, {
-      type: "welcome",
-      message: `Welcome, ${p.name}`,
-    });
-  }
+  remoteChannel.sendClientEvent(entity, {
+    type: "welcome",
+    message: `Welcome, ${p.name}`,
+  });
 });
 
 world.onChat((entity: GamePlayerEntity, message: string, _tick: number) => {

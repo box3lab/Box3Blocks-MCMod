@@ -1,14 +1,10 @@
 package com.box3lab.box3js.script;
 
-import com.box3lab.box3js.Box3JS;
-import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.flag.FeatureFlags;
-import net.neoforged.neoforge.network.IContainerFactory;
 
 public class Box3JSScriptContainerMenu extends AbstractContainerMenu {
 
@@ -104,26 +100,6 @@ public class Box3JSScriptContainerMenu extends AbstractContainerMenu {
         }
 
         return copy;
-    }
-
-    // ---- Factory for MenuType registration ----
-
-    public static class Factory implements MenuType.MenuSupplier<Box3JSScriptContainerMenu>,
-                                          IContainerFactory<Box3JSScriptContainerMenu> {
-        @Override
-        public Box3JSScriptContainerMenu create(int containerId, Inventory playerInventory) {
-            // Default 3 rows — used as fallback if IContainerFactory path fails
-            return new Box3JSScriptContainerMenu(
-                Box3JS.SCRIPT_CONTAINER_MENU.get(), containerId, playerInventory, 3, null);
-        }
-
-        @Override
-        public Box3JSScriptContainerMenu create(int containerId, Inventory playerInventory,
-                                                 RegistryFriendlyByteBuf extraData) {
-            int rows = extraData.readVarInt();
-            return new Box3JSScriptContainerMenu(
-                Box3JS.SCRIPT_CONTAINER_MENU.get(), containerId, playerInventory, rows, null);
-        }
     }
 
     // ---- Player inventory helper ----

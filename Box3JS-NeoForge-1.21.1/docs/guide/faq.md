@@ -143,15 +143,7 @@ db.sql("SELECT * FROM t WHERE name = '" + userInput + "'");
 
 ### Q: 如何检测玩家是否安装了 Box3JS 客户端？
 
-```js
-// 服务端检测
-if (entity.player.hasBox3JSClientMod()) {
-  // 可以发送客户端事件
-} else {
-  // 降级到聊天消息
-  entity.player.directMessage("安装 Box3JS 客户端获得完整体验");
-}
-```
+无需手动检测。`remoteChannel.sendClientEvent()` 使用可选数据包（optional payload），未安装 Box3JS 客户端的玩家会自动忽略这些数据包，不会产生任何错误或断线。可以直接发送，安全无副作用。
 
 ### Q: 客户端和服务端可以同时使用 `remoteChannel` 吗？
 

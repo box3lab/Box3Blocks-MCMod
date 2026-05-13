@@ -1,11 +1,11 @@
 package com.box3lab.box3js.script;
 
-import com.box3lab.box3js.Box3JS;
 import com.box3lab.box3js.Box3JSNetwork;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.inventory.MenuType;
 import net.neoforged.neoforge.network.PacketDistributor;
 import java.util.Map;
 import java.util.UUID;
@@ -18,6 +18,17 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class Box3JSGuiServerHandler {
 
     private Box3JSGuiServerHandler() {}
+
+    /** Vanilla generic chest menu types mapped by row count (1-6). */
+    private static final MenuType<?>[] CHEST_TYPES = {
+        MenuType.GENERIC_9x1, MenuType.GENERIC_9x2, MenuType.GENERIC_9x3,
+        MenuType.GENERIC_9x4, MenuType.GENERIC_9x5, MenuType.GENERIC_9x6
+    };
+
+    private static MenuType<?> chestType(int rows) {
+        int idx = Math.clamp(rows, 1, 6) - 1;
+        return CHEST_TYPES[idx];
+    }
 
     private static final Map<UUID, ActiveGui> activeGuis = new ConcurrentHashMap<>();
 
@@ -43,7 +54,7 @@ public final class Box3JSGuiServerHandler {
 
         MenuProvider provider = new SimpleMenuProvider((containerId, inv, p) -> {
             Box3JSScriptContainerMenu menu = new Box3JSScriptContainerMenu(
-                Box3JS.SCRIPT_CONTAINER_MENU.get(), containerId, inv, rows, controller);
+                chestType(rows), containerId, inv, rows, controller);
             controller.setMenu(menu);
 
             // Populate initial slots from JSON string like {"0":"minecraft:diamond","1":"minecraft:stone"}

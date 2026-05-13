@@ -157,14 +157,10 @@ globalConfig.set("season", "spring");
 
 ## 跨端通信
 
-服务端使用 `remoteChannel` 与客户端脚本通信。发送前建议检查玩家是否安装了 Box3JS 客户端：
+服务端使用 `remoteChannel` 与客户端脚本通信。数据包为可选的（optional），未安装 Box3JS 的客户端会自动忽略，无需手动检测：
 
 ```ts
 world.onPlayerJoin((entity) => {
-  if (!entity.hasBox3JSClient()) {
-    return;
-  }
-
   remoteChannel.sendClientEvent(entity, {
     type: "welcome",
     text: "欢迎来到服务器",

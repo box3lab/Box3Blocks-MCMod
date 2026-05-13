@@ -143,15 +143,7 @@ db.sql("SELECT * FROM t WHERE name = '" + userInput + "'");
 
 ### Q: How to detect if a player has Box3JS client mod installed?
 
-```js
-// Server-side check
-if (entity.player.hasBox3JSClientMod()) {
-  // Can send client events
-} else {
-  // Fallback to chat messages
-  entity.player.directMessage("Install Box3JS client for full experience");
-}
-```
+No manual detection is needed. `remoteChannel.sendClientEvent()` uses optional payloads — players without the Box3JS client mod will silently ignore these packets without errors or disconnects. You can safely send events to all players.
 
 ### Q: Can client and server use `remoteChannel` at the same time?
 

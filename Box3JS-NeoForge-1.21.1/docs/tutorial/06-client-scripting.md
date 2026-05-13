@@ -361,16 +361,7 @@ remoteChannel.onServerEvent((event) => {
 
 ### 检测客户端兼容性
 
-```js
-// 服务端检测玩家是否安装了 Box3JS 客户端
-if (entity.player.hasBox3JSClientMod()) {
-  // 可以发送客户端事件
-  remoteChannel.sendClientEvent(entity, { type: "custom_ui", ... });
-} else {
-  // 降级到聊天消息
-  entity.player.directMessage("请安装 Box3JS 客户端以获得完整体验");
-}
-```
+无需手动检测。`remoteChannel.sendClientEvent()` 使用可选数据包，未安装 Box3JS 客户端的玩家会自动忽略，不会报错或断线。可以放心向所有玩家发送。
 
 ### 通讯数据格式
 

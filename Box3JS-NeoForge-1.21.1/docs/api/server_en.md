@@ -157,14 +157,10 @@ globalConfig.set("season", "spring");
 
 ## Cross-Side Events
 
-Use `remoteChannel` to communicate with client scripts. Before sending to a player, check whether their client supports Box3JS:
+Use `remoteChannel` to communicate with client scripts. Packets are optional — vanilla clients silently ignore them, no manual check needed:
 
 ```ts
 world.onPlayerJoin((entity) => {
-  if (!entity.hasBox3JSClient()) {
-    return;
-  }
-
   remoteChannel.sendClientEvent(entity, {
     type: "welcome",
     text: "Welcome to the server",

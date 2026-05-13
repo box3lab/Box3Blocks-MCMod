@@ -95,9 +95,7 @@ export default [
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        project: true,
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
+        project: ['./tsconfig.server.json', './tsconfig.client.json'],
         tsconfigRootDir: import.meta.dirname,
       },
     },
