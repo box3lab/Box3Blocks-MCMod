@@ -2,7 +2,7 @@
 
 本文档详细对比官方 Box3 平台 API 与 Box3JS 模组（NeoForge 1.21.1）的实现差异。仅涉及**服务端 API**，因为客户端 API（ClientUI、ClientAudio、ClientMedia 等）在 Box3JS 中完全不可用——Minecraft 模组运行在服务端，没有 Box3 平台的客户端渲染环境。
 
-> **图例**: ✅ 已实现 | ⚠️ 部分实现 | ❌ 未实现 | ⬆ MC 独有扩展
+> **图例**: ✅ 已实现 | ⚠️ 部分实现 | ❌ 未实现 | ⬆ 独有扩展
 
 ---
 
@@ -27,9 +27,9 @@
 
 | Box3 API | Box3JS 实现 | 状态 | 差异说明 |
 |----------|-------------|------|---------|
-| `world.projectName` (只读属性) | `world.projectName` (属性) | ✅ | 一致。返回服务端 MOTD 字符串 |
+| `world.projectName()` (只读方法) | `world.projectName` (属性) | ✅ | 返回当前脚本项目名；服务器 MOTD 使用 `world.serverId` |
 | `world.serverId` (属性) | `world.serverId` (读写属性) | ✅ | 一致。映射到服务端 MOTD（get/set） |
-| `world.currentTick` (只读属性) | `world.currentTick` (属性) | ✅ | 一致。返回服务器总 tick 数 |
+| `world.currentTick()` (只读方法) | `world.currentTick` (属性) | ✅ | 返回服务器总 tick 数 |
 | `world.url` (只读属性) | — | ❌ | 未实现。MC 无地图 URL 概念 |
 
 ### 1.2 天气
@@ -217,7 +217,7 @@ Zone 可以设置局部天气/光照/力场参数，这在 MC 服务端无法实
 | `world.clearTimeout(id)` | `world.clearTimeout(id)` | ✅ | 一致 |
 | `world.clearInterval(id)` | `world.clearInterval(id)` | ✅ | 一致 |
 
-**注意**: Box3 的 setTimeout/setInterval 在官方文档中标注为 ⬆ MC 扩展，但 Box3JS 在 `world` 全局对象上直接提供，用法一致。
+**注意**: Box3 的 setTimeout/setInterval 在官方文档中标注为 ，但 Box3JS 在 `world` 全局对象上直接提供，用法一致。
 
 ### 1.15 视觉效果
 

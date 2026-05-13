@@ -32,6 +32,7 @@ class Box3ScriptWatcher {
     private final Box3ScriptConfig config;
     private WatchService watchService;
     private ScheduledExecutorService scheduler;
+    private Thread pollThread;
     private final Map<String, ScheduledFuture<?>> pending = new ConcurrentHashMap<>();
     private volatile boolean running;
 
@@ -61,15 +62,34 @@ class Box3ScriptWatcher {
                 return t;
             });
             running = true;
-            new Thread(this::pollLoop, "Box3Script-Watcher-Poll").start();
+            pollThread = new Thread(this::pollLoop, "Box3Script-Watcher-Poll");
+            pollThread.setDaemon(true);
+            pollThread.start();
             Box3JS.LOGGER.info("File watcher started (dist/ only) on {}", scriptDir);
         } catch (IOException e) {
+            running = false;
+            closeWatchService();
             Box3JS.LOGGER.error("Failed to start watcher", e);
         }
     }
 
     void stop() {
         running = false;
+        closeWatchService();
+        pending.values().forEach(future -> future.cancel(false));
+        pending.clear();
+        if (scheduler != null) {
+            scheduler.shutdownNow();
+            scheduler = null;
+        }
+        if (pollThread != null) {
+            pollThread.interrupt();
+            pollThread = null;
+        }
+        Box3JS.LOGGER.info("File watcher stopped");
+    }
+
+    private void closeWatchService() {
         if (watchService != null) {
             try {
                 watchService.close();
@@ -77,12 +97,6 @@ class Box3ScriptWatcher {
             }
             watchService = null;
         }
-        if (scheduler != null) {
-            scheduler.shutdownNow();
-            scheduler = null;
-        }
-        pending.clear();
-        Box3JS.LOGGER.info("File watcher stopped");
     }
 
     /** Register only dist/ directories under each project. */
@@ -149,7 +163,9 @@ class Box3ScriptWatcher {
                 distDir.register(watchService, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_DELETE);
                 Box3JS.LOGGER.info("Re-registered watch: {}", distDir);
             }
-        } catch (IOException | InterruptedException ignored) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (IOException ignored) {
         }
     }
 
@@ -157,10 +173,13 @@ class Box3ScriptWatcher {
         if (!config.isEnabled(project))
             return;
         synchronized (pending) {
+            ScheduledExecutorService activeScheduler = scheduler;
+            if (!running || activeScheduler == null || activeScheduler.isShutdown())
+                return;
             ScheduledFuture<?> existing = pending.remove(project);
             if (existing != null)
                 existing.cancel(false);
-            pending.put(project, scheduler.schedule(() -> {
+            pending.put(project, activeScheduler.schedule(() -> {
                 pending.remove(project);
                 reloadProject(project);
             }, DEBOUNCE_MS, TimeUnit.MILLISECONDS));

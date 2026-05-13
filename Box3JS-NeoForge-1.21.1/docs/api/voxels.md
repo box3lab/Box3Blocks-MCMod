@@ -6,21 +6,21 @@
 
 ### voxels.shape
 
-✅ Box3 API | 只读 `GameVector3`。世界尺寸（仅在部分 Box3 环境中有效）。
+只读 `GameVector3`。世界尺寸（仅在部分 Box3 环境中有效）。
 
 ### voxels.VoxelTypes
 
-✅ Box3 API | 只读字符串数组。所有已注册方块名称列表。
+只读字符串数组。所有已注册方块名称列表。
 
 ## 名称 ↔ ID
 
 ### voxels.id(name)
 
-✅ Box3 API | 方块名称 → 内部 ID。`name` 为带命名空间的字符串（如 `"minecraft:stone"`）。
+方块名称 → 内部 ID。`name` 为带命名空间的字符串（如 `"minecraft:stone"`）。
 
 ### voxels.name(id)
 
-✅ Box3 API | 内部 ID → 方块名称。
+内部 ID → 方块名称。
 
 ```js
 var stoneId = voxels.id("minecraft:stone"); // 获取 ID
@@ -31,7 +31,7 @@ var name = voxels.name(stoneId); // "minecraft:stone"
 
 ### voxels.setVoxel(x, y, z, voxel)
 
-✅ Box3 API | 在指定坐标放置方块。`voxel` 参数接受：
+在指定坐标放置方块。`voxel` 参数接受：
 
 - 字符串：命名空间 ID，如 `"minecraft:glass"`
 - 数字：内部方块 ID（含 rotation 编码）
@@ -44,7 +44,7 @@ var name = voxels.name(stoneId); // "minecraft:stone"
 
 ### voxels.setVoxel(x, y, z, voxel, rotation)
 
-✅ Box3 API | 放置方块并指定旋转方向。`rotation` 为 0–3，控制朝向（类似 `BlockState` 的旋转）。
+放置方块并指定旋转方向。`rotation` 为 0–3，控制朝向（类似 `BlockState` 的旋转）。
 
 ### voxels.setVoxel(pos, voxel, rotation)
 
@@ -62,7 +62,7 @@ voxels.setVoxel(new GameVector3(0, 100, 0), "minecraft:oak_stairs", 2);
 
 ### voxels.setVoxelId(x, y, z, voxelId)
 
-✅ Box3 API | 放置方块，`voxelId` 为已编码 rotation 的内部 ID。
+放置方块，`voxelId` 为已编码 rotation 的内部 ID。
 
 ### voxels.setVoxelId(pos, voxelId)
 
@@ -97,7 +97,7 @@ voxels.fillVoxel(
 
 ### voxels.getVoxel(x, y, z)
 
-✅ Box3 API | 返回方块的基础 ID（不含 rotation 信息）。
+返回方块的基础 ID（不含 rotation 信息）。
 
 ### voxels.getVoxel(pos)
 
@@ -105,7 +105,7 @@ voxels.fillVoxel(
 
 ### voxels.getVoxelId(x, y, z)
 
-✅ Box3 API | 返回完整 ID（含 rotation 编码位）。
+返回完整 ID（含 rotation 编码位）。
 
 ### voxels.getVoxelId(pos)
 
@@ -113,7 +113,7 @@ voxels.fillVoxel(
 
 ### voxels.getVoxelName(x, y, z)
 
-✅ Box3 API | 返回方块的命名空间 ID 字符串。
+返回方块的命名空间 ID 字符串。
 
 ### voxels.getVoxelName(pos)
 
@@ -121,7 +121,7 @@ voxels.fillVoxel(
 
 ### voxels.getVoxelRotation(x, y, z)
 
-✅ Box3 API | 返回方块的 rotation 值（0–3）。
+返回方块的 rotation 值（0–3）。
 
 ### voxels.getVoxelRotation(pos)
 

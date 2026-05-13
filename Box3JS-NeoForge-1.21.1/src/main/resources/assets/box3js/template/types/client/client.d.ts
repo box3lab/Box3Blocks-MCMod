@@ -3,6 +3,7 @@
 /// <reference path="input.d.ts" />
 /// <reference path="ui.d.ts" />
 /// <reference path="chat.d.ts" />
+/// <reference path="gui.d.ts" />
 
 // ── §1 @zh RemoteChannel 客户端方法（接口合并） @en RemoteChannel client‑side methods (interface merging) ──
 
@@ -36,6 +37,60 @@ interface RemoteChannel {
 interface GameClient {
   /** @zh 注册客户端每 tick 回调（每秒 20 次）。 @en Registers a callback invoked every client tick (20/sec). */
   onTick(callback: () => void): void;
+
+  /**
+   * @zh 获取当前帧率 (FPS)。
+   * @en Gets the current frames per second (FPS).
+   * @returns @zh FPS 数值 @en FPS value
+   */
+  getFPS(): number;
+
+  /**
+   * @zh 获取本地玩家信息。
+   * @en Gets local player information.
+   * @returns @zh `{ name, uuid, health, maxHealth, food, saturation, xp, dimension, position }` 或 null @en `{ name, uuid, health, maxHealth, food, saturation, xp, dimension, position }` or null
+   */
+  getPlayer(): {
+    name: string;
+    uuid: string;
+    health: number;
+    maxHealth: number;
+    food: number;
+    saturation: number;
+    xp: number;
+    dimension: string;
+    position: { x: number; y: number; z: number };
+  } | null;
+
+  /**
+   * @zh 获取玩家准星正在看向的目标。
+   * @en Gets what the player's crosshair is currently pointing at.
+   * @returns @zh `{ type: "block"|"entity", position, entity?, blockPos?, direction? }` 或 null @en `{ type: "block"|"entity", position, entity?, blockPos?, direction? }` or null
+   */
+  getLookingAt(): {
+    type: string;
+    position: { x: number; y: number; z: number };
+    entity?: {
+      name: string;
+      uuid: string;
+      type: string;
+    };
+    blockPos?: { x: number; y: number; z: number };
+    direction?: string;
+  } | null;
+
+  /**
+   * @zh 获取当前连接的服务器信息。
+   * @en Gets current server connection information.
+   * @returns @zh `{ ip, name, isLocal, playerCount?, maxPlayers? }` — 单人游戏返回 localhost @en `{ ip, name, isLocal, playerCount?, maxPlayers? }` — returns localhost for singleplayer
+   */
+  getServerInfo(): {
+    ip: string;
+    name: string;
+    isLocal: boolean;
+    playerCount: number;
+    maxPlayers: number;
+  };
 }
 
 // ── §7 @zh 全局声明（客户端） @en Global Declarations (client) ──
@@ -45,5 +100,6 @@ declare const client: GameClient;
 declare const input: GameInput;
 declare const ui: GameUI;
 declare const chat: GameChat;
+declare const gui: GameGUI;
 
 // storage, console, remoteChannel, db, http — declared in shared.d.ts

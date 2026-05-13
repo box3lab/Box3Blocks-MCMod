@@ -1,16 +1,20 @@
 # storage — 数据存储 API
 
-`storage` 提供 JSON 文件持久化存储，带内存缓存加速读写。数据保存在 `config/box3/storage/<项目名>/` 目录下，每个项目自动拥有独立命名空间。
+`storage` 提供 JSON 文件持久化存储，带内存缓存加速读写。
+
+> **运行环境：** 服务端和客户端都可用。服务端数据保存在 `config/box3/storage/<项目名>/`；客户端数据保存在本地游戏目录的 `box3/client-storage/<项目名>/`。每个项目自动拥有独立命名空间。
 
 ## 获取存储实例
 
 ### storage.getDataStorage(name)
 
-✅ Box3 API | 获取或创建一个命名存储。同名存储返回同一实例。
+获取或创建一个命名存储。同名存储返回同一实例。
 
 ### storage.getGroupStorage(name)
 
-✅ Box3 API | 获取**跨项目共享**存储。所有项目通过同一 `name` 访问同一份数据（底层使用 `__shared__/` 命名空间）。适合做全服排行榜、全局配置等。
+获取**跨项目共享**存储。所有项目通过同一 `name` 访问同一份数据（底层使用 `__shared__/` 命名空间）。适合做全服排行榜、全局配置等。
+
+> 仅服务端可用。客户端本地存储只提供 `getDataStorage(name)`。
 
 ```js
 var store = storage.getDataStorage("leaderboard");
@@ -21,11 +25,11 @@ var config = storage.getDataStorage("settings");
 
 ### store.set(key, value)
 
-✅ Box3 API | 存储键值对。`value` 可以是字符串、数字、对象（自动 JSON 序列化）。
+存储键值对。`value` 可以是字符串、数字、对象（自动 JSON 序列化）。
 
 ### store.get(key)
 
-✅ Box3 API | 获取值。返回存储时的原始类型。
+获取值。返回存储时的原始类型。
 
 ```js
 store.set("highScore", 100);
@@ -41,7 +45,7 @@ var cfg = store.get("config"); // {difficulty: "hard", ...} (object)
 
 ### store.keys()
 
-✅ Box3 API | 返回所有 key 的数组。
+返回所有 key 的数组。
 
 ```js
 var keys = store.keys();
@@ -54,7 +58,7 @@ for (var i = 0; i < keys.length; i++) {
 
 ### store.update(key, handler)
 
-✅ Box3 API | 回调式更新值。`handler` 接收当前值，返回新值。类似于 `store.set(key, handler(store.get(key)))`，但保证原子性。
+回调式更新值。`handler` 接收当前值，返回新值。类似于 `store.set(key, handler(store.get(key)))`，但保证原子性。
 
 ```js
 store.set("counter", 0);
@@ -65,11 +69,11 @@ store.update("counter", function (current) {
 
 ### store.remove(key)
 
-✅ Box3 API | 删除指定 key，并返回被删除的旧值（不存在时返回 `null`）。
+删除指定 key，并返回被删除的旧值（不存在时返回 `null`）。
 
 ### store.destroy()
 
-✅ Box3 API | 删除整个存储文件（同时清除内存缓存）。
+删除整个存储文件（同时清除内存缓存）。
 
 ```js
 store.remove("tempKey");
@@ -80,7 +84,7 @@ store.destroy(); // 删除该存储的所有数据
 
 ### store.increment(key, delta)
 
-✅ Box3 API | 递增数值。`delta` 默认为 1，返回递增后的新值。
+递增数值。`delta` 默认为 1，返回递增后的新值。
 
 ```js
 store.set("kills", 0);
@@ -93,7 +97,7 @@ store.increment("kills", -2); // kills = 4
 
 ### store.list(options)
 
-✅ Box3 API | 游标分页查询。`options` 对象支持的字段：
+游标分页查询。`options` 对象支持的字段：
 
 | 字段               | 类型    | 说明                                |
 | ------------------ | ------- | ----------------------------------- |
@@ -135,12 +139,12 @@ if (!result.isLastPage) {
 
 - **同名存储**：同一文件路径多次 `getDataStorage` 返回共享同一份内存数据，避免重复 I/O
 - **项目隔离**：`getDataStorage("scores")` 在不同项目中访问不同文件（自动添加项目名前缀）
-- **跨项目共享**：`getGroupStorage("leaderboard")` 所有项目访问同一个 `__shared__/leaderboard.json`
+- **跨项目共享（仅服务端）**：`getGroupStorage("leaderboard")` 所有项目访问同一个 `__shared__/leaderboard.json`
 
 ## 完整示例：排行榜
 
 ```js
-// 跨项目共享排行榜 — 所有项目读写同一份数据
+// 服务端：跨项目共享排行榜 — 所有项目读写同一份数据
 var lb = storage.getGroupStorage("leaderboard");
 
 // 保存成绩
@@ -162,5 +166,3 @@ while (true) {
   result.nextPage();
 }
 ```
-
-全部 ✅ Box3 API。

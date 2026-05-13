@@ -13,7 +13,10 @@ interface RemoteChannel {
    * @param entities - @zh 单个玩家实体或实体数组 @en A single player entity or an array of them
    * @param clientEvent - @zh 事件数据（任意 JSON 可序列化的值） @en Event data (any JSON‑serializable value)
    */
-  sendClientEvent<T = any>(entities: any | any[], clientEvent: T): void;
+  sendClientEvent<T = any>(
+    entities: GamePlayerEntity | GamePlayerEntity[],
+    clientEvent: T,
+  ): void;
 
   /**
    * @zh 向所有玩家广播客户端事件。
@@ -33,7 +36,7 @@ interface RemoteChannel {
       /** @zh 事件到达时的服务端 tick @en Server tick when the event arrived */
       tick: number;
       /** @zh 发送事件的玩家实体 @en The player entity that sent the event */
-      entity: any;
+      entity: GamePlayerEntity;
       /** @zh 事件数据（已反序列化） @en Event data (deserialised) */
       args: T;
     }) => void,

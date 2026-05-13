@@ -13,15 +13,15 @@ world.onPlayerJoin(function(entity, tick) {
 
 ### player.name
 
-✅ Box3 API | 只读。玩家名称。
+只读。玩家名称。
 
 ### player.userId
 
-✅ Box3 API | 只读。玩家 UUID 字符串（与 `entity.id` 相同）。
+只读。玩家 UUID 字符串（与 `entity.id` 相同）。
 
 ### player.opLevel
 
-✅ Box3 API | 获取/设置玩家管理员权限等级 (0–4)。
+获取/设置玩家管理员权限等级 (0–4)。
 
 | 等级 | 说明 |
 |------|------|
@@ -44,11 +44,11 @@ player.opLevel = 3;  // 属性方式设置为 3 级
 
 ### player.invisible
 
-✅ Box3 API | 获取/设置玩家是否隐形。
+获取/设置玩家是否隐形。
 
 ### player.scale
 
-✅ Box3 API | 只读。玩家模型缩放比例（MC 原生 scale，非 Box3 scale）。
+只读。玩家模型缩放比例（MC 原生 scale，非 Box3 scale）。
 
 ```js
 player.invisible = true;  // 隐形
@@ -57,7 +57,7 @@ console.log("玩家缩放: " + player.scale);
 
 ## 移动
 
-全部 ✅ Box3 API。
+
 
 ### player.walkSpeed
 
@@ -131,23 +131,23 @@ world.onTick(function() {
 
 ### player.canFly
 
-✅ Box3 API | 获取/设置飞行权限（`mayfly`）。设为 `true` 后玩家按跳跃键起飞。
+获取/设置飞行权限（`mayfly`）。设为 `true` 后玩家按跳跃键起飞。
 
 ### player.flying
 
-✅ Box3 API | 获取/设置是否正在飞行（`flying`）。需要先设置 `canFly = true`。
+获取/设置是否正在飞行（`flying`）。需要先设置 `canFly = true`。
 
 ### player.flySpeed
 
-✅ Box3 API | 飞行速度。
+飞行速度。
 
 ### player.disableFly
 
-✅ Box3 API | 设为 `true` 时立即停止飞行并禁用飞行权限。
+设为 `true` 时立即停止飞行并禁用飞行权限。
 
 ### player.spectator
 
-✅ Box3 API | 只读。玩家是否处于旁观模式。
+只读。玩家是否处于旁观模式。
 
 ```js
 // 允许飞行
@@ -204,7 +204,7 @@ if (player.dead) {
 
 ### player.gameMode
 
-✅ Box3 API | 获取/设置游戏模式。get 返回名称字符串，set 接受字符串或数字。
+获取/设置游戏模式。get 返回名称字符串，set 接受字符串或数字。
 
 ```js
 player.gameMode = "creative";   // 创造模式
@@ -216,7 +216,7 @@ player.gameMode = "spectator";  // 旁观模式
 
 ## 相机
 
-全部 ✅ Box3 API。
+
 
 ### player.cameraMode
 
@@ -259,11 +259,11 @@ var target = player.cameraTarget;
 
 ### player.teleport(pos)
 
-✅ Box3 API | 传送玩家到指定 `GameVector3` 坐标。
+传送玩家到指定 `GameVector3` 坐标。
 
 ### player.spawnPoint
 
-✅ Box3 API | 获取/设置玩家的重生点坐标 (`GameVector3`)。读取时若玩家未设置重生点，返回世界出生点。
+获取/设置玩家的重生点坐标 (`GameVector3`)。读取时若玩家未设置重生点，返回世界出生点。
 
 ```js
 // 属性方式设置
@@ -273,15 +273,15 @@ console.log(player.spawnPoint);
 
 ### player.setRespawnPoint(pos)
 
-✅ Box3 API | 设置玩家重生点（方法方式，与 `spawnPoint` 属性等价）。
+设置玩家重生点（方法方式，与 `spawnPoint` 属性等价）。
 
 ### player.setSpawnPoint(pos)
 
-✅ Box3 API | 同 `setRespawnPoint`，Box3 标准命名。
+同 `setRespawnPoint`，Box3 标准命名。
 
 ### player.respawn()
 
-✅ Box3 API | 强制玩家重生（仅死亡状态有效）。
+强制玩家重生（仅死亡状态有效）。
 
 ### player.dimension
 
@@ -300,11 +300,11 @@ player.teleport(new GameVector3(0, 70, 0));
 
 ### player.kick()
 
-✅ Box3 API | 踢出玩家，默认提示 "Kicked"。
+踢出玩家，默认提示 "Kicked"。
 
 ### player.kick(reason)
 
-✅ Box3 API | 踢出玩家，自定义踢出原因。
+踢出玩家，自定义踢出原因。
 
 ```js
 player.kick("你已被移出游戏");
@@ -314,7 +314,7 @@ player.kick("你已被移出游戏");
 
 ### player.directMessage(msg)
 
-✅ Box3 API | 向玩家发送聊天栏消息（仅该玩家可见的系统消息）。
+向玩家发送聊天栏消息（仅该玩家可见的系统消息）。
 
 ### player.directMessage(msg, color)
 
@@ -327,11 +327,11 @@ player.directMessage("警告!", new GameRGBColor(1, 0.5, 0));    // 橙色
 
 ### player.actionBar(msg)
 
-✅ Box3 API | 向玩家发送快捷栏上方消息（Action Bar）。
+向玩家发送快捷栏上方消息（Action Bar）。
 
 ### player.title(title, subtitle)
 
-✅ Box3 API | 向玩家发送屏幕标题。使用默认动画参数：淡入 10 tick、停留 70 tick、淡出 20 tick。
+向玩家发送屏幕标题。使用默认动画参数：淡入 10 tick、停留 70 tick、淡出 20 tick。
 
 ### player.title(title, subtitle, fadeIn, stay, fadeOut)
 
@@ -339,7 +339,7 @@ player.directMessage("警告!", new GameRGBColor(1, 0.5, 0));    // 橙色
 
 ### player.dialog(config)
 
-✅ Box3 API | 弹出对话框。传入 `{content, options}` 配置，返回 `{index, value}`。目前 MC 中发送系统消息作为简化实现。
+弹出对话框。传入 `{content, options}` 配置，返回 `{index, value}`。目前 MC 中发送系统消息作为简化实现。
 
 ```js
 var result = player.dialog({
@@ -351,11 +351,11 @@ player.directMessage("你选择了: " + result.value);
 
 ### player.link(href)
 
-✅ Box3 API | 向玩家发送可点击的 URL 链接（蓝色下划线）。
+向玩家发送可点击的 URL 链接（蓝色下划线）。
 
 ### player.onChat(handler)
 
-✅ Box3 API | 为单个玩家注册聊天回调（比全局 `world.onChat` 更精细的控制，常用于对话树）。
+为单个玩家注册聊天回调（比全局 `world.onChat` 更精细的控制，常用于对话树）。
 
 ```js
 player.directMessage("你好！");
@@ -458,6 +458,62 @@ console.log(held.id, held.count);  // "minecraft:diamond_sword" 1
 
 ```js
 player.clearInventory();
+```
+
+## 自定义容器 GUI
+
+⬆ MC 扩展 | 为玩家打开脚本控制的容器 GUI（类似箱子界面），可自定义格子内容、点击行为和关闭回调。
+
+### player.openGUI(config?)
+
+打开一个容器 GUI 并返回 `GUIController` 控制器对象。
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `title` | `string` | `"Container"` | 容器标题 |
+| `rows` | `number` | `3` | 行数 (1–6)，每行 9 格 |
+| `slots` | `{ [slot: number]: string }` | `{}` | 预填充物品，key 为格子索引，value 为物品 ID |
+
+**返回值 `GUIController` 方法：**
+
+| 方法 | 说明 |
+|------|------|
+| `setItem(slot, itemId, count?)` | 在指定格子放置物品 |
+| `getItem(slot)` | 获取格子物品，返回 `{ id, count }` |
+| `onSlotClick(callback)` | 注册点击回调，`return false` 可取消点击 |
+| `onClose(callback)` | 注册关闭回调（ESC 或 `close()` 触发） |
+| `close()` | 关闭容器 |
+
+```js
+world.onChat(function(entity, msg, tick) {
+  if (msg === "!shop") {
+    var gui = entity.player.openGUI({
+      title: "§6§l商店",
+      rows: 3,
+      slots: {
+        0: "minecraft:diamond",
+        4: "minecraft:emerald",
+        8: "minecraft:gold_ingot",
+      },
+    });
+
+    gui.setItem(1, "minecraft:netherite_ingot", 5);
+
+    gui.onSlotClick(function(slot, player) {
+      console.log("点击格子: " + slot);
+      if (slot === 0) return false;  // 禁止拿走钻石
+    });
+
+    gui.onClose(function(player) {
+      player.directMessage("商店已关闭");
+    });
+  }
+
+  if (msg === "!closegui") {
+    // 也可通过 controller 编程关闭
+    // (需要将 controller 保存在外部作用域)
+  }
+});
 ```
 
 ## 药水效果

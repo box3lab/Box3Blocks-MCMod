@@ -1,6 +1,6 @@
 # Math Types
 
-All ✅ Box3 API. The following data types are globally available in JS.
+ The following data types are globally available in JS.
 
 ## GameVector3
 

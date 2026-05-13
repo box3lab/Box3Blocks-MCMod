@@ -1,23 +1,33 @@
-// Welcome players when they join the server.
+// Server script: world logic, players, voxels, storage, and server-side events.
 world.onPlayerJoin((entity: GamePlayerEntity) => {
   const p = entity.player;
 
   world.say(`§e${p.name} §7joined the server`);
-  p.directMessage("§6Welcome to §eb §6!");
+  p.directMessage("§6Welcome to §ePROJECT_NAME§6!");
   p.directMessage("§7Type §e!hello §7to say hi");
+
+  if (entity.hasBox3JSClient()) {
+    remoteChannel.sendClientEvent(entity, {
+      type: "welcome",
+      message: `Welcome, ${p.name}`,
+    });
+  }
 });
 
-// Handle chat commands sent by players.
 world.onChat((entity: GamePlayerEntity, message: string, _tick: number) => {
   const p = entity.player;
 
-  // Respond to a simple hello command.
   if (message === "!hello") {
     world.say(`§e${p.name}§7: Hello World!`);
   }
 });
 
-// Broadcast a periodic status message every 5 seconds (100 ticks).
+remoteChannel.onServerEvent<{ type: string; fps?: number }>((event) => {
+  if (event.args.type === "clientReady") {
+    console.log(`[PROJECT_NAME] client ready: ${event.entity.player.name}`);
+  }
+});
+
 let announceTicks = 0;
 world.onTick(function () {
   announceTicks++;
@@ -25,17 +35,16 @@ world.onTick(function () {
   if (announceTicks >= 100) {
     announceTicks = 0;
 
-    // Count online entities and show runtime status in each player's action bar.
     const players = world.querySelectorAll("*");
     for (let i = 0; i < players.length; i++) {
       const p = players[i].player;
       if (p) {
         p.actionBar(
-          `§a⚡ b is running §7| §f${String(players.length)} §7online`,
+          `§a⚡ PROJECT_NAME is running §7| §f${String(players.length)} §7online`,
         );
       }
     }
   }
 });
 
-console.log("[b] loaded - Hello World!");
+console.log("[PROJECT_NAME] server loaded");

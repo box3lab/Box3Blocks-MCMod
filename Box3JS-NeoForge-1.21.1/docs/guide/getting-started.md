@@ -107,17 +107,20 @@ config/box3/script/mygame/
 ├── types/
 │   ├── shared.d.ts        ← 服务端&客户端共享类型
 │   ├── server/
-│   │   ├── server.d.ts    ← 服务端 API 类型声明
+│   │   ├── index.d.ts     ← 服务端类型入口
+│   │   ├── server.d.ts
 │   │   ├── entity.d.ts
 │   │   ├── player.d.ts
 │   │   ├── world.d.ts
 │   │   └── voxels.d.ts
 │   └── client/
-│       ├── client.d.ts    ← 客户端 API 类型声明
+│       ├── index.d.ts     ← 客户端类型入口
+│       ├── client.d.ts
 │       ├── audio.d.ts
 │       ├── input.d.ts
 │       ├── ui.d.ts
-│       └── chat.d.ts
+│       ├── chat.d.ts
+│       └── gui.d.ts
 ├── src/
 │   ├── server/
 │   │   └── app.ts         ← ★ 服务端入口（你写代码的地方）

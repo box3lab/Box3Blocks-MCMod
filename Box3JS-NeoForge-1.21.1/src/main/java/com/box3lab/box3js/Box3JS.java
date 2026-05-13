@@ -1,16 +1,26 @@
 package com.box3lab.box3js;
 
 import com.box3lab.box3js.client.Box3JSClientEngine;
+import com.box3lab.box3js.client.Box3JSGuiProxy;
+import com.box3lab.box3js.client.screen.Box3JSScriptContainerScreen;
 import com.box3lab.box3js.registries.Box3JSRecipeManager;
 import com.box3lab.box3js.script.Box3ScriptCommand;
 import com.box3lab.box3js.script.Box3ScriptEngine;
+import com.box3lab.box3js.script.Box3JSGuiServerHandler;
+import com.box3lab.box3js.script.Box3JSScriptContainerMenu;
 import com.mojang.logging.LogUtils;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.inventory.MenuType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.registries.DeferredRegister;
+import java.util.function.Supplier;
 
 import java.nio.file.Path;
 import java.util.Set;
@@ -35,7 +45,20 @@ public class Box3JS {
     /** Tracks which connected players have Box3JS installed on their client. */
     public static final Set<UUID> clientsWithBox3JS = ConcurrentHashMap.newKeySet();
 
+    // ── Registries ──
+
+    private static final DeferredRegister<MenuType<?>> MENU_TYPES =
+        DeferredRegister.create(Registries.MENU, MODID);
+
+    /** Single MenuType for all script container sizes (1-6 rows). */
+    public static final Supplier<MenuType<Box3JSScriptContainerMenu>> SCRIPT_CONTAINER_MENU =
+        MENU_TYPES.register("script_container",
+            () -> new MenuType<>(new Box3JSScriptContainerMenu.Factory(), FeatureFlags.DEFAULT_FLAGS));
+
     public Box3JS(IEventBus modEventBus, ModContainer modContainer) {
+        // Register registries
+        MENU_TYPES.register(modEventBus);
+
         // Register custom payloads
         modEventBus.addListener(RegisterPayloadHandlersEvent.class, event -> {
             var registrar = event.registrar("1");
@@ -68,7 +91,46 @@ public class Box3JS {
                     }
                 }
             );
+
+            // Client → Server: GUI operations (open, setItem, registerCallbacks, close)
+            registrar.optional().playToServer(
+                Box3JSNetwork.GUIServerboundPayload.TYPE,
+                Box3JSNetwork.GUIServerboundPayload.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer sp) {
+                        clientsWithBox3JS.add(sp.getUUID());
+                        switch (payload.actionType()) {
+                            case 0 -> Box3JSGuiServerHandler.handleOpen(
+                                sp, payload.title(), payload.rows(), payload.slotsJson());
+                            case 1 -> Box3JSGuiServerHandler.handleSetItem(
+                                sp, payload.slot(), payload.itemId(), payload.count());
+                            case 2 -> Box3JSGuiServerHandler.handleRegisterCallbacks(
+                                sp, payload.hasSlotClick(), payload.hasClose());
+                            case 3 -> Box3JSGuiServerHandler.handleClose(sp);
+                        }
+                    }
+                }
+            );
+
+            // Server → Client: GUI events (slot click, close) for client-side JS callbacks
+            registrar.optional().playToClient(
+                Box3JSNetwork.GUIClientboundPayload.TYPE,
+                Box3JSNetwork.GUIClientboundPayload.STREAM_CODEC,
+                (payload, context) -> {
+                    Box3JSGuiProxy proxy = Box3JSClientEngine.get().getActiveGuiProxy();
+                    if (proxy != null) {
+                        switch (payload.eventType()) {
+                            case 0 -> proxy.fireSlotClick(payload.slot());
+                            case 1 -> proxy.fireClose();
+                        }
+                    }
+                }
+            );
         });
+
+        // Register client-side screen for the script container
+        modEventBus.addListener(RegisterMenuScreensEvent.class, event ->
+            event.register(SCRIPT_CONTAINER_MENU.get(), Box3JSScriptContainerScreen::new));
 
         // Script commands
         NeoForge.EVENT_BUS.addListener(Box3ScriptCommand::register);

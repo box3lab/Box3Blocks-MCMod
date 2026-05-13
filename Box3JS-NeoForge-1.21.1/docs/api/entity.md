@@ -8,15 +8,15 @@
 
 ### entity.id
 
-✅ Box3 API | 只读。实体的 UUID 字符串（如 `"550e8400-e29b-41d4-a716-446655440000"`）。
+只读。实体的 UUID 字符串（如 `"550e8400-e29b-41d4-a716-446655440000"`）。
 
 ### entity.isPlayer()
 
-✅ Box3 API | 返回 `true` 表示该实体是玩家。当返回 `true` 后，`entity.player` 必定非 null。
+返回 `true` 表示该实体是玩家。当返回 `true` 后，`entity.player` 必定非 null。
 
 ### entity.entityType
 
-✅ Box3 API | 只读。返回实体的命名空间 ID 字符串（如 `"minecraft:zombie"`）。
+只读。返回实体的命名空间 ID 字符串（如 `"minecraft:zombie"`）。
 
 ```js
 var all = world.querySelectorAll("*");
@@ -30,7 +30,7 @@ for (var i = 0; i < all.length; i++) {
 
 ### entity.position
 
-✅ Box3 API | 只读 `GameVector3`。这是一个 **LiveVec3**：读取时自动同步实体当前坐标，调用 `.set(x,y,z)` 可**直接传送实体**。
+只读 `GameVector3`。这是一个 **LiveVec3**：读取时自动同步实体当前坐标，调用 `.set(x,y,z)` 可**直接传送实体**。
 
 ```js
 var pos = entity.position;
@@ -42,7 +42,7 @@ entity.position.set(0, 100, 0);
 
 ### entity.velocity
 
-✅ Box3 API | 只读 `GameVector3`。**LiveVec3**：读取时自动同步当前速度，`.set(x,y,z)` 直接设置速度向量。
+只读 `GameVector3`。**LiveVec3**：读取时自动同步当前速度，`.set(x,y,z)` 直接设置速度向量。
 
 ```js
 entity.velocity.set(0, 1, 0);  // 向上弹射
@@ -51,7 +51,7 @@ entity.velocity.set(2, 0, 2);  // 水平方向速度
 
 ### entity.bounds
 
-✅ Box3 API | 只读 `GameVector3`。实体的包围盒**半尺寸** (half-extents)：
+只读 `GameVector3`。实体的包围盒**半尺寸** (half-extents)：
 - `x` = 宽度 / 2
 - `y` = 高度 / 2
 - `z` = 宽度 / 2
@@ -78,11 +78,11 @@ var eye = entity.eyePosition;
 
 ### entity.hp
 
-✅ Box3 API | 获取/设置当前生命值。非 LivingEntity 返回/存储自定义属性。
+获取/设置当前生命值。非 LivingEntity 返回/存储自定义属性。
 
 ### entity.maxHp
 
-✅ Box3 API | 获取/设置最大生命值。设置后若当前生命超过新上限会自动截断。
+获取/设置最大生命值。设置后若当前生命超过新上限会自动截断。
 
 ```js
 var zombie = world.spawnEntity("minecraft:zombie", new GameVector3(0, 100, 0));
@@ -92,11 +92,11 @@ zombie.hp = 100;
 
 ### entity.hurt(amount)
 
-✅ Box3 API | 对实体造成 `amount` 点伤害（通用伤害类型，触发伤害事件）。
+对实体造成 `amount` 点伤害（通用伤害类型，触发伤害事件）。
 
 ### entity.heal(amount)
 
-✅ Box3 API | 治疗实体 `amount` 点生命值（不超过 maxHp）。
+治疗实体 `amount` 点生命值（不超过 maxHp）。
 
 ```js
 zombie.hurt(10);  // 造成 10 点伤害
@@ -114,11 +114,11 @@ console.log(entity.invulnerable);
 
 ### entity.destroyed
 
-✅ Box3 API | 只读。实体是否已被移除/销毁。
+只读。实体是否已被移除/销毁。
 
 ## 物理属性
 
-✅ Box3 API | 以下属性控制实体的物理行为。
+以下属性控制实体的物理行为。
 
 ### entity.collides
 
@@ -172,7 +172,7 @@ var ball = world.createEntity({
 
 ### entity.meshInvisible
 
-✅ Box3 API | 控制实体是否不可见（隐身）。
+控制实体是否不可见（隐身）。
 
 ```js
 entity.meshInvisible = true;  // 隐身
@@ -230,7 +230,7 @@ entity.setNameTag("§e守卫");          // 方法方式设置
 
 ## 标签系统
 
-全部 ✅ Box3 API。标签是附加在实体上的字符串标记（实质是 Minecraft 的 scoreboard tags），用于分类和查询。
+标签是附加在实体上的字符串标记（实质是 Minecraft 的 scoreboard tags），用于分类和查询。
 
 ### entity.addTag(tag)
 
@@ -421,11 +421,11 @@ entity.setAttribute("minecraft:generic.armor", 10);
 
 ### entity.destroy()
 
-✅ Box3 API | 销毁实体。如果通过 `setOnDestroy()` 设置了回调，会触发它。
+销毁实体。如果通过 `setOnDestroy()` 设置了回调，会触发它。
 
 ### entity.setOnDestroy(handler)
 
-✅ Box3 API | 设置销毁回调。`handler` 接收一个参数 `(entity)`。
+设置销毁回调。`handler` 接收一个参数 `(entity)`。
 
 ```js
 entity.setOnDestroy(function(e) {
@@ -451,7 +451,7 @@ boss.setOnDestroy(function(e) {
 
 ## 自定义属性
 
-✅ Box3 API | 可以直接在 entity 上存储任意 JS 数据，存活期等于实体生命周期。
+可以直接在 entity 上存储任意 JS 数据，存活期等于实体生命周期。
 
 自定义属性存储在 entity 的 UUID 下，通过 `ConcurrentHashMap` 持久化直到实体被移除。
 

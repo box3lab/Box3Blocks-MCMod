@@ -6,21 +6,21 @@
 
 ### voxels.shape
 
-✅ Box3 API | Read-only `GameVector3`. World dimensions (valid in some Box3 environments).
+Read-only `GameVector3`. World dimensions (valid in some Box3 environments).
 
 ### voxels.VoxelTypes
 
-✅ Box3 API | Read-only string array. All registered block names.
+Read-only string array. All registered block names.
 
 ## Name ↔ ID
 
 ### voxels.id(name)
 
-✅ Box3 API | Block name → internal ID. `name` is a namespaced string (e.g. `"minecraft:stone"`).
+Block name → internal ID. `name` is a namespaced string (e.g. `"minecraft:stone"`).
 
 ### voxels.name(id)
 
-✅ Box3 API | Internal ID → block name.
+Internal ID → block name.
 
 ```js
 var stoneId = voxels.id("minecraft:stone"); // get ID
@@ -31,7 +31,7 @@ var name = voxels.name(stoneId); // "minecraft:stone"
 
 ### voxels.setVoxel(x, y, z, voxel)
 
-✅ Box3 API | Place a block at the given coordinates. `voxel` accepts:
+Place a block at the given coordinates. `voxel` accepts:
 
 - String: namespaced ID, e.g. `"minecraft:glass"`
 - Number: internal block ID (rotation encoded)
@@ -44,7 +44,7 @@ Returns the internal ID of the newly placed block.
 
 ### voxels.setVoxel(x, y, z, voxel, rotation)
 
-✅ Box3 API | Place a block with rotation. `rotation` is 0–3, controlling orientation (like `BlockState` rotation).
+Place a block with rotation. `rotation` is 0–3, controlling orientation (like `BlockState` rotation).
 
 ### voxels.setVoxel(pos, voxel, rotation)
 
@@ -62,7 +62,7 @@ voxels.setVoxel(new GameVector3(0, 100, 0), "minecraft:oak_stairs", 2);
 
 ### voxels.setVoxelId(x, y, z, voxelId)
 
-✅ Box3 API | Place a block, `voxelId` is the internal ID with encoded rotation.
+Place a block, `voxelId` is the internal ID with encoded rotation.
 
 ### voxels.setVoxelId(pos, voxelId)
 
@@ -97,7 +97,7 @@ voxels.fillVoxel(
 
 ### voxels.getVoxel(x, y, z)
 
-✅ Box3 API | Returns the block's base ID (without rotation info).
+Returns the block's base ID (without rotation info).
 
 ### voxels.getVoxel(pos)
 
@@ -105,7 +105,7 @@ voxels.fillVoxel(
 
 ### voxels.getVoxelId(x, y, z)
 
-✅ Box3 API | Returns the full ID (with rotation bits encoded).
+Returns the full ID (with rotation bits encoded).
 
 ### voxels.getVoxelId(pos)
 
@@ -113,7 +113,7 @@ voxels.fillVoxel(
 
 ### voxels.getVoxelName(x, y, z)
 
-✅ Box3 API | Returns the block's namespaced ID string.
+Returns the block's namespaced ID string.
 
 ### voxels.getVoxelName(pos)
 
@@ -121,7 +121,7 @@ voxels.fillVoxel(
 
 ### voxels.getVoxelRotation(x, y, z)
 
-✅ Box3 API | Returns the block's rotation value (0–3).
+Returns the block's rotation value (0–3).
 
 ### voxels.getVoxelRotation(pos)
 

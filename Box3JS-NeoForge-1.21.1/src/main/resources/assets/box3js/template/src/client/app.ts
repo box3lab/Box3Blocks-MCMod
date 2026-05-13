@@ -1,22 +1,23 @@
-// Box3JS Client Script
-// This script runs on the player's Minecraft client.
-// It is automatically sent from the server when a player joins.
+// Client script: local UI, input, audio, chat helpers, and client-side events.
+remoteChannel.sendServerEvent({ type: "clientReady" });
 
-// Called every client tick (20 times per second).
-client.onTick(() => {
-    // Your per-frame logic here
+remoteChannel.onClientEvent<{ type: string; message?: string }>((event) => {
+  if (event.args.type === "welcome" && event.args.message) {
+    ui.showOverlay(event.args.message);
+    audio.playSound("minecraft:block.note_block.pling", 0.6, 1.2);
+  }
 });
 
-// Show overlay text in the action bar.
-// ui.showOverlay("Hello from client script!");
+let ticks = 0;
+client.onTick(() => {
+  ticks++;
 
-// Play a sound on the client.
-// audio.playSound("minecraft:block.note_block.pling", 1.0, 1.0);
-
-// Poll keyboard state.
-// if (input.isKeyDown("space")) { ... }
-
-// Send a chat message.
-// chat.sendMessage("Hello!");
+  if (ticks % 40 === 0) {
+    const player = client.getPlayer();
+    if (player) {
+      ui.showActionBar(`FPS ${client.getFPS()} | ${player.name}`);
+    }
+  }
+});
 
 console.log("[client] loaded!");

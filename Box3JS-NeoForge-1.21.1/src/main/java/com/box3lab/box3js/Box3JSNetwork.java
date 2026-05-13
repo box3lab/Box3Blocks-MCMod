@@ -93,6 +93,74 @@ public final class Box3JSNetwork {
         }
     }
 
+    // ── GUI payloads (client ↔ server) ──
+
+    /** Client → Server: open/manipulate/close a script container GUI. */
+    public record GUIServerboundPayload(
+        int actionType,        // 0=OPEN, 1=SET_ITEM, 2=REGISTER_CALLBACKS, 3=CLOSE
+        String title,          // for OPEN
+        int rows,              // for OPEN
+        String slotsJson,      // for OPEN (JSON object string of slot→itemId)
+        int slot,              // for SET_ITEM
+        String itemId,         // for SET_ITEM
+        int count,             // for SET_ITEM
+        boolean hasSlotClick,  // for REGISTER_CALLBACKS
+        boolean hasClose       // for REGISTER_CALLBACKS
+    ) implements CustomPacketPayload {
+
+        public static final Type<GUIServerboundPayload> TYPE =
+                new Type<>(ResourceLocation.fromNamespaceAndPath(Box3JS.MODID, "gui_serverbound"));
+
+        public static final StreamCodec<RegistryFriendlyByteBuf, GUIServerboundPayload> STREAM_CODEC =
+                StreamCodec.of(
+                    (buf, p) -> {
+                        buf.writeVarInt(p.actionType);
+                        buf.writeUtf(p.title);
+                        buf.writeVarInt(p.rows);
+                        buf.writeUtf(p.slotsJson);
+                        buf.writeVarInt(p.slot);
+                        buf.writeUtf(p.itemId);
+                        buf.writeVarInt(p.count);
+                        buf.writeBoolean(p.hasSlotClick);
+                        buf.writeBoolean(p.hasClose);
+                    },
+                    buf -> new GUIServerboundPayload(
+                        buf.readVarInt(),
+                        buf.readUtf(),
+                        buf.readVarInt(),
+                        buf.readUtf(),
+                        buf.readVarInt(),
+                        buf.readUtf(),
+                        buf.readVarInt(),
+                        buf.readBoolean(),
+                        buf.readBoolean()
+                    )
+                );
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
+
+    /** Server → Client: GUI events (slot click, close) for client-side JS callbacks. */
+    public record GUIClientboundPayload(
+        int eventType,   // 0=SLOT_CLICK, 1=CLOSE
+        int slot         // for SLOT_CLICK (ignored for CLOSE)
+    ) implements CustomPacketPayload {
+
+        public static final Type<GUIClientboundPayload> TYPE =
+                new Type<>(ResourceLocation.fromNamespaceAndPath(Box3JS.MODID, "gui_clientbound"));
+
+        public static final StreamCodec<RegistryFriendlyByteBuf, GUIClientboundPayload> STREAM_CODEC =
+                StreamCodec.composite(
+                        ByteBufCodecs.VAR_INT, GUIClientboundPayload::eventType,
+                        ByteBufCodecs.VAR_INT, GUIClientboundPayload::slot,
+                        GUIClientboundPayload::new
+                );
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
+
     // ── Server-side: send client scripts to a joining player ──
 
     private static final ResourceLocation CLIENT_SCRIPT_ID =

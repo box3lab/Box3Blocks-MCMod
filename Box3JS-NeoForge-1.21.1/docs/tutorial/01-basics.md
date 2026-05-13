@@ -15,7 +15,7 @@
 /box3script create hello
 ```
 
-这会在 `config/box3/script/hello/` 下生成一个完整的 TypeScript 项目。其中 `src/app.ts` 就是你要写代码的地方。
+这会在 `config/box3/script/hello/` 下生成一个完整的 TypeScript 项目。服务端玩法逻辑写在 `src/server/app.ts`；客户端 UI/输入逻辑写在 `src/client/app.ts`。
 
 ## 第二步：构建
 
@@ -30,7 +30,7 @@ npm install && npm run build
 
 ## 第三步：写你的第一个脚本
 
-打开 `src/app.ts`，清空内容，写入：
+打开 `src/server/app.ts`，清空内容，写入：
 
 ```js
 console.log("Hello, Box3JS!");

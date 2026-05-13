@@ -7,9 +7,16 @@ import babel from "@babel/core";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const entryFile = resolve(__dirname, "src/server/app.ts");
+const args = new Set(process.argv.slice(2));
+const watchMode = args.has("--watch");
+const serverOnly = args.has("--server") && !args.has("--client");
+const clientOnly = args.has("--client") && !args.has("--server");
+const shouldBuildServer = !clientOnly;
+const shouldBuildClient = !serverOnly;
+
+const serverEntry = resolve(__dirname, "src/server/app.ts");
 const distDir = resolve(__dirname, "dist");
-const outFile = resolve(distDir, "server.js");
+const serverOutFile = resolve(distDir, "server.js");
 const clientEntry = resolve(__dirname, "src/client/app.ts");
 const clientOutFile = resolve(distDir, "client.js");
 
@@ -419,8 +426,8 @@ function sanitizeForRhino(code) {
 // ═══════════════════════════════════════════════════════════════
 
 const buildOptions = {
-  entryPoints: [entryFile],
-  outfile: outFile,
+  entryPoints: [serverEntry],
+  outfile: serverOutFile,
   bundle: true,
   format: "cjs",
   platform: "neutral",
@@ -430,13 +437,18 @@ const buildOptions = {
 };
 
 async function runBuild() {
+  if (!existsSync(serverEntry)) {
+    console.error("Missing server entry: src/server/app.ts");
+    process.exit(1);
+  }
   try {
     mkdirSync(distDir, { recursive: true });
 
+    console.log("Building server script -> dist/server.js");
     await esbuild.build({ ...buildOptions, metafile: true });
 
-    const code = readFileSync(outFile, "utf8");
-    writeFileSync(outFile, sanitizeForRhino(code), "utf-8");
+    const code = readFileSync(serverOutFile, "utf8");
+    writeFileSync(serverOutFile, sanitizeForRhino(code), "utf-8");
   } catch (err) {
     console.error("Build failed:", err);
     process.exit(1);
@@ -460,6 +472,8 @@ async function buildClient() {
     return;
   }
   try {
+    mkdirSync(distDir, { recursive: true });
+    console.log("Building client script -> dist/client.js");
     await esbuild.build({ ...clientBuildOptions, metafile: true });
 
     const code = readFileSync(clientOutFile, "utf8");
@@ -473,28 +487,35 @@ async function buildClient() {
 
 // ── Entry ──
 
-if (process.argv.includes("--watch")) {
+if (watchMode) {
   console.log("Watch mode enabled...");
 
-  const ctx = await esbuild.context({
-    ...buildOptions,
-    plugins: [
-      babelRhinoPlugin,
-      {
-        name: "post-process-plugin",
-        setup(build) {
-          build.onEnd(() => {
-            const code = readFileSync(outFile, "utf8");
-            writeFileSync(outFile, sanitizeForRhino(code), "utf-8");
-          });
+  if (shouldBuildServer) {
+    if (!existsSync(serverEntry)) {
+      console.error("Missing server entry: src/server/app.ts");
+      process.exit(1);
+    }
+    console.log("Server watch mode enabled...");
+    const ctx = await esbuild.context({
+      ...buildOptions,
+      plugins: [
+        babelRhinoPlugin,
+        {
+          name: "post-process-plugin",
+          setup(build) {
+            build.onEnd(() => {
+              const code = readFileSync(serverOutFile, "utf8");
+              writeFileSync(serverOutFile, sanitizeForRhino(code), "utf-8");
+            });
+          },
         },
-      },
-    ],
-  });
+      ],
+    });
 
-  await ctx.watch();
+    await ctx.watch();
+  }
 
-  if (existsSync(clientEntry)) {
+  if (shouldBuildClient && existsSync(clientEntry)) {
     console.log("Client watch mode enabled...");
     const clientCtx = await esbuild.context({
       ...clientBuildOptions,
@@ -512,8 +533,14 @@ if (process.argv.includes("--watch")) {
       ],
     });
     await clientCtx.watch();
+  } else if (shouldBuildClient) {
+    console.log("No src/client/app.ts found, skipping client watch.");
   }
 } else {
-  await runBuild();
-  await buildClient();
+  if (shouldBuildServer) {
+    await runBuild();
+  }
+  if (shouldBuildClient) {
+    await buildClient();
+  }
 }

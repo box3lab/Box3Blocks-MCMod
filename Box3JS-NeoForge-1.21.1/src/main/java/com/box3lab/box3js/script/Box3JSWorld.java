@@ -74,8 +74,8 @@ public class Box3JSWorld {
 
     // ---- World properties ----
 
-    public String projectName() { return server.getMotd(); }
-    public String getProjectName() { return server.getMotd(); }
+    public String projectName() { return projectName != null ? projectName : ""; }
+    public String getProjectName() { return projectName(); }
 
     public int currentTick() { return server.getTickCount(); }
     public int getCurrentTick() { return server.getTickCount(); }

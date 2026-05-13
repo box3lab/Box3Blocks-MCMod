@@ -1,6 +1,6 @@
 # Box3JS API Reference
 
-Box3JS is a Minecraft mod that lets you write server-side scripts in JavaScript/TypeScript. All scripts run under `config/box3/script/<project>`.
+Box3JS is a Minecraft mod that lets you write server-side scripts in JavaScript/TypeScript, with optional client scripts for local UI, input, and audio. Each script project lives under `config/box3/script/<project>`.
 
 ## 5-Minute Quick Start
 
@@ -16,7 +16,7 @@ npm install && npm run build
 /box3script start mygame
 ```
 
-Open `src/app.ts` and write:
+Open `src/server/app.ts` and write:
 
 ```js
 world.onChat((entity, message) => {
@@ -30,19 +30,19 @@ world.onChat((entity, message) => {
 console.log("Script loaded");
 ```
 
-After each edit, re-run `npm run build`, then use `/box3script reload mygame` to hot-reload.
+After each edit, re-run `npm run build`, then use `/box3script reload mygame` to hot-reload. Client logic goes in `src/client/app.ts`; after build it becomes `dist/client.js` and is sent automatically to players who have the Box3JS client mod installed.
 
 > **New here?** [Quick Start Guide](../guide/getting-started_en.md) | **How it works:** [Architecture](../guide/architecture_en.md) | **JS vs Java:** [Comparison](../guide/js-vs-java_en.md)
 
 ## API Domain Map
 
-Box3JS APIs are divided by runtime environment:
+Box3JS APIs are split into server-side, client-side, and shared runtimes. The type declarations are separated: `tsconfig.server.json` does not include client globals, and `tsconfig.client.json` does not include server globals such as `world` / `voxels`.
 
 | Domain | Runtime | Globals | Description |
 |--------|---------|---------|-------------|
 | **World & Entities** (server) | Server | `world` `voxels` | World control, blocks, event callbacks |
-| **Players & Data** (server) | Server | `player` `entity` `storage` `db` `http` | Accessed via `entity.player` |
-| **Client Interaction** (client) | Client | `audio` `client` `input` `ui` `chat` | Requires Box3JS client mod |
+| **Players & Data** (server) | Server | `entity` `player` `storage` `db` `http` | `entity`/`player` come from callbacks or queries |
+| **Client Interaction** (client) | Client | `audio` `client` `input` `ui` `chat` `gui` | Requires Box3JS client mod |
 | **Cross-Side** | Both | `remoteChannel` | Server↔Client event communication |
 | **Registries** | Compile-time | `registries` | Only in `/box3script compile` JAR mode |
 | **Math & Utilities** | Both | `GameVector3` `GameBounds3` `GameRGBColor` `GameRGBAColor` `GameQuaternion` | Constructed with `new` |
@@ -51,6 +51,14 @@ Box3JS APIs are divided by runtime environment:
 > **Server APIs** manipulate the world, entities, players, and blocks. Scripts run on the server by default.  
 > **Client APIs** are only available with the Box3JS client mod installed, for UI, input, and audio.  
 > **Registry APIs** are only available in compiled JAR mode (`registries` is `undefined` in interpreted mode).
+
+## Read By Runtime
+
+| Entry | Use it for | Includes |
+|-------|------------|----------|
+| [Server API Overview](server_en.md) | Gameplay logic, events, blocks, entities, players, data, server-to-client events | `world`, `entity`, `player`, `voxels`, `storage`, `db`, `http`, `registries` |
+| [Client API Overview](client_en.md) | Local UI, input, audio, chat helpers, local data, client-to-server events | `client`, `audio`, `input`, `ui`, `chat`, `gui`, `storage`, `db`, `http` |
+| [Shared Utilities](math_en.md) | Math, color, and spatial code usable on both sides | `GameVector3`, `GameBounds3`, `GameRGBColor`, `GameRGBAColor`, `GameQuaternion` |
 
 ## Find by Task — I want to...
 
@@ -246,26 +254,27 @@ Find APIs by what you want to do, not by which global object they live on.
 
 | Object | Type | Description |
 |--------|------|-------------|
-| `world` | ✅ Box3 | World control, see [world_en.md](world_en.md) |
-| `entity` | ✅ Box3 | Entity wrapper (from callbacks or `world.spawnEntity`), see [entity_en.md](entity_en.md) |
-| `player` | ✅ Box3 | Player wrapper (via `entity.player`), see [player_en.md](player_en.md) |
-| `voxels` | ✅ Box3 | Block operations, see [voxels_en.md](voxels_en.md) |
-| `storage` | ✅ Box3 | Data persistence, see [storage_en.md](storage_en.md) |
-| `db` | ✅ Box3 | SQLite database, see [database_en.md](database_en.md) |
-| `http` | 🆕 MC Extension | HTTP requests, see [http_en.md](http_en.md) |
-| `audio` | 🆕 MC Extension | Client sound, music, volume control, see [client_en.md](client_en.md) |
-| `client` | 🆕 MC Extension | Client lifecycle, see [client_en.md](client_en.md) |
-| `input` | 🆕 MC Extension | Client keyboard input, see [client_en.md](client_en.md) |
-| `ui` | 🆕 MC Extension | Client screen UI, see [client_en.md](client_en.md) |
-| `chat` | 🆕 MC Extension | Client chat send/receive, see [client_en.md](client_en.md) |
-| `remoteChannel` | 🆕 MC Extension | Server↔client event channel, see [client_en.md](client_en.md) |
-| `registries` | 🆕 MC Extension | Custom blocks, items & sounds (compiled mode), see [registries_en.md](registries_en.md) |
-| `console` | ✅ Box3 | Console logging (`log`/`warn`/`error`/`debug`) |
-| `GameVector3` | ✅ Box3 | 3D vector, see [math_en.md](math_en.md) |
-| `GameBounds3` | ✅ Box3 | Bounding box, see [math_en.md](math_en.md) |
-| `GameRGBColor` | ✅ Box3 | RGB color, see [math_en.md](math_en.md) |
-| `GameRGBAColor` | ✅ Box3 | RGBA color, see [math_en.md](math_en.md) |
-| `GameQuaternion` | ✅ Box3 | Quaternion, see [math_en.md](math_en.md) |
+| `world` | Server | World control, see [world_en.md](world_en.md) |
+| `voxels` | Server | Block operations, see [voxels_en.md](voxels_en.md) |
+| `entity` | Server value | Entity wrapper (from callbacks or `world.spawnEntity`), see [entity_en.md](entity_en.md) |
+| `player` | Server value | Player wrapper (via `entity.player`), see [player_en.md](player_en.md) |
+| `storage` | Both | Data persistence, see [storage_en.md](storage_en.md) |
+| `db` | Both | SQLite database, see [database_en.md](database_en.md) |
+| `http` | Both | HTTP requests, see [http_en.md](http_en.md) |
+| `audio` | Client | Client sound, music, volume control, see [client_en.md](client_en.md) |
+| `client` | Client | Client lifecycle, see [client_en.md](client_en.md) |
+| `input` | Client | Client keyboard input, see [client_en.md](client_en.md) |
+| `ui` | Client | Client screen UI, see [client_en.md](client_en.md) |
+| `chat` | Client | Client chat send/receive, see [client_en.md](client_en.md) |
+| `gui` | Client | Custom container GUI, see [client_en.md](client_en.md) |
+| `remoteChannel` | Both | Server↔client event channel, see [server_en.md](server_en.md) / [client_en.md](client_en.md) |
+| `registries` | Server | Custom blocks, items & sounds (compiled mode), see [registries_en.md](registries_en.md) |
+| `console` | Both | Console logging (`log`/`warn`/`error`/`debug`) |
+| `GameVector3` | Both | 3D vector, see [math_en.md](math_en.md) |
+| `GameBounds3` | Both | Bounding box, see [math_en.md](math_en.md) |
+| `GameRGBColor` | Both | RGB color, see [math_en.md](math_en.md) |
+| `GameRGBAColor` | Both | RGBA color, see [math_en.md](math_en.md) |
+| `GameQuaternion` | Both | Quaternion, see [math_en.md](math_en.md) |
 
 ## API Legend
 
@@ -274,10 +283,23 @@ Find APIs by what you want to do, not by which global object they live on.
 | ✅ **Box3 API** | Originates from the Box3 platform; naming and semantics match Box3 |
 | ⬆ **MC Extension** | Not in original Box3; added using Minecraft-specific features |
 
+## Documentation Style
+
+Each API document should follow this structure. Use the same style when adding future APIs:
+
+1. State the runtime at the top: server, client, or shared.
+2. List globals and core concepts before method details.
+3. Use `object.method(parameters)` for method headings.
+4. Document parameters in tables with name, type, default, and meaning.
+5. Prefer TypeScript/JavaScript examples and identify server or client context when needed.
+6. For cross-side APIs, always state the direction: server → client, or client → server.
+7. If docs and types disagree, treat `types/server/index.d.ts` and `types/client/index.d.ts` as the source of truth, then update the docs.
+
 ## Detailed Document Index
 
 | Document | Content |
 |----------|---------|
+| [server_en.md](server_en.md) | Server API overview: runtime boundary, globals, events, players/entities, blocks, data, cross-side communication |
 | [world_en.md](world_en.md) | World state, events, scoreboard, bossbar, teams, border, particles, fireworks, lightning, sounds |
 | [entity_en.md](entity_en.md) | Entity properties, AI, equipment, potion effects, pathfinding, tags, collisions |
 | [player_en.md](player_en.md) | Inventory, messaging, flight, game mode, teleport, commands, XP |
@@ -285,7 +307,7 @@ Find APIs by what you want to do, not by which global object they live on.
 | [storage_en.md](storage_en.md) | Persistent data storage |
 | [database_en.md](database_en.md) | SQLite database API |
 | [http_en.md](http_en.md) | HTTP request API |
-| [client_en.md](client_en.md) | Client scripts: lifecycle, keyboard, screen UI, chat, remoteChannel, client-side storage |
+| [client_en.md](client_en.md) | Client API: lifecycle, keyboard, screen UI, chat, GUI, remoteChannel, client-side storage |
 | [registries_en.md](registries_en.md) | Custom blocks, items & sounds (blocks.json, items.json, sounds.json, creativeTabs.json) |
 | [math_en.md](math_en.md) | GameVector3, GameBounds3, GameRGBColor, GameRGBAColor, GameQuaternion |
 | [commands_en.md](commands_en.md) | `/box3script` command reference |
@@ -304,17 +326,20 @@ config/box3/script/mygame/
 ├── types/
 │   ├── shared.d.ts       ← Shared types (server & client)
 │   ├── server/
-│   │   ├── server.d.ts   ← Server entry point
+│   │   ├── index.d.ts    ← Server type entry point
+│   │   ├── server.d.ts
 │   │   ├── entity.d.ts
 │   │   ├── player.d.ts
 │   │   ├── world.d.ts
 │   │   └── voxels.d.ts
 │   └── client/
-│       ├── client.d.ts   ← Client entry point
+│       ├── index.d.ts    ← Client type entry point
+│       ├── client.d.ts
 │       ├── audio.d.ts
 │       ├── input.d.ts
 │       ├── ui.d.ts
-│       └── chat.d.ts
+│       ├── chat.d.ts
+│       └── gui.d.ts
 ├── src/
 │   ├── server/
 │   │   ├── app.ts        ← Server entry point

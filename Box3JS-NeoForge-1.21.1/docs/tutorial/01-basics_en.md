@@ -15,7 +15,7 @@ Run one command in-game:
 /box3script create hello
 ```
 
-This generates a complete TypeScript project under `config/box3/script/hello/`. The file `src/app.ts` is where you write your code.
+This generates a complete TypeScript project under `config/box3/script/hello/`. Server gameplay logic goes in `src/server/app.ts`; client UI/input logic goes in `src/client/app.ts`.
 
 ## Step 2: Build
 
@@ -30,7 +30,7 @@ npm install && npm run build
 
 ## Step 3: Write Your First Script
 
-Open `src/app.ts`, clear the contents, and write:
+Open `src/server/app.ts`, clear the contents, and write:
 
 ```js
 console.log("Hello, Box3JS!");
