@@ -6,7 +6,7 @@
 
 ### world.projectName
 
-✅ Box3 API | Read-only property. The server MOTD string. Also callable as `world.projectName()` for backward compatibility.
+Read-only property. The server MOTD string. Also callable as `world.projectName()` for backward compatibility.
 
 ```js
 console.log(world.projectName); // "A Minecraft Server"
@@ -14,7 +14,7 @@ console.log(world.projectName); // "A Minecraft Server"
 
 ### world.serverId
 
-✅ Box3 API | Read/write property. Server identifier, maps to the server MOTD.
+Read/write property. Server identifier, maps to the server MOTD.
 
 ```js
 world.serverId = "My Cool Server";
@@ -23,7 +23,7 @@ console.log(world.serverId);
 
 ### world.currentTick
 
-✅ Box3 API | Read-only property. Total ticks since server startup. Also callable as `world.currentTick()` for backward compatibility.
+Read-only property. Total ticks since server startup. Also callable as `world.currentTick()` for backward compatibility.
 
 ```js
 var uptime = world.currentTick;
@@ -36,7 +36,7 @@ world.say(
 
 ### world.rainDensity
 
-✅ Box3 API | Get/set rain intensity, range 0.0–1.0.
+Get/set rain intensity, range 0.0–1.0.
 
 ```js
 world.rainDensity = 1.0; // full rain
@@ -63,7 +63,7 @@ world.clearWeather();
 
 ### world.time
 
-✅ Box3 API | Get/set world time (ticks). One Minecraft day = 24000 ticks.
+Get/set world time (ticks). One Minecraft day = 24000 ticks.
 
 ```js
 world.time = 6000; // noon
@@ -81,7 +81,7 @@ Common time values: `0` sunrise, `6000` noon, `12000` sunset, `18000` midnight.
 
 ### world.timeScale
 
-✅ Box3 API | Get/set time flow rate. `0` = paused, `1` = normal. Internally modifies the `doDaylightCycle` game rule.
+Get/set time flow rate. `0` = paused, `1` = normal. Internally modifies the `doDaylightCycle` game rule.
 
 ```js
 world.timeScale = 0; // freeze time
@@ -92,7 +92,7 @@ world.timeScale = 1; // resume normal
 
 ### world.difficulty
 
-✅ Box3 API | Get/set game difficulty. Get returns the name string; set accepts a name string or number 0–3.
+Get/set game difficulty. Get returns the name string; set accepts a name string or number 0–3.
 
 ```js
 world.difficulty = "hard";
@@ -106,11 +106,11 @@ console.log(world.difficulty); // "hard"
 
 ### world.spawnPoint
 
-✅ Box3 API | Read-only, returns the world spawn point as `GameVector3`.
+Read-only, returns the world spawn point as `GameVector3`.
 
 ### world.setWorldSpawn(pos)
 
-✅ Box3 API | Set the world spawn point.
+Set the world spawn point.
 
 ```js
 world.setWorldSpawn(new GameVector3(0, 70, 0));
@@ -148,7 +148,7 @@ console.log(world.getGameRule("doMobSpawning")); // true/false
 
 ### world.spawnEntity(type, pos)
 
-✅ Box3 API | Spawn an entity at the given position. `type` is a namespaced ID, returns `Box3JSEntity`.
+Spawn an entity at the given position. `type` is a namespaced ID, returns `Box3JSEntity`.
 
 ```js
 var zombie = world.spawnEntity("minecraft:zombie", new GameVector3(0, 100, 0));
@@ -161,7 +161,7 @@ zombie.setAI(true);
 
 ### world.createEntity(config)
 
-✅ Box3 API | Spawn an entity with a full configuration object. Returns `Box3JSEntity`.
+Spawn an entity with a full configuration object. Returns `Box3JSEntity`.
 
 Supported config fields: `type`, `position`, `velocity`, `fixed`, `gravity`, `friction`, `mass`, `restitution`, `collides`, `meshInvisible`, `hp`, `maxHp`, `tags` (array).
 
@@ -181,7 +181,7 @@ var entity = world.createEntity({
 
 ## Sound Properties
 
-✅ Box3 API | Sound path strings that auto-play when set to a non-empty value:
+Sound path strings that auto-play when set to a non-empty value:
 
 | Property           | Trigger                                                    |
 | ------------------ | ---------------------------------------------------------- |
@@ -205,7 +205,7 @@ world.breakVoxelSound = "minecraft:block.stone.break";
 
 ### world.sound(config)
 
-✅ Box3 API | Play a sound. `config` can be a path string or `{path, position, volume, pitch}` object.
+Play a sound. `config` can be a path string or `{path, position, volume, pitch}` object.
 
 ```js
 // String shorthand — plays at origin with default volume/pitch
@@ -224,7 +224,7 @@ world.sound({
 
 ### world.searchBox(bounds)
 
-✅ Box3 API | Query all entities within a GameBounds3 region.
+Query all entities within a GameBounds3 region.
 
 ```js
 var bounds = new GameBounds3(
@@ -256,19 +256,19 @@ var token = world.onTick(function (info) {
 
 | Event                        | Type    | Callback Signature                                     | Trigger                                             |
 | ---------------------------- | ------- | ------------------------------------------------------ | --------------------------------------------------- |
-| `world.onTick(fn)`           | ✅ Box3 | `(info)` → `{tick, prevTick, elapsedTimeMS, skip}`     | Every tick                                          |
-| `world.onPlayerJoin(fn)`     | ✅ Box3 | `(entity, tick)`                                       | Player logs in                                      |
-| `world.onPlayerLeave(fn)`    | ✅ Box3 | `(entity, tick)`                                       | Player leaves                                       |
-| `world.onChat(fn)`           | ✅ Box3 | `(entity, message, tick) => boolean \| void`           | Player sends chat message; return `false` to cancel |
-| `world.onVoxelDestroy(fn)`   | ✅ Box3 | `(entity, x, y, z, voxel, tick)`                       | Player breaks a block                               |
+| `world.onTick(fn)`           | | `(info)` → `{tick, prevTick, elapsedTimeMS, skip}`     | Every tick                                          |
+| `world.onPlayerJoin(fn)`     | | `(entity, tick)`                                       | Player logs in                                      |
+| `world.onPlayerLeave(fn)`    | | `(entity, tick)`                                       | Player leaves                                       |
+| `world.onChat(fn)`           | | `(entity, message, tick) => boolean \| void`           | Player sends chat message; return `false` to cancel |
+| `world.onVoxelDestroy(fn)`   | | `(entity, x, y, z, voxel, tick)`                       | Player breaks a block                               |
 | `world.onBlockPlace(fn)`     | ⬆ MC    | `(entity, x, y, z, voxel, voxelId, tick)`              | Player places a block                               |
 | `world.onBlockActivate(fn)`  | ⬆ MC    | `(entity, x, y, z, voxel, tick)`                       | Player right-clicks a block                         |
-| `world.onInteract(fn)`       | ✅ Box3 | `(entity, target, tick)`                               | Player right-clicks an entity                       |
-| `world.onVoxelContact(fn)`   | ✅ Box3 | `(entity, voxelId, x, y, z, contactType, force, tick)` | Entity contacts a block                             |
-| `world.onEntityContact(fn)`  | ✅ Box3 | `(entity, other, tick)`                                | Two entities contact                                |
-| `world.onEntitySeparate(fn)` | ✅ Box3 | `(entity, other, tick)`                                | Two entities separate                               |
-| `world.onFluidEnter(fn)`     | ✅ Box3 | `(entity, fluid, x, y, z, tick)`                       | Entity enters a fluid                               |
-| `world.onFluidLeave(fn)`     | ✅ Box3 | `(entity, fluid, x, y, z, tick)`                       | Entity leaves a fluid                               |
+| `world.onInteract(fn)`       | | `(entity, target, tick)`                               | Player right-clicks an entity                       |
+| `world.onVoxelContact(fn)`   | | `(entity, voxelId, x, y, z, contactType, force, tick)` | Entity contacts a block                             |
+| `world.onEntityContact(fn)`  | | `(entity, other, tick)`                                | Two entities contact                                |
+| `world.onEntitySeparate(fn)` | | `(entity, other, tick)`                                | Two entities separate                               |
+| `world.onFluidEnter(fn)`     | | `(entity, fluid, x, y, z, tick)`                       | Entity enters a fluid                               |
+| `world.onFluidLeave(fn)`     | | `(entity, fluid, x, y, z, tick)`                       | Entity leaves a fluid                               |
 | `world.onEntityDeath(fn)`    | ⬆ MC    | `(entity, killer, tick)`                               | Entity dies; `killer` may be null                   |
 | `world.onEntityDamage(fn)`   | ⬆ MC    | `(entity, amount, source, attacker, tick)`             | Entity takes damage (Pre phase)                     |
 | `world.onPlayerRespawn(fn)`  | ⬆ MC    | `(entity, tick)`                                       | Player respawns                                     |
@@ -332,11 +332,11 @@ world.onEntityDeath((entity, killer) => {
 
 ### world.querySelectorAll(selector)
 
-✅ Box3 API | Query all matching entities. Returns `Box3JSEntity[]`.
+Query all matching entities. Returns `Box3JSEntity[]`.
 
 ### world.querySelector(selector)
 
-✅ Box3 API | Query a single matching entity. Returns `Box3JSEntity` or null.
+Query a single matching entity. Returns `Box3JSEntity` or null.
 
 **Selector syntax:**
 
@@ -361,7 +361,7 @@ if (specific) {
 
 ### world.say(message)
 
-✅ Box3 API | Broadcast a message to the entire server.
+Broadcast a message to the entire server.
 
 ```js
 world.say("§6[Announcement] §fThe match is about to begin!");

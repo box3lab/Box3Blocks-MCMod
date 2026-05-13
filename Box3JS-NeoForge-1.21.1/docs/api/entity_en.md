@@ -8,15 +8,15 @@ Use `entity.player` to get the corresponding `player` object (non-null only when
 
 ### entity.id
 
-✅ Box3 API | Readonly. The entity's UUID string (e.g. `"550e8400-e29b-41d4-a716-446655440000"`).
+Readonly. The entity's UUID string (e.g. `"550e8400-e29b-41d4-a716-446655440000"`).
 
 ### entity.isPlayer()
 
-✅ Box3 API | Returns `true` if the entity is a player. When true, `entity.player` is guaranteed non-null.
+Returns `true` if the entity is a player. When true, `entity.player` is guaranteed non-null.
 
 ### entity.entityType
 
-✅ Box3 API | Readonly. Returns the entity's namespace ID string (e.g. `"minecraft:zombie"`).
+Readonly. Returns the entity's namespace ID string (e.g. `"minecraft:zombie"`).
 
 ```js
 var all = world.querySelectorAll("*");
@@ -30,7 +30,7 @@ for (var i = 0; i < all.length; i++) {
 
 ### entity.position
 
-✅ Box3 API | Readonly `GameVector3`. This is a **LiveVec3**: reading syncs to the entity's current coordinates; calling `.set(x,y,z)` **directly teleports** the entity.
+Readonly `GameVector3`. This is a **LiveVec3**: reading syncs to the entity's current coordinates; calling `.set(x,y,z)` **directly teleports** the entity.
 
 ```js
 var pos = entity.position;
@@ -42,7 +42,7 @@ entity.position.set(0, 100, 0);
 
 ### entity.velocity
 
-✅ Box3 API | Readonly `GameVector3`. **LiveVec3**: reading syncs to current velocity; `.set(x,y,z)` directly sets the velocity vector.
+Readonly `GameVector3`. **LiveVec3**: reading syncs to current velocity; `.set(x,y,z)` directly sets the velocity vector.
 
 ```js
 entity.velocity.set(0, 1, 0);  // Launch upward
@@ -51,7 +51,7 @@ entity.velocity.set(2, 0, 2);  // Horizontal velocity
 
 ### entity.bounds
 
-✅ Box3 API | Readonly `GameVector3`. The entity's bounding box **half-extents**:
+Readonly `GameVector3`. The entity's bounding box **half-extents**:
 - `x` = width / 2
 - `y` = height / 2
 - `z` = width / 2
@@ -78,11 +78,11 @@ var eye = entity.eyePosition;
 
 ### entity.hp
 
-✅ Box3 API | Gets/sets current health. For non-LivingEntity, returns/stores a custom property.
+Gets/sets current health. For non-LivingEntity, returns/stores a custom property.
 
 ### entity.maxHp
 
-✅ Box3 API | Gets/sets maximum health. If current health exceeds the new maximum, it is clamped.
+Gets/sets maximum health. If current health exceeds the new maximum, it is clamped.
 
 ```js
 var zombie = world.spawnEntity("minecraft:zombie", new GameVector3(0, 100, 0));
@@ -92,11 +92,11 @@ zombie.hp = 100;
 
 ### entity.hurt(amount)
 
-✅ Box3 API | Deals `amount` generic damage to the entity (triggers damage events).
+Deals `amount` generic damage to the entity (triggers damage events).
 
 ### entity.heal(amount)
 
-✅ Box3 API | Heals the entity by `amount` (capped at maxHp).
+Heals the entity by `amount` (capped at maxHp).
 
 ```js
 zombie.hurt(10);  // Deal 10 damage
@@ -114,11 +114,11 @@ console.log(entity.invulnerable);
 
 ### entity.destroyed
 
-✅ Box3 API | Readonly. Whether the entity has been removed/destroyed.
+Readonly. Whether the entity has been removed/destroyed.
 
 ## Physics
 
-✅ Box3 API | The following properties control entity physics behavior.
+The following properties control entity physics behavior.
 
 ### entity.collides
 
@@ -172,7 +172,7 @@ var ball = world.createEntity({
 
 ### entity.meshInvisible
 
-✅ Box3 API | Controls entity invisibility.
+Controls entity invisibility.
 
 ```js
 entity.meshInvisible = true;  // Invisible
@@ -230,7 +230,7 @@ entity.setNameTag("§eGuard");       // Method access
 
 ## Tag System
 
-All ✅ Box3 API. Tags are string markers attached to entities (backed by Minecraft scoreboard tags), used for classification and queries.
+ Tags are string markers attached to entities (backed by Minecraft scoreboard tags), used for classification and queries.
 
 ### entity.addTag(tag)
 
@@ -421,11 +421,11 @@ entity.setAttribute("minecraft:generic.armor", 10);
 
 ### entity.destroy()
 
-✅ Box3 API | Destroys the entity. If a callback was registered via `setOnDestroy()`, it will be invoked.
+Destroys the entity. If a callback was registered via `setOnDestroy()`, it will be invoked.
 
 ### entity.setOnDestroy(handler)
 
-✅ Box3 API | Registers a callback called when the entity is destroyed. `handler` receives one argument `(entity)`.
+Registers a callback called when the entity is destroyed. `handler` receives one argument `(entity)`.
 
 ```js
 entity.setOnDestroy(function(e) {
@@ -451,7 +451,7 @@ boss.setOnDestroy(function(e) {
 
 ## Custom Properties
 
-✅ Box3 API | You can store arbitrary JS data directly on the entity. The data lives as long as the entity exists.
+You can store arbitrary JS data directly on the entity. The data lives as long as the entity exists.
 
 Custom properties are stored under the entity's UUID in a `ConcurrentHashMap` and persist until the entity is removed.
 

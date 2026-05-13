@@ -30,6 +30,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.client.multiplayer.ServerData;
+import net.neoforged.neoforge.client.event.RenderGuiEvent;
 
 /**
  * Singleton client-side Rhino engine.
@@ -61,10 +70,16 @@ public class Box3JSClientEngine {
     private volatile boolean tickRegistered;
     private volatile boolean keyRegistered;
     private volatile boolean chatRegistered;
+    private volatile boolean renderRegistered;
+    private volatile boolean mouseRegistered;
+    private final Map<Integer, DrawTextEntry> drawTexts = new ConcurrentHashMap<>();
+    private final AtomicInteger drawTextIdCounter = new AtomicInteger(0);
+    private final List<Function> mouseClickHandlers = new CopyOnWriteArrayList<>();
     private String currentProject = "";
     private Box3JSClientStorage storage;
     private Box3JSClientDatabase database;
     private Box3JSClientHttp http;
+    private Box3JSGuiProxy activeGuiProxy;
     private volatile boolean dbWarningShown;
 
     private static final Map<String, Integer> KEY_MAP = new HashMap<>();
@@ -103,6 +118,8 @@ public class Box3JSClientEngine {
     public static Box3JSClientEngine get() { return INSTANCE; }
 
     private Box3JSClientEngine() {}
+
+    public Box3JSGuiProxy getActiveGuiProxy() { return activeGuiProxy; }
 
     // ── Initialisation ──
 
@@ -157,6 +174,101 @@ public class Box3JSClientEngine {
                         });
                     }
                     return Undefined.instance;
+                }
+            });
+
+            // client.getFPS()
+            ScriptableObject.putProperty(clientObj, "getFPS", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    return Minecraft.getInstance().getFps();
+                }
+            });
+
+            // client.getPlayer()
+            ScriptableObject.putProperty(clientObj, "getPlayer", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    var player = Minecraft.getInstance().player;
+                    if (player == null) return null;
+                    Scriptable obj = cx.newObject(scope);
+                    ScriptableObject.putProperty(obj, "name", player.getName().getString());
+                    ScriptableObject.putProperty(obj, "uuid", player.getUUID().toString());
+                    ScriptableObject.putProperty(obj, "health", player.getHealth());
+                    ScriptableObject.putProperty(obj, "maxHealth", player.getMaxHealth());
+                    ScriptableObject.putProperty(obj, "food", player.getFoodData().getFoodLevel());
+                    ScriptableObject.putProperty(obj, "saturation", player.getFoodData().getSaturationLevel());
+                    ScriptableObject.putProperty(obj, "xp", player.experienceLevel);
+                    ScriptableObject.putProperty(obj, "dimension", player.level().dimension().location().toString());
+                    var pos = player.position();
+                    Scriptable objPos = cx.newObject(scope);
+                    ScriptableObject.putProperty(objPos, "x", pos.x);
+                    ScriptableObject.putProperty(objPos, "y", pos.y);
+                    ScriptableObject.putProperty(objPos, "z", pos.z);
+                    ScriptableObject.putProperty(obj, "position", objPos);
+                    return obj;
+                }
+            });
+
+            // client.getLookingAt()
+            ScriptableObject.putProperty(clientObj, "getLookingAt", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    var hit = Minecraft.getInstance().hitResult;
+                    if (hit == null || hit.getType() == HitResult.Type.MISS) return null;
+                    Scriptable obj = cx.newObject(scope);
+                    ScriptableObject.putProperty(obj, "type", hit.getType().name().toLowerCase());
+                    var loc = hit.getLocation();
+                    Scriptable objPos = cx.newObject(scope);
+                    ScriptableObject.putProperty(objPos, "x", loc.x);
+                    ScriptableObject.putProperty(objPos, "y", loc.y);
+                    ScriptableObject.putProperty(objPos, "z", loc.z);
+                    ScriptableObject.putProperty(obj, "position", objPos);
+                    if (hit instanceof EntityHitResult ehr) {
+                        Entity target = ehr.getEntity();
+                        Scriptable objEnt = cx.newObject(scope);
+                        ScriptableObject.putProperty(objEnt, "name", target.getName().getString());
+                        ScriptableObject.putProperty(objEnt, "uuid", target.getUUID().toString());
+                        ScriptableObject.putProperty(objEnt, "type", target.getType().getDescriptionId());
+                        ScriptableObject.putProperty(obj, "entity", objEnt);
+                    }
+                    if (hit instanceof BlockHitResult bhr) {
+                        var blockPos = bhr.getBlockPos();
+                        Scriptable objBlockPos = cx.newObject(scope);
+                        ScriptableObject.putProperty(objBlockPos, "x", blockPos.getX());
+                        ScriptableObject.putProperty(objBlockPos, "y", blockPos.getY());
+                        ScriptableObject.putProperty(objBlockPos, "z", blockPos.getZ());
+                        ScriptableObject.putProperty(obj, "blockPos", objBlockPos);
+                        ScriptableObject.putProperty(obj, "direction", bhr.getDirection().getName());
+                    }
+                    return obj;
+                }
+            });
+
+            // client.getServerInfo()
+            ScriptableObject.putProperty(clientObj, "getServerInfo", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    var serverData = Minecraft.getInstance().getCurrentServer();
+                    if (serverData == null) {
+                        // Singleplayer — return local info
+                        Scriptable obj = cx.newObject(scope);
+                        ScriptableObject.putProperty(obj, "ip", "localhost");
+                        ScriptableObject.putProperty(obj, "name", "Singleplayer");
+                        ScriptableObject.putProperty(obj, "isLocal", true);
+                        return obj;
+                    }
+                    Scriptable obj = cx.newObject(scope);
+                    ScriptableObject.putProperty(obj, "ip", serverData.ip);
+                    ScriptableObject.putProperty(obj, "name", serverData.name);
+                    ScriptableObject.putProperty(obj, "isLocal", false);
+                    ScriptableObject.putProperty(obj, "playerCount", serverData.players != null ? serverData.players.online() : -1);
+                    ScriptableObject.putProperty(obj, "maxPlayers", serverData.players != null ? serverData.players.max() : -1);
+                    return obj;
                 }
             });
 
@@ -287,6 +399,37 @@ public class Box3JSClientEngine {
                 }
             });
 
+            // input.getMouseX()
+            ScriptableObject.putProperty(inputObj, "getMouseX", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    return Minecraft.getInstance().mouseHandler.xpos();
+                }
+            });
+
+            // input.getMouseY()
+            ScriptableObject.putProperty(inputObj, "getMouseY", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    return Minecraft.getInstance().mouseHandler.ypos();
+                }
+            });
+
+            // input.onMouseClick(callback) — returns GameEventHandlerToken
+            ScriptableObject.putProperty(inputObj, "onMouseClick", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    if (args.length < 1 || !(args[0] instanceof Function fn))
+                        return Undefined.instance;
+                    mouseClickHandlers.add(fn);
+                    registerMouseListener();
+                    return new GameEventHandlerToken(() -> mouseClickHandlers.remove(fn));
+                }
+            });
+
             ScriptableObject.putProperty(scope, "input", inputObj);
 
             // -- ui global (screen overlays) --------------------------------
@@ -352,6 +495,66 @@ public class Box3JSClientEngine {
                             }
                         });
                     }
+                    return Undefined.instance;
+                }
+            });
+
+            // ui.getScreenSize()
+            ScriptableObject.putProperty(uiObj, "getScreenSize", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    var window = Minecraft.getInstance().getWindow();
+                    Scriptable obj = cx.newObject(scope);
+                    ScriptableObject.putProperty(obj, "width", window.getScreenWidth());
+                    ScriptableObject.putProperty(obj, "height", window.getScreenHeight());
+                    ScriptableObject.putProperty(obj, "scaledWidth", window.getGuiScaledWidth());
+                    ScriptableObject.putProperty(obj, "scaledHeight", window.getGuiScaledHeight());
+                    return obj;
+                }
+            });
+
+            // ui.drawText(id, x, y, text, color?)
+            ScriptableObject.putProperty(uiObj, "drawText", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    if (args.length < 4) return -1;
+                    int id = args[0] instanceof Number n ? n.intValue() : drawTextIdCounter.incrementAndGet();
+                    int x = ((Number) args[1]).intValue();
+                    int y = ((Number) args[2]).intValue();
+                    String text = args[3].toString();
+                    int color = 0xFFFFFFFF;
+                    if (args.length > 4 && args[4] instanceof NativeObject c) {
+                        int r = ((Number) c.get("r", c)).intValue();
+                        int g = ((Number) c.get("g", c)).intValue();
+                        int b = ((Number) c.get("b", c)).intValue();
+                        color = 0xFF000000 | (r << 16) | (g << 8) | b;
+                    }
+                    drawTexts.put(id, new DrawTextEntry(x, y, text, color));
+                    registerRenderListener();
+                    return id;
+                }
+            });
+
+            // ui.removeDrawText(id)
+            ScriptableObject.putProperty(uiObj, "removeDrawText", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    if (args.length < 1) return Undefined.instance;
+                    int id = ((Number) args[0]).intValue();
+                    drawTexts.remove(id);
+                    return Undefined.instance;
+                }
+            });
+
+            // ui.clearDrawTexts()
+            ScriptableObject.putProperty(uiObj, "clearDrawTexts", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    drawTexts.clear();
                     return Undefined.instance;
                 }
             });
@@ -505,6 +708,54 @@ public class Box3JSClientEngine {
                 }
             });
             ScriptableObject.putProperty(scope, "http", httpObj);
+
+            // -- gui global -------------------------------------------------
+            ScriptableObject guiObj = (ScriptableObject) cx.newObject(scope);
+
+            ScriptableObject.putProperty(guiObj, "openGUI", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    if (args.length < 1 || !(args[0] instanceof NativeObject config))
+                        return Undefined.instance;
+
+                    String title = "Container";
+                    if (config.containsKey("title")) title = config.get("title").toString();
+                    int rows = 3;
+                    if (config.containsKey("rows"))
+                        rows = Math.max(1, Math.min(6, ((Number) config.get("rows")).intValue()));
+
+                    // Build slotsJson manually
+                    String slotsJson = "";
+                    if (config.containsKey("slots") && config.get("slots") instanceof NativeObject slots
+                            && slots.keySet().size() > 0) {
+                        StringBuilder sb = new StringBuilder("{");
+                        boolean first = true;
+                        for (Object key : slots.keySet()) {
+                            Object val = slots.get(key);
+                            if (val == null || val == UniqueTag.NOT_FOUND) continue;
+                            if (!first) sb.append(",");
+                            first = false;
+                            sb.append("\"").append(key).append("\":\"");
+                            sb.append(val.toString().replace("\\", "\\\\").replace("\"", "\\\""));
+                            sb.append("\"");
+                        }
+                        sb.append("}");
+                        slotsJson = sb.toString();
+                    }
+
+                    Box3JSGuiProxy proxy = new Box3JSGuiProxy();
+                    activeGuiProxy = proxy;
+
+                    PacketDistributor.sendToServer(
+                        new Box3JSNetwork.GUIServerboundPayload(0, title, rows, slotsJson,
+                            0, "", 0, false, false));
+
+                    return Context.javaToJS(proxy, scope);
+                }
+            });
+
+            ScriptableObject.putProperty(scope, "gui", guiObj);
 
             // -- regex helpers (shared pure JS, from Box3ScriptUtils) ---------
             cx.evaluateString(scope, com.box3lab.box3js.script.Box3ScriptUtils.REGEX_HELPERS_JS,
@@ -684,6 +935,55 @@ public class Box3JSClientEngine {
     private static String stringify(Context cx, Scriptable scope, Object value) {
         return com.box3lab.box3js.script.Box3ScriptUtils.stringify(cx, scope, value);
     }
+
+    // ── Render overlay for drawText ──
+
+    private void registerRenderListener() {
+        if (renderRegistered) return;
+        Minecraft.getInstance().execute(() -> {
+            if (renderRegistered) return;
+            NeoForge.EVENT_BUS.addListener(RenderGuiEvent.Post.class, event -> {
+                if (drawTexts.isEmpty()) return;
+                GuiGraphics gfx = event.getGuiGraphics();
+                var font = Minecraft.getInstance().font;
+                for (DrawTextEntry entry : drawTexts.values()) {
+                    gfx.drawString(font, entry.text(), entry.x(), entry.y(), entry.color());
+                }
+            });
+            renderRegistered = true;
+        });
+    }
+
+    // ── Mouse click listener ──
+
+    private void registerMouseListener() {
+        if (mouseRegistered) return;
+        Minecraft.getInstance().execute(() -> {
+            if (mouseRegistered) return;
+            NeoForge.EVENT_BUS.addListener(InputEvent.MouseButton.class, event -> {
+                if (mouseClickHandlers.isEmpty()) return;
+                int button = event.getButton();
+                int action = event.getAction();
+                double x = Minecraft.getInstance().mouseHandler.xpos();
+                double y = Minecraft.getInstance().mouseHandler.ypos();
+                for (Function fn : mouseClickHandlers) {
+                    Context cx = Context.enter();
+                    try {
+                        fn.call(cx, scope, scope, new Object[]{button, action, x, y});
+                    } catch (Exception e) {
+                        LOGGER.error("Mouse click handler error", e);
+                    } finally {
+                        Context.exit();
+                    }
+                }
+            });
+            mouseRegistered = true;
+        });
+    }
+
+    // ── Draw text entry ──
+
+    private record DrawTextEntry(int x, int y, String text, int color) {}
 
     // ── Console backend ──
 

@@ -71,11 +71,6 @@ public class Box3JSPlayer {
     public String getUserId() { return player.getUUID().toString(); }
     public ServerPlayer getPlayer() { return player; }
 
-    /** Whether this player has Box3JS installed on their client. */
-    public boolean hasBox3JSClientMod() {
-        return com.box3lab.box3js.Box3JS.clientsWithBox3JS.contains(player.getUUID());
-    }
-
     public int getOpLevel() { return server.getProfilePermissions(player.getGameProfile()); }
 
     public void setOpLevel(int level) {

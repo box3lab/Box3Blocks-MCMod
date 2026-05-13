@@ -13,15 +13,15 @@ world.onPlayerJoin(function(entity, tick) {
 
 ### player.name
 
-✅ Box3 API | Readonly. Player display name.
+Readonly. Player display name.
 
 ### player.userId
 
-✅ Box3 API | Readonly. Player UUID string (same as `entity.id`).
+Readonly. Player UUID string (same as `entity.id`).
 
 ### player.opLevel
 
-✅ Box3 API | Gets/sets the player's operator permission level (0–4).
+Gets/sets the player's operator permission level (0–4).
 
 | Level | Description |
 |-------|-------------|
@@ -44,11 +44,11 @@ There is also `player.getOpLevel()` method returning the permission level number
 
 ### player.invisible
 
-✅ Box3 API | Gets/sets whether the player is invisible.
+Gets/sets whether the player is invisible.
 
 ### player.scale
 
-✅ Box3 API | Readonly. Player model scale (Minecraft native scale, not Box3 scale).
+Readonly. Player model scale (Minecraft native scale, not Box3 scale).
 
 ```js
 player.invisible = true;  // Invisible
@@ -57,7 +57,7 @@ console.log("Player scale: " + player.scale);
 
 ## Movement
 
-All ✅ Box3 API.
+
 
 ### player.walkSpeed
 
@@ -131,23 +131,23 @@ world.onTick(function() {
 
 ### player.canFly
 
-✅ Box3 API | Gets/sets flight permission (`mayfly`). When `true`, player can take off by pressing jump.
+Gets/sets flight permission (`mayfly`). When `true`, player can take off by pressing jump.
 
 ### player.flying
 
-✅ Box3 API | Gets/sets whether the player is currently flying (`flying`). Requires `canFly = true` first.
+Gets/sets whether the player is currently flying (`flying`). Requires `canFly = true` first.
 
 ### player.flySpeed
 
-✅ Box3 API | Flying speed.
+Flying speed.
 
 ### player.disableFly
 
-✅ Box3 API | When set to `true`, immediately stops flight and disables flight permission.
+When set to `true`, immediately stops flight and disables flight permission.
 
 ### player.spectator
 
-✅ Box3 API | Readonly. Whether the player is in spectator mode.
+Readonly. Whether the player is in spectator mode.
 
 ```js
 // Enable flight
@@ -204,7 +204,7 @@ if (player.dead) {
 
 ### player.gameMode
 
-✅ Box3 API | Gets/sets game mode. Get returns a name string; set accepts a string or number.
+Gets/sets game mode. Get returns a name string; set accepts a string or number.
 
 ```js
 player.gameMode = "creative";   // Creative
@@ -216,7 +216,7 @@ player.gameMode = "spectator";  // Spectator
 
 ## Camera
 
-All ✅ Box3 API.
+
 
 ### player.cameraMode
 
@@ -259,11 +259,11 @@ var target = player.cameraTarget;
 
 ### player.teleport(pos)
 
-✅ Box3 API | Teleports the player to the given `GameVector3` coordinates.
+Teleports the player to the given `GameVector3` coordinates.
 
 ### player.spawnPoint
 
-✅ Box3 API | Gets/sets the player's respawn point (`GameVector3`). When reading, returns the world spawn if the player hasn't set a personal respawn point.
+Gets/sets the player's respawn point (`GameVector3`). When reading, returns the world spawn if the player hasn't set a personal respawn point.
 
 ```js
 // Property-style set
@@ -273,15 +273,15 @@ console.log(player.spawnPoint);
 
 ### player.setRespawnPoint(pos)
 
-✅ Box3 API | Sets the player's respawn point (method-style, equivalent to `spawnPoint` property).
+Sets the player's respawn point (method-style, equivalent to `spawnPoint` property).
 
 ### player.setSpawnPoint(pos)
 
-✅ Box3 API | Same as `setRespawnPoint`, Box3 standard naming.
+Same as `setRespawnPoint`, Box3 standard naming.
 
 ### player.respawn()
 
-✅ Box3 API | Forces the player to respawn (only works when dead).
+Forces the player to respawn (only works when dead).
 
 ### player.dimension
 
@@ -300,11 +300,11 @@ player.teleport(new GameVector3(0, 70, 0));
 
 ### player.kick()
 
-✅ Box3 API | Kicks the player with the default reason "Kicked".
+Kicks the player with the default reason "Kicked".
 
 ### player.kick(reason)
 
-✅ Box3 API | Kicks the player with a custom reason.
+Kicks the player with a custom reason.
 
 ```js
 player.kick("You have been removed from the game");
@@ -314,7 +314,7 @@ player.kick("You have been removed from the game");
 
 ### player.directMessage(msg)
 
-✅ Box3 API | Sends a chat message visible only to this player (system message).
+Sends a chat message visible only to this player (system message).
 
 ### player.directMessage(msg, color)
 
@@ -327,11 +327,11 @@ player.directMessage("Warning!", new GameRGBColor(1, 0.5, 0)); // Orange
 
 ### player.actionBar(msg)
 
-✅ Box3 API | Sends a message displayed on the action bar (above the hotbar).
+Sends a message displayed on the action bar (above the hotbar).
 
 ### player.title(title, subtitle)
 
-✅ Box3 API | Displays a screen title with default animation: fade-in 10 ticks, stay 70 ticks, fade-out 20 ticks.
+Displays a screen title with default animation: fade-in 10 ticks, stay 70 ticks, fade-out 20 ticks.
 
 ### player.title(title, subtitle, fadeIn, stay, fadeOut)
 
@@ -339,7 +339,7 @@ player.directMessage("Warning!", new GameRGBColor(1, 0.5, 0)); // Orange
 
 ### player.dialog(config)
 
-✅ Box3 API | Shows a dialog panel. Pass `{content, options}`, returns `{index, value}`. Currently simplified in MC — sends system messages.
+Shows a dialog panel. Pass `{content, options}`, returns `{index, value}`. Currently simplified in MC — sends system messages.
 
 ```js
 var result = player.dialog({
@@ -351,11 +351,11 @@ player.directMessage("You chose: " + result.value);
 
 ### player.link(href)
 
-✅ Box3 API | Sends a clickable URL link to the player (blue underlined text).
+Sends a clickable URL link to the player (blue underlined text).
 
 ### player.onChat(handler)
 
-✅ Box3 API | Registers a per-player chat handler (more granular than global `world.onChat`, useful for dialog trees).
+Registers a per-player chat handler (more granular than global `world.onChat`, useful for dialog trees).
 
 ```js
 player.directMessage("Hello!");
@@ -458,6 +458,57 @@ Clears the entire inventory (including armor slots and offhand).
 
 ```js
 player.clearInventory();
+```
+
+## Custom Container GUI
+
+⬆ MC Extension | Opens a script-controlled container GUI (chest-like screen) for the player, with custom slot contents, click behavior, and close callbacks.
+
+### player.openGUI(config?)
+
+Opens a container GUI and returns a `GUIController` handle.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `title` | `string` | `"Container"` | Container title |
+| `rows` | `number` | `3` | Number of rows (1–6), 9 slots each |
+| `slots` | `{ [slot: number]: string }` | `{}` | Pre-fill slots, key = slot index, value = item ID |
+
+**Returned `GUIController` methods:**
+
+| Method | Description |
+|--------|-------------|
+| `setItem(slot, itemId, count?)` | Place an item in the given slot |
+| `getItem(slot)` | Get item info as `{ id, count }` |
+| `onSlotClick(callback)` | Register click callback; `return false` to cancel |
+| `onClose(callback)` | Register close callback (ESC or `close()` fires it) |
+| `close()` | Close the container |
+
+```js
+world.onChat(function(entity, msg, tick) {
+  if (msg === "!shop") {
+    var gui = entity.player.openGUI({
+      title: "§6§lShop",
+      rows: 3,
+      slots: {
+        0: "minecraft:diamond",
+        4: "minecraft:emerald",
+        8: "minecraft:gold_ingot",
+      },
+    });
+
+    gui.setItem(1, "minecraft:netherite_ingot", 5);
+
+    gui.onSlotClick(function(slot, player) {
+      console.log("Clicked slot: " + slot);
+      if (slot === 0) return false;  // prevent taking the diamond
+    });
+
+    gui.onClose(function(player) {
+      player.directMessage("Shop closed");
+    });
+  }
+});
 ```
 
 ## Status Effects

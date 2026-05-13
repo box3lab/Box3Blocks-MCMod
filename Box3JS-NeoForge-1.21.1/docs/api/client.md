@@ -12,6 +12,7 @@
 | `storage` | `GameStorage` | 客户端本地持久化存储 |
 | `db` | `GameDatabase` | 客户端本地 SQLite 数据库 |
 | `http` | `GameHttpAPI` | HTTP 请求（同步/异步） |
+| `gui` | `GameGUI` | 自定义容器 GUI 界面 |
 | `remoteChannel` | `RemoteChannel` | 客户端 ↔ 服务端事件通信 |
 
 > **前置条件：** 客户端必须安装 Box3JS mod，服务端必须启用该项目的客户端脚本并通过网络自动下发。
@@ -21,7 +22,7 @@
 
 ### audio.playSound(path, volume, pitch)
 
-🆕 MC 扩展 | 播放音效（SoundSource.PLAYERS 类别）。
+播放音效（SoundSource.PLAYERS 类别）。
 
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
@@ -36,7 +37,7 @@ audio.playSound("minecraft:entity.experience_orb.pickup", 0.5, 1.5);
 
 ### audio.playMusic(path, volume, pitch)
 
-🆕 MC 扩展 | 播放音乐（SoundSource.MUSIC 类别）。参数同 `playSound`。
+播放音乐（SoundSource.MUSIC 类别）。参数同 `playSound`。
 
 ```js
 audio.playMusic("minecraft:music.creative", 0.5, 1.0);
@@ -44,7 +45,7 @@ audio.playMusic("minecraft:music.creative", 0.5, 1.0);
 
 ### audio.stopAll()
 
-🆕 MC 扩展 | 停止所有正在播放的声音和音乐。
+停止所有正在播放的声音和音乐。
 
 ```js
 audio.stopAll();
@@ -52,7 +53,7 @@ audio.stopAll();
 
 ### audio.getVolume(category)
 
-🆕 MC 扩展 | 获取指定音频类别的音量。
+获取指定音频类别的音量。
 
 | 参数 | 类型 | 说明 |
 |------|------|------|
@@ -64,7 +65,7 @@ var musicVol = audio.getVolume("music"); // 0.0–1.0
 
 ### audio.setVolume(category, value)
 
-🆕 MC 扩展 | 设置指定音频类别的音量。
+设置指定音频类别的音量。
 
 | 参数 | 类型 | 说明 |
 |------|------|------|
@@ -95,7 +96,7 @@ audio.setVolume("player", 0.8);
 
 ### client.onTick(callback)
 
-🆕 MC 扩展 | 注册客户端每 tick 回调（每秒 20 次）。无参数，无返回值。
+注册客户端每 tick 回调（每秒 20 次）。无参数，无返回值。
 
 ```js
 client.onTick(() => {
@@ -105,11 +106,59 @@ client.onTick(() => {
 
 > **注意：** 服务端也有 `world.onTick()`，但参数为 `TickInfo` 对象。客户端 `client.onTick()` 无参数。
 
+### client.getFPS()
+
+获取当前游戏帧率 (FPS)。
+
+```js
+var fps = client.getFPS();
+console.log(`Current FPS: ${fps}`);
+```
+
+### client.getPlayer()
+
+获取本地玩家信息。如果玩家未加载则返回 `null`。
+
+```js
+var player = client.getPlayer();
+if (player) {
+  console.log(`Player: ${player.name}, HP: ${player.health}/${player.maxHealth}`);
+  console.log(`Position: ${player.position.x}, ${player.position.y}, ${player.position.z}`);
+}
+```
+
+### client.getLookingAt()
+
+获取玩家准星正在看向的目标。未指向任何目标时返回 `null`。
+
+```js
+var target = client.getLookingAt();
+if (target) {
+  if (target.type === "entity") {
+    console.log(`Looking at entity: ${target.entity.name}`);
+  } else if (target.type === "block") {
+    console.log(`Looking at block: ${target.blockPos.x}, ${target.blockPos.y}, ${target.blockPos.z}`);
+  }
+}
+```
+
+### client.getServerInfo()
+
+获取当前连接的服务器信息。单人游戏返回 `{ ip: "localhost", name: "Singleplayer", isLocal: true }`。
+
+```js
+var info = client.getServerInfo();
+console.log(`Server: ${info.name} (${info.ip})`);
+if (!info.isLocal) {
+  console.log(`Players: ${info.playerCount}/${info.maxPlayers}`);
+}
+```
+
 ## input — 键盘输入
 
 ### input.isKeyDown(key)
 
-🆕 MC 扩展 | 检查指定按键当前是否被按下。
+检查指定按键当前是否被按下。
 
 | 参数 | 类型 | 说明 |
 |------|------|------|
@@ -123,11 +172,51 @@ if (input.isKeyDown("space")) {
 
 ### input.onKeyPress(key, callback)
 
-🆕 MC 扩展 | 注册按键按下回调（按下瞬间触发一次）。返回 `GameEventHandlerToken`，调用 `.cancel()` 取消。
+注册按键按下回调（按下瞬间触发一次）。返回 `GameEventHandlerToken`，调用 `.cancel()` 取消。
 
 ```js
 var token = input.onKeyPress("f", () => {
   chat.sendCommand("fly");
+});
+
+// 取消监听
+token.cancel();
+```
+
+### input.getMouseX()
+
+获取当前鼠标 X 坐标（屏幕像素）。
+
+```js
+var mx = input.getMouseX();
+```
+
+### input.getMouseY()
+
+获取当前鼠标 Y 坐标（屏幕像素）。
+
+```js
+var my = input.getMouseY();
+```
+
+### input.onMouseClick(callback)
+
+注册鼠标按键回调。返回 `GameEventHandlerToken`，调用 `.cancel()` 取消。
+
+回调参数：`(button: number, action: number, x: number, y: number) => void`
+
+| 参数 | 说明 |
+|------|------|
+| `button` | 0=左键, 1=右键, 2=中键 |
+| `action` | 0=释放, 1=按下, 2=重复 |
+| `x` | 鼠标 X 坐标（屏幕像素） |
+| `y` | 鼠标 Y 坐标（屏幕像素） |
+
+```js
+var token = input.onMouseClick((button, action, x, y) => {
+  if (action === 1) { // 按下
+    console.log(`Clicked button ${button} at (${x}, ${y})`);
+  }
 });
 
 // 取消监听
@@ -149,7 +238,7 @@ token.cancel();
 
 ### ui.showOverlay(text)
 
-🆕 MC 扩展 | 在动作栏（快捷栏上方）显示文字。支持颜色代码（`§a`、`§b` 等）。
+在动作栏（快捷栏上方）显示文字。支持颜色代码（`§a`、`§b` 等）。
 
 ```js
 ui.showOverlay("§a欢迎来到服务器！");
@@ -157,7 +246,7 @@ ui.showOverlay("§a欢迎来到服务器！");
 
 ### ui.showTitle(title, subtitle, fadeIn?, stay?, fadeOut?)
 
-🆕 MC 扩展 | 显示屏幕中央大标题。
+显示屏幕中央大标题。
 
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
@@ -174,17 +263,63 @@ ui.showTitle("§c游戏结束", "§7再接再厉");
 
 ### ui.showActionBar(text)
 
-🆕 MC 扩展 | 在动作栏显示文字（与 `showOverlay` 相同）。
+在动作栏显示文字（与 `showOverlay` 相同）。
 
 ```js
 ui.showActionBar("§e按 F 键使用技能");
+```
+
+### ui.getScreenSize()
+
+获取当前游戏窗口和 GUI 缩放尺寸。
+
+```js
+var size = ui.getScreenSize();
+console.log(size.width, size.height);           // 窗口像素
+console.log(size.scaledWidth, size.scaledHeight); // GUI 缩放坐标
+```
+
+### ui.drawText(id, x, y, text, color?)
+
+在屏幕上绘制自定义文字（每帧持续绘制，直到调用 `removeDrawText` 移除）。
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `id` | number | (必需) | 文字 ID，用于后续移除或更新 |
+| `x` | number | (必需) | X 坐标（GUI 缩放坐标系） |
+| `y` | number | (必需) | Y 坐标（GUI 缩放坐标系） |
+| `text` | string | (必需) | 要显示的文字 |
+| `color` | GameRGBColor | `白色` | 文字颜色 |
+
+返回文字 ID（与传入的 `id` 相同）。重复调用相同 ID 会覆盖之前的内容。
+
+```js
+var textId = ui.drawText(1, 10, 10, "Hello, Box3JS!");
+// 更新位置或内容
+ui.drawText(1, 10, 30, "Updated text", new GameRGBColor(1, 0, 0)); // 红色
+```
+
+### ui.removeDrawText(id)
+
+移除指定 ID 的绘制文字。
+
+```js
+ui.removeDrawText(1);
+```
+
+### ui.clearDrawTexts()
+
+清除所有通过 `drawText()` 绘制的文字。
+
+```js
+ui.clearDrawTexts();
 ```
 
 ## chat — 聊天消息与命令
 
 ### chat.sendMessage(text)
 
-🆕 MC 扩展 | 向服务端发送聊天消息。
+向服务端发送聊天消息。
 
 ```js
 chat.sendMessage("大家好！");
@@ -192,7 +327,7 @@ chat.sendMessage("大家好！");
 
 ### chat.sendCommand(cmd)
 
-🆕 MC 扩展 | 向服务端发送命令（等同于在聊天框输入 `/` 前缀的命令）。
+向服务端发送命令（等同于在聊天框输入 `/` 前缀的命令）。
 
 ```js
 chat.sendCommand("spawn");
@@ -201,7 +336,7 @@ chat.sendCommand("home");
 
 ### chat.onMessage(handler)
 
-🆕 MC 扩展 | 注册接收聊天消息的处理器。返回 `GameEventHandlerToken`，调用 `.cancel()` 取消。
+注册接收聊天消息的处理器。返回 `GameEventHandlerToken`，调用 `.cancel()` 取消。
 
 回调参数：`(message: string, sender: string, isSystem: boolean) => boolean | void`
 
@@ -220,13 +355,64 @@ var token = chat.onMessage((message, sender, isSystem) => {
 token.cancel();
 ```
 
+## gui — 自定义 GUI
+
+### gui.openGUI(config)
+
+打开一个脚本控制的自定义容器 GUI（类似箱子界面），返回控制器对象。
+客户端会自动向服务端请求创建容器，并返回 `GuiController` 用于操作界面和监听事件。
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `config.title` | string | `"Container"` | 标题 |
+| `config.rows` | number | `3` | 行数 (1–6) |
+| `config.slots` | object | `{}` | 初始物品，格式 `{ [槽位]: "物品ID" }` |
+
+```js
+var ctrl = gui.openGUI({
+  title: "§6商店",
+  rows: 3,
+  slots: { 0: "minecraft:diamond", 4: "minecraft:emerald" },
+});
+
+// 设置物品
+ctrl.setItem(1, "minecraft:gold_ingot", 5);
+
+// 获取物品
+var item = ctrl.getItem(0);
+console.log(item.id, item.count); // minecraft:diamond, 1
+
+// 监听槽位点击
+ctrl.onSlotClick((slot) => {
+  console.log("Clicked slot:", slot);
+});
+
+// 监听关闭
+ctrl.onClose(() => {
+  console.log("GUI closed");
+});
+
+// 关闭 GUI
+ctrl.close();
+```
+
+### GuiController 方法
+
+| 方法 | 说明 |
+|------|------|
+| `setItem(slot, itemId, count?)` | 设置指定槽位的物品 |
+| `getItem(slot)` | 获取指定槽位的物品，返回 `{ id, count }` |
+| `onSlotClick(callback)` | 注册槽位点击回调，`callback(slot: number)` |
+| `onClose(callback)` | 注册关闭回调，`callback()` |
+| `close()` | 关闭 GUI |
+
 ## remoteChannel — 客户端 ↔ 服务端通信
 
 客户端通过 `remoteChannel` 与服务端进行双向事件通信。事件数据通过 JSON 序列化传输。
 
 ### remoteChannel.sendServerEvent(event)
 
-🆕 MC 扩展 | 向服务端发送事件。`event` 为任意 JSON 可序列化的值。
+向服务端发送事件。`event` 为任意 JSON 可序列化的值。
 
 ```js
 remoteChannel.sendServerEvent({
@@ -237,7 +423,7 @@ remoteChannel.sendServerEvent({
 
 ### remoteChannel.onClientEvent(handler)
 
-🆕 MC 扩展 | 注册来自服务端的远程事件处理器。返回 `GameEventHandlerToken`。
+注册来自服务端的远程事件处理器。返回 `GameEventHandlerToken`。
 
 回调参数：`(event: { tick: number, args: T }) => void`
 
@@ -313,4 +499,4 @@ remoteChannel.onClientEvent((event) => {
 console.log("[client] loaded!");
 ```
 
-全部 🆕 MC 扩展（客户端 API 为 Box3JS 专属，非 Box3 平台原有）。
+客户端 API 为 Box3JS 专属。

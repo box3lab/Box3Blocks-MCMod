@@ -38,4 +38,33 @@ interface GameInput {
    * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to unsubscribe
    */
   onKeyPress(key: KeyName, callback: () => void): GameEventHandlerToken;
+
+  /**
+   * @zh 获取当前鼠标 X 坐标（屏幕像素）。
+   * @en Gets the current mouse X position in screen pixels.
+   * @returns @zh 鼠标 X 坐标 @en mouse X coordinate
+   */
+  getMouseX(): number;
+
+  /**
+   * @zh 获取当前鼠标 Y 坐标（屏幕像素）。
+   * @en Gets the current mouse Y position in screen pixels.
+   * @returns @zh 鼠标 Y 坐标 @en mouse Y coordinate
+   */
+  getMouseY(): number;
+
+  /**
+   * @zh 注册鼠标点击回调。
+   * @en Registers a mouse button click callback.
+   * @param callback - @zh 回调函数 (button, action, x, y)。button: 0=左键 1=右键 2=中键; action: 0=释放 1=按下 2=重复; x/y: 鼠标坐标 @en callback (button, action, x, y). button: 0=left 1=right 2=middle; action: 0=release 1=press 2=repeat; x/y: mouse position
+   * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to unsubscribe
+   */
+  onMouseClick(
+    callback: (
+      button: number,
+      action: number,
+      x: number,
+      y: number,
+    ) => void,
+  ): GameEventHandlerToken;
 }

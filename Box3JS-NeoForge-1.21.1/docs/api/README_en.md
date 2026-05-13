@@ -246,26 +246,26 @@ Find APIs by what you want to do, not by which global object they live on.
 
 | Object | Type | Description |
 |--------|------|-------------|
-| `world` | ✅ Box3 | World control, see [world_en.md](world_en.md) |
-| `entity` | ✅ Box3 | Entity wrapper (from callbacks or `world.spawnEntity`), see [entity_en.md](entity_en.md) |
-| `player` | ✅ Box3 | Player wrapper (via `entity.player`), see [player_en.md](player_en.md) |
-| `voxels` | ✅ Box3 | Block operations, see [voxels_en.md](voxels_en.md) |
-| `storage` | ✅ Box3 | Data persistence, see [storage_en.md](storage_en.md) |
-| `db` | ✅ Box3 | SQLite database, see [database_en.md](database_en.md) |
-| `http` | 🆕 MC Extension | HTTP requests, see [http_en.md](http_en.md) |
-| `audio` | 🆕 MC Extension | Client sound, music, volume control, see [client_en.md](client_en.md) |
-| `client` | 🆕 MC Extension | Client lifecycle, see [client_en.md](client_en.md) |
-| `input` | 🆕 MC Extension | Client keyboard input, see [client_en.md](client_en.md) |
-| `ui` | 🆕 MC Extension | Client screen UI, see [client_en.md](client_en.md) |
-| `chat` | 🆕 MC Extension | Client chat send/receive, see [client_en.md](client_en.md) |
-| `remoteChannel` | 🆕 MC Extension | Server↔client event channel, see [client_en.md](client_en.md) |
-| `registries` | 🆕 MC Extension | Custom blocks, items & sounds (compiled mode), see [registries_en.md](registries_en.md) |
-| `console` | ✅ Box3 | Console logging (`log`/`warn`/`error`/`debug`) |
-| `GameVector3` | ✅ Box3 | 3D vector, see [math_en.md](math_en.md) |
-| `GameBounds3` | ✅ Box3 | Bounding box, see [math_en.md](math_en.md) |
-| `GameRGBColor` | ✅ Box3 | RGB color, see [math_en.md](math_en.md) |
-| `GameRGBAColor` | ✅ Box3 | RGBA color, see [math_en.md](math_en.md) |
-| `GameQuaternion` | ✅ Box3 | Quaternion, see [math_en.md](math_en.md) |
+| `world` | | World control, see [world_en.md](world_en.md) |
+| `entity` | | Entity wrapper (from callbacks or `world.spawnEntity`), see [entity_en.md](entity_en.md) |
+| `player` | | Player wrapper (via `entity.player`), see [player_en.md](player_en.md) |
+| `voxels` | | Block operations, see [voxels_en.md](voxels_en.md) |
+| `storage` | | Data persistence, see [storage_en.md](storage_en.md) |
+| `db` | | SQLite database, see [database_en.md](database_en.md) |
+| `http` | Client | HTTP requests, see [http_en.md](http_en.md) |
+| `audio` | Client | Client sound, music, volume control, see [client_en.md](client_en.md) |
+| `client` | Client | Client lifecycle, see [client_en.md](client_en.md) |
+| `input` | Client | Client keyboard input, see [client_en.md](client_en.md) |
+| `ui` | Client | Client screen UI, see [client_en.md](client_en.md) |
+| `chat` | Client | Client chat send/receive, see [client_en.md](client_en.md) |
+| `remoteChannel` | Client | Server↔client event channel, see [client_en.md](client_en.md) |
+| `registries` | Server | Custom blocks, items & sounds (compiled mode), see [registries_en.md](registries_en.md) |
+| `console` | | Console logging (`log`/`warn`/`error`/`debug`) |
+| `GameVector3` | | 3D vector, see [math_en.md](math_en.md) |
+| `GameBounds3` | | Bounding box, see [math_en.md](math_en.md) |
+| `GameRGBColor` | | RGB color, see [math_en.md](math_en.md) |
+| `GameRGBAColor` | | RGBA color, see [math_en.md](math_en.md) |
+| `GameQuaternion` | | Quaternion, see [math_en.md](math_en.md) |
 
 ## API Legend
 

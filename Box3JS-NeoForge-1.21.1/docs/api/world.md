@@ -6,7 +6,7 @@
 
 ### world.projectName
 
-✅ Box3 API | 只读属性。服务端 MOTD 字符串。为兼容旧代码也可作为方法调用 `world.projectName()`。
+只读属性。服务端 MOTD 字符串。为兼容旧代码也可作为方法调用 `world.projectName()`。
 
 ```js
 console.log(world.projectName); // "A Minecraft Server"
@@ -14,7 +14,7 @@ console.log(world.projectName); // "A Minecraft Server"
 
 ### world.serverId
 
-✅ Box3 API | 可读写属性。服务器标识符，映射到服务端 MOTD。
+可读写属性。服务器标识符，映射到服务端 MOTD。
 
 ```js
 world.serverId = "My Cool Server";
@@ -23,7 +23,7 @@ console.log(world.serverId);
 
 ### world.currentTick
 
-✅ Box3 API | 只读属性。服务器自启动以来的总 tick 数。为兼容旧代码也可作为方法调用 `world.currentTick()`。
+只读属性。服务器自启动以来的总 tick 数。为兼容旧代码也可作为方法调用 `world.currentTick()`。
 
 ```js
 var uptime = world.currentTick;
@@ -34,7 +34,7 @@ world.say("服务器已运行 " + Math.floor(uptime / 20 / 60) + " 分钟");
 
 ### world.rainDensity
 
-✅ Box3 API | 获取/设置降雨强度，范围 0.0–1.0。
+获取/设置降雨强度，范围 0.0–1.0。
 
 ```js
 world.rainDensity = 1.0; // 满强度下雨
@@ -61,7 +61,7 @@ world.clearWeather();
 
 ### world.time
 
-✅ Box3 API | 获取/设置世界时间（tick）。Minecraft 一天 = 24000 tick。
+获取/设置世界时间（tick）。Minecraft 一天 = 24000 tick。
 
 ```js
 world.time = 6000; // 正午
@@ -79,7 +79,7 @@ world.setTime(6000); // 等效于 world.time = 6000
 
 ### world.timeScale
 
-✅ Box3 API | 获取/设置时间流速。`0` = 暂停，`1` = 正常。底层修改 `doDaylightCycle` 游戏规则。
+获取/设置时间流速。`0` = 暂停，`1` = 正常。底层修改 `doDaylightCycle` 游戏规则。
 
 ```js
 world.timeScale = 0; // 冻结时间
@@ -90,7 +90,7 @@ world.timeScale = 1; // 恢复正常
 
 ### world.difficulty
 
-✅ Box3 API | 获取/设置游戏难度。get 返回名称字符串，set 接受名称字符串或数字 0–3。
+获取/设置游戏难度。get 返回名称字符串，set 接受名称字符串或数字 0–3。
 
 ```js
 world.difficulty = "hard";
@@ -104,11 +104,11 @@ console.log(world.difficulty); // "hard"
 
 ### world.spawnPoint
 
-✅ Box3 API | 只读，返回世界出生点 `GameVector3`。
+只读，返回世界出生点 `GameVector3`。
 
 ### world.setWorldSpawn(pos)
 
-✅ Box3 API | 设置世界出生点。
+设置世界出生点。
 
 ```js
 world.setWorldSpawn(new GameVector3(0, 70, 0));
@@ -146,7 +146,7 @@ console.log(world.getGameRule("doMobSpawning")); // true/false
 
 ### world.spawnEntity(type, pos)
 
-✅ Box3 API | 在指定位置生成实体。`type` 为命名空间 ID，返回 `Box3JSEntity`。
+在指定位置生成实体。`type` 为命名空间 ID，返回 `Box3JSEntity`。
 
 ```js
 var zombie = world.spawnEntity("minecraft:zombie", new GameVector3(0, 100, 0));
@@ -159,7 +159,7 @@ zombie.setAI(true);
 
 ### world.createEntity(config)
 
-✅ Box3 API | 使用完整配置对象生成实体。返回 `Box3JSEntity`。
+使用完整配置对象生成实体。返回 `Box3JSEntity`。
 
 支持的配置字段：`type`、`position`、`velocity`、`fixed`、`gravity`、`friction`、`mass`、`restitution`、`collides`、`meshInvisible`、`hp`、`maxHp`、`tags`（数组）。
 
@@ -179,7 +179,7 @@ var entity = world.createEntity({
 
 ## 音效属性
 
-✅ Box3 API | 存储音效路径字符串，设为非空后触发时机如下：
+存储音效路径字符串，设为非空后触发时机如下：
 
 | 属性               | 触发时机                                        |
 | ------------------ | ----------------------------------------------- |
@@ -203,7 +203,7 @@ world.breakVoxelSound = "minecraft:block.stone.break";
 
 ### world.sound(config)
 
-✅ Box3 API | 播放音效。`config` 可以是路径字符串或 `{path, position, volume, pitch}` 对象。
+播放音效。`config` 可以是路径字符串或 `{path, position, volume, pitch}` 对象。
 
 ```js
 // 字符串简写 — 在原点以默认音量/音调播放
@@ -222,7 +222,7 @@ world.sound({
 
 ### world.searchBox(bounds)
 
-✅ Box3 API | 查询 GameBounds3 区域内的所有实体。
+查询 GameBounds3 区域内的所有实体。
 
 ```js
 var bounds = new GameBounds3(
@@ -254,19 +254,19 @@ var token = world.onTick(function (info) {
 
 | 事件                         | 类型    | 回调签名                                               | 触发时机                              |
 | ---------------------------- | ------- | ------------------------------------------------------ | ------------------------------------- |
-| `world.onTick(fn)`           | ✅ Box3 | `(info)` → `{tick, prevTick, elapsedTimeMS, skip}`     | 每 tick                               |
-| `world.onPlayerJoin(fn)`     | ✅ Box3 | `(entity, tick)`                                       | 玩家登录                              |
-| `world.onPlayerLeave(fn)`    | ✅ Box3 | `(entity, tick)`                                       | 玩家退出                              |
-| `world.onChat(fn)`           | ✅ Box3 | `(entity, message, tick) => boolean \| void`           | 玩家发送聊天消息；返回 `false` 可取消 |
-| `world.onVoxelDestroy(fn)`   | ✅ Box3 | `(entity, x, y, z, voxel, tick)`                       | 玩家破坏方块                          |
+| `world.onTick(fn)`           | | `(info)` → `{tick, prevTick, elapsedTimeMS, skip}`     | 每 tick                               |
+| `world.onPlayerJoin(fn)`     | | `(entity, tick)`                                       | 玩家登录                              |
+| `world.onPlayerLeave(fn)`    | | `(entity, tick)`                                       | 玩家退出                              |
+| `world.onChat(fn)`           | | `(entity, message, tick) => boolean \| void`           | 玩家发送聊天消息；返回 `false` 可取消 |
+| `world.onVoxelDestroy(fn)`   | | `(entity, x, y, z, voxel, tick)`                       | 玩家破坏方块                          |
 | `world.onBlockPlace(fn)`     | ⬆ MC    | `(entity, x, y, z, voxel, voxelId, tick)`              | 玩家放置方块                          |
 | `world.onBlockActivate(fn)`  | ⬆ MC    | `(entity, x, y, z, voxel, tick)`                       | 玩家右键方块                          |
-| `world.onInteract(fn)`       | ✅ Box3 | `(entity, target, tick)`                               | 玩家右键实体                          |
-| `world.onVoxelContact(fn)`   | ✅ Box3 | `(entity, voxelId, x, y, z, contactType, force, tick)` | 实体接触方块                          |
-| `world.onEntityContact(fn)`  | ✅ Box3 | `(entity, other, tick)`                                | 两个实体接触                          |
-| `world.onEntitySeparate(fn)` | ✅ Box3 | `(entity, other, tick)`                                | 两个实体分离                          |
-| `world.onFluidEnter(fn)`     | ✅ Box3 | `(entity, fluid, x, y, z, tick)`                       | 实体进入液体                          |
-| `world.onFluidLeave(fn)`     | ✅ Box3 | `(entity, fluid, x, y, z, tick)`                       | 实体离开液体                          |
+| `world.onInteract(fn)`       | | `(entity, target, tick)`                               | 玩家右键实体                          |
+| `world.onVoxelContact(fn)`   | | `(entity, voxelId, x, y, z, contactType, force, tick)` | 实体接触方块                          |
+| `world.onEntityContact(fn)`  | | `(entity, other, tick)`                                | 两个实体接触                          |
+| `world.onEntitySeparate(fn)` | | `(entity, other, tick)`                                | 两个实体分离                          |
+| `world.onFluidEnter(fn)`     | | `(entity, fluid, x, y, z, tick)`                       | 实体进入液体                          |
+| `world.onFluidLeave(fn)`     | | `(entity, fluid, x, y, z, tick)`                       | 实体离开液体                          |
 | `world.onEntityDeath(fn)`    | ⬆ MC    | `(entity, killer, tick)`                               | 实体死亡；`killer` 可能为 null        |
 | `world.onEntityDamage(fn)`   | ⬆ MC    | `(entity, amount, source, attacker, tick)`             | 实体受伤（Pre 阶段）                  |
 | `world.onPlayerRespawn(fn)`  | ⬆ MC    | `(entity, tick)`                                       | 玩家重生                              |
@@ -330,11 +330,11 @@ world.onEntityDeath((entity, killer) => {
 
 ### world.querySelectorAll(selector)
 
-✅ Box3 API | 查询所有匹配实体。返回 `Box3JSEntity[]`。
+查询所有匹配实体。返回 `Box3JSEntity[]`。
 
 ### world.querySelector(selector)
 
-✅ Box3 API | 查询单个匹配实体。返回 `Box3JSEntity` 或 null。
+查询单个匹配实体。返回 `Box3JSEntity` 或 null。
 
 **选择器语法：**
 
@@ -359,7 +359,7 @@ if (specific) {
 
 ### world.say(message)
 
-✅ Box3 API | 向全服广播消息。
+向全服广播消息。
 
 ```js
 world.say("§6[公告] §f比赛即将开始！");

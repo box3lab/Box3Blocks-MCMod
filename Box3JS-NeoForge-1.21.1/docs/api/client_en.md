@@ -12,6 +12,7 @@ Client scripts run locally on the player's Minecraft client and are accessed thr
 | `storage` | `GameStorage` | Client-side persistent key-value storage |
 | `db` | `GameDatabase` | Client-side SQLite database |
 | `http` | `GameHttpAPI` | HTTP requests (sync/async) |
+| `gui` | `GameGUI` | Custom container GUI interface |
 | `remoteChannel` | `RemoteChannel` | Client ↔ Server event communication |
 
 > **Prerequisite:** The client must have the Box3JS mod installed. The server must enable the project's client script, which is automatically sent to connecting players.
@@ -21,7 +22,7 @@ Client scripts run locally on the player's Minecraft client and are accessed thr
 
 ### audio.playSound(path, volume, pitch)
 
-🆕 MC Extension | Plays a sound effect (SoundSource.PLAYERS category).
+Plays a sound effect (SoundSource.PLAYERS category).
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -36,7 +37,7 @@ audio.playSound("minecraft:entity.experience_orb.pickup", 0.5, 1.5);
 
 ### audio.playMusic(path, volume, pitch)
 
-🆕 MC Extension | Plays music (SoundSource.MUSIC category). Same parameters as `playSound`.
+Plays music (SoundSource.MUSIC category). Same parameters as `playSound`.
 
 ```js
 audio.playMusic("minecraft:music.creative", 0.5, 1.0);
@@ -44,7 +45,7 @@ audio.playMusic("minecraft:music.creative", 0.5, 1.0);
 
 ### audio.stopAll()
 
-🆕 MC Extension | Stops all currently playing sounds and music.
+Stops all currently playing sounds and music.
 
 ```js
 audio.stopAll();
@@ -52,7 +53,7 @@ audio.stopAll();
 
 ### audio.getVolume(category)
 
-🆕 MC Extension | Gets the volume of a specific audio category.
+Gets the volume of a specific audio category.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
@@ -64,7 +65,7 @@ var musicVol = audio.getVolume("music"); // 0.0–1.0
 
 ### audio.setVolume(category, value)
 
-🆕 MC Extension | Sets the volume of a specific audio category.
+Sets the volume of a specific audio category.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
@@ -95,7 +96,7 @@ audio.setVolume("player", 0.8);
 
 ### client.onTick(callback)
 
-🆕 MC Extension | Registers a callback invoked every client tick (20 times/sec). No parameters, no return value.
+Registers a callback invoked every client tick (20 times/sec). No parameters, no return value.
 
 ```js
 client.onTick(() => {
@@ -105,11 +106,59 @@ client.onTick(() => {
 
 > **Note:** Server-side `world.onTick()` receives a `TickInfo` object. Client-side `client.onTick()` receives nothing.
 
+### client.getFPS()
+
+Gets the current frames per second (FPS).
+
+```js
+var fps = client.getFPS();
+console.log(`Current FPS: ${fps}`);
+```
+
+### client.getPlayer()
+
+Gets local player information. Returns `null` if the player is not yet loaded.
+
+```js
+var player = client.getPlayer();
+if (player) {
+  console.log(`Player: ${player.name}, HP: ${player.health}/${player.maxHealth}`);
+  console.log(`Position: ${player.position.x}, ${player.position.y}, ${player.position.z}`);
+}
+```
+
+### client.getLookingAt()
+
+Gets what the player's crosshair is currently pointing at. Returns `null` when not looking at anything.
+
+```js
+var target = client.getLookingAt();
+if (target) {
+  if (target.type === "entity") {
+    console.log(`Looking at entity: ${target.entity.name}`);
+  } else if (target.type === "block") {
+    console.log(`Looking at block: ${target.blockPos.x}, ${target.blockPos.y}, ${target.blockPos.z}`);
+  }
+}
+```
+
+### client.getServerInfo()
+
+Gets current server connection information. Returns `{ ip: "localhost", name: "Singleplayer", isLocal: true }` for singleplayer.
+
+```js
+var info = client.getServerInfo();
+console.log(`Server: ${info.name} (${info.ip})`);
+if (!info.isLocal) {
+  console.log(`Players: ${info.playerCount}/${info.maxPlayers}`);
+}
+```
+
 ## input — Keyboard Input
 
 ### input.isKeyDown(key)
 
-🆕 MC Extension | Checks whether a key is currently held down.
+Checks whether a key is currently held down.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
@@ -123,11 +172,51 @@ if (input.isKeyDown("space")) {
 
 ### input.onKeyPress(key, callback)
 
-🆕 MC Extension | Registers a callback fired once when the key is pressed. Returns `GameEventHandlerToken`; call `.cancel()` to unregister.
+Registers a callback fired once when the key is pressed. Returns `GameEventHandlerToken`; call `.cancel()` to unregister.
 
 ```js
 var token = input.onKeyPress("f", () => {
   chat.sendCommand("fly");
+});
+
+// Unregister
+token.cancel();
+```
+
+### input.getMouseX()
+
+Gets the current mouse X position in screen pixels.
+
+```js
+var mx = input.getMouseX();
+```
+
+### input.getMouseY()
+
+Gets the current mouse Y position in screen pixels.
+
+```js
+var my = input.getMouseY();
+```
+
+### input.onMouseClick(callback)
+
+Registers a mouse button callback. Returns `GameEventHandlerToken`; call `.cancel()` to unregister.
+
+Callback: `(button: number, action: number, x: number, y: number) => void`
+
+| Parameter | Description |
+|-----------|-------------|
+| `button` | 0=left, 1=right, 2=middle |
+| `action` | 0=release, 1=press, 2=repeat |
+| `x` | Mouse X in screen pixels |
+| `y` | Mouse Y in screen pixels |
+
+```js
+var token = input.onMouseClick((button, action, x, y) => {
+  if (action === 1) { // pressed
+    console.log(`Clicked button ${button} at (${x}, ${y})`);
+  }
 });
 
 // Unregister
@@ -149,7 +238,7 @@ token.cancel();
 
 ### ui.showOverlay(text)
 
-🆕 MC Extension | Displays text in the action bar (above the hotbar). Supports color codes (`§a`, `§b`, etc.).
+Displays text in the action bar (above the hotbar). Supports color codes (`§a`, `§b`, etc.).
 
 ```js
 ui.showOverlay("§aWelcome to the server!");
@@ -157,7 +246,7 @@ ui.showOverlay("§aWelcome to the server!");
 
 ### ui.showTitle(title, subtitle, fadeIn?, stay?, fadeOut?)
 
-🆕 MC Extension | Displays a large centered screen title.
+Displays a large centered screen title.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -174,17 +263,63 @@ ui.showTitle("§cGame Over", "§7Try again");
 
 ### ui.showActionBar(text)
 
-🆕 MC Extension | Displays text in the action bar (same as `showOverlay`).
+Displays text in the action bar (same as `showOverlay`).
 
 ```js
 ui.showActionBar("§ePress F to use ability");
+```
+
+### ui.getScreenSize()
+
+Gets the current game window and GUI-scaled dimensions.
+
+```js
+var size = ui.getScreenSize();
+console.log(size.width, size.height);           // window pixels
+console.log(size.scaledWidth, size.scaledHeight); // GUI-scaled
+```
+
+### ui.drawText(id, x, y, text, color?)
+
+Draws custom text on screen (persists every frame until removed via `removeDrawText`).
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `id` | number | (required) | Text ID for later removal or update |
+| `x` | number | (required) | X position (GUI-scaled coordinates) |
+| `y` | number | (required) | Y position (GUI-scaled coordinates) |
+| `text` | string | (required) | Text to display |
+| `color` | GameRGBColor | white | Text colour |
+
+Returns the text ID (same as the passed `id`). Reusing the same ID overwrites the previous entry.
+
+```js
+var textId = ui.drawText(1, 10, 10, "Hello, Box3JS!");
+// Update position or content
+ui.drawText(1, 10, 30, "Updated text", new GameRGBColor(1, 0, 0)); // red
+```
+
+### ui.removeDrawText(id)
+
+Removes the drawn text with the given ID.
+
+```js
+ui.removeDrawText(1);
+```
+
+### ui.clearDrawTexts()
+
+Clears all texts drawn via `drawText()`.
+
+```js
+ui.clearDrawTexts();
 ```
 
 ## chat — Chat Messages & Commands
 
 ### chat.sendMessage(text)
 
-🆕 MC Extension | Sends a chat message to the server.
+Sends a chat message to the server.
 
 ```js
 chat.sendMessage("Hello everyone!");
@@ -192,7 +327,7 @@ chat.sendMessage("Hello everyone!");
 
 ### chat.sendCommand(cmd)
 
-🆕 MC Extension | Sends a command to the server (equivalent to typing a `/` command in chat).
+Sends a command to the server (equivalent to typing a `/` command in chat).
 
 ```js
 chat.sendCommand("spawn");
@@ -201,7 +336,7 @@ chat.sendCommand("home");
 
 ### chat.onMessage(handler)
 
-🆕 MC Extension | Registers a handler for incoming chat messages. Returns `GameEventHandlerToken`; call `.cancel()` to unregister.
+Registers a handler for incoming chat messages. Returns `GameEventHandlerToken`; call `.cancel()` to unregister.
 
 Callback: `(message: string, sender: string, isSystem: boolean) => boolean | void`
 
@@ -220,13 +355,64 @@ var token = chat.onMessage((message, sender, isSystem) => {
 token.cancel();
 ```
 
+## gui — Custom GUI
+
+### gui.openGUI(config)
+
+Opens a script-controlled custom container GUI (chest-like screen), returning a controller object.
+The client automatically requests the server to create the container, and returns a `GuiController` for manipulating the GUI and listening to events.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `config.title` | string | `"Container"` | Title |
+| `config.rows` | number | `3` | Number of rows (1–6) |
+| `config.slots` | object | `{}` | Initial items, format `{ [slot]: "itemId" }` |
+
+```js
+var ctrl = gui.openGUI({
+  title: "§6Shop",
+  rows: 3,
+  slots: { 0: "minecraft:diamond", 4: "minecraft:emerald" },
+});
+
+// Set item
+ctrl.setItem(1, "minecraft:gold_ingot", 5);
+
+// Get item
+var item = ctrl.getItem(0);
+console.log(item.id, item.count); // minecraft:diamond, 1
+
+// Slot click listener
+ctrl.onSlotClick((slot) => {
+  console.log("Clicked slot:", slot);
+});
+
+// Close listener
+ctrl.onClose(() => {
+  console.log("GUI closed");
+});
+
+// Close the GUI
+ctrl.close();
+```
+
+### GuiController Methods
+
+| Method | Description |
+|--------|-------------|
+| `setItem(slot, itemId, count?)` | Sets the item in the given slot |
+| `getItem(slot)` | Gets the item in the given slot, returns `{ id, count }` |
+| `onSlotClick(callback)` | Registers a slot click callback, `callback(slot: number)` |
+| `onClose(callback)` | Registers a close callback, `callback()` |
+| `close()` | Closes the GUI |
+
 ## remoteChannel — Client ↔ Server Communication
 
 The client uses `remoteChannel` for bidirectional event communication with the server. Event data is JSON-serialized.
 
 ### remoteChannel.sendServerEvent(event)
 
-🆕 MC Extension | Sends an event to the server. `event` is any JSON-serializable value.
+Sends an event to the server. `event` is any JSON-serializable value.
 
 ```js
 remoteChannel.sendServerEvent({
@@ -237,7 +423,7 @@ remoteChannel.sendServerEvent({
 
 ### remoteChannel.onClientEvent(handler)
 
-🆕 MC Extension | Registers a handler for remote events sent from the server. Returns `GameEventHandlerToken`.
+Registers a handler for remote events sent from the server. Returns `GameEventHandlerToken`.
 
 Callback: `(event: { tick: number, args: T }) => void`
 
@@ -313,4 +499,4 @@ remoteChannel.onClientEvent((event) => {
 console.log("[client] loaded!");
 ```
 
-All 🆕 MC Extension (client APIs are Box3JS-specific, not from the Box3 platform).
+Client APIs are Box3JS-specific.

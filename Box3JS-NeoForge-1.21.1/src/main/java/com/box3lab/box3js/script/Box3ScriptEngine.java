@@ -336,7 +336,7 @@ public class Box3ScriptEngine {
         };
     }
 
-    private void runInContext(String project, Runnable action) {
+    public void runInContext(String project, Runnable action) {
         String prev = currentProject;
         setCurrentProject(project);
         try {

@@ -246,26 +246,26 @@ Box3JS API 按运行环境分为三大类：
 
 | 对象 | 类型 | 说明 |
 |------|------|------|
-| `world` | ✅ Box3 | 世界控制，见 [world.md](world.md) |
-| `entity` | ✅ Box3 | 实体包装（回调参数或 `world.spawnEntity` 创建），见 [entity.md](entity.md) |
-| `player` | ✅ Box3 | 玩家包装（通过 `entity.player` 获取），见 [player.md](player.md) |
-| `voxels` | ✅ Box3 | 方块操作，见 [voxels.md](voxels.md) |
-| `storage` | ✅ Box3 | 数据持久化，见 [storage.md](storage.md) |
-| `db` | ✅ Box3 | SQLite 数据库，见 [database.md](database.md) |
-| `http` | 🆕 MC 扩展 | HTTP 请求，见 [http.md](http.md) |
-| `audio` | 🆕 MC 扩展 | 客户端音效、音乐、音量控制，见 [client.md](client.md) |
-| `client` | 🆕 MC 扩展 | 客户端生命周期，见 [client.md](client.md) |
-| `input` | 🆕 MC 扩展 | 客户端键盘输入，见 [client.md](client.md) |
-| `ui` | 🆕 MC 扩展 | 客户端屏幕 UI，见 [client.md](client.md) |
-| `chat` | 🆕 MC 扩展 | 客户端聊天收发，见 [client.md](client.md) |
-| `remoteChannel` | 🆕 MC 扩展 | 服务端↔客户端事件通信，见 [client.md](client.md) |
-| `registries` | 🆕 MC 扩展 | 自定义方块/物品/音效（编译模式），见 [registries.md](registries.md) |
-| `console` | ✅ Box3 | 控制台日志输出（`log`/`warn`/`error`/`debug`） |
-| `GameVector3` | ✅ Box3 | 三维向量，见 [math.md](math.md) |
-| `GameBounds3` | ✅ Box3 | 包围盒，见 [math.md](math.md) |
-| `GameRGBColor` | ✅ Box3 | RGB 颜色，见 [math.md](math.md) |
-| `GameRGBAColor` | ✅ Box3 | RGBA 颜色，见 [math.md](math.md) |
-| `GameQuaternion` | ✅ Box3 | 四元数，见 [math.md](math.md) |
+| `world` | | 世界控制，见 [world.md](world.md) |
+| `entity` | | 实体包装（回调参数或 `world.spawnEntity` 创建），见 [entity.md](entity.md) |
+| `player` | | 玩家包装（通过 `entity.player` 获取），见 [player.md](player.md) |
+| `voxels` | | 方块操作，见 [voxels.md](voxels.md) |
+| `storage` | | 数据持久化，见 [storage.md](storage.md) |
+| `db` | | SQLite 数据库，见 [database.md](database.md) |
+| `http` | 客户端 | HTTP 请求，见 [http.md](http.md) |
+| `audio` | 客户端 | 客户端音效、音乐、音量控制，见 [client.md](client.md) |
+| `client` | 客户端 | 客户端生命周期，见 [client.md](client.md) |
+| `input` | 客户端 | 客户端键盘输入，见 [client.md](client.md) |
+| `ui` | 客户端 | 客户端屏幕 UI，见 [client.md](client.md) |
+| `chat` | 客户端 | 客户端聊天收发，见 [client.md](client.md) |
+| `remoteChannel` | 客户端 | 服务端↔客户端事件通信，见 [client.md](client.md) |
+| `registries` | 服务端 | 自定义方块/物品/音效（编译模式），见 [registries.md](registries.md) |
+| `console` | | 控制台日志输出（`log`/`warn`/`error`/`debug`） |
+| `GameVector3` | | 三维向量，见 [math.md](math.md) |
+| `GameBounds3` | | 包围盒，见 [math.md](math.md) |
+| `GameRGBColor` | | RGB 颜色，见 [math.md](math.md) |
+| `GameRGBAColor` | | RGBA 颜色，见 [math.md](math.md) |
+| `GameQuaternion` | | 四元数，见 [math.md](math.md) |
 
 ## API 标注说明
 
