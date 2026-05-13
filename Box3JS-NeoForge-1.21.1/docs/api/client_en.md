@@ -1,6 +1,8 @@
 # client — Client-side API
 
-Client scripts run locally on the player's Minecraft client and are accessed through five globals:
+Client scripts run locally on the player's Minecraft client. The entry file is `src/client/app.ts`, and the compiled output is `dist/client.js`. Client APIs handle local UI, input, audio, chat helpers, local storage, local HTTP/SQLite, and cross-side events.
+
+Client scripts access APIs through these globals:
 
 | Object | Type | Purpose |
 |--------|------|---------|
@@ -16,7 +18,13 @@ Client scripts run locally on the player's Minecraft client and are accessed thr
 | `remoteChannel` | `RemoteChannel` | Client ↔ Server event communication |
 
 > **Prerequisite:** The client must have the Box3JS mod installed. The server must enable the project's client script, which is automatically sent to connecting players.
-> Client scripts go in `src/client/`, server scripts in `src/server/`.
+> Client scripts go in `src/client/`, server scripts in `src/server/`. The client type entry is `types/client/index.d.ts`; it does not include server APIs such as `world` / `voxels`.
+
+Client scripts cannot directly modify the server world. To change blocks, players, entities, or scoreboards, send an event to the server:
+
+```ts
+remoteChannel.sendServerEvent({ type: "requestTeleport" });
+```
 
 ## audio — Sound Playback
 
@@ -383,12 +391,12 @@ var item = ctrl.getItem(0);
 console.log(item.id, item.count); // minecraft:diamond, 1
 
 // Slot click listener
-ctrl.onSlotClick((slot) => {
+var clickToken = ctrl.onSlotClick((slot) => {
   console.log("Clicked slot:", slot);
 });
 
 // Close listener
-ctrl.onClose(() => {
+var closeToken = ctrl.onClose(() => {
   console.log("GUI closed");
 });
 
@@ -402,8 +410,8 @@ ctrl.close();
 |--------|-------------|
 | `setItem(slot, itemId, count?)` | Sets the item in the given slot |
 | `getItem(slot)` | Gets the item in the given slot, returns `{ id, count }` |
-| `onSlotClick(callback)` | Registers a slot click callback, `callback(slot: number)` |
-| `onClose(callback)` | Registers a close callback, `callback()` |
+| `onSlotClick(callback)` | Registers a slot click callback and returns `GameEventHandlerToken`, `callback(slot: number)` |
+| `onClose(callback)` | Registers a close callback and returns `GameEventHandlerToken`, `callback()` |
 | `close()` | Closes the GUI |
 
 ## remoteChannel — Client ↔ Server Communication

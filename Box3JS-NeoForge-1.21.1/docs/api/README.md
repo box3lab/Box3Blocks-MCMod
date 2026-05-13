@@ -1,6 +1,6 @@
 # Box3JS API 参考
 
-Box3JS 是一个 Minecraft 模组，允许用 JavaScript/TypeScript 编写服务端脚本。所有脚本运行在 `config/box3/script/<项目名>` 下。
+Box3JS 是一个 Minecraft 模组，允许用 JavaScript/TypeScript 编写服务端脚本，并可选下发客户端脚本来实现本地 UI、输入和音效。每个脚本项目位于 `config/box3/script/<项目名>` 下。
 
 ## 5 分钟快速开始
 
@@ -16,7 +16,7 @@ npm install && npm run build
 /box3script start mygame
 ```
 
-打开 `src/app.ts`，写入：
+打开 `src/server/app.ts`，写入：
 
 ```js
 world.onChat((entity, message) => {
@@ -30,19 +30,19 @@ world.onChat((entity, message) => {
 console.log("脚本已加载");
 ```
 
-每次修改后重新 `npm run build`，然后用 `/box3script reload mygame` 热重载。
+每次修改后重新 `npm run build`，然后用 `/box3script reload mygame` 热重载。客户端逻辑放在 `src/client/app.ts`，构建后生成 `dist/client.js`，玩家安装 Box3JS 客户端 Mod 后会在加入服务器时自动接收。
 
 > **新手上路**: [快速开始指南](../guide/getting-started.md) | **原理深入**: [运行原理](../guide/architecture.md) | **JS vs Java**: [技术选型对比](../guide/js-vs-java.md)
 
 ## API 领域分类
 
-Box3JS API 按运行环境分为三大类：
+Box3JS API 按运行环境分为服务端、客户端和双端共享三类。服务端与客户端类型声明已拆分，`tsconfig.server.json` 不会包含客户端全局对象，`tsconfig.client.json` 也不会包含服务端 `world` / `voxels`。
 
 | 领域 | 运行环境 | 全局对象 | 说明 |
 |------|---------|---------|------|
 | **世界与实体** (服务端) | 服务端 | `world` `voxels` | 世界控制、方块操作、事件回调 |
-| **玩家与数据** (服务端) | 服务端 | `player` `entity` `storage` `db` `http` | 通过 `entity.player` 访问 |
-| **客户端交互** (客户端) | 客户端 | `audio` `client` `input` `ui` `chat` | 需 Box3JS 客户端 Mod |
+| **玩家与数据** (服务端) | 服务端 | `entity` `player` `storage` `db` `http` | `entity`/`player` 来自回调或查询 |
+| **客户端交互** (客户端) | 客户端 | `audio` `client` `input` `ui` `chat` `gui` | 需 Box3JS 客户端 Mod |
 | **跨端通信** | 双端 | `remoteChannel` | 服务端↔客户端事件通信 |
 | **注册与编译** | 编译时 | `registries` | 仅在 `/box3script compile` JAR 模式可用 |
 | **数学与工具** | 双端 | `GameVector3` `GameBounds3` `GameRGBColor` `GameRGBAColor` `GameQuaternion` | 通过 `new` 构造 |
@@ -51,6 +51,14 @@ Box3JS API 按运行环境分为三大类：
 > **服务端 API** 操作世界、实体、玩家、方块。脚本默认运行在服务端。  
 > **客户端 API** 仅在安装了 Box3JS 客户端 Mod 时可用，用于 UI、输入、音效。  
 > **注册 API** 仅在编译 JAR 模式下可用（`/box3script start` 解释模式中 `registries` 为 `undefined`）。
+
+## 按运行环境阅读
+
+| 入口 | 适合场景 | 包含文档 |
+|------|----------|----------|
+| [服务端 API 总览](server.md) | 写玩法逻辑、事件、方块、实体、玩家、数据、服务端到客户端事件 | `world`、`entity`、`player`、`voxels`、`storage`、`db`、`http`、`registries` |
+| [客户端 API 总览](client.md) | 写本地 UI、输入、音效、聊天辅助、本地数据、客户端到服务端事件 | `client`、`audio`、`input`、`ui`、`chat`、`gui`、`storage`、`db`、`http` |
+| [共享工具](math.md) | 写双端都可用的数学、颜色、空间计算代码 | `GameVector3`、`GameBounds3`、`GameRGBColor`、`GameRGBAColor`、`GameQuaternion` |
 
 ## 功能速查 — 我想...
 
@@ -246,26 +254,27 @@ Box3JS API 按运行环境分为三大类：
 
 | 对象 | 类型 | 说明 |
 |------|------|------|
-| `world` | | 世界控制，见 [world.md](world.md) |
-| `entity` | | 实体包装（回调参数或 `world.spawnEntity` 创建），见 [entity.md](entity.md) |
-| `player` | | 玩家包装（通过 `entity.player` 获取），见 [player.md](player.md) |
-| `voxels` | | 方块操作，见 [voxels.md](voxels.md) |
-| `storage` | | 数据持久化，见 [storage.md](storage.md) |
-| `db` | | SQLite 数据库，见 [database.md](database.md) |
-| `http` | 客户端 | HTTP 请求，见 [http.md](http.md) |
+| `world` | 服务端 | 世界控制，见 [world.md](world.md) |
+| `voxels` | 服务端 | 方块操作，见 [voxels.md](voxels.md) |
+| `entity` | 服务端值 | 实体包装（回调参数或 `world.spawnEntity` 创建），见 [entity.md](entity.md) |
+| `player` | 服务端值 | 玩家包装（通过 `entity.player` 获取），见 [player.md](player.md) |
+| `storage` | 双端 | 数据持久化，见 [storage.md](storage.md) |
+| `db` | 双端 | SQLite 数据库，见 [database.md](database.md) |
+| `http` | 双端 | HTTP 请求，见 [http.md](http.md) |
 | `audio` | 客户端 | 客户端音效、音乐、音量控制，见 [client.md](client.md) |
 | `client` | 客户端 | 客户端生命周期，见 [client.md](client.md) |
 | `input` | 客户端 | 客户端键盘输入，见 [client.md](client.md) |
 | `ui` | 客户端 | 客户端屏幕 UI，见 [client.md](client.md) |
 | `chat` | 客户端 | 客户端聊天收发，见 [client.md](client.md) |
-| `remoteChannel` | 客户端 | 服务端↔客户端事件通信，见 [client.md](client.md) |
+| `gui` | 客户端 | 自定义容器 GUI，见 [client.md](client.md) |
+| `remoteChannel` | 双端 | 服务端↔客户端事件通信，见 [server.md](server.md) / [client.md](client.md) |
 | `registries` | 服务端 | 自定义方块/物品/音效（编译模式），见 [registries.md](registries.md) |
-| `console` | | 控制台日志输出（`log`/`warn`/`error`/`debug`） |
-| `GameVector3` | | 三维向量，见 [math.md](math.md) |
-| `GameBounds3` | | 包围盒，见 [math.md](math.md) |
-| `GameRGBColor` | | RGB 颜色，见 [math.md](math.md) |
-| `GameRGBAColor` | | RGBA 颜色，见 [math.md](math.md) |
-| `GameQuaternion` | | 四元数，见 [math.md](math.md) |
+| `console` | 双端 | 控制台日志输出（`log`/`warn`/`error`/`debug`） |
+| `GameVector3` | 双端 | 三维向量，见 [math.md](math.md) |
+| `GameBounds3` | 双端 | 包围盒，见 [math.md](math.md) |
+| `GameRGBColor` | 双端 | RGB 颜色，见 [math.md](math.md) |
+| `GameRGBAColor` | 双端 | RGBA 颜色，见 [math.md](math.md) |
+| `GameQuaternion` | 双端 | 四元数，见 [math.md](math.md) |
 
 ## API 标注说明
 
@@ -274,10 +283,23 @@ Box3JS API 按运行环境分为三大类：
 | ✅ **Box3 API** | 源自 Box3 平台，命名和语义与 Box3 保持一致 |
 | ⬆ **MC 扩展** | 非 Box3 原有，利用 Minecraft 特性新增的 API |
 
+## 文档风格约定
+
+每个 API 文档统一使用以下结构，后续新增 API 时也按这个格式维护：
+
+1. 顶部说明运行环境：服务端、客户端或双端共享。
+2. 先列全局对象和核心概念，再列方法详情。
+3. 每个方法使用 `对象.方法(参数)` 标题。
+4. 参数使用表格说明名称、类型、默认值和语义。
+5. 示例优先使用 TypeScript/JavaScript 片段，并标明服务端或客户端上下文。
+6. 跨端能力必须说明数据方向：服务端 → 客户端，或客户端 → 服务端。
+7. 与 DTS 不一致时，以 `types/server/index.d.ts` 和 `types/client/index.d.ts` 为准，并同步修正文档。
+
 ## 详细文档索引
 
 | 文档 | 内容 |
 |------|------|
+| [server.md](server.md) | 服务端 API 总览：运行边界、全局对象、事件、玩家/实体、方块、数据、跨端通信 |
 | [world.md](world.md) | 世界状态、事件回调、记分板、BossBar、队伍、边界、粒子、烟花、闪电、音效 |
 | [entity.md](entity.md) | 实体属性、AI、装备、药水效果、寻路、标签、碰撞 |
 | [player.md](player.md) | 背包、消息、飞行、游戏模式、传送、命令、经验值 |
@@ -285,7 +307,7 @@ Box3JS API 按运行环境分为三大类：
 | [storage.md](storage.md) | 数据持久化存储 |
 | [database.md](database.md) | SQLite 数据库 |
 | [http.md](http.md) | HTTP 网络请求 |
-| [client.md](client.md) | 客户端脚本：生命周期、键盘输入、屏幕 UI、聊天、remoteChannel、客户端本地存储 |
+| [client.md](client.md) | 客户端 API：生命周期、键盘输入、屏幕 UI、聊天、GUI、remoteChannel、客户端本地存储 |
 | [registries.md](registries.md) | 自定义方块/物品/音效（blocks.json、items.json、sounds.json、creativeTabs.json） |
 | [math.md](math.md) | GameVector3、GameBounds3、GameRGBColor、GameRGBAColor、GameQuaternion |
 | [commands.md](commands.md) | `/box3script` 命令参考 |
@@ -303,8 +325,21 @@ config/box3/script/mygame/
 ├── build.mjs             ← Babel TS→JS → esbuild bundle → dist/
 ├── types/
 │   ├── shared.d.ts       ← 服务端&客户端共享类型
-│   ├── server.d.ts       ← 服务端专属类型
-│   └── client.d.ts       ← 客户端专属类型
+│   ├── server/
+│   │   ├── index.d.ts    ← 服务端类型入口
+│   │   ├── server.d.ts
+│   │   ├── entity.d.ts
+│   │   ├── player.d.ts
+│   │   ├── world.d.ts
+│   │   └── voxels.d.ts
+│   └── client/
+│       ├── index.d.ts    ← 客户端类型入口
+│       ├── client.d.ts
+│       ├── audio.d.ts
+│       ├── input.d.ts
+│       ├── ui.d.ts
+│       ├── chat.d.ts
+│       └── gui.d.ts
 ├── src/
 │   ├── server/
 │   │   ├── app.ts        ← 服务端入口

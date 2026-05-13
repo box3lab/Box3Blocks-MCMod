@@ -27,9 +27,9 @@
 
 | Box3 API | Box3JS 实现 | 状态 | 差异说明 |
 |----------|-------------|------|---------|
-| `world.projectName` (只读属性) | `world.projectName` (属性) | ✅ | 一致。返回服务端 MOTD 字符串 |
+| `world.projectName()` (只读方法) | `world.projectName` (属性) | ✅ | 返回当前脚本项目名；服务器 MOTD 使用 `world.serverId` |
 | `world.serverId` (属性) | `world.serverId` (读写属性) | ✅ | 一致。映射到服务端 MOTD（get/set） |
-| `world.currentTick` (只读属性) | `world.currentTick` (属性) | ✅ | 一致。返回服务器总 tick 数 |
+| `world.currentTick()` (只读方法) | `world.currentTick` (属性) | ✅ | 返回服务器总 tick 数 |
 | `world.url` (只读属性) | — | ❌ | 未实现。MC 无地图 URL 概念 |
 
 ### 1.2 天气

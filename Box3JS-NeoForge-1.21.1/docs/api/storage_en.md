@@ -1,6 +1,8 @@
 # storage — Data Storage API
 
-`storage` provides JSON file persistence with in-memory caching for fast reads/writes. Data is saved under `config/box3/storage/<project>/`. Each project automatically gets an independent namespace.
+`storage` provides JSON file persistence with in-memory caching for fast reads/writes.
+
+> **Runtime:** Available on both server and client. Server data is saved under `config/box3/storage/<project>/`; client data is saved under the local game directory at `box3/client-storage/<project>/`. Each project automatically gets an independent namespace.
 
 ## Getting a Storage Instance
 
@@ -11,6 +13,8 @@ Gets or creates a named storage. Same name returns the same instance.
 ### storage.getGroupStorage(name)
 
 Gets a **cross-project shared** storage. All projects access the same data via the same `name` (uses `__shared__/` namespace internally). Useful for global leaderboards, shared config, etc.
+
+> Server-side only. Client local storage only provides `getDataStorage(name)`.
 
 ```js
 var store = storage.getDataStorage("leaderboard");
@@ -135,12 +139,12 @@ All `GameDataStorage` instances share a memory cache (`ConcurrentHashMap`). Data
 
 - **Same-name storage**: multiple `getDataStorage` calls for the same file path share a single in-memory copy, avoiding redundant I/O
 - **Project isolation**: `getDataStorage("scores")` accesses different files in different projects (auto-prefixed with project name)
-- **Cross-project sharing**: `getGroupStorage("leaderboard")` accesses the same `__shared__/leaderboard.json` from all projects
+- **Cross-project sharing (server-side only)**: `getGroupStorage("leaderboard")` accesses the same `__shared__/leaderboard.json` from all projects
 
 ## Complete Example: Leaderboard
 
 ```js
-// Cross-project shared leaderboard — all projects read/write the same data
+// Server: cross-project shared leaderboard — all projects read/write the same data
 var lb = storage.getGroupStorage("leaderboard");
 
 // Save score
@@ -162,5 +166,3 @@ while (true) {
   result.nextPage();
 }
 ```
-
-

@@ -1,6 +1,8 @@
 # Database API
 
-Box3JS 通过全局 `db` 对象提供 SQLite 数据库能力。每个脚本项目自动拥有独立的数据库文件（`config/box3/data/<project>.db`），无需手动管理连接。
+Box3JS 通过全局 `db` 对象提供 SQLite 数据库能力，无需手动管理连接。
+
+> **运行环境：** 服务端和客户端都可用。服务端数据库位于 `config/box3/data/<project>.db`；客户端数据库位于本地游戏目录的 `box3/client-db/<project>.db`。两端数据库互不共享，需要同步数据时请使用 `remoteChannel`。
 
 ## 依赖与降级行为
 

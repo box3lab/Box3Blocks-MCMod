@@ -19,16 +19,19 @@ public class Box3ScriptTemplate {
             "src/server/app.ts",
             "src/client/app.ts",
             "types/shared.d.ts",
+            "types/server/index.d.ts",
             "types/server/server.d.ts",
             "types/server/entity.d.ts",
             "types/server/player.d.ts",
             "types/server/world.d.ts",
             "types/server/voxels.d.ts",
+            "types/client/index.d.ts",
             "types/client/client.d.ts",
             "types/client/audio.d.ts",
             "types/client/input.d.ts",
             "types/client/ui.d.ts",
             "types/client/chat.d.ts",
+            "types/client/gui.d.ts",
     };
 
     public static void copyTo(Path projectDir, String projectName) throws IOException {
@@ -43,7 +46,7 @@ public class Box3ScriptTemplate {
                     throw new IOException("Template file not found: " + resourcePath);
                 Files.copy(in, dest, StandardCopyOption.REPLACE_EXISTING);
             }
-            if (relPath.equals("src/server/app.ts")) {
+            if (relPath.equals("package.json") || relPath.equals("src/server/app.ts")) {
                 String content = Files.readString(dest);
                 Files.writeString(dest, content.replace("PROJECT_NAME", projectName));
             }

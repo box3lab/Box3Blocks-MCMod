@@ -4,12 +4,12 @@
 
 ## World Properties
 
-### world.projectName
+### world.projectName()
 
-Read-only property. The server MOTD string. Also callable as `world.projectName()` for backward compatibility.
+Read-only method. Returns the name of the currently executing script project. Use `world.serverId` for the server MOTD/identifier.
 
 ```js
-console.log(world.projectName); // "A Minecraft Server"
+console.log(world.projectName()); // "mygame"
 ```
 
 ### world.serverId
@@ -21,12 +21,12 @@ world.serverId = "My Cool Server";
 console.log(world.serverId);
 ```
 
-### world.currentTick
+### world.currentTick()
 
-Read-only property. Total ticks since server startup. Also callable as `world.currentTick()` for backward compatibility.
+Read-only method. Returns total ticks since server startup.
 
 ```js
-var uptime = world.currentTick;
+var uptime = world.currentTick();
 world.say(
   "Server has been running for " + Math.floor(uptime / 20 / 60) + " minutes",
 );

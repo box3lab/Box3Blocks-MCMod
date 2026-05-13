@@ -4,12 +4,12 @@
 
 ## 世界属性
 
-### world.projectName
+### world.projectName()
 
-只读属性。服务端 MOTD 字符串。为兼容旧代码也可作为方法调用 `world.projectName()`。
+只读方法。返回当前正在执行的脚本项目名。需要服务器标识/MOTD 时使用 `world.serverId`。
 
 ```js
-console.log(world.projectName); // "A Minecraft Server"
+console.log(world.projectName()); // "mygame"
 ```
 
 ### world.serverId
@@ -21,12 +21,12 @@ world.serverId = "My Cool Server";
 console.log(world.serverId);
 ```
 
-### world.currentTick
+### world.currentTick()
 
-只读属性。服务器自启动以来的总 tick 数。为兼容旧代码也可作为方法调用 `world.currentTick()`。
+只读方法。返回服务器自启动以来的总 tick 数。
 
 ```js
-var uptime = world.currentTick;
+var uptime = world.currentTick();
 world.say("服务器已运行 " + Math.floor(uptime / 20 / 60) + " 分钟");
 ```
 

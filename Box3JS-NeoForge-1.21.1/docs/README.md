@@ -36,6 +36,7 @@ Box3JS 是 Minecraft NeoForge 1.21.1 的 JavaScript/TypeScript 脚本引擎模�
 
 | 分类 | 文档 | 全局对象 |
 |------|------|---------|
+| **服务端总览** | [server](api/server.md) | 服务端运行边界、事件、玩家/实体、方块、数据、跨端通信 |
 | **世界** | [world](api/world.md) | `world` — 事件、粒子、烟花、音效、计分板 |
 | **实体** | [entity](api/entity.md) | `entity` — 属性、AI、装备、效果 |
 | **玩家** | [player](api/player.md) | `player` — 背包、消息、飞行、传送 |
@@ -43,7 +44,7 @@ Box3JS 是 Minecraft NeoForge 1.21.1 的 JavaScript/TypeScript 脚本引擎模�
 | **存储** | [storage](api/storage.md) | `storage` — JSON 持久化 |
 | **数据库** | [database](api/database.md) | `db` — SQLite 数据库 |
 | **网络** | [http](api/http.md) | `http` — HTTP 请求 |
-| **客户端** | [client](api/client.md) | `audio` `client` `input` `ui` `chat` `remoteChannel` |
+| **客户端** | [client](api/client.md) | `audio` `client` `input` `ui` `chat` `gui` `remoteChannel` |
 | **注册表** | [registries](api/registries.md) | `registries` — 自定义方块/物品/音效 |
 | **数学** | [math](api/math.md) | `GameVector3` `GameBounds3` `GameRGBColor` `GameRGBAColor` `GameQuaternion` |
 | **命令** | [commands](api/commands.md) | `/box3script` CLI 命令 |

@@ -458,7 +458,7 @@ Implemented in the `colorzone` project's `app.ts`. Commands: `!cz` to join, `!cz
 
 Core mechanic: players walk over the ground → tiles auto-color to their team → periodic potions + speed buffs → after 90 seconds, ranking by territory claimed.
 
-See `src/app.ts` for the full Territory Rush implementation.
+See `src/server/app.ts` for the full Territory Rush implementation.
 
 ## 5.9 More Practical Examples
 

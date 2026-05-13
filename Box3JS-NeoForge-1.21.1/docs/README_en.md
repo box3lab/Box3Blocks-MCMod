@@ -36,6 +36,7 @@ Complete API docs organized by functional category. One document per global obje
 
 | Category | Doc | Globals |
 |----------|-----|---------|
+| **Server Overview** | [server](api/server_en.md) | Server runtime boundary, events, players/entities, blocks, data, cross-side communication |
 | **World** | [world](api/world_en.md) | `world` — events, particles, fireworks, sound, scoreboards |
 | **Entity** | [entity](api/entity_en.md) | `entity` — properties, AI, equipment, effects |
 | **Player** | [player](api/player_en.md) | `player` — inventory, messages, flight, teleport |
@@ -43,7 +44,7 @@ Complete API docs organized by functional category. One document per global obje
 | **Storage** | [storage](api/storage_en.md) | `storage` — JSON persistence |
 | **Database** | [database](api/database_en.md) | `db` — SQLite database |
 | **HTTP** | [http](api/http_en.md) | `http` — HTTP requests |
-| **Client** | [client](api/client_en.md) | `audio` `client` `input` `ui` `chat` `remoteChannel` |
+| **Client** | [client](api/client_en.md) | `audio` `client` `input` `ui` `chat` `gui` `remoteChannel` |
 | **Registries** | [registries](api/registries_en.md) | `registries` — custom blocks/items/sounds |
 | **Math** | [math](api/math_en.md) | `GameVector3` `GameBounds3` `GameRGBColor` `GameRGBAColor` `GameQuaternion` |
 | **Commands** | [commands](api/commands_en.md) | `/box3script` CLI commands |

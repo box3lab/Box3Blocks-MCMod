@@ -1,6 +1,8 @@
 # client — 客户端 API
 
-客户端脚本运行在玩家本地 Minecraft 客户端上，通过以下五个全局对象访问：
+客户端脚本运行在玩家本地 Minecraft 客户端上，入口文件是 `src/client/app.ts`，构建产物是 `dist/client.js`。客户端 API 只负责本地 UI、输入、音频、聊天辅助、本地存储、本地 HTTP/SQLite 以及接收/发送跨端事件。
+
+客户端脚本通过以下全局对象访问 API：
 
 | 对象 | 类型 | 用途 |
 |------|------|------|
@@ -16,7 +18,13 @@
 | `remoteChannel` | `RemoteChannel` | 客户端 ↔ 服务端事件通信 |
 
 > **前置条件：** 客户端必须安装 Box3JS mod，服务端必须启用该项目的客户端脚本并通过网络自动下发。
-> 客户端脚本放在 `src/client/` 目录下，服务端脚本放在 `src/server/` 目录下。
+> 客户端脚本放在 `src/client/` 目录下，服务端脚本放在 `src/server/` 目录下。客户端类型入口是 `types/client/index.d.ts`，不会包含服务端 `world` / `voxels` API。
+
+客户端脚本不能直接修改服务端世界。需要改变方块、玩家、实体或计分板时，应发送事件给服务端：
+
+```ts
+remoteChannel.sendServerEvent({ type: "requestTeleport" });
+```
 
 ## audio — 音频播放
 
@@ -383,12 +391,12 @@ var item = ctrl.getItem(0);
 console.log(item.id, item.count); // minecraft:diamond, 1
 
 // 监听槽位点击
-ctrl.onSlotClick((slot) => {
+var clickToken = ctrl.onSlotClick((slot) => {
   console.log("Clicked slot:", slot);
 });
 
 // 监听关闭
-ctrl.onClose(() => {
+var closeToken = ctrl.onClose(() => {
   console.log("GUI closed");
 });
 
@@ -402,8 +410,8 @@ ctrl.close();
 |------|------|
 | `setItem(slot, itemId, count?)` | 设置指定槽位的物品 |
 | `getItem(slot)` | 获取指定槽位的物品，返回 `{ id, count }` |
-| `onSlotClick(callback)` | 注册槽位点击回调，`callback(slot: number)` |
-| `onClose(callback)` | 注册关闭回调，`callback()` |
+| `onSlotClick(callback)` | 注册槽位点击回调，返回 `GameEventHandlerToken`，`callback(slot: number)` |
+| `onClose(callback)` | 注册关闭回调，返回 `GameEventHandlerToken`，`callback()` |
 | `close()` | 关闭 GUI |
 
 ## remoteChannel — 客户端 ↔ 服务端通信

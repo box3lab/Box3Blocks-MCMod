@@ -458,7 +458,7 @@ function endPvPGame(): void {
 
 核心机制：玩家走过地面 → 自动染色为队伍颜色 → 定时发药水 + 速度效果 → 90 秒后按占地数量排名。
 
-详见 `src/app.ts` 中的 Territory Rush 实现。
+详见 `src/server/app.ts` 中的 Territory Rush 实现。
 
 ## 5.9 更多实用示例
 

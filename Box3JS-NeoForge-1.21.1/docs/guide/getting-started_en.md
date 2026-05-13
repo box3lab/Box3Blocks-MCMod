@@ -100,8 +100,12 @@ config/box3/script/mygame/
 ├── eslint.config.mjs      ← ESLint rules
 ├── types/
 │   ├── shared.d.ts        ← Shared server & client types
-│   ├── server/            ← Server API type declarations
-│   └── client/            ← Client API type declarations
+│   ├── server/
+│   │   ├── index.d.ts     ← Server type entry point
+│   │   └── ...
+│   └── client/
+│       ├── index.d.ts     ← Client type entry point
+│       └── ...
 ├── src/
 │   ├── server/
 │   │   └── app.ts         ← ★ Server entry point (where you write code)

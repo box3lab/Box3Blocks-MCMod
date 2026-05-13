@@ -10,13 +10,13 @@
 interface GameWorld {
   // ── @zh 世界属性 @en World properties ──
 
-  /** @zh 项目名称 (只读) @en Project name, readonly. */
+  /** @zh 当前脚本项目名称 (只读方法) @en Current script project name, readonly method. */
   projectName(): string;
 
-  /** @zh 服务器 MOTD (可读写, 同 projectName) @en Server MOTD (read/write, alias of projectName). */
+  /** @zh 服务器 MOTD/标识符 (可读写) @en Server MOTD/identifier, read/write. */
   serverId: string;
 
-  /** @zh 当前服务端 tick 计数 @en Current server tick count. */
+  /** @zh 当前服务端 tick 计数 (只读方法) @en Current server tick count, readonly method. */
   currentTick(): number;
 
   /**

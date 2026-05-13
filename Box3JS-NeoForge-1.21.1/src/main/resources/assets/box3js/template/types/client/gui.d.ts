@@ -12,8 +12,8 @@ interface GameGUI {
    * ```ts
    * const ctrl = gui.openGUI({ title: "Shop", rows: 3, slots: { 0: "minecraft:diamond" } });
    * console.log(ctrl.getItem(0)); // { id: "minecraft:diamond", count: 1 }
-   * ctrl.onSlotClick((slot) => { console.log("Clicked slot:", slot); });
-   * ctrl.onClose(() => { console.log("GUI closed"); });
+   * const clickToken = ctrl.onSlotClick((slot) => { console.log("Clicked slot:", slot); });
+   * const closeToken = ctrl.onClose(() => { console.log("GUI closed"); });
    * ctrl.close();
    * ```
    *
@@ -57,14 +57,14 @@ interface GuiController {
    * @en Registers a slot click callback (notification only, cannot cancel the click).
    * @param callback - @zh 回调函数，接收被点击的槽位索引 @en Callback receiving the clicked slot index
    */
-  onSlotClick(callback: (slot: number) => void): void;
+  onSlotClick(callback: (slot: number) => void): GameEventHandlerToken;
 
   /**
    * @zh 注册关闭回调。
    * @en Registers a close callback.
    * @param callback - @zh GUI 关闭时调用的回调函数 @en Callback called when the GUI is closed
    */
-  onClose(callback: () => void): void;
+  onClose(callback: () => void): GameEventHandlerToken;
 
   /**
    * @zh 关闭 GUI。

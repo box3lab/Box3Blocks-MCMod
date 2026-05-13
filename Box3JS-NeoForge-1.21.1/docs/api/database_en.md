@@ -1,6 +1,8 @@
 # Database API
 
-Box3JS exposes SQLite capabilities through the global `db` object. Each script project gets its own database file at `config/box3/data/<project>.db`, and connections are managed automatically.
+Box3JS exposes SQLite capabilities through the global `db` object. Connections are managed automatically.
+
+> **Runtime:** Available on both server and client. Server databases live at `config/box3/data/<project>.db`; client databases live under the local game directory at `box3/client-db/<project>.db`. The two sides do not share database files; use `remoteChannel` when data must be synchronized.
 
 ## Dependency & Graceful Fallback
 

@@ -2,7 +2,7 @@
 
 Box3JS provides HTTP request capabilities via the global `http` object, supporting all HTTP methods, timeout, custom headers, auto-parsing, binary uploads, and both synchronous and asynchronous calling modes.
 
-> **Synchronous requests** block the server tick — avoid long-running requests in high-frequency callbacks. **Async requests** (`async: true`) are non-blocking and deliver results via callbacks.
+> **Runtime:** Available on both server and client. Server-side synchronous requests block the server tick, so avoid long-running requests in high-frequency callbacks. Client-side synchronous requests block the client render/logic thread. **Async requests** (`async: true`) deliver results via callbacks.
 
 ## `http.fetch(url, options?)`
 

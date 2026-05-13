@@ -54,7 +54,7 @@ public class Box3ScriptEngine {
         this.server = server;
         this.sandbox = new Box3ScriptSandbox(server.overworld());
         this.worldBinding = new Box3JSWorld(server, this);
-        this.voxelsBinding = new Box3JSVoxels(server, sandbox);
+        this.voxelsBinding = new Box3JSVoxels(server, sandbox, this);
         this.storageBinding = new Box3JSStorage(server.getServerDirectory().resolve("config"), this);
         this.dbBinding = new Box3JSDatabase(server.getServerDirectory().resolve("config"), this);
         this.httpBinding = new Box3JSHttp(server);
@@ -74,7 +74,7 @@ public class Box3ScriptEngine {
         engine.currentProject = projectName;
         engine.sandbox = new Box3ScriptSandbox(server.overworld());
         engine.worldBinding = new Box3JSWorld(server, engine);
-        engine.voxelsBinding = new Box3JSVoxels(server, engine.sandbox);
+        engine.voxelsBinding = new Box3JSVoxels(server, engine.sandbox, engine);
         engine.storageBinding = new Box3JSStorage(storageRoot, engine);
         engine.dbBinding = new Box3JSDatabase(storageRoot, engine);
         engine.httpBinding = new Box3JSHttp(server);
@@ -98,6 +98,10 @@ public class Box3ScriptEngine {
     /** Exposed for remoteChannel. */
     public long getCurrentTick() {
         return currentTick;
+    }
+
+    public boolean isInitialized() {
+        return initialized;
     }
 
     /**
@@ -514,6 +518,9 @@ public class Box3ScriptEngine {
     // ---- Tick ----
 
     public void fireTick() {
+        if (!initialized || server == null) {
+            return;
+        }
         prevTick = currentTick;
         currentTick = server.getTickCount();
         fireTimers();
@@ -914,7 +921,7 @@ public class Box3ScriptEngine {
         this.sandbox = new Box3ScriptSandbox(server.overworld());
         this.sandbox.inheritEnabled(oldSandbox);
         this.worldBinding = new Box3JSWorld(server, this);
-        this.voxelsBinding = new Box3JSVoxels(server, sandbox);
+        this.voxelsBinding = new Box3JSVoxels(server, sandbox, this);
         this.storageBinding = new Box3JSStorage(server.getServerDirectory().resolve("config"), this);
         if (this.dbBinding != null) {
             this.dbBinding.closeAll();

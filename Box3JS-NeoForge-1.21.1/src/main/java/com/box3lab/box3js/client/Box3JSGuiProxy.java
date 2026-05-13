@@ -1,6 +1,7 @@
 package com.box3lab.box3js.client;
 
 import com.box3lab.box3js.Box3JSNetwork;
+import com.box3lab.box3js.script.GameEventHandlerToken;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.ItemStack;
@@ -23,9 +24,14 @@ public class Box3JSGuiProxy {
 
     private final List<Function> slotClickCallbacks = new CopyOnWriteArrayList<>();
     private final List<Function> closeCallbacks = new CopyOnWriteArrayList<>();
-    private boolean callbacksRegistered;
+    private boolean slotClickRegistered;
+    private boolean closeRegistered;
 
     // ---- Slot manipulation (C→S packets) ----
+
+    public void setItem(int slot, String itemId) {
+        setItem(slot, itemId, 1);
+    }
 
     public void setItem(int slot, String itemId, int count) {
         PacketDistributor.sendToServer(
@@ -59,22 +65,28 @@ public class Box3JSGuiProxy {
 
     // ---- Callbacks ----
 
-    public void onSlotClick(Function callback) {
+    public GameEventHandlerToken onSlotClick(Function callback) {
         slotClickCallbacks.add(callback);
-        ensureCallbacksRegistered();
+        ensureCallbacksRegistered(true, false);
+        return new GameEventHandlerToken(() -> slotClickCallbacks.remove(callback));
     }
 
-    public void onClose(Function callback) {
+    public GameEventHandlerToken onClose(Function callback) {
         closeCallbacks.add(callback);
-        ensureCallbacksRegistered();
+        ensureCallbacksRegistered(false, true);
+        return new GameEventHandlerToken(() -> closeCallbacks.remove(callback));
     }
 
-    private void ensureCallbacksRegistered() {
-        if (callbacksRegistered) return;
-        callbacksRegistered = true;
+    private void ensureCallbacksRegistered(boolean wantsSlotClick, boolean wantsClose) {
+        boolean sendSlotClick = wantsSlotClick && !slotClickRegistered;
+        boolean sendClose = wantsClose && !closeRegistered;
+        if (!sendSlotClick && !sendClose) return;
+
+        slotClickRegistered = slotClickRegistered || sendSlotClick;
+        closeRegistered = closeRegistered || sendClose;
         PacketDistributor.sendToServer(
             new Box3JSNetwork.GUIServerboundPayload(2, "", 0, "", 0, "", 0,
-                !slotClickCallbacks.isEmpty(), !closeCallbacks.isEmpty()));
+                sendSlotClick, sendClose));
     }
 
     // ---- Close ----

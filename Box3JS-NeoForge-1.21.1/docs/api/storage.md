@@ -1,6 +1,8 @@
 # storage — 数据存储 API
 
-`storage` 提供 JSON 文件持久化存储，带内存缓存加速读写。数据保存在 `config/box3/storage/<项目名>/` 目录下，每个项目自动拥有独立命名空间。
+`storage` 提供 JSON 文件持久化存储，带内存缓存加速读写。
+
+> **运行环境：** 服务端和客户端都可用。服务端数据保存在 `config/box3/storage/<项目名>/`；客户端数据保存在本地游戏目录的 `box3/client-storage/<项目名>/`。每个项目自动拥有独立命名空间。
 
 ## 获取存储实例
 
@@ -11,6 +13,8 @@
 ### storage.getGroupStorage(name)
 
 获取**跨项目共享**存储。所有项目通过同一 `name` 访问同一份数据（底层使用 `__shared__/` 命名空间）。适合做全服排行榜、全局配置等。
+
+> 仅服务端可用。客户端本地存储只提供 `getDataStorage(name)`。
 
 ```js
 var store = storage.getDataStorage("leaderboard");
@@ -135,12 +139,12 @@ if (!result.isLastPage) {
 
 - **同名存储**：同一文件路径多次 `getDataStorage` 返回共享同一份内存数据，避免重复 I/O
 - **项目隔离**：`getDataStorage("scores")` 在不同项目中访问不同文件（自动添加项目名前缀）
-- **跨项目共享**：`getGroupStorage("leaderboard")` 所有项目访问同一个 `__shared__/leaderboard.json`
+- **跨项目共享（仅服务端）**：`getGroupStorage("leaderboard")` 所有项目访问同一个 `__shared__/leaderboard.json`
 
 ## 完整示例：排行榜
 
 ```js
-// 跨项目共享排行榜 — 所有项目读写同一份数据
+// 服务端：跨项目共享排行榜 — 所有项目读写同一份数据
 var lb = storage.getGroupStorage("leaderboard");
 
 // 保存成绩
@@ -162,5 +166,3 @@ while (true) {
   result.nextPage();
 }
 ```
-
-
