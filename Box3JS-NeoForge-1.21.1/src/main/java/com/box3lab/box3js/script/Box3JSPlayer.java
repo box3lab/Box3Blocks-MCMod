@@ -385,7 +385,7 @@ public class Box3JSPlayer {
 
     public void setPlayerListName(String name) {
         try {
-            java.lang.reflect.Field f = net.minecraft.world.entity.player.Player.class.getDeclaredField("displayName");
+            java.lang.reflect.Field f = net.minecraft.world.entity.player.Player.class.getDeclaredField("displayname");
             f.setAccessible(true);
             f.set(player, Component.literal(name));
             server.getPlayerList().broadcastAll(
