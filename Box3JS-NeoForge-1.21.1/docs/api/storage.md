@@ -6,6 +6,10 @@
 
 ## 获取存储实例
 
+### storage.key
+
+只读。根 `storage` 对象始终返回空字符串；具体命名空间请读取 `store.key`。
+
 ### storage.getDataStorage(name)
 
 获取或创建一个命名存储。同名存储返回同一实例。

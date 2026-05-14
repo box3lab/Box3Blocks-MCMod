@@ -2,6 +2,7 @@ package com.box3lab.box3js.script;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -16,12 +17,16 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
+import com.mojang.logging.LogUtils;
 import org.mozilla.javascript.Function;
+import org.slf4j.Logger;
 
 import java.util.Map;
 import java.util.function.Consumer;
 
 public class Box3JSEntity {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     private final Entity entity;
     private final MinecraftServer server;
@@ -50,8 +55,8 @@ public class Box3JSEntity {
     public boolean isPlayer() { return entity instanceof ServerPlayer; }
 
     public String getEntityType() {
-        var key = entity.getType().builtInRegistryHolder().key();
-        return key != null ? key.location().toString() : "unknown";
+        var key = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+        return key != null ? key.toString() : "unknown";
     }
 
     public Box3JSPlayer getPlayer() {
@@ -387,7 +392,11 @@ public class Box3JSEntity {
 
     public void setText(String text) {
         if (entity instanceof net.minecraft.world.entity.Display.TextDisplay td) {
-            try { _tdSetText.invoke(td, Component.literal(text)); } catch (Exception ignored) {}
+            try {
+                _tdSetText.invoke(td, Component.literal(text));
+            } catch (Exception e) {
+                LOGGER.warn("Failed to set TextDisplay text for entity {}", entity.getStringUUID(), e);
+            }
         }
     }
 
@@ -401,7 +410,9 @@ public class Box3JSEntity {
                 int b = (int) (Math.max(0, Math.min(1, color.b)) * 255);
                 int rgb = (r << 16) | (g << 8) | b;
                 _tdSetText.invoke(td, Component.literal(text).withColor(rgb));
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                LOGGER.warn("Failed to set TextDisplay text color for entity {}", entity.getStringUUID(), e);
+            }
         }
     }
 
@@ -411,7 +422,11 @@ public class Box3JSEntity {
             int g = (int) (Math.max(0, Math.min(1, color.g)) * 255);
             int b = (int) (Math.max(0, Math.min(1, color.b)) * 255);
             int a = (int) (Math.max(0, Math.min(1, color.a)) * 255);
-            try { _tdSetBgColor.invoke(td, (a << 24) | (r << 16) | (g << 8) | b); } catch (Exception ignored) {}
+            try {
+                _tdSetBgColor.invoke(td, (a << 24) | (r << 16) | (g << 8) | b);
+            } catch (Exception e) {
+                LOGGER.warn("Failed to set TextDisplay background color for entity {}", entity.getStringUUID(), e);
+            }
         }
     }
 

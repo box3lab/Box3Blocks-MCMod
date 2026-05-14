@@ -114,8 +114,8 @@ scope.put("storage", scope, storageApi);
 // 2. Initialize console JS bridge
 cx.evaluateString(scope, Box3ScriptUtils.CONSOLE_INIT_JS, "console-init", 1, null);
 
-// 3. Load user script
-cx.evaluateReader(scope, scriptReader, "app.js", 1, null);
+// 3. Load server entry script
+cx.evaluateReader(scope, scriptReader, "server.js", 1, null);
 ```
 
 ### Type Bridging

@@ -71,7 +71,7 @@ public class Box3JSRemoteChannel {
 
     // ── onServerEvent(handler) ──
 
-    public Object onServerEvent(Function handler) {
+    public GameEventHandlerToken onServerEvent(Function handler) {
         String project = engine.getCurrentProject();
         Function stored = engine.bus.addServerEventHandler(project, handler);
         return new GameEventHandlerToken(() ->

@@ -57,6 +57,22 @@ console.log("玩家缩放: " + player.scale);
 
 ## 移动
 
+### player.position
+
+只读引用。玩家当前世界坐标，可通过 `player.position.set(x, y, z)` 修改向量值；如需传送玩家，优先使用 `player.teleport(pos)`。
+
+### player.velocity
+
+只读引用。玩家当前速度向量，可通过 `.set()` 修改。
+
+### player.bounds
+
+只读。玩家包围盒半尺寸。
+
+### player.onGround
+
+只读。玩家当前是否站在方块上。
+
 
 
 ### player.walkSpeed

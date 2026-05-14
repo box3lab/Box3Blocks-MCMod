@@ -57,6 +57,22 @@ console.log("Player scale: " + player.scale);
 
 ## Movement
 
+### player.position
+
+Readonly reference. Current world position. You can mutate the vector with `player.position.set(x, y, z)`; prefer `player.teleport(pos)` when moving the player.
+
+### player.velocity
+
+Readonly reference. Current velocity vector; mutate with `.set()`.
+
+### player.bounds
+
+Readonly. Player bounding-box half extents.
+
+### player.onGround
+
+Readonly. Whether the player is currently standing on a block.
+
 
 
 ### player.walkSpeed

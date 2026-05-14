@@ -35,8 +35,12 @@ interface RemoteChannel {
 
 /** @zh 通过 `client` 访问：生命周期回调 @en Accessed via `client`: lifecycle callbacks */
 interface GameClient {
-  /** @zh 注册客户端每 tick 回调（每秒 20 次）。 @en Registers a callback invoked every client tick (20/sec). */
-  onTick(callback: () => void): void;
+  /**
+   * @zh 注册客户端每 tick 回调（每秒 20 次）。
+   * @en Registers a callback invoked every client tick (20/sec).
+   * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to unsubscribe
+   */
+  onTick(callback: () => void): GameEventHandlerToken;
 
   /**
    * @zh 获取当前帧率 (FPS)。
@@ -68,7 +72,7 @@ interface GameClient {
    * @returns @zh `{ type: "block"|"entity", position, entity?, blockPos?, direction? }` 或 null @en `{ type: "block"|"entity", position, entity?, blockPos?, direction? }` or null
    */
   getLookingAt(): {
-    type: string;
+    type: "block" | "entity";
     position: { x: number; y: number; z: number };
     entity?: {
       name: string;
@@ -88,8 +92,8 @@ interface GameClient {
     ip: string;
     name: string;
     isLocal: boolean;
-    playerCount: number;
-    maxPlayers: number;
+    playerCount?: number;
+    maxPlayers?: number;
   };
 }
 

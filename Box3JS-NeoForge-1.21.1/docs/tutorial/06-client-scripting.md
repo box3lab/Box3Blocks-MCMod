@@ -50,6 +50,8 @@ client.onTick(() => {
 });
 ```
 
+与其他事件 API 一样，`client.onTick()` 会返回 `GameEventHandlerToken`；不再需要监听时调用 `token.cancel()`。
+
 **性能提示：** 客户端 onTick 也在主线程执行。避免密集循环，用取模运算降低实际执行频率。
 
 ## 6.4 input — 键盘输入

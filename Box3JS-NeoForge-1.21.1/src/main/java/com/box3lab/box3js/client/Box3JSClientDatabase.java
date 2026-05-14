@@ -25,7 +25,11 @@ public class Box3JSClientDatabase extends Box3DatabaseBase {
 
     public Box3JSClientDatabase(java.io.File gameDir) {
         this.dataDir = gameDir.toPath().resolve("box3").resolve("client-db");
-        try { Files.createDirectories(dataDir); } catch (IOException ignored) {}
+        try {
+            Files.createDirectories(dataDir);
+        } catch (IOException e) {
+            LOGGER.warn("Failed to create client database directory: {}", dataDir, e);
+        }
     }
 
     public void setProjectName(String name) {

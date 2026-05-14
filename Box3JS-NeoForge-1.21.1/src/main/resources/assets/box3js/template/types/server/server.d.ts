@@ -266,30 +266,39 @@ type GameMapColor =
  * @en Query interface for registered content — only available in JARs built via `/box3script compile`.
  */
 interface GameRegistries {
+  /** @zh 获取已注册方块信息。 @en Gets registered block information. */
   getBlock(id: string): {
     block: any;
     itemId: string;
   } | null;
 
+  /** @zh 检查方块是否已注册。 @en Checks whether a block is registered. */
   hasBlock(id: string): boolean;
 
+  /** @zh 列出所有已注册方块 ID。 @en Lists all registered block IDs. */
   listBlocks(): string[];
 
+  /** @zh 获取已注册物品信息。 @en Gets registered item information. */
   getItem(id: string): {
     item: any;
     itemId: string;
   } | null;
 
+  /** @zh 检查物品是否已注册。 @en Checks whether an item is registered. */
   hasItem(id: string): boolean;
 
+  /** @zh 列出所有已注册物品 ID。 @en Lists all registered item IDs. */
   listItems(): string[];
 
+  /** @zh 获取已注册音效信息。 @en Gets registered sound information. */
   getSound(id: string): {
     soundId: string;
   } | null;
 
+  /** @zh 检查音效是否已注册。 @en Checks whether a sound is registered. */
   hasSound(id: string): boolean;
 
+  /** @zh 列出所有已注册音效 ID。 @en Lists all registered sound IDs. */
   listSounds(): string[];
 }
 

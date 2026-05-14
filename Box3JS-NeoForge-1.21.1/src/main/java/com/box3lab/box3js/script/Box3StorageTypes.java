@@ -1,6 +1,7 @@
 package com.box3lab.box3js.script;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Shared storage data types used by both server-side and client-side storage.
@@ -21,8 +22,12 @@ public final class Box3StorageTypes {
             this.value = value;
             this.createTime = createTime;
             this.updateTime = createTime;
-            this.version = Long.toHexString(createTime) + "-" + Integer.toHexString(new Random().nextInt());
+            this.version = newVersion(createTime);
         }
+    }
+
+    public static String newVersion(long timestamp) {
+        return Long.toHexString(timestamp) + "-" + Integer.toHexString(ThreadLocalRandom.current().nextInt());
     }
 
     // ── ReturnValue ──

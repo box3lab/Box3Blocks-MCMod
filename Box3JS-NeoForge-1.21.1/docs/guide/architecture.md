@@ -117,8 +117,8 @@ scope.put("storage", scope, storageApi);
 // 2. 初始化 console JS 代码
 cx.evaluateString(scope, Box3ScriptUtils.CONSOLE_INIT_JS, "console-init", 1, null);
 
-// 3. 加载用户脚本
-cx.evaluateReader(scope, scriptReader, "app.js", 1, null);
+// 3. 加载服务端入口脚本
+cx.evaluateReader(scope, scriptReader, "server.js", 1, null);
 ```
 
 ### 类型桥接

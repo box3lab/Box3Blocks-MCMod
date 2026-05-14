@@ -6,6 +6,10 @@
 
 ## Getting a Storage Instance
 
+### storage.key
+
+Readonly. The root `storage` object always returns an empty string; read `store.key` for a concrete namespace name.
+
 ### storage.getDataStorage(name)
 
 Gets or creates a named storage. Same name returns the same instance.

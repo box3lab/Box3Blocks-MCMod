@@ -168,6 +168,15 @@ world.onPlayerJoin((entity) => {
 });
 ```
 
+Broadcast a client event to every player:
+
+```ts
+remoteChannel.broadcastClientEvent({
+  type: "serverNotice",
+  text: "A server event was triggered",
+});
+```
+
 Receive client events:
 
 ```ts
@@ -223,4 +232,3 @@ Custom content files:
 - Keep tokens for long-lived event listeners and call `cancel()` when disabling a game mode or subsystem.
 - Rate-limit large `voxels.fillVoxel()` calls, mass entity spawning, and synchronous HTTP requests to avoid blocking server ticks.
 - Give storage namespaces explicit names, such as `storage.getDataStorage("arena/scores")` or `storage.getGroupStorage("global/season")`.
-

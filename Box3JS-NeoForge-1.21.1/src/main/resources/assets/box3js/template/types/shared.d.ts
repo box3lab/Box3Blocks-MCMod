@@ -161,6 +161,9 @@ declare class GameVector3 {
   static fromPolar(mag: number, phi: number, theta: number): GameVector3;
 
   /** @zh 返回 "(x, y, z)" 格式的字符串表示。 @en Returns a string in "(x, y, z)" format. */
+  /** @zh 返回 "(lo, hi)" 格式的字符串表示。 @en Returns a string representation in "(lo, hi)" format. */
+  /** @zh 返回四元数字符串表示。 @en Returns a string representation of the quaternion. */
+  /** @zh 返回四元数字符串表示。 @en Returns a string representation of the quaternion. */
   toString(): string;
 }
 
@@ -230,6 +233,7 @@ declare class GameBounds3 {
   /** @zh 从 GameVector3 数组创建最小包围盒。 @en Creates bounds from an array of GameVector3. */
   static fromPoints(points: GameVector3[]): GameBounds3 | null;
 
+  /** @zh 返回颜色字符串表示。 @en Returns a string representation of the color. */
   toString(): string;
 }
 
@@ -301,6 +305,7 @@ declare class GameRGBColor {
   /** @zh 生成一个随机 RGB 颜色（每个通道 0–1）。 @en Generates a random RGB color (each channel 0–1). */
   static random(): GameRGBColor;
 
+  /** @zh 返回颜色字符串表示。 @en Returns a string representation of the color. */
   toString(): string;
 }
 
@@ -373,6 +378,7 @@ declare class GameRGBAColor {
    */
   blendEq(rgb: GameRGBColor): GameRGBColor;
 
+  /** @zh 返回四元数字符串表示。 @en Returns a string representation of the quaternion. */
   toString(): string;
 }
 
@@ -491,6 +497,7 @@ declare class GameQuaternion {
   /** @zh 近似相等检查（容差 1e‑6）。 @en Approximate equality check within 1e‑6 tolerance. */
   equals(v: GameQuaternion): boolean;
 
+  /** @zh 返回四元数字符串表示。 @en Returns a string representation of the quaternion. */
   toString(): string;
 }
 

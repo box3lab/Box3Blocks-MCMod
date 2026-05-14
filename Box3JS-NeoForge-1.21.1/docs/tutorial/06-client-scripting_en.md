@@ -50,6 +50,8 @@ client.onTick(() => {
 });
 ```
 
+Like other event APIs, `client.onTick()` returns a `GameEventHandlerToken`; call `token.cancel()` when you no longer need the listener.
+
 **Performance tip:** Client onTick also runs on the main thread. Avoid tight loops; use modulo to reduce the effective execution rate.
 
 ## 6.4 input — Keyboard Input

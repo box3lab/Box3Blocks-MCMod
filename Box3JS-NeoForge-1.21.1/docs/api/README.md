@@ -60,6 +60,13 @@ Box3JS API 按运行环境分为服务端、客户端和双端共享三类。服
 | [客户端 API 总览](client.md) | 写本地 UI、输入、音效、聊天辅助、本地数据、客户端到服务端事件 | `client`、`audio`、`input`、`ui`、`chat`、`gui`、`storage`、`db`、`http` |
 | [共享工具](math.md) | 写双端都可用的数学、颜色、空间计算代码 | `GameVector3`、`GameBounds3`、`GameRGBColor`、`GameRGBAColor`、`GameQuaternion` |
 
+## API 风格约定
+
+- 所有 `onXxx(...)` 事件注册 API 都返回 `GameEventHandlerToken`，使用 `token.cancel()` 取消监听，使用 `token.active()` 检查是否仍有效。
+- 服务端 API 只出现在 `src/server/app.ts` 的类型环境中；客户端 API 只出现在 `src/client/app.ts` 的类型环境中。双端共享 API 为 `storage`、`db`、`http`、`remoteChannel`、`console` 和数学类型。
+- 跨端数据通过 `remoteChannel` 发送 JSON 可序列化对象：客户端使用 `sendServerEvent` / `onClientEvent`，服务端使用 `sendClientEvent` / `broadcastClientEvent` / `onServerEvent`。
+- 能用 `GameVector3` 的坐标 API 通常同时支持 `x, y, z` 重载；服务端方块坐标按整数处理。
+
 ## 功能速查 — 我想...
 
 按你想做的事情查找对应 API，而非按全局对象记。

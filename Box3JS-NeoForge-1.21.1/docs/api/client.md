@@ -104,12 +104,14 @@ audio.setVolume("player", 0.8);
 
 ### client.onTick(callback)
 
-注册客户端每 tick 回调（每秒 20 次）。无参数，无返回值。
+注册客户端每 tick 回调（每秒 20 次）。无参数，返回 `GameEventHandlerToken`，可用 `cancel()` 取消监听。
 
 ```js
-client.onTick(() => {
+const token = client.onTick(() => {
   // 每帧更新逻辑
 });
+
+// token.cancel();
 ```
 
 > **注意：** 服务端也有 `world.onTick()`，但参数为 `TickInfo` 对象。客户端 `client.onTick()` 无参数。
@@ -240,7 +242,7 @@ token.cancel();
 | 功能键 | `f1`–`f12` |
 | 方向键 | `up`, `down`, `left`, `right` |
 | 特殊键 | `space`, `enter`, `escape`, `tab`, `backspace`, `delete` |
-| 修饰键 | `left_shift`, `right_shift`, `left_ctrl`, `right_ctrl`, `left_alt`, `right_alt` |
+| 修饰键 | `shift`, `left_shift`, `right_shift`, `ctrl`, `left_ctrl`, `right_ctrl`, `alt`, `left_alt`, `right_alt` |
 
 ## ui — 屏幕 UI
 

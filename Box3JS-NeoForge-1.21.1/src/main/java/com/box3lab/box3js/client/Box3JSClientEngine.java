@@ -2,6 +2,7 @@ package com.box3lab.box3js.client;
 
 import com.box3lab.box3js.Box3JSNetwork;
 import com.box3lab.box3js.script.Box3JSQueryResult;
+import com.box3lab.box3js.script.Box3Rhino;
 import com.box3lab.box3js.script.GameBounds3;
 import com.box3lab.box3js.script.GameEventHandlerToken;
 import com.box3lab.box3js.script.GameQuaternion;
@@ -105,10 +106,13 @@ public class Box3JSClientEngine {
         KEY_MAP.put("delete",          InputConstants.KEY_DELETE);
         KEY_MAP.put("left_shift",       InputConstants.KEY_LSHIFT);
         KEY_MAP.put("right_shift",      InputConstants.KEY_RSHIFT);
+        KEY_MAP.put("shift",            InputConstants.KEY_LSHIFT);
         KEY_MAP.put("left_ctrl",        InputConstants.KEY_LCONTROL);
         KEY_MAP.put("right_ctrl",       InputConstants.KEY_RCONTROL);
+        KEY_MAP.put("ctrl",             InputConstants.KEY_LCONTROL);
         KEY_MAP.put("left_alt",         InputConstants.KEY_LALT);
         KEY_MAP.put("right_alt",        InputConstants.KEY_RALT);
+        KEY_MAP.put("alt",              InputConstants.KEY_LALT);
         KEY_MAP.put("up",              InputConstants.KEY_UP);
         KEY_MAP.put("down",            InputConstants.KEY_DOWN);
         KEY_MAP.put("left",            InputConstants.KEY_LEFT);
@@ -126,8 +130,7 @@ public class Box3JSClientEngine {
     private void init() {
         if (initialized) return;
 
-        Context cx = Context.enter();
-        cx.setOptimizationLevel(-1);
+        Context cx = Box3Rhino.enterInterpretedContext();
         try {
             scope = cx.initStandardObjects();
 
@@ -162,7 +165,7 @@ public class Box3JSClientEngine {
                 public Object call(Context cx, Scriptable scope,
                                    Scriptable thisObj, Object[] args) {
                     if (args.length > 0 && args[0] instanceof Function fn) {
-                        tickCallbacks.add(() -> {
+                        Runnable callback = () -> {
                             Context cx2 = Context.enter();
                             try {
                                 fn.call(cx2, scope, scope, new Object[0]);
@@ -171,7 +174,9 @@ public class Box3JSClientEngine {
                             } finally {
                                 Context.exit();
                             }
-                        });
+                        };
+                        tickCallbacks.add(callback);
+                        return new GameEventHandlerToken(() -> tickCallbacks.remove(callback));
                     }
                     return Undefined.instance;
                 }
@@ -775,8 +780,7 @@ public class Box3JSClientEngine {
     public void loadScript(String projectName, String scriptSource) {
         if (!initialized) init();
 
-        Context cx = Context.enter();
-        cx.setOptimizationLevel(-1);
+        Context cx = Box3Rhino.enterInterpretedContext();
         try {
             if (!projectName.equals(this.currentProject)) {
                 this.currentProject = projectName;
@@ -891,8 +895,7 @@ public class Box3JSClientEngine {
             List<Function> handlers = clientEventHandlers.getOrDefault(projectName, List.of());
             if (handlers.isEmpty()) return;
 
-            Context cx = Context.enter();
-            cx.setOptimizationLevel(-1);
+            Context cx = Box3Rhino.enterInterpretedContext();
             try {
                 scope.put("_arg", scope, eventJson);
                 Object args = cx.evaluateString(scope,

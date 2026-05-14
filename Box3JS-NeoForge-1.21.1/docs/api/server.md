@@ -168,6 +168,15 @@ world.onPlayerJoin((entity) => {
 });
 ```
 
+向所有玩家广播客户端事件：
+
+```ts
+remoteChannel.broadcastClientEvent({
+  type: "serverNotice",
+  text: "服务器事件已触发",
+});
+```
+
 接收客户端事件：
 
 ```ts
@@ -223,4 +232,3 @@ if (registries) {
 - 对所有长期事件监听保存 token，需要关闭玩法或重载模块时调用 `cancel()`。
 - 大范围 `voxels.fillVoxel()`、大量实体生成、同步 HTTP 请求都应控制频率，避免卡住服务器 tick。
 - 共享数据优先明确命名空间，例如 `storage.getDataStorage("arena/scores")` 或 `storage.getGroupStorage("global/season")`。
-

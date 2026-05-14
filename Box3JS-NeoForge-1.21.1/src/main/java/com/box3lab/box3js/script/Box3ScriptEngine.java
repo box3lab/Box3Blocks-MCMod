@@ -1,6 +1,7 @@
 package com.box3lab.box3js.script;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.state.BlockState;
@@ -15,7 +16,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import com.mojang.logging.LogUtils;
@@ -91,16 +91,16 @@ public class Box3ScriptEngine {
     }
 
     /** Exposed for remoteChannel payload handler. */
-    public MinecraftServer getServer() {
+    MinecraftServer getServer() {
         return server;
     }
 
     /** Exposed for remoteChannel. */
-    public long getCurrentTick() {
+    long getCurrentTick() {
         return currentTick;
     }
 
-    public boolean isInitialized() {
+    boolean isInitialized() {
         return initialized;
     }
 
@@ -121,7 +121,7 @@ public class Box3ScriptEngine {
         });
     }
 
-    /** Execute app.js for enabled projects under config/box3/script/ */
+    /** Execute server.js for enabled projects under config/box3/script/ */
     public void autoLoad(MinecraftServer server) {
         init(server);
         Box3ScriptConfig config = Box3ScriptConfig.get();
@@ -152,15 +152,15 @@ public class Box3ScriptEngine {
                             }
                         }
                     });
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            LOGGER.warn("Failed to scan script directory for auto-load: {}", scriptDir, e);
         }
     }
 
     public Object eval(String code) {
         if (!initialized)
             throw new IllegalStateException("ScriptEngine not initialized");
-        Context cx = Context.enter();
-        cx.setOptimizationLevel(-1); // interpreter mode avoids regex classloader issues
+        Context cx = Box3Rhino.enterInterpretedContext();
         try {
             return cx.evaluateString(scope, code, "script", 1, null);
         } finally {
@@ -323,9 +323,15 @@ public class Box3ScriptEngine {
         return () -> bus.removeMessage(project, wrapped);
     }
 
-    public void setPlayerChatHandler(UUID uuid, Function handler) {
+    public Runnable setPlayerChatHandler(UUID uuid, Function handler) {
         String project = currentProject;
         bus.chatHandlersFor(project).put(uuid, handler);
+        return () -> {
+            Map<UUID, Function> handlers = bus.chatHandlersFor(project);
+            if (handlers.get(uuid) == handler) {
+                handlers.remove(uuid);
+            }
+        };
     }
 
     private Runnable wrapContext(String project, Runnable cb) {
@@ -350,12 +356,12 @@ public class Box3ScriptEngine {
         }
     }
 
-    public void setCurrentProject(String name) {
+    void setCurrentProject(String name) {
         currentProject = name;
         worldBinding.setProjectName(name);
     }
 
-    public String getCurrentProject() {
+    String getCurrentProject() {
         return currentProject;
     }
 
@@ -645,8 +651,8 @@ public class Box3ScriptEngine {
 
     private String getBlockIdString(BlockPos pos) {
         var state = server.overworld().getBlockState(pos);
-        var key = state.getBlock().builtInRegistryHolder().key();
-        return key != null ? key.location().toString() : "minecraft:air";
+        var key = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+        return key != null ? key.toString() : "minecraft:air";
     }
 
     public void fireVoxelDestroy(ServerPlayer player, BlockPos pos) {
@@ -745,7 +751,7 @@ public class Box3ScriptEngine {
                 tick = server.getTickCount();
                 voxelId = voxelsBinding.getId(state);
                 voxel = state.isAir() ? "minecraft:air"
-                        : state.getBlock().builtInRegistryHolder().key().location().toString();
+                        : BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
             }
             Box3JSEntity e = entity;
             long t = tick;
@@ -814,7 +820,7 @@ public class Box3ScriptEngine {
                 entity = new Box3JSEntity(player, server, this);
                 tick = server.getTickCount();
                 voxel = state.isAir() ? "minecraft:air"
-                        : state.getBlock().builtInRegistryHolder().key().location().toString();
+                        : BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
             }
             Box3JSEntity e = entity;
             long t = tick;
@@ -969,7 +975,7 @@ public class Box3ScriptEngine {
             ScriptableObject.putProperty(scope, "db", dbObj);
             ScriptableObject.putProperty(scope, "http", Context.javaToJS(httpBinding, scope));
             ScriptableObject.putProperty(scope, "remoteChannel", Context.javaToJS(remoteChannel, scope));
-            ScriptableObject.putProperty(scope, "_jConsole", Context.javaToJS(new Box3JSConsole(), scope));
+            ScriptableObject.putProperty(scope, "_jConsole", Context.javaToJS(new Box3JSConsole(() -> currentProject), scope));
             cx.evaluateString(scope, Box3ScriptUtils.CONSOLE_INIT_JS,
                     "console-init", 1, null);
             ScriptableObject.putProperty(scope, "require", new BaseFunction() {
@@ -1027,47 +1033,8 @@ public class Box3ScriptEngine {
         }
     }
 
-    public Box3JSVoxels getVoxelsBinding() {
+    Box3JSVoxels getVoxelsBinding() {
         return voxelsBinding;
-    }
-
-    public class Box3JSConsole {
-        private void print(String level, Object... args) {
-            StringBuilder sb = new StringBuilder();
-            String proj = currentProject;
-            if (proj != null)
-                sb.append('[').append(proj).append("] ");
-            for (Object a : args)
-                sb.append(a).append(' ');
-            System.out.println("[Box3JS]" + level + " " + sb.toString().trim());
-        }
-
-        public void log(Object... args) {
-            print("", args);
-        }
-
-        public void debug(Object... args) {
-            print("[DEBUG]", args);
-        }
-
-        public void warn(Object... args) {
-            print("[WARN]", args);
-        }
-
-        public void error(Object... args) {
-            StringBuilder sb = new StringBuilder();
-            String proj = currentProject;
-            if (proj != null)
-                sb.append('[').append(proj).append("] ");
-            for (Object a : args)
-                sb.append(a).append(' ');
-            System.err.println("[Box3JS][ERROR] " + sb.toString().trim());
-        }
-
-        public void clear() {
-            System.out.print("\033[H\033[2J");
-            System.out.flush();
-        }
     }
 
     static class TimerEntry {

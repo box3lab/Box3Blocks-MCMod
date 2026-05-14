@@ -135,6 +135,8 @@ interface GameEntity {
    * @en Custom name tag text (empty string = none).
    */
   nameTag: string;
+
+  /** @zh 设置名称标签文本。 @en Sets the custom name tag text. */
   setNameTag(name: string): void;
 
   // ── @zh 物理 @en Physics ──
@@ -308,6 +310,7 @@ interface GameEntity {
    */
   destroy(): void;
 
+  /** @zh 注册实体销毁回调。 @en Registers a callback invoked when this entity is destroyed. */
   setOnDestroy(handler: (entity: GameEntity) => void): void;
 
   // ── @zh 玩家代理 @en Player proxy ──

@@ -1,6 +1,7 @@
 package com.box3lab.box3js.script;
 
 import com.box3lab.box3js.Box3JSNetwork;
+import com.mojang.logging.LogUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
@@ -10,12 +11,15 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import org.slf4j.Logger;
 
 /**
  * Handles client→server GUI packets on the server thread.
  * Creates containers, manages active GUIs per player, and forwards events back to the client.
  */
 public final class Box3JSGuiServerHandler {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     private Box3JSGuiServerHandler() {}
 
@@ -79,7 +83,9 @@ public final class Box3JSGuiServerHandler {
                             if (item != null && slot >= 0 && slot < rows * 9) {
                                 menu.getContainer().setItem(slot, new net.minecraft.world.item.ItemStack(item, 1));
                             }
-                        } catch (NumberFormatException | IndexOutOfBoundsException ignored) {}
+                        } catch (NumberFormatException | IndexOutOfBoundsException e) {
+                            LOGGER.debug("Ignoring invalid GUI slot entry '{}'", pair, e);
+                        }
                     }
                 }
             }

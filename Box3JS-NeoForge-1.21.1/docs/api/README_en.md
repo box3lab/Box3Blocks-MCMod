@@ -60,6 +60,13 @@ Box3JS APIs are split into server-side, client-side, and shared runtimes. The ty
 | [Client API Overview](client_en.md) | Local UI, input, audio, chat helpers, local data, client-to-server events | `client`, `audio`, `input`, `ui`, `chat`, `gui`, `storage`, `db`, `http` |
 | [Shared Utilities](math_en.md) | Math, color, and spatial code usable on both sides | `GameVector3`, `GameBounds3`, `GameRGBColor`, `GameRGBAColor`, `GameQuaternion` |
 
+## API Style Rules
+
+- Every `onXxx(...)` event registration API returns a `GameEventHandlerToken`; call `token.cancel()` to unsubscribe and `token.active()` to check whether it is still live.
+- Server APIs are only typed in `src/server/app.ts`; client APIs are only typed in `src/client/app.ts`. Shared APIs are `storage`, `db`, `http`, `remoteChannel`, `console`, and the math classes.
+- Cross-side data travels through `remoteChannel` as JSON-serializable objects: clients use `sendServerEvent` / `onClientEvent`; servers use `sendClientEvent` / `broadcastClientEvent` / `onServerEvent`.
+- Coordinate APIs that accept `GameVector3` usually also support an `x, y, z` overload; server block coordinates are handled as integers.
+
 ## Find by Task — I want to...
 
 Find APIs by what you want to do, not by which global object they live on.

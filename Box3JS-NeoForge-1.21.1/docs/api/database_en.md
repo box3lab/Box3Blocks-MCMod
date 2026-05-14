@@ -21,6 +21,10 @@ After installing `minecraft-sqlite-jdbc` and restarting the server, the `db` API
 > - Put `minecraft-sqlite-jdbc` under `run/mods/`.
 > - The file must be a `.jar` (for example, `xxx.jar`), not `.zip`, otherwise NeoForge will not load it.
 
+## `db.isAvailable()`
+
+Checks whether the SQLite JDBC driver is available. When unavailable, `db.sql(...)` returns a safe empty error result or shows a clear hint; scripts can call this first to degrade gracefully.
+
 ## `db.sql(sql, ...params)`
 
 Executes a SQL query/update and returns `GameQueryResult`.

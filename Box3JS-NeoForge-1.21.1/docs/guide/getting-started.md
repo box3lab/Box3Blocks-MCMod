@@ -126,7 +126,8 @@ config/box3/script/mygame/
 │   │   └── app.ts         ← ★ 服务端入口（你写代码的地方）
 │   └── client/
 │       └── app.ts         ← 客户端入口
-└── registries/            ← 自定义内容（方块/物品/音效 JSON）
+├── registries/            ← 自定义内容（方块/物品/音效 JSON）
+└── assets/lang/           ← 自定义内容本地化文本
 ```
 
 ### 安装依赖

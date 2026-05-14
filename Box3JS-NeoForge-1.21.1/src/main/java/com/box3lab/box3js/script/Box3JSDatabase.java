@@ -62,7 +62,8 @@ public class Box3JSDatabase extends Box3DatabaseBase {
         this.engine = engine;
         try {
             Files.createDirectories(dataDir);
-        } catch (java.io.IOException ignored) {
+        } catch (IOException e) {
+            LOGGER.warn("Failed to create database directory: {}", dataDir, e);
         }
     }
 

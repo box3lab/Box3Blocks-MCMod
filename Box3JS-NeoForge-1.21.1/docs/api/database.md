@@ -21,6 +21,10 @@ db API requires SQLite JDBC driver. Install the minecraft-sqlite-jdbc mod, then 
 > - 请将 `minecraft-sqlite-jdbc` 放到 `run/mods/`。
 > - 模组文件必须是 `.jar`（例如 `xxx.jar`），不要使用 `.zip`，否则不会被 NeoForge 加载。
 
+## `db.isAvailable()`
+
+检查 SQLite JDBC 驱动是否可用。不可用时，`db.sql(...)` 会返回安全的空错误结果或显示清晰提示，脚本可用该方法提前降级。
+
 ## `db.sql(sql, ...params)`
 
 执行 SQL 查询或更新，返回 `GameQueryResult`。

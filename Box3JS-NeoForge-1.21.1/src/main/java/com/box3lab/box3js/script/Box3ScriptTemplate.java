@@ -32,6 +32,12 @@ public class Box3ScriptTemplate {
             "types/client/ui.d.ts",
             "types/client/chat.d.ts",
             "types/client/gui.d.ts",
+            "registries/blocks.json",
+            "registries/items.json",
+            "registries/sounds.json",
+            "registries/creativeTabs.json",
+            "assets/lang/en_us.json",
+            "assets/lang/zh_cn.json",
     };
 
     public static void copyTo(Path projectDir, String projectName) throws IOException {
@@ -46,7 +52,7 @@ public class Box3ScriptTemplate {
                     throw new IOException("Template file not found: " + resourcePath);
                 Files.copy(in, dest, StandardCopyOption.REPLACE_EXISTING);
             }
-            if (relPath.equals("package.json") || relPath.equals("src/server/app.ts")) {
+            if (relPath.endsWith(".json") || relPath.endsWith(".ts") || relPath.endsWith(".mjs")) {
                 String content = Files.readString(dest);
                 Files.writeString(dest, content.replace("PROJECT_NAME", projectName));
             }

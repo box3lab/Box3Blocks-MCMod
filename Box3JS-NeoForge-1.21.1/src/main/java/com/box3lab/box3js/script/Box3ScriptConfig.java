@@ -9,11 +9,14 @@ import java.util.Map;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.mojang.logging.LogUtils;
 
 import net.minecraft.server.MinecraftServer;
+import org.slf4j.Logger;
 
 public class Box3ScriptConfig {
 
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static final Gson GSON = new Gson();
     private static final Type MAP_TYPE = new TypeToken<Map<String, Boolean>>() {
     }.getType();
@@ -41,7 +44,8 @@ public class Box3ScriptConfig {
                 Map<String, Boolean> loaded = GSON.fromJson(json, MAP_TYPE);
                 if (loaded != null)
                     projects = new LinkedHashMap<>(loaded);
-            } catch (IOException ignored) {
+            } catch (IOException e) {
+                LOGGER.warn("Failed to load script config: {}", configFile, e);
             }
         }
     }
@@ -53,7 +57,8 @@ public class Box3ScriptConfig {
         try {
             Files.createDirectories(configFile.getParent());
             Files.writeString(configFile, GSON.toJson(projects));
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            LOGGER.warn("Failed to save script config: {}", configFile, e);
         }
     }
 
@@ -89,7 +94,8 @@ public class Box3ScriptConfig {
                     projects.putIfAbsent(name, false);
                 }
             });
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            LOGGER.warn("Failed to discover script projects in: {}", scriptDir, e);
         }
         save();
     }

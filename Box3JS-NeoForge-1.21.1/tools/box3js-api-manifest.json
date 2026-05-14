@@ -1,0 +1,273 @@
+{
+  "globals": [
+    { "side": "server", "name": "world", "type": "GameWorld", "dts": "src/main/resources/assets/box3js/template/types/server/server.d.ts", "runtime": "src/main/java/com/box3lab/box3js/script/Box3ScriptEngine.java" },
+    { "side": "server", "name": "voxels", "type": "GameVoxels", "dts": "src/main/resources/assets/box3js/template/types/server/server.d.ts", "runtime": "src/main/java/com/box3lab/box3js/script/Box3ScriptEngine.java" },
+    { "side": "server", "name": "storage", "type": "GameStorage", "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts", "runtime": "src/main/java/com/box3lab/box3js/script/Box3ScriptEngine.java" },
+    { "side": "server", "name": "remoteChannel", "type": "RemoteChannel", "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts", "runtime": "src/main/java/com/box3lab/box3js/script/Box3ScriptEngine.java" },
+    { "side": "server", "name": "db", "type": "GameDatabase", "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts", "runtime": "src/main/java/com/box3lab/box3js/script/Box3ScriptEngine.java" },
+    { "side": "server", "name": "http", "type": "GameHttpAPI", "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts", "runtime": "src/main/java/com/box3lab/box3js/script/Box3ScriptEngine.java" },
+    { "side": "server", "name": "registries", "type": "GameRegistries | undefined", "dts": "src/main/resources/assets/box3js/template/types/server/server.d.ts", "runtime": "src/main/java/com/box3lab/box3js/standalone/Box3StandaloneBootstrap.java" },
+    { "side": "client", "name": "audio", "type": "GameAudio", "dts": "src/main/resources/assets/box3js/template/types/client/client.d.ts", "runtime": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java" },
+    { "side": "client", "name": "client", "type": "GameClient", "dts": "src/main/resources/assets/box3js/template/types/client/client.d.ts", "runtime": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java" },
+    { "side": "client", "name": "input", "type": "GameInput", "dts": "src/main/resources/assets/box3js/template/types/client/client.d.ts", "runtime": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java" },
+    { "side": "client", "name": "ui", "type": "GameUI", "dts": "src/main/resources/assets/box3js/template/types/client/client.d.ts", "runtime": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java" },
+    { "side": "client", "name": "chat", "type": "GameChat", "dts": "src/main/resources/assets/box3js/template/types/client/client.d.ts", "runtime": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java" },
+    { "side": "client", "name": "gui", "type": "GameGUI", "dts": "src/main/resources/assets/box3js/template/types/client/client.d.ts", "runtime": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java" },
+    { "side": "client", "name": "storage", "type": "GameStorage", "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts", "runtime": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java" },
+    { "side": "client", "name": "remoteChannel", "type": "RemoteChannel", "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts", "runtime": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java" },
+    { "side": "client", "name": "db", "type": "GameDatabase", "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts", "runtime": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java" },
+    { "side": "client", "name": "http", "type": "GameHttpAPI", "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts", "runtime": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java" }
+  ],
+  "apis": [
+    {
+      "name": "world",
+      "prefix": "world",
+      "java": "src/main/java/com/box3lab/box3js/script/Box3JSWorld.java",
+      "dts": "src/main/resources/assets/box3js/template/types/server/world.d.ts",
+      "iface": "GameWorld",
+      "accessorProperties": ["serverId", "rainDensity", "thunderDensity", "time", "timeScale", "difficulty", "spawnPoint", "ambientSound", "playerJoinSound", "playerLeaveSound", "placeVoxelSound", "breakVoxelSound", "borderSize"],
+      "keepMethodNames": ["setTime"],
+      "ignoreJava": ["setProjectName", "removeProject", "resetAll", "getProjectName", "getCurrentTick"],
+      "docs": ["docs/api/world.md", "docs/api/world_en.md"]
+    },
+    {
+      "name": "GameVector3",
+      "java": "src/main/java/com/box3lab/box3js/script/GameVector3.java",
+      "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts",
+      "iface": "GameVector3"
+    },
+    {
+      "name": "GameBounds3",
+      "java": "src/main/java/com/box3lab/box3js/script/GameBounds3.java",
+      "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts",
+      "iface": "GameBounds3"
+    },
+    {
+      "name": "GameRGBColor",
+      "java": "src/main/java/com/box3lab/box3js/script/GameRGBColor.java",
+      "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts",
+      "iface": "GameRGBColor"
+    },
+    {
+      "name": "GameRGBAColor",
+      "java": "src/main/java/com/box3lab/box3js/script/GameRGBAColor.java",
+      "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts",
+      "iface": "GameRGBAColor"
+    },
+    {
+      "name": "GameQuaternion",
+      "java": "src/main/java/com/box3lab/box3js/script/GameQuaternion.java",
+      "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts",
+      "iface": "GameQuaternion"
+    },
+    {
+      "name": "GameEventHandlerToken",
+      "java": "src/main/java/com/box3lab/box3js/script/GameEventHandlerToken.java",
+      "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts",
+      "iface": "GameEventHandlerToken"
+    },
+    {
+      "name": "console",
+      "expectedMembers": ["log", "debug", "warn", "error", "clear", "assert"],
+      "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts",
+      "iface": "GameConsole"
+    },
+    {
+      "name": "entity",
+      "prefix": "entity",
+      "java": "src/main/java/com/box3lab/box3js/script/Box3JSEntity.java",
+      "dts": "src/main/resources/assets/box3js/template/types/server/entity.d.ts",
+      "iface": "GameEntity",
+      "ignoreJava": ["getEntity"],
+      "accessorProperties": ["id", "entityType", "player", "position", "velocity", "bounds", "meshInvisible", "glowing", "nameTag", "onGround", "eyePosition", "destroyed", "hp", "maxHp", "collides", "fixed", "gravity", "friction", "mass", "restitution", "invulnerable"],
+      "keepMethodNames": ["isPlayer", "setNameTag"],
+      "docs": ["docs/api/entity.md", "docs/api/entity_en.md"]
+    },
+    {
+      "name": "player",
+      "prefix": "player",
+      "java": "src/main/java/com/box3lab/box3js/script/Box3JSPlayer.java",
+      "dts": "src/main/resources/assets/box3js/template/types/server/player.d.ts",
+      "iface": "GamePlayer",
+      "ignoreJava": ["getPlayer"],
+      "accessorProperties": ["position", "velocity", "bounds", "onGround", "name", "userId", "opLevel", "invisible", "scale", "walkSpeed", "runSpeed", "jumpPower", "moveState", "walkState", "enableJump", "crouchSpeed", "swimSpeed", "canFly", "flying", "collision", "spectator", "flySpeed", "gameMode", "dimension", "disableFly", "cameraMode", "cameraEntity", "cameraPitch", "cameraYaw", "facingDirection", "cameraTarget", "dead", "spawnPoint", "hp", "maxHp", "xp", "food", "saturation"],
+      "docs": ["docs/api/player.md", "docs/api/player_en.md"]
+    },
+    {
+      "name": "voxels",
+      "prefix": "voxels",
+      "java": "src/main/java/com/box3lab/box3js/script/Box3JSVoxels.java",
+      "dts": "src/main/resources/assets/box3js/template/types/server/voxels.d.ts",
+      "iface": "GameVoxels",
+      "ignoreJava": ["getId"],
+      "docs": ["docs/api/voxels.md", "docs/api/voxels_en.md"]
+    },
+    {
+      "name": "server storage",
+      "prefix": "storage",
+      "java": "src/main/java/com/box3lab/box3js/script/Box3JSStorage.java",
+      "dts": ["src/main/resources/assets/box3js/template/types/shared.d.ts", "src/main/resources/assets/box3js/template/types/server/server.d.ts"],
+      "iface": "GameStorage",
+      "accessorProperties": ["key"],
+      "docs": ["docs/api/storage.md", "docs/api/storage_en.md"]
+    },
+    {
+      "name": "server data storage",
+      "prefix": "store",
+      "java": "src/main/java/com/box3lab/box3js/script/Box3JSStorage.java",
+      "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts",
+      "iface": "GameDataStorage",
+      "nestedClass": "GameDataStorage",
+      "accessorProperties": ["key"],
+      "docs": ["docs/api/storage.md", "docs/api/storage_en.md"]
+    },
+    {
+      "name": "client storage",
+      "java": "src/main/java/com/box3lab/box3js/client/Box3JSClientStorage.java",
+      "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts",
+      "iface": "GameStorage",
+      "accessorProperties": ["key"]
+    },
+    {
+      "name": "client data storage",
+      "java": "src/main/java/com/box3lab/box3js/client/Box3JSClientStorage.java",
+      "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts",
+      "iface": "GameDataStorage",
+      "nestedClass": "GameDataStorage",
+      "accessorProperties": ["key"]
+    },
+    {
+      "name": "server remoteChannel",
+      "prefix": "remoteChannel",
+      "java": "src/main/java/com/box3lab/box3js/script/Box3JSRemoteChannel.java",
+      "dts": "src/main/resources/assets/box3js/template/types/server/server.d.ts",
+      "iface": "RemoteChannel",
+      "docs": ["docs/api/server.md", "docs/api/server_en.md"]
+    },
+    {
+      "name": "http",
+      "prefix": "http",
+      "java": "src/main/java/com/box3lab/box3js/script/Box3JSHttp.java",
+      "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts",
+      "iface": "GameHttpAPI",
+      "docs": ["docs/api/http.md", "docs/api/http_en.md"]
+    },
+    {
+      "name": "client http",
+      "java": "src/main/java/com/box3lab/box3js/client/Box3JSClientHttp.java",
+      "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts",
+      "iface": "GameHttpAPI"
+    },
+    {
+      "name": "database",
+      "prefix": "db",
+      "java": "src/main/java/com/box3lab/box3js/script/Box3DatabaseBase.java",
+      "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts",
+      "iface": "GameDatabase",
+      "docs": ["docs/api/database.md", "docs/api/database_en.md"]
+    },
+    {
+      "name": "query result",
+      "java": "src/main/java/com/box3lab/box3js/script/Box3JSQueryResult.java",
+      "className": "Box3JSQueryResult",
+      "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts",
+      "iface": "GameQueryResult",
+      "ignoreJava": ["toString"],
+      "accessorProperties": ["rows", "firstRow", "columnNames", "columnCount", "rowCount", "affectedRows"]
+    },
+    {
+      "name": "http response",
+      "java": "src/main/java/com/box3lab/box3js/script/Box3JSResponse.java",
+      "className": "Box3JSResponse",
+      "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts",
+      "iface": "GameHttpFetchResponse",
+      "ignoreJava": ["timeout", "error"],
+      "accessorProperties": ["status", "statusText", "ok", "errorMessage", "headers", "data", "truncated"]
+    },
+    {
+      "name": "registries",
+      "prefix": "registries",
+      "javaObject": { "path": "src/main/java/com/box3lab/box3js/standalone/Box3StandaloneBootstrap.java", "variable": "registriesObj" },
+      "dts": "src/main/resources/assets/box3js/template/types/server/server.d.ts",
+      "iface": "GameRegistries",
+      "docs": ["docs/api/registries.md", "docs/api/registries_en.md"]
+    },
+    {
+      "name": "client",
+      "prefix": "client",
+      "javaObject": { "path": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java", "variable": "clientObj" },
+      "dts": "src/main/resources/assets/box3js/template/types/client/client.d.ts",
+      "iface": "GameClient",
+      "docs": ["docs/api/client.md", "docs/api/client_en.md"]
+    },
+    {
+      "name": "audio",
+      "prefix": "audio",
+      "javaObject": { "path": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java", "variable": "audioObj" },
+      "dts": "src/main/resources/assets/box3js/template/types/client/audio.d.ts",
+      "iface": "GameAudio",
+      "docs": ["docs/api/client.md", "docs/api/client_en.md"]
+    },
+    {
+      "name": "input",
+      "prefix": "input",
+      "javaObject": { "path": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java", "variable": "inputObj" },
+      "dts": "src/main/resources/assets/box3js/template/types/client/input.d.ts",
+      "iface": "GameInput",
+      "docs": ["docs/api/client.md", "docs/api/client_en.md"]
+    },
+    {
+      "name": "ui",
+      "prefix": "ui",
+      "javaObject": { "path": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java", "variable": "uiObj" },
+      "dts": "src/main/resources/assets/box3js/template/types/client/ui.d.ts",
+      "iface": "GameUI",
+      "docs": ["docs/api/client.md", "docs/api/client_en.md"]
+    },
+    {
+      "name": "chat",
+      "prefix": "chat",
+      "javaObject": { "path": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java", "variable": "chatObj" },
+      "dts": "src/main/resources/assets/box3js/template/types/client/chat.d.ts",
+      "iface": "GameChat",
+      "docs": ["docs/api/client.md", "docs/api/client_en.md"]
+    },
+    {
+      "name": "client remoteChannel",
+      "prefix": "remoteChannel",
+      "javaObject": { "path": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java", "variable": "rcObj" },
+      "dts": "src/main/resources/assets/box3js/template/types/client/client.d.ts",
+      "iface": "RemoteChannel",
+      "docs": ["docs/api/client.md", "docs/api/client_en.md"]
+    },
+    {
+      "name": "client database",
+      "javaObject": { "path": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java", "variable": "dbObj" },
+      "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts",
+      "iface": "GameDatabase"
+    },
+    {
+      "name": "client http global",
+      "javaObject": { "path": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java", "variable": "httpObj" },
+      "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts",
+      "iface": "GameHttpAPI"
+    },
+    {
+      "name": "gui",
+      "prefix": "gui",
+      "javaObject": { "path": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java", "variable": "guiObj" },
+      "dts": "src/main/resources/assets/box3js/template/types/client/gui.d.ts",
+      "iface": "GameGUI",
+      "docs": ["docs/api/client.md", "docs/api/client_en.md"]
+    },
+    {
+      "name": "gui controller",
+      "prefix": "ctrl",
+      "java": "src/main/java/com/box3lab/box3js/client/Box3JSGuiProxy.java",
+      "dts": "src/main/resources/assets/box3js/template/types/client/gui.d.ts",
+      "iface": "GuiController",
+      "ignoreJava": ["fireSlotClick", "fireClose"],
+      "docs": ["docs/api/client.md", "docs/api/client_en.md"]
+    }
+  ]
+}

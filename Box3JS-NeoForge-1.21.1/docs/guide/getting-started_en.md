@@ -111,7 +111,8 @@ config/box3/script/mygame/
 │   │   └── app.ts         ← ★ Server entry point (where you write code)
 │   └── client/
 │       └── app.ts         ← Client entry point
-└── registries/            ← Custom content (blocks/items/sounds JSON)
+├── registries/            ← Custom content (blocks/items/sounds JSON)
+└── assets/lang/           ← Custom content localization text
 ```
 
 ### Install Dependencies

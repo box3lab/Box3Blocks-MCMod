@@ -104,12 +104,14 @@ audio.setVolume("player", 0.8);
 
 ### client.onTick(callback)
 
-Registers a callback invoked every client tick (20 times/sec). No parameters, no return value.
+Registers a callback invoked every client tick (20 times/sec). It receives no parameters and returns a `GameEventHandlerToken`; call `cancel()` to unsubscribe.
 
 ```js
-client.onTick(() => {
+const token = client.onTick(() => {
   // Per-frame logic
 });
+
+// token.cancel();
 ```
 
 > **Note:** Server-side `world.onTick()` receives a `TickInfo` object. Client-side `client.onTick()` receives nothing.
@@ -240,7 +242,7 @@ token.cancel();
 | Function keys | `f1`–`f12` |
 | Arrow keys | `up`, `down`, `left`, `right` |
 | Special keys | `space`, `enter`, `escape`, `tab`, `backspace`, `delete` |
-| Modifiers | `left_shift`, `right_shift`, `left_ctrl`, `right_ctrl`, `left_alt`, `right_alt` |
+| Modifiers | `shift`, `left_shift`, `right_shift`, `ctrl`, `left_ctrl`, `right_ctrl`, `alt`, `left_alt`, `right_alt` |
 
 ## ui — Screen UI
 

@@ -208,6 +208,8 @@ public final class Box3JSNetwork {
                     Box3JS.LOGGER.error("Failed to send client script '{}': {}", name, e.getMessage());
                 }
             });
-        } catch (IOException ignored) {}
+        } catch (IOException e) {
+            Box3JS.LOGGER.warn("Failed to scan client script directory: {}", scriptDir, e);
+        }
     }
 }

@@ -1,13 +1,13 @@
 package com.box3lab.box3js.client;
 
 import com.box3lab.box3js.script.Box3StorageTypes;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import com.box3lab.box3js.script.Box3StorageSupport;
+import com.mojang.logging.LogUtils;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
+import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -20,8 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Box3JSClientStorage {
 
-    private static final Gson GSON = new Gson();
-    private static final Type MAP_TYPE = new TypeToken<Map<String, Box3StorageTypes.ValueEntry>>() {}.getType();
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     private final Path baseDir;
     private final String projectName;
@@ -30,7 +29,11 @@ public class Box3JSClientStorage {
     public Box3JSClientStorage(java.io.File gameDir, String projectName) {
         this.baseDir = gameDir.toPath().resolve("box3").resolve("client-storage");
         this.projectName = projectName;
-        try { Files.createDirectories(baseDir); } catch (IOException ignored) {}
+        try {
+            Files.createDirectories(baseDir);
+        } catch (IOException e) {
+            LOGGER.warn("Failed to create client storage directory: {}", baseDir, e);
+        }
     }
 
     public String getKey() { return ""; }
@@ -53,41 +56,14 @@ public class Box3JSClientStorage {
 
         GameDataStorage(String name) {
             this.name = name;
-            String[] parts = name.split("/");
-            Path dir = baseDir;
-            for (int i = 0; i < parts.length - 1; i++) {
-                String seg = sanitize(parts[i]);
-                if (!seg.isEmpty()) dir = dir.resolve(seg);
-            }
-            String file = sanitize(parts[parts.length - 1]);
-            if (file.isEmpty()) file = "default";
-            this.path = dir.resolve(file + ".json");
-            this.data = cache.computeIfAbsent(path, p -> {
-                if (Files.exists(p)) {
-                    try {
-                        String json = Files.readString(p);
-                        Map<String, Box3StorageTypes.ValueEntry> map = GSON.fromJson(json, MAP_TYPE);
-                        return map != null ? Collections.synchronizedMap(new LinkedHashMap<>(map))
-                                           : Collections.synchronizedMap(new LinkedHashMap<>());
-                    } catch (IOException e) {
-                        return Collections.synchronizedMap(new LinkedHashMap<>());
-                    }
-                }
-                return Collections.synchronizedMap(new LinkedHashMap<>());
-            });
-        }
-
-        private String sanitize(String s) {
-            return s.replaceAll("[^a-zA-Z0-9_.\\-]", "_");
+            this.path = Box3StorageSupport.resolveStoragePath(baseDir, name);
+            this.data = cache.computeIfAbsent(path, p -> Box3StorageSupport.readData(p, "client"));
         }
 
         public String getKey() { return name; }
 
         private void persist() {
-            try {
-                Files.createDirectories(path.getParent());
-                Files.writeString(path, GSON.toJson(data));
-            } catch (IOException ignored) {}
+            Box3StorageSupport.writeData(path, data, "client");
         }
 
         // ── Basic API ──
@@ -100,7 +76,7 @@ public class Box3JSClientStorage {
                 if (existing != null) {
                     existing.value = value;
                     existing.updateTime = now;
-                    existing.version = Long.toHexString(now) + "-" + Integer.toHexString(new Random().nextInt());
+                    existing.version = Box3StorageTypes.newVersion(now);
                 } else {
                     data.put(key, new Box3StorageTypes.ValueEntry(value, now));
                 }
@@ -135,7 +111,7 @@ public class Box3JSClientStorage {
                     Context.exit();
                 }
                 entry.updateTime = now;
-                entry.version = Long.toHexString(now) + "-" + Integer.toHexString(new Random().nextInt());
+                entry.version = Box3StorageTypes.newVersion(now);
                 persist();
             }
         }
@@ -165,7 +141,7 @@ public class Box3JSClientStorage {
                         entry.value = delta;
                     }
                     entry.updateTime = now;
-                    entry.version = Long.toHexString(now) + "-" + Integer.toHexString(new Random().nextInt());
+                    entry.version = Box3StorageTypes.newVersion(now);
                 } else {
                     entry = new Box3StorageTypes.ValueEntry(delta, now);
                     data.put(key, entry);
@@ -255,7 +231,7 @@ public class Box3JSClientStorage {
         public void destroy() {
             synchronized (data) {
                 cache.remove(path);
-                try { Files.deleteIfExists(path); } catch (IOException ignored) {}
+                Box3StorageSupport.deleteData(path, "client");
             }
         }
     }

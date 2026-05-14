@@ -93,7 +93,8 @@ class Box3ScriptWatcher {
         if (watchService != null) {
             try {
                 watchService.close();
-            } catch (IOException ignored) {
+            } catch (IOException e) {
+                Box3JS.LOGGER.warn("Failed to close script watch service", e);
             }
             watchService = null;
         }
@@ -165,7 +166,8 @@ class Box3ScriptWatcher {
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            Box3JS.LOGGER.warn("Failed to re-register watch for project '{}'", project, e);
         }
     }
 

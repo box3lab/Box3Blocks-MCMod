@@ -14,7 +14,6 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
-import java.nio.file.Path;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -209,7 +208,7 @@ public class Box3JS {
                     event.getSource().getEntity());
         });
 
-        // Auto-load scripts from config/box3/script/<project>/app.js on server start
+        // Auto-load server scripts from config/box3/script/<project>/dist/server.js on server start
         NeoForge.EVENT_BUS.addListener((ServerStartedEvent event) -> {
             Box3ScriptEngine.get().autoLoad(event.getServer());
             Box3JSRecipeManager.init(event.getServer());
