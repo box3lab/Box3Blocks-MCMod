@@ -38,7 +38,7 @@ world.addScoreboard("playtime", "dummy");
 world.showScoreboard("sidebar", "playtime");
 
 // 每分钟 +1
-world.setInterval(() => {
+setInterval(() => {
   world.querySelectorAll("*").forEach((entity) => {
     if (!entity.isPlayer()) { return; }
     const p = entity.player;
@@ -94,11 +94,11 @@ world.removeBossbar("my_bar");
 let timeLeft = 30;
 world.showBossbar("demo_timer", "§e倒计时演示", 1.0, "green");
 
-const timerId = world.setInterval(() => {
+const timerId = setInterval(() => {
   timeLeft--;
   if (timeLeft <= 0) {
     world.removeBossbar("demo_timer");
-    world.clearInterval(timerId);
+    timerId.cancel();
     world.say("§c⏰ 时间到！");
     world.playSound("minecraft:block.note_block.pling", new GameVector3(0, 70, 0), 1.0, 0.5);
     return;
@@ -201,7 +201,7 @@ world.borderSize = 200;
 world.setBorderDamage(1);
 world.setBorderWarning(10);
 
-world.setTimeout(() => {
+setTimeout(() => {
   world.say("§c边界缩小至 50 格！");
   world.shrinkBorder(50, 60);
   world.playSound(

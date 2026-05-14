@@ -1015,3 +1015,36 @@ declare const db: GameDatabase;
 
 /** @zh HTTP 请求 API @en HTTP request API */
 declare const http: GameHttpAPI;
+
+// ── §8 @zh 定时器（全局函数） @en Timers (global functions) ──
+
+/**
+ * @zh 设置一次性延时回调。Rhino 引擎不提供浏览器内置的 setTimeout，由 Box3JS 提供。
+ * @en Schedules a one‑shot delayed callback. Rhino does not provide the browser built‑in setTimeout; Box3JS supplies it.
+ * @param handler - @zh 回调函数 @en callback function
+ * @param ticks - @zh 延迟 tick 数（20 ticks = 1 秒） @en delay in ticks (20 ticks = 1 second)
+ * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to cancel
+ *
+ * @example
+ * const token = setTimeout(() => {
+ *   world.say("3 seconds passed");
+ * }, 60);
+ * // token.cancel(); // cancel before it fires
+ */
+declare function setTimeout(handler: () => void, ticks: number): GameEventHandlerToken;
+
+/**
+ * @zh 设置循环定时回调。Rhino 引擎不提供浏览器内置的 setInterval，由 Box3JS 提供。
+ * @en Schedules a recurring interval callback. Rhino does not provide the browser built‑in setInterval; Box3JS supplies it.
+ * @param handler - @zh 回调函数 @en callback function
+ * @param ticks - @zh 间隔 tick 数（20 ticks = 1 秒） @en interval in ticks (20 ticks = 1 second)
+ * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to cancel
+ *
+ * @example
+ * const token = setInterval(() => {
+ *   world.say("Every 5 seconds");
+ * }, 100);
+ * // token.cancel(); // stop the interval
+ */
+declare function setInterval(handler: () => void, ticks: number): GameEventHandlerToken;
+

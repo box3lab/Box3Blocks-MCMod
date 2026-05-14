@@ -403,7 +403,7 @@ function spawnWave(pos: GameVector3): void {
   world.say(`§c§l⚔ 第 ${wave} 波开始！§f ${count} 只怪物`);
 
   for (let i = 0; i < count; i++) {
-    world.setTimeout(() => {
+    setTimeout(() => {
       const x = pos.x + (Math.random() - 0.5) * 12;
       const z = pos.z + (Math.random() - 0.5) * 12;
       const type = types[Math.floor(Math.random() * types.length)];
@@ -445,10 +445,10 @@ function startShrinkPhase(centerX: number, centerZ: number, stages: { size: numb
     world.say(`§c边界缩小至 ${stage.size} 格！(${stage.duration} 秒)`);
     world.shrinkBorder(stage.size * 2, stage.duration);
     stageIndex++;
-    world.setTimeout(nextStage, stage.duration * 20);
+    setTimeout(nextStage, stage.duration * 20);
   }
 
-  world.setTimeout(nextStage, 100);  // 5 秒后开始
+  setTimeout(nextStage, 100);  // 5 秒后开始
 }
 
 // 用法：100→50→25→10，每段 60 秒
@@ -488,7 +488,7 @@ world.onEntityDeath((entity, killer) => {
 const SERVER_NAME = "My Server";
 const WEBHOOK_URL = "https://discord.com/api/webhooks/YOUR_ID";
 
-world.setInterval(() => {
+setInterval(() => {
   const playerCount = world.querySelectorAll("*").length;
   const tps = "20";  // 正常情况
 

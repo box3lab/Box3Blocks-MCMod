@@ -167,6 +167,9 @@ Box3JS API 按运行环境分为服务端、客户端和双端共享三类。服
 | 发送服务端事件 | `remoteChannel.sendServerEvent({ ... })` |
 | 接收服务端事件 | `remoteChannel.onClientEvent((event) => { ... })` |
 | 客户端本地存储 | `storage.getDataStorage("key")` |
+| 设置雾颜色 | `client.setFogColor(255, 100, 50)` |
+| 设置雾距离 | `client.setFogStartDistance(10)` / `client.setFogEndDistance(50)` |
+| 重置雾效果 | `client.resetFog()` |
 
 ### 视觉效果
 
@@ -200,8 +203,8 @@ Box3JS API 按运行环境分为服务端、客户端和双端共享三类。服
 | 右键方块时 | `world.onBlockActivate((entity, x, y, z, voxel, tick) => { ... })` |
 | 按钮按下时 | `world.onButtonPressed((entity, button, tick) => { ... })` |
 | 玩家重生时 | `world.onPlayerRespawn((entity, tick) => { ... })` |
-| 定时执行一次 | `world.setTimeout(() => { ... }, ticks)` |
-| 定时循环执行 | `world.setInterval(() => { ... }, ticks)` |
+| 定时执行一次 | `setTimeout(() => { ... }, ticks)` |
+| 定时循环执行 | `setInterval(() => { ... }, ticks)` |
 | 取消事件监听 | `token.cancel()` |
 | 检查事件是否活跃 | `token.active()` |
 

@@ -26,7 +26,7 @@ All events are registered via `world.onXxx(handler)` and return a `GameEventHand
 
 ```js
 const token = world.onTick((info) => {
-  console.log("Tick: " + info.tick);
+  console.log(`Tick: ${info.tick}`);
 });
 
 token.cancel();       // Unsubscribe
@@ -164,9 +164,10 @@ const entity = world.createEntity({
   maxHp: 40,
   tags: ["elite", "undead"],
 });
+if (!entity) return;  // createEntity may return null
 
 entity.setEquipment("mainhand", "minecraft:bow");
-entity.setTarget(somePlayerEntity);   // Set attack target
+// entity.setTarget(targetEntity);   // Set attack target (requires entity reference)
 entity.clearTarget();                 // Clear target
 entity.navigateTo(10, 100, 10, 0.5); // Navigate to position
 entity.setPersistent(true);           // Persistent (won't be unloaded)
@@ -199,9 +200,9 @@ function createPatrol(
   guard.setAI(true);
 
   let wpIndex = 0;
-  const tid = world.setInterval(() => {
+  const tid = setInterval(() => {
     if (guard.destroyed) {
-      world.clearInterval(tid);
+      tid.cancel();
       return;
     }
     // Reached current waypoint → move to next
@@ -251,13 +252,13 @@ if (entity.hasTag("boss")) {
 const tags = entity.tags();  // ["boss", "undead"]
 
 // Entity collision
-world.onEntityContact((entityA, entityB, tick) => {
+world.onEntityContact((entityA, entityB, _tick) => {
   if (entityA.isPlayer() && entityB.hasTag("boss")) {
     entityA.player.actionBar("§cWatch out — Boss!");
   }
 });
 
-world.onEntitySeparate((entityA, entityB, tick) => {
+world.onEntitySeparate((entityA, entityB, _tick) => {
   // Two entities separated
 });
 ```

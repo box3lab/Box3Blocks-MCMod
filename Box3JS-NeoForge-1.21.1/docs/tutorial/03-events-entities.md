@@ -26,7 +26,7 @@
 
 ```js
 const token = world.onTick((info) => {
-  console.log("Tick: " + info.tick);
+  console.log(`Tick: ${info.tick}`);
 });
 
 token.cancel();       // 取消监听
@@ -164,9 +164,10 @@ const entity = world.createEntity({
   maxHp: 40,
   tags: ["elite", "undead"],
 });
+if (!entity) return;  // createEntity 可能返回 null
 
 entity.setEquipment("mainhand", "minecraft:bow");
-entity.setTarget(somePlayerEntity);   // 设置攻击目标
+// entity.setTarget(targetEntity);   // 设置攻击目标（需要先获取实体引用）
 entity.clearTarget();                 // 清除目标
 entity.navigateTo(10, 100, 10, 0.5); // 导航到指定位置
 entity.setPersistent(true);           // 持久化（不会被卸载）
@@ -199,9 +200,9 @@ function createPatrol(
   guard.setAI(true);
 
   let wpIndex = 0;
-  const tid = world.setInterval(() => {
+  const tid = setInterval(() => {
     if (guard.destroyed) {
-      world.clearInterval(tid);
+      tid.cancel();
       return;
     }
     // 到达当前路点 → 下一个
@@ -251,13 +252,13 @@ if (entity.hasTag("boss")) {
 const tags = entity.tags();  // ["boss", "undead"]
 
 // 实体碰撞
-world.onEntityContact((entityA, entityB, tick) => {
+world.onEntityContact((entityA, entityB, _tick) => {
   if (entityA.isPlayer() && entityB.hasTag("boss")) {
     entityA.player.actionBar("§c小心 Boss！");
   }
 });
 
-world.onEntitySeparate((entityA, entityB, tick) => {
+world.onEntitySeparate((entityA, entityB, _tick) => {
   // 两个实体分离
 });
 ```

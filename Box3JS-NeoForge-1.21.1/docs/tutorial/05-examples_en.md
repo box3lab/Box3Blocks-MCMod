@@ -40,7 +40,7 @@ Common particles:
 ```js
 function spiralEffect(pos: GameVector3): void {
   for (let i = 0; i < 40; i++) {
-    world.setTimeout(() => {
+    setTimeout(() => {
       const angle = (i / 40) * Math.PI * 4;
       const radius = 2.0;
       const px = pos.x + Math.cos(angle) * radius;
@@ -74,7 +74,7 @@ const colors = ["red", "gold", "green", "blue", "purple", "white", "pink", "aqua
 const shapes = ["ball", "large_ball", "star", "creeper", "burst"];
 
 for (let i = 0; i < 8; i++) {
-  world.setTimeout(() => {
+  setTimeout(() => {
     const c = colors[i % colors.length];
     const s = shapes[i % shapes.length];
     world.launchFirework(
@@ -97,7 +97,7 @@ world.strikeLightning(0, 100, 0, 0);     // No damage, visual only
 
 // Summon lightning around a player
 for (let i = 0; i < 3; i++) {
-  world.setTimeout(() => {
+  setTimeout(() => {
     const lx = pos.x + (Math.random() - 0.5) * 12;
     const lz = pos.z + (Math.random() - 0.5) * 12;
     world.strikeLightning(lx, pos.y, lz, 0);
@@ -115,9 +115,9 @@ world.explode(0, 100, 0, 8, true);    // Power 8, causes fire
 
 // Player-triggered self-destruct (3-second countdown)
 world.playSound("minecraft:block.note_block.bass", pos, 1.0, 0.5);
-world.setTimeout(() => {
+setTimeout(() => {
   world.spawnParticle("minecraft:explosion", pos.x, pos.y, pos.z, 1, 0, 0, 0, 0);
-  world.setTimeout(() => {
+  setTimeout(() => {
     world.explode(pos.x, pos.y, pos.z, 4, false);
     world.playSound("minecraft:entity.generic.explode", pos, 1.0, 1.0);
   }, 10);
@@ -215,9 +215,9 @@ const state: PvPState = {
   blueScore: 0,
 };
 
-let pvpGameTimer: number | null = null;
-let pvpAirdropTimer: number | null = null;
-let pvpLobbyTimer: number | null = null;
+let pvpGameTimer: GameEventHandlerToken | null = null;
+let pvpAirdropTimer: GameEventHandlerToken | null = null;
+let pvpLobbyTimer: GameEventHandlerToken | null = null;
 
 // ── Initialization ──
 world.setGameRule("keepInventory", false);
@@ -269,9 +269,9 @@ world.onChat((entity, message, _tick) => {
 function startLobby(): void {
   state.phase = "starting";
   let cd = 30;
-  pvpLobbyTimer = world.setInterval(() => {
+  pvpLobbyTimer = setInterval(() => {
     cd--;
-    if (cd <= 0 && pvpLobbyTimer) { world.clearInterval(pvpLobbyTimer); beginPvPGame(); }
+    if (cd <= 0 && pvpLobbyTimer) { pvpLobbyTimer.cancel(); beginPvPGame(); }
     else if (cd <= 5) { world.say(`§eGame starts in §c${cd} §eseconds!`); }
     else if (cd % 10 === 0) { world.say(`§7Game starts in ${cd} seconds...`); }
   }, 20);
@@ -322,7 +322,7 @@ function beginPvPGame(): void {
 
   // Game countdown
   let remaining = DURATION;
-  pvpGameTimer = world.setInterval(() => {
+  pvpGameTimer = setInterval(() => {
     remaining--;
     const progress = remaining / DURATION;
     const mins = Math.floor(remaining / 60);
@@ -343,20 +343,20 @@ function beginPvPGame(): void {
     if (remaining === 60) { world.say("§cFinal minute!"); }
     if (remaining === 30) { world.strikeLightning(ARENA.x, ARENA.y, ARENA.z, 0); }
     if (remaining <= 0 && pvpGameTimer) {
-      world.clearInterval(pvpGameTimer);
+      pvpGameTimer.cancel();
       endPvPGame();
     }
   }, 20);
 
   // Airdrops
-  pvpAirdropTimer = world.setInterval(() => {
+  pvpAirdropTimer = setInterval(() => {
     if (state.phase !== "playing") return;
     const angle = Math.random() * Math.PI * 2;
     const dist = Math.random() * ARENA_RADIUS * 0.6;
     const dx = ARENA.x + Math.cos(angle) * dist;
     const dz = ARENA.z + Math.sin(angle) * dist;
     world.strikeLightning(dx, ARENA.y + 30, dz, 0);
-    world.setTimeout(() => {
+    setTimeout(() => {
       world.dropItem(dx, ARENA.y + 1, dz, "minecraft:ender_pearl", 2);
       world.dropItem(dx, ARENA.y + 1, dz, "minecraft:golden_apple", 2);
       world.launchFirework(dx, ARENA.y + 3, dz, "yellow", "ball");
@@ -408,7 +408,7 @@ world.onPlayerRespawn((entity, _tick) => {
 function endPvPGame(): void {
   state.phase = "ending";
   world.removeBossbar("pvp_timer");
-  if (pvpAirdropTimer) { world.clearInterval(pvpAirdropTimer); }
+  if (pvpAirdropTimer) { pvpAirdropTimer.cancel(); }
 
   let winner = "Draw!";
   let color = "e";
@@ -427,7 +427,7 @@ function endPvPGame(): void {
 
   // Victory fireworks
   for (let i = 0; i < 8; i++) {
-    world.setTimeout(() => {
+    setTimeout(() => {
       const cs = ["red", "gold", "green", "blue", "purple"];
       const ss = ["ball", "large_ball", "star", "burst"];
       world.launchFirework(
@@ -441,7 +441,7 @@ function endPvPGame(): void {
   }
 
   // Reset after 30 seconds
-  world.setTimeout(() => {
+  setTimeout(() => {
     state.phase = "waiting";
     state.playersReady = 0; state.redScore = 0; state.blueScore = 0;
     world.hideScoreboard("sidebar");
@@ -546,7 +546,7 @@ function startWave(pos: GameVector3): void {
   world.say(`§c§l⚔ Wave ${wave} begins!§f Spawning ${count} zombies`);
 
   for (let i = 0; i < count; i++) {
-    world.setTimeout(() => {
+    setTimeout(() => {
       const x = pos.x + (Math.random() - 0.5) * 10;
       const z = pos.z + (Math.random() - 0.5) * 10;
       const zombie = world.spawnEntity("minecraft:zombie", new GameVector3(x, pos.y, z));
@@ -565,7 +565,7 @@ world.onEntityDeath((entity, killer, _tick) => {
   mobsAlive--;
   if (mobsAlive <= 0) {
     world.say(`§a§l✔ Wave ${wave} cleared!`);
-    world.setTimeout(() => startWave(entity.position), 200);
+    setTimeout(() => startWave(entity.position), 200);
   }
 });
 ```
@@ -580,7 +580,7 @@ world.onChat((entity, message, _tick) => {
   if (message === "!sounds") {
     const notes = [1.0, 1.2, 1.5, 2.0];
     notes.forEach((pitch, i) => {
-      world.setTimeout(() => {
+      setTimeout(() => {
         p.playSound("minecraft:block.note_block.pling", 1.0, pitch);
       }, i * 100);
     });

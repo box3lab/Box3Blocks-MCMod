@@ -57,7 +57,7 @@ Now when a player joins, they'll receive "§aWelcome to the server!" in green. T
 Try changing the welcome message to:
 
 ```js
-entity.player.directMessage("§6Hello, " + entity.player.name + "!");
+entity.player.directMessage(`§6Hello, ${entity.player.name}!`);
 ```
 
 Save, run `npm run build`, then in-game:
@@ -186,13 +186,13 @@ Effect: when a player joins, they see a screen title, hear a bell chime, and gre
 
 ```js
 // Broadcast player count every 5 minutes
-world.setInterval(() => {
+setInterval(() => {
   const count = world.querySelectorAll("*").length;
   if (count > 0) world.say(`§7Online: §f${count} §7players`);
 }, 6000);  // 6000 ticks = 5 minutes
 
 // Run once after 30 seconds
-world.setTimeout(() => {
+setTimeout(() => {
   world.say("§6Server has been running for 30 seconds");
 }, 600);  // 600 ticks = 30 seconds
 ```
@@ -248,7 +248,7 @@ world.onPlayerJoin((entity) => {
 });
 
 // ── Periodic announcement ──
-world.setInterval(() => {
+setInterval(() => {
   const count = world.querySelectorAll("*").length;
   if (count > 0) world.say(`§7Online: §f${count} §7players`);
 }, 6000);

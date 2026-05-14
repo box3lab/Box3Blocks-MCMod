@@ -57,7 +57,7 @@ world.onPlayerJoin((entity) => {
 试着把欢迎消息改成：
 
 ```js
-entity.player.directMessage("§6你好，" + entity.player.name + "！");
+entity.player.directMessage(`§6你好，${entity.player.name}！`);
 ```
 
 保存后执行 `npm run build`，然后在游戏内：
@@ -186,13 +186,13 @@ world.onPlayerJoin((entity) => {
 
 ```js
 // 每 5 分钟广播一次在线人数
-world.setInterval(() => {
+setInterval(() => {
   const count = world.querySelectorAll("*").length;
   if (count > 0) world.say(`§7在线: §f${count} §7人`);
 }, 6000);  // 6000 ticks = 5 分钟
 
 // 30 秒后执行一次
-world.setTimeout(() => {
+setTimeout(() => {
   world.say("§6服务器已运行 30 秒");
 }, 600);  // 600 ticks = 30 秒
 ```
@@ -248,7 +248,7 @@ world.onPlayerJoin((entity) => {
 });
 
 // ── 定时公告 ──
-world.setInterval(() => {
+setInterval(() => {
   const count = world.querySelectorAll("*").length;
   if (count > 0) world.say(`§7在线: §f${count} §7人`);
 }, 6000);

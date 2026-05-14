@@ -164,6 +164,70 @@ if (!info.isLocal) {
 }
 ```
 
+### Fog Control
+
+The Box3JS client can override Minecraft's fog colour and distance, providing effects similar to Box3's `world.fogColor` / `world.maxFog`.
+
+### client.getFogColor()
+
+Gets the current custom fog colour. Returns `null` if not set.
+
+```js
+var color = client.getFogColor();
+if (color) {
+  console.log("Fog color: " + color.r + ", " + color.g + ", " + color.b);
+}
+```
+
+### client.setFogColor(r, g, b)
+
+Sets the fog colour (RGB 0-255).
+
+| Parameter | Type   | Description    |
+|-----------|--------|----------------|
+| `r`       | number | Red (0-255)    |
+| `g`       | number | Green (0-255)  |
+| `b`       | number | Blue (0-255)   |
+
+```js
+// Red fog effect
+client.setFogColor(255, 50, 50);
+```
+
+### client.setFogStartDistance(distance)
+
+Sets the distance (in blocks) where fog begins. Fully transparent below this distance.
+
+| Parameter  | Type   | Description               |
+|------------|--------|---------------------------|
+| `distance` | number | Fog start distance (blocks) |
+
+```js
+// Fog starts 10 blocks away
+client.setFogStartDistance(10);
+```
+
+### client.setFogEndDistance(distance)
+
+Sets the distance (in blocks) where fog becomes fully opaque, equivalent to Box3's `maxFog`.
+
+| Parameter  | Type   | Description             |
+|------------|--------|-------------------------|
+| `distance` | number | Fog end distance (blocks) |
+
+```js
+// Fully obscured by fog beyond 50 blocks
+client.setFogEndDistance(50);
+```
+
+### client.resetFog()
+
+Resets fog to Minecraft's default behaviour.
+
+```js
+client.resetFog();
+```
+
 ## input — Keyboard Input
 
 ### input.isKeyDown(key)

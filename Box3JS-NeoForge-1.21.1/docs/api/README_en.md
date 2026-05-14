@@ -167,6 +167,9 @@ Find APIs by what you want to do, not by which global object they live on.
 | Send event to server | `remoteChannel.sendServerEvent({ ... })` |
 | Receive event from server | `remoteChannel.onClientEvent((event) => { ... })` |
 | Client-side local storage | `storage.getDataStorage("key")` |
+| Set fog colour | `client.setFogColor(255, 100, 50)` |
+| Set fog distance | `client.setFogStartDistance(10)` / `client.setFogEndDistance(50)` |
+| Reset fog | `client.resetFog()` |
 
 ### Visual Effects
 
@@ -200,8 +203,8 @@ Find APIs by what you want to do, not by which global object they live on.
 | On right-click block | `world.onBlockActivate((entity, x, y, z, voxel, tick) => { ... })` |
 | On button pressed | `world.onButtonPressed((entity, button, tick) => { ... })` |
 | On player respawn | `world.onPlayerRespawn((entity, tick) => { ... })` |
-| Run once after delay | `world.setTimeout(() => { ... }, ticks)` |
-| Run on interval | `world.setInterval(() => { ... }, ticks)` |
+| Run once after delay | `setTimeout(() => { ... }, ticks)` |
+| Run on interval | `setInterval(() => { ... }, ticks)` |
 | Cancel event listener | `token.cancel()` |
 | Check if active | `token.active()` |
 

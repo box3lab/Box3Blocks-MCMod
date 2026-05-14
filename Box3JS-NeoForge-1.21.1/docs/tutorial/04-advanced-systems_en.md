@@ -38,7 +38,7 @@ world.addScoreboard("playtime", "dummy");
 world.showScoreboard("sidebar", "playtime");
 
 // +1 every minute
-world.setInterval(() => {
+setInterval(() => {
   world.querySelectorAll("*").forEach((entity) => {
     if (!entity.isPlayer()) { return; }
     const p = entity.player;
@@ -94,11 +94,11 @@ Color options: `"blue"` `"green"` `"pink"` `"purple"` `"red"` `"white"` `"yellow
 let timeLeft = 30;
 world.showBossbar("demo_timer", "§eCountdown Demo", 1.0, "green");
 
-const timerId = world.setInterval(() => {
+const timerId = setInterval(() => {
   timeLeft--;
   if (timeLeft <= 0) {
     world.removeBossbar("demo_timer");
-    world.clearInterval(timerId);
+    timerId.cancel();
     world.say("§c⏰ Time's up!");
     world.playSound("minecraft:block.note_block.pling", new GameVector3(0, 70, 0), 1.0, 0.5);
     return;
@@ -201,7 +201,7 @@ world.borderSize = 200;
 world.setBorderDamage(1);
 world.setBorderWarning(10);
 
-world.setTimeout(() => {
+setTimeout(() => {
   world.say("§cBorder shrinking to 50 blocks!");
   world.shrinkBorder(50, 60);
   world.playSound(

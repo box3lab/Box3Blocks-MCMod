@@ -60,7 +60,7 @@ remoteChannel.sendClientEvent(entity, {
 | Entity interaction | `world.onInteract(handler)` |
 | Block interaction | `world.onBlockActivate(handler)` |
 | Block break/place | `world.onVoxelDestroy(handler)` / `world.onBlockPlace(handler)` |
-| Timers | `world.setTimeout(fn, ticks)` / `world.setInterval(fn, ticks)` |
+| Timers | `setTimeout(fn, ticks)` / `setInterval(fn, ticks)` |
 
 ```ts
 world.onChat((entity, message) => {

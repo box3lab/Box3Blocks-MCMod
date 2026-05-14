@@ -384,6 +384,11 @@ function extractJavaScriptableMembers(path, objectVariable) {
 
 function hasDtsConst(paths, name, type) {
   const files = Array.isArray(paths) ? paths : [paths];
+  // GlobalFunction entries use `declare function` instead of `declare const`
+  if (type === "GlobalFunction") {
+    const funcRe = new RegExp(`declare\\s+function\\s+${name}\\s*\\(`);
+    return files.some((path) => funcRe.test(read(path)));
+  }
   const escapedType = type.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s*");
   const declarationRe = new RegExp(`declare\\s+const\\s+${name}\\s*:\\s*${escapedType}\\s*;`);
   return files.some((path) => declarationRe.test(read(path)));

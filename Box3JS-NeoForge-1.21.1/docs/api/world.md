@@ -367,34 +367,28 @@ world.say("§6[公告] §f比赛即将开始！");
 
 ## 计时器
 
-### world.setTimeout(handler, ticks)
+`setTimeout` 和 `setInterval` 是全局函数（不在 `world` 上）。Rhino 引擎不提供浏览器内置的定时器，由 Box3JS 提供。返回 `GameEventHandlerToken`，调用 `.cancel()` 取消。
 
-⬆ MC 扩展 | 延迟 `ticks` 后执行一次，返回 timer ID。
+### setTimeout(handler, ticks)
 
-### world.setInterval(handler, ticks)
+延迟 `ticks` 后执行一次。
 
-⬆ MC 扩展 | 每 `ticks` 重复执行，返回 timer ID。
+### setInterval(handler, ticks)
 
-### world.clearTimeout(id)
-
-⬆ MC 扩展 | 取消 timeout。
-
-### world.clearInterval(id)
-
-⬆ MC 扩展 | 取消 interval。
+每 `ticks` 重复执行。
 
 ```js
-var tid = world.setTimeout(() => {
+var token = setTimeout(() => {
   world.say("3 秒后执行");
 }, 60); // 60 ticks = 3 秒
 
-var iid = world.setInterval(() => {
+var interval = setInterval(() => {
   world.say("每 10 秒执行一次");
 }, 200); // 200 ticks = 10 秒
 
 // 取消
-world.clearTimeout(tid);
-world.clearInterval(iid);
+token.cancel();
+interval.cancel();
 ```
 
 ## 记分板
@@ -467,12 +461,12 @@ world.removeScoreboard("kills");
 ```js
 // 创建一个 3 分钟倒计时血条
 var totalTicks = 3600;
-var iid = world.setInterval(() => {
+var iid = setInterval(() => {
   totalTicks -= 20;
   var remain = totalTicks / 3600;
   if (remain <= 0) {
     world.removeBossbar("timer");
-    world.clearInterval(iid);
+    iid.cancel();
   } else {
     world.showBossbar(
       "timer",
@@ -550,7 +544,7 @@ world.borderSize = 500;
 world.setBorderDamage(2);
 world.setBorderWarning(10);
 
-world.setTimeout(() => {
+setTimeout(() => {
   world.shrinkBorder(100, 120); // 2 分钟缩到 100
 }, 600); // 30 秒后开始
 ```

@@ -403,7 +403,7 @@ function spawnWave(pos: GameVector3): void {
   world.say(`§c§l⚔ Wave ${wave} begins! §f${count} mobs`);
 
   for (let i = 0; i < count; i++) {
-    world.setTimeout(() => {
+    setTimeout(() => {
       const x = pos.x + (Math.random() - 0.5) * 12;
       const z = pos.z + (Math.random() - 0.5) * 12;
       const type = types[Math.floor(Math.random() * types.length)];
@@ -445,10 +445,10 @@ function startShrinkPhase(centerX: number, centerZ: number, stages: { size: numb
     world.say(`§cBorder shrinking to ${stage.size} blocks! (${stage.duration}s)`);
     world.shrinkBorder(stage.size * 2, stage.duration);
     stageIndex++;
-    world.setTimeout(nextStage, stage.duration * 20);
+    setTimeout(nextStage, stage.duration * 20);
   }
 
-  world.setTimeout(nextStage, 100);  // Start after 5 seconds
+  setTimeout(nextStage, 100);  // Start after 5 seconds
 }
 
 // Usage: 100→50→25→10, 60s per stage
@@ -488,7 +488,7 @@ world.onEntityDeath((entity, killer) => {
 const SERVER_NAME = "My Server";
 const WEBHOOK_URL = "https://discord.com/api/webhooks/YOUR_ID";
 
-world.setInterval(() => {
+setInterval(() => {
   const playerCount = world.querySelectorAll("*").length;
 
   http.fetch(WEBHOOK_URL, {

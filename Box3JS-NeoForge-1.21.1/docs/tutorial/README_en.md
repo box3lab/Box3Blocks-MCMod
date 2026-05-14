@@ -58,7 +58,7 @@ world.onChat((entity, message) => {
   return true;
 });
 
-world.setInterval(() => {
+setInterval(() => {
   world.say("Players online: " + world.querySelectorAll("*").length);
 }, 6000);
 ```

@@ -80,7 +80,7 @@ world.onChat((entity, message) => {
   return true;
 });
 
-world.setInterval(() => {
+setInterval(() => {
   world.say("当前在线: " + world.querySelectorAll("*").length + " 人");
 }, 6000);
 ```

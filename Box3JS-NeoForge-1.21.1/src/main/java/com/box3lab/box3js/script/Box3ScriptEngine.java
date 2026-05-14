@@ -975,6 +975,26 @@ public class Box3ScriptEngine {
             ScriptableObject.putProperty(scope, "db", dbObj);
             ScriptableObject.putProperty(scope, "http", Context.javaToJS(httpBinding, scope));
             ScriptableObject.putProperty(scope, "remoteChannel", Context.javaToJS(remoteChannel, scope));
+            ScriptableObject.putProperty(scope, "setTimeout", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    Function handler = (Function) args[0];
+                    int ticks = ((Number) args[1]).intValue();
+                    int id = scheduleTimeout(handler, ticks);
+                    return new GameEventHandlerToken(() -> clearTimer(id));
+                }
+            });
+            ScriptableObject.putProperty(scope, "setInterval", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    Function handler = (Function) args[0];
+                    int ticks = ((Number) args[1]).intValue();
+                    int id = scheduleInterval(handler, ticks);
+                    return new GameEventHandlerToken(() -> clearTimer(id));
+                }
+            });
             ScriptableObject.putProperty(scope, "_jConsole", Context.javaToJS(new Box3JSConsole(() -> currentProject), scope));
             cx.evaluateString(scope, Box3ScriptUtils.CONSOLE_INIT_JS,
                     "console-init", 1, null);

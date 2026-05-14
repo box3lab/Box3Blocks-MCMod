@@ -60,7 +60,7 @@ remoteChannel.sendClientEvent(entity, {
 | 实体交互 | `world.onInteract(handler)` |
 | 方块交互 | `world.onBlockActivate(handler)` |
 | 方块破坏/放置 | `world.onVoxelDestroy(handler)` / `world.onBlockPlace(handler)` |
-| 定时器 | `world.setTimeout(fn, ticks)` / `world.setInterval(fn, ticks)` |
+| 定时器 | `setTimeout(fn, ticks)` / `setInterval(fn, ticks)` |
 
 ```ts
 world.onChat((entity, message) => {

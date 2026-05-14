@@ -369,34 +369,28 @@ world.say("§6[Announcement] §fThe match is about to begin!");
 
 ## Timers
 
-### world.setTimeout(handler, ticks)
+`setTimeout` and `setInterval` are global functions (not on `world`). Rhino does not provide the browser built-in timers; Box3JS supplies them. They return `GameEventHandlerToken` — call `.cancel()` to stop.
 
-⬆ MC Extension | Execute once after `ticks` delay, returns timer ID.
+### setTimeout(handler, ticks)
 
-### world.setInterval(handler, ticks)
+Execute once after `ticks` delay.
 
-⬆ MC Extension | Execute repeatedly every `ticks`, returns timer ID.
+### setInterval(handler, ticks)
 
-### world.clearTimeout(id)
-
-⬆ MC Extension | Cancel a timeout.
-
-### world.clearInterval(id)
-
-⬆ MC Extension | Cancel an interval.
+Execute repeatedly every `ticks`.
 
 ```js
-var tid = world.setTimeout(() => {
+var token = setTimeout(() => {
   world.say("Executed after 3 seconds");
 }, 60); // 60 ticks = 3 seconds
 
-var iid = world.setInterval(() => {
+var interval = setInterval(() => {
   world.say("Executed every 10 seconds");
 }, 200); // 200 ticks = 10 seconds
 
 // Cancel
-world.clearTimeout(tid);
-world.clearInterval(iid);
+token.cancel();
+interval.cancel();
 ```
 
 ## Scoreboard
@@ -469,12 +463,12 @@ Remove a boss bar.
 ```js
 // Create a 3-minute countdown boss bar
 var totalTicks = 3600;
-var iid = world.setInterval(() => {
+var iid = setInterval(() => {
   totalTicks -= 20;
   var remain = totalTicks / 3600;
   if (remain <= 0) {
     world.removeBossbar("timer");
-    world.clearInterval(iid);
+    iid.cancel();
   } else {
     world.showBossbar(
       "timer",
@@ -552,7 +546,7 @@ world.borderSize = 500;
 world.setBorderDamage(2);
 world.setBorderWarning(10);
 
-world.setTimeout(() => {
+setTimeout(() => {
   world.shrinkBorder(100, 120); // shrink to 100 over 2 minutes
 }, 600); // start after 30 seconds
 ```

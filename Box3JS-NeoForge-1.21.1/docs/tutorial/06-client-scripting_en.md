@@ -34,6 +34,7 @@ The colorzone project (`src/client/app.ts`) contains a complete client-side demo
 | ui | On-screen text | F6 to show settings |
 | chat | Chat commands | `!fav` `!mob` |
 | audio | Custom sounds | V key |
+| fog | Fog colour and distance control | — |
 
 ## 6.3 client — Lifecycle
 
@@ -137,7 +138,28 @@ const musicVol = audio.getVolume("music");  // Read current volume
 audio.playSound("colorzone:victory_fanfare", 1.0, 1.0);
 ```
 
-## 6.8 storage — Client-Side Local Storage
+## 6.8 fog — Fog Control
+
+Override Minecraft's fog colour and render distance:
+
+```js
+// Set fog colour (RGB 0-255)
+client.setFogColor(255, 100, 50);
+
+// Set fog distance (in blocks)
+client.setFogStartDistance(10);     // fog begins beyond 10 blocks
+client.setFogEndDistance(50);       // fully obscured beyond 50 blocks
+
+// Read current fog colour
+const color = client.getFogColor(); // returns GameRGBColor or null
+
+// Restore Minecraft default fog
+client.resetFog();
+```
+
+> **Note**: Fog changes take effect locally on each client. Use `remoteChannel` to let the server trigger fog changes on clients, enabling server-controlled weather effects.
+
+## 6.9 storage — Client-Side Local Storage
 
 Client-side `storage` uses the same API as the server but stores data locally on each player's machine:
 
@@ -194,7 +216,7 @@ const page = notes.list({ pageSize: 10, ascending: false });
 const entries = page.getCurrentPage();
 ```
 
-## 6.9 db — Client-Side SQLite
+## 6.10 db — Client-Side SQLite
 
 The client also supports SQLite (requires `minecraft-sqlite-jdbc` mod):
 
@@ -244,7 +266,7 @@ function searchMobs(keyword: string): void {
 
 > When `minecraft-sqlite-jdbc` is not installed, `db.isAvailable()` returns `false` and all SQL calls silently return empty results.
 
-## 6.10 http — Client HTTP Requests
+## 6.11 http — Client HTTP Requests
 
 ```js
 // Synchronous GET
@@ -286,7 +308,7 @@ http.fetch("https://httpbin.org/post", {
 });
 ```
 
-## 6.11 remoteChannel — Bidirectional Communication
+## 6.12 remoteChannel — Bidirectional Communication
 
 This is the most powerful client scripting feature: server and client can send events to each other.
 
@@ -369,7 +391,7 @@ No manual detection is needed. `remoteChannel.sendClientEvent()` uses optional p
 
 > **Important:** Data sent across the network must be JSON-serializable (string, number, boolean, null, plain objects, arrays). You cannot send functions, Java objects, or `GameVector3`.
 
-## 6.12 Practical Example: Custom HUD Status Bar
+## 6.13 Practical Example: Custom HUD Status Bar
 
 Combining input, ui, remoteChannel, and storage to create a custom HUD:
 
@@ -436,7 +458,7 @@ ui.showTitle("§6Custom HUD Active", "§7F6=Coords F7=FPS", 10, 40, 10);
 console.log("[HUD] Client HUD demo loaded");
 ```
 
-## 6.13 Debugging Client Scripts
+## 6.14 Debugging Client Scripts
 
 Client script `console.log` output goes to the **client log** (not the server log). Check your Minecraft launcher or logs directory.
 

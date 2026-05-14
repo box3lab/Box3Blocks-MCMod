@@ -26,6 +26,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import org.mozilla.javascript.*;
 import org.slf4j.Logger;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +41,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.client.multiplayer.ServerData;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.neoforge.client.event.ViewportEvent;
 
 /**
  * Singleton client-side Rhino engine.
@@ -82,6 +84,20 @@ public class Box3JSClientEngine {
     private Box3JSClientHttp http;
     private Box3JSGuiProxy activeGuiProxy;
     private volatile boolean dbWarningShown;
+
+    // ── Fog state (client-side rendering) ──
+    private volatile boolean fogColorEnabled;
+    private volatile float fogColorR = 1.0f;
+    private volatile float fogColorG = 1.0f;
+    private volatile float fogColorB = 1.0f;
+    private volatile boolean fogDistanceEnabled;
+    private volatile float fogStartDist = -1f;
+    private volatile float fogEndDist = -1f;
+    private volatile boolean fogRegistered;
+
+    // ── Timers ──
+    private final List<TimerEntry> timers = new CopyOnWriteArrayList<>();
+    private final AtomicInteger timerIdCounter = new AtomicInteger(0);
 
     private static final Map<String, Integer> KEY_MAP = new HashMap<>();
     static {
@@ -155,6 +171,28 @@ public class Box3JSClientEngine {
                     new NativeJavaClass(scope, GameEventHandlerToken.class));
             ScriptableObject.putProperty(scope, "Box3JSQueryResult",
                     new NativeJavaClass(scope, Box3JSQueryResult.class));
+
+            // -- setTimeout / setInterval global functions -------------------
+            ScriptableObject.putProperty(scope, "setTimeout", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    Function handler = (Function) args[0];
+                    int ticks = ((Number) args[1]).intValue();
+                    int id = scheduleTimeout(handler, ticks);
+                    return new GameEventHandlerToken(() -> clearTimer(id));
+                }
+            });
+            ScriptableObject.putProperty(scope, "setInterval", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    Function handler = (Function) args[0];
+                    int ticks = ((Number) args[1]).intValue();
+                    int id = scheduleInterval(handler, ticks);
+                    return new GameEventHandlerToken(() -> clearTimer(id));
+                }
+            });
 
             // -- client global (lifecycle + server-bound actions) ----------
             ScriptableObject clientObj = (ScriptableObject) cx.newObject(scope);
@@ -274,6 +312,70 @@ public class Box3JSClientEngine {
                     ScriptableObject.putProperty(obj, "playerCount", serverData.players != null ? serverData.players.online() : -1);
                     ScriptableObject.putProperty(obj, "maxPlayers", serverData.players != null ? serverData.players.max() : -1);
                     return obj;
+                }
+            });
+
+            // client.getFogColor() -> GameRGBColor or null
+            ScriptableObject.putProperty(clientObj, "getFogColor", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    if (!fogColorEnabled) return null;
+                    return new GameRGBColor(fogColorR, fogColorG, fogColorB);
+                }
+            });
+
+            // client.setFogColor(r, g, b) — r,g,b each 0-255
+            ScriptableObject.putProperty(clientObj, "setFogColor", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    if (args.length < 3) return Undefined.instance;
+                    fogColorR = Math.max(0f, Math.min(1f, ((Number) args[0]).floatValue() / 255f));
+                    fogColorG = Math.max(0f, Math.min(1f, ((Number) args[1]).floatValue() / 255f));
+                    fogColorB = Math.max(0f, Math.min(1f, ((Number) args[2]).floatValue() / 255f));
+                    fogColorEnabled = true;
+                    registerFogListener();
+                    return Undefined.instance;
+                }
+            });
+
+            // client.setFogStartDistance(distanceInBlocks)
+            ScriptableObject.putProperty(clientObj, "setFogStartDistance", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    if (args.length < 1) return Undefined.instance;
+                    fogStartDist = Math.max(0f, ((Number) args[0]).floatValue());
+                    fogDistanceEnabled = true;
+                    registerFogListener();
+                    return Undefined.instance;
+                }
+            });
+
+            // client.setFogEndDistance(distanceInBlocks) — maps to Box3 maxFog
+            ScriptableObject.putProperty(clientObj, "setFogEndDistance", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    if (args.length < 1) return Undefined.instance;
+                    fogEndDist = Math.max(0f, ((Number) args[0]).floatValue());
+                    fogDistanceEnabled = true;
+                    registerFogListener();
+                    return Undefined.instance;
+                }
+            });
+
+            // client.resetFog() — restore Minecraft default fog
+            ScriptableObject.putProperty(clientObj, "resetFog", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    fogColorEnabled = false;
+                    fogDistanceEnabled = false;
+                    fogStartDist = -1f;
+                    fogEndDist = -1f;
+                    return Undefined.instance;
                 }
             });
 
@@ -826,6 +928,64 @@ public class Box3JSClientEngine {
                 LOGGER.error("Client tick callback error", e);
             }
         }
+        fireTimers();
+    }
+
+    // ── Timers ──
+
+    private int scheduleTimeout(Function handler, int ticks) {
+        int id = timerIdCounter.incrementAndGet();
+        timers.add(new TimerEntry(id, handler, ticks, 0));
+        return id;
+    }
+
+    private int scheduleInterval(Function handler, int ticks) {
+        int id = timerIdCounter.incrementAndGet();
+        timers.add(new TimerEntry(id, handler, ticks, ticks));
+        return id;
+    }
+
+    private void clearTimer(int id) {
+        timers.removeIf(t -> t.id == id);
+    }
+
+    private void fireTimers() {
+        var toFire = new ArrayList<TimerEntry>();
+        var toRemove = new ArrayList<TimerEntry>();
+        for (var t : timers) {
+            if (--t.remaining <= 0) {
+                toFire.add(t);
+                if (t.interval == 0)
+                    toRemove.add(t);
+                else
+                    t.remaining = t.interval;
+            }
+        }
+        timers.removeAll(toRemove);
+        for (var t : toFire) {
+            Context cx = Context.enter();
+            try {
+                t.handler.call(cx, scope, scope, new Object[0]);
+            } catch (Exception e) {
+                LOGGER.error("Client timer error", e);
+            } finally {
+                Context.exit();
+            }
+        }
+    }
+
+    static class TimerEntry {
+        final int id;
+        final Function handler;
+        int remaining;
+        final int interval;
+
+        TimerEntry(int id, Function handler, int remaining, int interval) {
+            this.id = id;
+            this.handler = handler;
+            this.remaining = remaining;
+            this.interval = interval;
+        }
     }
 
     private void registerKeyListener() {
@@ -981,6 +1141,37 @@ public class Box3JSClientEngine {
                 }
             });
             mouseRegistered = true;
+        });
+    }
+
+    // ── Fog override listener ──
+
+    private void registerFogListener() {
+        if (fogRegistered) return;
+        Minecraft.getInstance().execute(() -> {
+            if (fogRegistered) return;
+            // Fog color override
+            NeoForge.EVENT_BUS.addListener(ViewportEvent.ComputeFogColor.class, event -> {
+                if (fogColorEnabled) {
+                    event.setRed(fogColorR);
+                    event.setGreen(fogColorG);
+                    event.setBlue(fogColorB);
+                }
+            });
+            // Fog distance override
+            NeoForge.EVENT_BUS.addListener(ViewportEvent.RenderFog.class, event -> {
+                if (fogDistanceEnabled) {
+                    if (fogStartDist >= 0) {
+                        event.setNearPlaneDistance(fogStartDist);
+                    }
+                    if (fogEndDist >= 0) {
+                        event.setFarPlaneDistance(fogEndDist);
+                    }
+                    event.setCanceled(true);
+                }
+            });
+            fogRegistered = true;
+            LOGGER.debug("Fog rendering listener registered");
         });
     }
 
