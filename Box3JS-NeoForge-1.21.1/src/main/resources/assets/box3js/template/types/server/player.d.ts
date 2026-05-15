@@ -430,13 +430,4 @@ interface GamePlayer {
    */
   revokeAdvancement(advancementId: string): void;
 
-  // ── @zh 客户端 Mod 检测 @en Client Mod Detection ──
-
-  /**
-   * @zh 检查该玩家的客户端是否安装了 Box3JS mod。
-   * @en Returns true if this player's client has the Box3JS mod installed.
-   * @remarks 用于在调用 `remoteChannel.sendClientEvent()` 前检测，避免向未安装的客户端发送。
-   *          Use before calling `remoteChannel.sendClientEvent()` to avoid sending to unsupported clients.
-   */
-  hasBox3JSClientMod(): boolean;
 }

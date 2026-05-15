@@ -1,23 +1,6 @@
-# 常用配方：Box3JS 功能模板
+# 常用配方
 
-本指南是"菜谱"风格——不逐 API 讲解，而是一个个"想实现 X 功能，照这个模板改就行"。所有代码段均经过编译验证。
-
-## 目录
-
-1. [聊天命令](#聊天命令)
-2. [经济系统](#经济系统)
-3. [传送系统](#传送系统)
-4. [重生保护](#重生保护)
-5. [商店/NPC](#商店npc)
-6. [每日奖励](#每日奖励)
-7. [排行榜](#排行榜)
-8. [波次刷怪](#波次刷怪)
-9. [缩圈机制](#缩圈机制)
-10. [HTTP Webhook](#http-webhook)
-11. [客户端 HUD](#客户端-hud)
-12. [跨脚本联动](#跨脚本联动)
-
----
+"想实现 X 功能，照模板改就行"。所有代码段均经过编译验证。
 
 ## 聊天命令
 
@@ -72,8 +55,6 @@ if (message === "!admin") {
   // ... 管理员操作
 }
 ```
-
----
 
 ## 经济系统
 
@@ -149,8 +130,6 @@ world.onChat((entity, message) => {
   return true;
 });
 ```
-
----
 
 ## 传送系统
 
@@ -243,23 +222,19 @@ world.onChat((entity, message) => {
 });
 ```
 
----
-
 ## 重生保护
 
 ```js
 // 玩家重生后给予短暂无敌
 world.onPlayerRespawn((entity) => {
   const p = entity.player;
-  p.addEffect("minecraft:resistance", 100, 4, true);    // 5秒 抗性V（无敌）
-  p.addEffect("minecraft:regeneration", 100, 2, true);  // 5秒 生命恢复III
+  p.addEffect("minecraft:resistance", 100, 4, true); // 5秒 抗性V（无敌）
+  p.addEffect("minecraft:regeneration", 100, 2, true); // 5秒 生命恢复III
   p.addEffect("minecraft:fire_resistance", 100, 0, true); // 5秒 防火
   p.directMessage("§a你已获得 5 秒重生保护");
   p.playSound("minecraft:block.beacon.activate", 1.0, 1.5);
 });
 ```
-
----
 
 ## 商店/NPC
 
@@ -318,12 +293,11 @@ world.onChat((entity, message) => {
 });
 ```
 
----
-
 ## 每日奖励
 
 ```js
-const dailyRewards = storage.getDataStorage<{ lastClaimed: number }>("daily-rewards");
+const dailyRewards =
+  storage.getDataStorage < { lastClaimed: number } > "daily-rewards";
 
 world.onChat((entity, message) => {
   const p = entity.player;
@@ -331,9 +305,9 @@ world.onChat((entity, message) => {
   if (message === "!daily") {
     const now = Date.now();
     const record = dailyRewards.get(p.userId);
-    const cooldown = 24 * 60 * 60 * 1000;  // 24 小时
+    const cooldown = 24 * 60 * 60 * 1000; // 24 小时
 
-    if (record && (now - record.lastClaimed) < cooldown) {
+    if (record && now - record.lastClaimed < cooldown) {
       const hours = Math.ceil((record.lastClaimed + cooldown - now) / 3600000);
       p.directMessage(`§c请等待 ${hours} 小时后再领取`);
       return false;
@@ -353,8 +327,6 @@ world.onChat((entity, message) => {
   return true;
 });
 ```
-
----
 
 ## 排行榜
 
@@ -382,8 +354,6 @@ world.onChat((entity, message) => {
 });
 ```
 
----
-
 ## 波次刷怪
 
 完整波次系统，难度递增：
@@ -403,7 +373,7 @@ function spawnWave(pos: GameVector3): void {
   world.say(`§c§l⚔ 第 ${wave} 波开始！§f ${count} 只怪物`);
 
   for (let i = 0; i < count; i++) {
-    world.setTimeout(() => {
+    setTimeout(() => {
       const x = pos.x + (Math.random() - 0.5) * 12;
       const z = pos.z + (Math.random() - 0.5) * 12;
       const type = types[Math.floor(Math.random() * types.length)];
@@ -424,8 +394,6 @@ function spawnWave(pos: GameVector3): void {
 }
 ```
 
----
-
 ## 缩圈机制
 
 ```js
@@ -445,10 +413,10 @@ function startShrinkPhase(centerX: number, centerZ: number, stages: { size: numb
     world.say(`§c边界缩小至 ${stage.size} 格！(${stage.duration} 秒)`);
     world.shrinkBorder(stage.size * 2, stage.duration);
     stageIndex++;
-    world.setTimeout(nextStage, stage.duration * 20);
+    setTimeout(nextStage, stage.duration * 20);
   }
 
-  world.setTimeout(nextStage, 100);  // 5 秒后开始
+  setTimeout(nextStage, 100);  // 5 秒后开始
 }
 
 // 用法：100→50→25→10，每段 60 秒
@@ -459,8 +427,6 @@ startShrinkPhase(0, 0, [
   { size: 10, duration: 60 },
 ]);
 ```
-
----
 
 ## HTTP Webhook
 
@@ -478,8 +444,12 @@ world.onEntityDeath((entity, killer) => {
       }),
       timeout: 5000,
       async: true,
-      onResponse: (resp) => { console.log(`Webhook sent: ${resp.status}`); },
-      onError: (err) => { console.warn(`Webhook failed: ${err}`); },
+      onResponse: (resp) => {
+        console.log(`Webhook sent: ${resp.status}`);
+      },
+      onError: (err) => {
+        console.warn(`Webhook failed: ${err}`);
+      },
     });
   }
 });
@@ -488,9 +458,9 @@ world.onEntityDeath((entity, killer) => {
 const SERVER_NAME = "My Server";
 const WEBHOOK_URL = "https://discord.com/api/webhooks/YOUR_ID";
 
-world.setInterval(() => {
+setInterval(() => {
   const playerCount = world.querySelectorAll("*").length;
-  const tps = "20";  // 正常情况
+  const tps = "20"; // 正常情况
 
   http.fetch(WEBHOOK_URL, {
     method: "POST",
@@ -503,8 +473,6 @@ world.setInterval(() => {
   });
 }, 6000);
 ```
-
----
 
 ## 客户端 HUD
 
@@ -560,8 +528,6 @@ remoteChannel.onClientEvent((event) => {
 });
 ```
 
----
-
 ## 跨脚本联动
 
 多个脚本项目之间通信：
@@ -589,7 +555,5 @@ function endGame(): void {
   });
 }
 ```
-
----
 
 每个配方都是独立的，按需取用。更多细节参见 [API 文档](../api/README.md) 和 [教程系列](../tutorial/README.md)。

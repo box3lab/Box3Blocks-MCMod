@@ -11,7 +11,7 @@
 
 在游戏内执行一条命令：
 
-```
+```js
 /box3script create hello
 ```
 
@@ -46,7 +46,7 @@ world.onPlayerJoin((entity) => {
 
 回到游戏内：
 
-```
+```js
 /box3script start hello
 ```
 
@@ -57,18 +57,16 @@ world.onPlayerJoin((entity) => {
 试着把欢迎消息改成：
 
 ```js
-entity.player.directMessage("§6你好，" + entity.player.name + "！");
+entity.player.directMessage(`§6你好，${entity.player.name}！`);
 ```
 
 保存后执行 `npm run build`，然后在游戏内：
 
-```
+```js
 /box3script reload hello
 ```
 
 不需要重启服务器，改动立刻生效。
-
----
 
 以上 5 步就是完整的开发循环：**改代码 → build → reload**。下文深入讲解你能用的所有能力。
 
@@ -94,22 +92,22 @@ player.title("§6§l主标题", "§7副标题");
 player.title("§c§lBOSS", "远古巨龙", 10, 60, 10);
 ```
 
-| 方法 | 位置 | 可见范围 |
-|------|------|---------|
-| `world.say()` | 聊天栏 | 全服 |
-| `player.directMessage()` | 聊天栏 | 单人 |
-| `player.actionBar()` | 快捷栏上方 | 单人 |
-| `player.title()` | 屏幕中央 | 单人 |
+| 方法                     | 位置       | 可见范围 |
+| ------------------------ | ---------- | -------- |
+| `world.say()`            | 聊天栏     | 全服     |
+| `player.directMessage()` | 聊天栏     | 单人     |
+| `player.actionBar()`     | 快捷栏上方 | 单人     |
+| `player.title()`         | 屏幕中央   | 单人     |
 
 ### console 日志
 
 `console` 输出到服务端控制台，格式为 `[Box3JS] [项目名] message`：
 
 ```js
-console.log("普通日志");   // [Box3JS] [hello] 普通日志
+console.log("普通日志"); // [Box3JS] [hello] 普通日志
 console.debug("调试信息"); // [Box3JS] [hello] [DEBUG] 调试信息
-console.warn("警告");      // [Box3JS] [hello] [WARN] 警告
-console.error("错误");     // [Box3JS] [hello] [ERROR] 错误
+console.warn("警告"); // [Box3JS] [hello] [WARN] 警告
+console.error("错误"); // [Box3JS] [hello] [ERROR] 错误
 ```
 
 ## 聊天命令系统
@@ -128,7 +126,7 @@ world.onChat((entity, message) => {
       p.directMessage("§f!pos    §7- 查看坐标");
       p.directMessage("§f!day    §7- 设为白天");
       p.directMessage("§f!clear  §7- 清除天气");
-      return false;  // ★ 返回 false 阻止消息显示在聊天栏
+      return false; // ★ 返回 false 阻止消息显示在聊天栏
 
     case "!hello":
       p.directMessage(`§e你好，${p.name}！`);
@@ -141,7 +139,7 @@ world.onChat((entity, message) => {
     case "!pos": {
       const pos = p.position;
       p.directMessage(
-        `§e你的位置: §f${Math.floor(pos.x)}, ${Math.floor(pos.y)}, ${Math.floor(pos.z)}`
+        `§e你的位置: §f${Math.floor(pos.x)}, ${Math.floor(pos.y)}, ${Math.floor(pos.z)}`,
       );
       return false;
     }
@@ -156,7 +154,7 @@ world.onChat((entity, message) => {
       world.say(`§e${p.name} §f清除了天气`);
       return false;
   }
-  return true;  // 不是命令的消息正常发送
+  return true; // 不是命令的消息正常发送
 });
 ```
 
@@ -175,7 +173,14 @@ world.onPlayerJoin((entity) => {
 
   // 粒子圈 + 音效
   const pos = p.position;
-  world.spawnParticleCircle(pos.x, pos.y, pos.z, 1.5, "minecraft:happy_villager", 15);
+  world.spawnParticleCircle(
+    pos.x,
+    pos.y,
+    pos.z,
+    1.5,
+    "minecraft:happy_villager",
+    15,
+  );
   world.playSound("minecraft:block.note_block.pling", pos, 1.0, 1.5);
 });
 ```
@@ -186,44 +191,44 @@ world.onPlayerJoin((entity) => {
 
 ```js
 // 每 5 分钟广播一次在线人数
-world.setInterval(() => {
+setInterval(() => {
   const count = world.querySelectorAll("*").length;
   if (count > 0) world.say(`§7在线: §f${count} §7人`);
-}, 6000);  // 6000 ticks = 5 分钟
+}, 6000); // 6000 ticks = 5 分钟
 
 // 30 秒后执行一次
-world.setTimeout(() => {
+setTimeout(() => {
   world.say("§6服务器已运行 30 秒");
-}, 600);  // 600 ticks = 30 秒
+}, 600); // 600 ticks = 30 秒
 ```
 
 **Tick 换算：** 20 ticks = 1 秒
 
-| 时长 | Ticks |
-|------|-------|
-| 1 秒 | 20 |
-| 5 秒 | 100 |
-| 30 秒 | 600 |
-| 1 分钟 | 1200 |
-| 5 分钟 | 6000 |
+| 时长   | Ticks |
+| ------ | ----- |
+| 1 秒   | 20    |
+| 5 秒   | 100   |
+| 30 秒  | 600   |
+| 1 分钟 | 1200  |
+| 5 分钟 | 6000  |
 
 ## 世界属性
 
 ```js
 // 时间
-world.time = 6000;      // 正午 (0=日出, 6000=正午, 12000=日落, 18000=午夜)
+world.time = 6000; // 正午 (0=日出, 6000=正午, 12000=日落, 18000=午夜)
 
 // 天气
-world.rainDensity = 1.0;    // 满强度下雨
+world.rainDensity = 1.0; // 满强度下雨
 world.thunderDensity = 0.5; // 雷暴
-world.clearWeather();        // 晴天
+world.clearWeather(); // 晴天
 
 // 难度
-world.difficulty = "hard";  // peaceful / easy / normal / hard
+world.difficulty = "hard"; // peaceful / easy / normal / hard
 
 // 游戏规则
-world.setGameRule("keepInventory", true);  // 死亡不掉落
-world.setGameRule("doFireTick", false);    // 火焰不蔓延
+world.setGameRule("keepInventory", true); // 死亡不掉落
+world.setGameRule("doFireTick", false); // 火焰不蔓延
 world.setGameRule("doMobSpawning", false); // 禁止刷怪
 ```
 
@@ -243,12 +248,19 @@ world.onPlayerJoin((entity) => {
   const p = entity.player;
   p.title("§6§l欢迎来到服务器！", "§7输入 §f!help §7查看命令", 5, 70, 10);
   const pos = p.position;
-  world.spawnParticleCircle(pos.x, pos.y, pos.z, 1.5, "minecraft:happy_villager", 15);
+  world.spawnParticleCircle(
+    pos.x,
+    pos.y,
+    pos.z,
+    1.5,
+    "minecraft:happy_villager",
+    15,
+  );
   world.playSound("minecraft:block.note_block.pling", pos, 1.0, 1.5);
 });
 
 // ── 定时公告 ──
-world.setInterval(() => {
+setInterval(() => {
   const count = world.querySelectorAll("*").length;
   if (count > 0) world.say(`§7在线: §f${count} §7人`);
 }, 6000);
@@ -268,7 +280,9 @@ world.onChat((entity, message) => {
       return false;
     case "!pos": {
       const pos = p.position;
-      p.directMessage(`§e位置: §f${Math.floor(pos.x)} ${Math.floor(pos.y)} ${Math.floor(pos.z)}`);
+      p.directMessage(
+        `§e位置: §f${Math.floor(pos.x)} ${Math.floor(pos.y)} ${Math.floor(pos.z)}`,
+      );
       return false;
     }
     case "!online":
@@ -291,13 +305,13 @@ world.onChat((entity, message) => {
 
 ### 开发循环
 
-```
+```js
 改代码 → npm run build → /box3script reload hello → 测试
 ```
 
 开启文件监控自动热重载（无需手动 reload）：
 
-```
+```js
 /box3script watch
 ```
 
@@ -305,7 +319,7 @@ world.onChat((entity, message) => {
 
 开启沙盒后，脚本对世界的所有修改都会被追踪，关闭时一键回滚：
 
-```
+```js
 /box3script sandbox hello    # 开启
 # ... 测试脚本 ...
 /box3script sandbox hello    # 关闭 → 回滚所有修改
@@ -314,6 +328,7 @@ world.onChat((entity, message) => {
 ### 调试技巧
 
 遇到问题时的排查顺序：
+
 1. 检查服务端控制台是否有报错（`console.log` 输出会出现在这里）
 2. 确认脚本已加载：`/box3script` 看项目是否显示为 `◉`（已加载运行中）
 3. 确认 build 成功：`npm run build` 应该没有错误

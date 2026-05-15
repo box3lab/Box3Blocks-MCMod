@@ -358,13 +358,6 @@ public class Box3JSWorld {
         server.getPlayerList().broadcastSystemMessage(net.minecraft.network.chat.Component.literal(message), false);
     }
 
-    // ---- Timers ----
-
-    public int setTimeout(Function handler, int ticks) { return engine.scheduleTimeout(handler, ticks); }
-    public int setInterval(Function handler, int ticks) { return engine.scheduleInterval(handler, ticks); }
-    public void clearTimeout(int id) { engine.clearTimer(id); }
-    public void clearInterval(int id) { engine.clearTimer(id); }
-
     // ---- Command ----
 
     public void runCommand(String cmd) {

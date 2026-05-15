@@ -1,10 +1,8 @@
 # Box3JS 教程
 
-从零开始学习 Box3JS 脚本开发。每个教程约 10-15 分钟，包含可直接运行的完整代码。
-
 ## 学习路径
 
-```
+```text
 教程一          教程二          教程三              教程四              教程五
   │               │               │                   │                   │
 从零开始  →   玩家操控  →   事件系统  →   高级游戏系统  →   实战小游戏
@@ -34,7 +32,7 @@
 
 ## 技能进阶路线
 
-```
+```text
 入门                      进阶                      高级
 │                          │                          │
 │ 教程一: 从零开始          │ 教程三: 事件与实体       │ 教程五: 实战小游戏
@@ -80,7 +78,7 @@ world.onChat((entity, message) => {
   return true;
 });
 
-world.setInterval(() => {
+setInterval(() => {
   world.say("当前在线: " + world.querySelectorAll("*").length + " 人");
 }, 6000);
 ```

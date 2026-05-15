@@ -8,8 +8,9 @@
  */
 type KeyName =
   | "space" | "enter" | "escape" | "tab" | "backspace" | "delete"
-  | "left_shift" | "right_shift" | "left_ctrl" | "right_ctrl"
-  | "left_alt" | "right_alt"
+  | "shift" | "left_shift" | "right_shift"
+  | "ctrl" | "left_ctrl" | "right_ctrl"
+  | "alt" | "left_alt" | "right_alt"
   | "up" | "down" | "left" | "right"
   | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j"
   | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t"

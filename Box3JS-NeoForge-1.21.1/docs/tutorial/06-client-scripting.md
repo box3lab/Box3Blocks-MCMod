@@ -34,6 +34,7 @@ colorzone 项目包含完整的客户端脚本示例（`src/client/app.ts`），
 | ui | 屏幕文字 | F6 显示设置 |
 | chat | 聊天命令 | `!fav` `!mob` |
 | audio | 自定义音效 | V 键 |
+| fog | 雾颜色和距离控制 | — |
 
 ## 6.3 client — 生命周期
 
@@ -49,6 +50,8 @@ client.onTick(() => {
   }
 });
 ```
+
+与其他事件 API 一样，`client.onTick()` 会返回 `GameEventHandlerToken`；不再需要监听时调用 `token.cancel()`。
 
 **性能提示：** 客户端 onTick 也在主线程执行。避免密集循环，用取模运算降低实际执行频率。
 
@@ -135,7 +138,30 @@ const musicVol = audio.getVolume("music");  // 读取当前音量
 audio.playSound("colorzone:victory_fanfare", 1.0, 1.0);
 ```
 
-## 6.8 storage — 客户端本地存储
+## 6.8 fog — 雾效控制
+
+覆盖 Minecraft 的雾颜色和渲染距离：
+
+```js
+// 设置雾颜色（RGB 0-255）
+client.setFogColor(255, 100, 50);
+
+// 设置雾距离（单位：方块）
+client.setFogStartDistance(10);     // 雾从 10 格外开始
+client.setFogEndDistance(50);       // 50 格外完全被雾遮挡
+
+// 读取当前雾颜色
+const color = client.getFogColor(); // 返回 GameRGBColor 或 null
+
+// 恢复 Minecraft 默认雾效果
+client.resetFog();
+```
+
+::: warning
+雾效修改在客户端本地生效。可通过 `remoteChannel` 让服务端指令触发客户端雾效变化，实现服务端控制的天气效果。
+:::
+
+## 6.9 storage — 客户端本地存储
 
 客户端的 `storage` 与服务端用法相同，但数据存储在玩家本地：
 
@@ -192,7 +218,7 @@ const page = notes.list({ pageSize: 10, ascending: false });
 const entries = page.getCurrentPage();
 ```
 
-## 6.9 db — 客户端 SQLite
+## 6.10 db — 客户端 SQLite
 
 客户端也支持 SQLite（需要 `minecraft-sqlite-jdbc` 模组）：
 
@@ -240,9 +266,11 @@ function searchMobs(keyword: string): void {
 }
 ```
 
-> 未安装 `minecraft-sqlite-jdbc` 时，`db.isAvailable()` 返回 `false`，所有 SQL 调用静默返回空结果。
+::: warning
+未安装 `minecraft-sqlite-jdbc` 时，`db.isAvailable()` 返回 `false`，所有 SQL 调用静默返回空结果。
+:::
 
-## 6.10 http — 客户端 HTTP 请求
+## 6.11 http — 客户端 HTTP 请求
 
 ```js
 // 同步 GET
@@ -284,7 +312,7 @@ http.fetch("https://httpbin.org/post", {
 });
 ```
 
-## 6.11 remoteChannel — 两端通讯
+## 6.12 remoteChannel — 两端通讯
 
 这是客户端脚本最强大的功能：服务端和客户端可以互相发送事件。
 
@@ -361,22 +389,15 @@ remoteChannel.onServerEvent((event) => {
 
 ### 检测客户端兼容性
 
-```js
-// 服务端检测玩家是否安装了 Box3JS 客户端
-if (entity.player.hasBox3JSClientMod()) {
-  // 可以发送客户端事件
-  remoteChannel.sendClientEvent(entity, { type: "custom_ui", ... });
-} else {
-  // 降级到聊天消息
-  entity.player.directMessage("请安装 Box3JS 客户端以获得完整体验");
-}
-```
+无需手动检测。`remoteChannel.sendClientEvent()` 使用可选数据包，未安装 Box3JS 客户端的玩家会自动忽略，不会报错或断线。可以放心向所有玩家发送。
 
 ### 通讯数据格式
 
-> **重要：** 跨网络传输的数据必须是 JSON 可序列化的类型（string、number、boolean、null、普通对象、数组）。不能传函数、Java 对象或 `GameVector3`。
+::: warning
+跨网络传输的数据必须是 JSON 可序列化的类型（string、number、boolean、null、普通对象、数组）。不能传函数、Java 对象或 `GameVector3`。
+:::
 
-## 6.12 完整实战：客户端 HUD 状态栏
+## 6.13 完整实战：客户端 HUD 状态栏
 
 综合运用 input、ui、remoteChannel 和 storage 创建一个自定义 HUD：
 
@@ -444,7 +465,7 @@ ui.showTitle("§6自定义 HUD 已启动", "§7F6=坐标 F7=FPS", 10, 40, 10);
 console.log("[HUD] Client HUD demo loaded");
 ```
 
-## 6.13 客户端脚本调试
+## 6.14 客户端脚本调试
 
 客户端脚本的 `console.log` 输出到**客户端日志**（不是服务端）。在 Minecraft 启动器或日志目录中查看。
 

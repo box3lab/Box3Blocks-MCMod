@@ -60,9 +60,7 @@ public class Box3JSResponse {
 
         if (responseType != null && ok && body != null && body.length > 0) {
             switch (responseType) {
-                case "json" -> {
-                    try { this.parsedBody = json(); } catch (Exception ignored) {}
-                }
+                case "json" -> this.parsedBody = json();
                 case "text" -> this.parsedBody = text();
                 case "arrayBuffer" -> this.parsedBody = arrayBuffer();
             }

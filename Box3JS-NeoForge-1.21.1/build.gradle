@@ -209,6 +209,17 @@ tasks.named('jar', Jar).configure {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+    options.compilerArgs.addAll(['-Xlint:deprecation', '-Xlint:unchecked'])
+}
+
+tasks.register('verifyBox3JSProject', Exec) {
+    group = 'verification'
+    description = 'Verifies Box3JS template files, runtime DTS split, and event API token consistency.'
+    commandLine 'node', 'tools/verify-box3js-project.mjs'
+}
+
+tasks.named('check').configure {
+    dependsOn tasks.named('verifyBox3JSProject')
 }
 
 // IDEA no longer automatically downloads sources/javadoc jars for dependencies, so we need to explicitly enable the behavior.

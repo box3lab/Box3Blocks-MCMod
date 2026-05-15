@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+@SuppressWarnings("deprecation")
 class Box3ScriptSandbox {
 
     private static final Logger LOGGER = LogUtils.getLogger();

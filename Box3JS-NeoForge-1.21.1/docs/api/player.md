@@ -1,6 +1,6 @@
 # player — 玩家 API
 
-`player` 对象通过 `entity.player` 获取，代表登录的玩家。它拥有 `entity` 的全部属性和方法（如 `hp`、`position`、`tags()` 等），并额外提供玩家专属功能：背包、经验、飞行、消息、传送等。
+`player` 通过 `entity.player` 获取，拥有 `entity` 的全部属性并额外提供背包、经验、飞行、消息、传送等玩家专属功能。
 
 ```js
 world.onPlayerJoin(function(entity, tick) {
@@ -56,6 +56,22 @@ console.log("玩家缩放: " + player.scale);
 ```
 
 ## 移动
+
+### player.position
+
+只读引用。玩家当前世界坐标，可通过 `player.position.set(x, y, z)` 修改向量值；如需传送玩家，优先使用 `player.teleport(pos)`。
+
+### player.velocity
+
+只读引用。玩家当前速度向量，可通过 `.set()` 修改。
+
+### player.bounds
+
+只读。玩家包围盒半尺寸。
+
+### player.onGround
+
+只读。玩家当前是否站在方块上。
 
 
 

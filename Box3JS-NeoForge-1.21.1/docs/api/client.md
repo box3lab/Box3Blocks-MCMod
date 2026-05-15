@@ -17,8 +17,9 @@
 | `gui` | `GameGUI` | 自定义容器 GUI 界面 |
 | `remoteChannel` | `RemoteChannel` | 客户端 ↔ 服务端事件通信 |
 
-> **前置条件：** 客户端必须安装 Box3JS mod，服务端必须启用该项目的客户端脚本并通过网络自动下发。
-> 客户端脚本放在 `src/client/` 目录下，服务端脚本放在 `src/server/` 目录下。客户端类型入口是 `types/client/index.d.ts`，不会包含服务端 `world` / `voxels` API。
+::: info 前置条件
+客户端必须安装 Box3JS mod，服务端必须启用该项目的客户端脚本并通过网络自动下发。客户端脚本放在 `src/client/` 目录下，服务端脚本放在 `src/server/` 目录下。客户端类型入口是 `types/client/index.d.ts`，不会包含服务端 `world` / `voxels` API。
+:::
 
 客户端脚本不能直接修改服务端世界。需要改变方块、玩家、实体或计分板时，应发送事件给服务端：
 
@@ -104,15 +105,19 @@ audio.setVolume("player", 0.8);
 
 ### client.onTick(callback)
 
-注册客户端每 tick 回调（每秒 20 次）。无参数，无返回值。
+注册客户端每 tick 回调（每秒 20 次）。无参数，返回 `GameEventHandlerToken`，可用 `cancel()` 取消监听。
 
 ```js
-client.onTick(() => {
+const token = client.onTick(() => {
   // 每帧更新逻辑
 });
+
+// token.cancel();
 ```
 
-> **注意：** 服务端也有 `world.onTick()`，但参数为 `TickInfo` 对象。客户端 `client.onTick()` 无参数。
+::: info 注意
+服务端也有 `world.onTick()`，但参数为 `TickInfo` 对象。客户端 `client.onTick()` 无参数。
+:::
 
 ### client.getFPS()
 
@@ -160,6 +165,70 @@ console.log(`Server: ${info.name} (${info.ip})`);
 if (!info.isLocal) {
   console.log(`Players: ${info.playerCount}/${info.maxPlayers}`);
 }
+```
+
+### 雾效控制 (Fog Control)
+
+Box3JS 客户端可以覆盖 Minecraft 的雾颜色和距离，实现类似 Box3 `world.fogColor` / `world.maxFog` 的效果。
+
+### client.getFogColor()
+
+获取当前自定义雾颜色。未设置时返回 `null`。
+
+```js
+var color = client.getFogColor();
+if (color) {
+  console.log("Fog color: " + color.r + ", " + color.g + ", " + color.b);
+}
+```
+
+### client.setFogColor(r, g, b)
+
+设置雾颜色（RGB 0-255）。
+
+| 参数 | 类型   | 说明       |
+|------|--------|------------|
+| `r`  | number | 红色 (0-255) |
+| `g`  | number | 绿色 (0-255) |
+| `b`  | number | 蓝色 (0-255) |
+
+```js
+// 红色迷雾效果
+client.setFogColor(255, 50, 50);
+```
+
+### client.setFogStartDistance(distance)
+
+设置雾起始距离（方块）。低于此距离完全透明。
+
+| 参数       | 类型   | 说明               |
+|------------|--------|--------------------|
+| `distance` | number | 雾起始距离（方块） |
+
+```js
+// 雾从 10 个方块距离外开始
+client.setFogStartDistance(10);
+```
+
+### client.setFogEndDistance(distance)
+
+设置雾结束距离（方块），对应 Box3 的 `maxFog`。超过此距离完全被雾遮挡。
+
+| 参数       | 类型   | 说明               |
+|------------|--------|--------------------|
+| `distance` | number | 雾结束距离（方块） |
+
+```js
+// 50 格以外完全被雾遮挡
+client.setFogEndDistance(50);
+```
+
+### client.resetFog()
+
+重置雾效果为 Minecraft 默认值。
+
+```js
+client.resetFog();
 ```
 
 ## input — 键盘输入
@@ -240,7 +309,7 @@ token.cancel();
 | 功能键 | `f1`–`f12` |
 | 方向键 | `up`, `down`, `left`, `right` |
 | 特殊键 | `space`, `enter`, `escape`, `tab`, `backspace`, `delete` |
-| 修饰键 | `left_shift`, `right_shift`, `left_ctrl`, `right_ctrl`, `left_alt`, `right_alt` |
+| 修饰键 | `shift`, `left_shift`, `right_shift`, `ctrl`, `left_ctrl`, `right_ctrl`, `alt`, `left_alt`, `right_alt` |
 
 ## ui — 屏幕 UI
 
@@ -451,8 +520,9 @@ remoteChannel.onClientEvent((event) => {
 });
 ```
 
-> 服务端对应 API 为 `remoteChannel.sendClientEvent()` / `broadcastClientEvent()` / `onServerEvent()`。
-> 详见 `server.d.ts` 中的类型声明。
+::: info
+服务端对应 API 为 `remoteChannel.sendClientEvent()` / `broadcastClientEvent()` / `onServerEvent()`。详见 `server.d.ts` 中的类型声明。
+:::
 
 ## storage — 客户端存储
 

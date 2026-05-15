@@ -35,8 +35,12 @@ interface RemoteChannel {
 
 /** @zh 通过 `client` 访问：生命周期回调 @en Accessed via `client`: lifecycle callbacks */
 interface GameClient {
-  /** @zh 注册客户端每 tick 回调（每秒 20 次）。 @en Registers a callback invoked every client tick (20/sec). */
-  onTick(callback: () => void): void;
+  /**
+   * @zh 注册客户端每 tick 回调（每秒 20 次）。
+   * @en Registers a callback invoked every client tick (20/sec).
+   * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to unsubscribe
+   */
+  onTick(callback: () => void): GameEventHandlerToken;
 
   /**
    * @zh 获取当前帧率 (FPS)。
@@ -68,15 +72,14 @@ interface GameClient {
    * @returns @zh `{ type: "block"|"entity", position, entity?, blockPos?, direction? }` 或 null @en `{ type: "block"|"entity", position, entity?, blockPos?, direction? }` or null
    */
   getLookingAt(): {
-    type: string;
+    type: "entity";
     position: { x: number; y: number; z: number };
-    entity?: {
-      name: string;
-      uuid: string;
-      type: string;
-    };
-    blockPos?: { x: number; y: number; z: number };
-    direction?: string;
+    entity: { name: string; uuid: string; type: string };
+  } | {
+    type: "block";
+    position: { x: number; y: number; z: number };
+    blockPos: { x: number; y: number; z: number };
+    direction: string;
   } | null;
 
   /**
@@ -88,9 +91,47 @@ interface GameClient {
     ip: string;
     name: string;
     isLocal: boolean;
-    playerCount: number;
-    maxPlayers: number;
+    playerCount?: number;
+    maxPlayers?: number;
   };
+
+  // ── Fog control ──
+
+  /**
+   * @zh 获取当前自定义雾颜色。未设置时返回 null。
+   * @en Gets the current custom fog colour. Returns null if not set.
+   * @returns @zh GameRGBColor 或 null @en GameRGBColor or null
+   */
+  getFogColor(): GameRGBColor | null;
+
+  /**
+   * @zh 设置雾颜色（RGB 0-255）。
+   * @en Sets the fog colour (RGB 0-255).
+   * @param r - @zh 红色 (0-255) @en Red (0-255)
+   * @param g - @zh 绿色 (0-255) @en Green (0-255)
+   * @param b - @zh 蓝色 (0-255) @en Blue (0-255)
+   */
+  setFogColor(r: number, g: number, b: number): void;
+
+  /**
+   * @zh 设置雾起始距离（方块）。低于此距离完全透明。
+   * @en Sets the distance (in blocks) where fog begins. Fully transparent below this distance.
+   * @param distance - @zh 雾起始距离（方块） @en Fog start distance (blocks)
+   */
+  setFogStartDistance(distance: number): void;
+
+  /**
+   * @zh 设置雾结束距离（方块），对应 Box3 的 maxFog。超过此距离完全被雾遮挡。
+   * @en Sets the distance (in blocks) where fog is fully opaque, equivalent to Box3's maxFog.
+   * @param distance - @zh 雾结束距离（方块） @en Fog end distance (blocks)
+   */
+  setFogEndDistance(distance: number): void;
+
+  /**
+   * @zh 重置雾效果为 Minecraft 默认值。
+   * @en Resets fog to Minecraft's default behaviour.
+   */
+  resetFog(): void;
 }
 
 // ── §7 @zh 全局声明（客户端） @en Global Declarations (client) ──

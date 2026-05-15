@@ -1,8 +1,10 @@
 # HTTP API
 
-Box3JS 通过全局 `http` 对象提供 HTTP 请求能力，支持全部 HTTP 方法、超时、自定义请求头、自动解析、二进制上传，以及同步/异步两种调用方式。
+通过全局 `http` 对象发起 HTTP 请求。
 
-> **运行环境：** 服务端和客户端都可用。服务端同步请求会阻塞服务器 tick，避免在高频回调中执行长时间请求。客户端同步请求会阻塞客户端渲染/逻辑线程。**异步请求**（`async: true`）通过回调接收结果。
+::: info 运行环境
+服务端和客户端都可用。同步请求会阻塞当前线程，避免在高频回调中执行长时间请求。**异步请求**（`async: true`）通过回调接收结果。
+:::
 
 ## `http.fetch(url, options?)`
 
@@ -27,9 +29,11 @@ Box3JS 通过全局 `http` 对象提供 HTTP 请求能力，支持全部 HTTP �
 | `onResponse` | `function` | — | 异步请求成功回调，参数为 `GameHttpFetchResponse` |
 | `onError` | `function` | — | 异步请求失败回调，参数为错误信息字符串 |
 
-> 设置 `responseType` 后，解析结果可直接通过 `resp.data` 获取，无需手动调 `resp.json()` 等。
->
-> 异步模式下 `fetch()` 返回 `null`，结果通过回调接收。
+::: info
+设置 `responseType` 后，解析结果可直接通过 `resp.data` 获取，无需手动调 `resp.json()` 等。
+
+异步模式下 `fetch()` 返回 `null`，结果通过回调接收。
+:::
 
 ## GameHttpFetchResponse
 

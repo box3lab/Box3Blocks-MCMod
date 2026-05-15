@@ -657,32 +657,6 @@ interface GameWorld {
    */
   setBorderWarning(blocks: number): void;
 
-  // ── @zh 定时器 @en Timers ──
-
-  /**
-   * @zh 设置一次性延时回调。
-   * @en Schedules a one‑shot delayed callback.
-   * @param handler - 回调函数
-   * @param ticks - 延迟 tick 数
-   * @returns @zh 定时器 ID（可用于 clearTimeout） @en Timer ID (can be used with clearTimeout)
-   */
-  setTimeout(handler: () => void, ticks: number): number;
-
-  /**
-   * @zh 设置循环定时回调。
-   * @en Schedules a recurring interval callback.
-   * @param handler - 回调函数
-   * @param ticks - 间隔 tick 数
-   * @returns @zh 定时器 ID（可用于 clearInterval） @en Timer ID (can be used with clearInterval)
-   */
-  setInterval(handler: () => void, ticks: number): number;
-
-  /** @zh 取消 setTimeout @en Clears a timeout by ID. */
-  clearTimeout(id: number): void;
-
-  /** @zh 取消 setInterval @en Clears an interval by ID. */
-  clearInterval(id: number): void;
-
   // ── @zh 项目间消息 @en Cross‑project Messaging ──
 
   /**

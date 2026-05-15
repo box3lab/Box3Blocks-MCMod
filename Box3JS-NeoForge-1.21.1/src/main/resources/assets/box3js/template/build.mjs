@@ -362,6 +362,137 @@ function rhinoArrayMethodsPlugin({ types: t }) {
   };
 }
 
+/**
+ * Regex literal → __regexSplit / __regexMatch / __regexReplace / __regexTest
+ *
+ * Rhino inside Minecraft cannot load NativeRegExp (classloader isolation).
+ * All regex operations are delegated to pure-JS helpers injected from Java.
+ *
+ * str.split(/pattern/flags)     → __regexSplit(str, "pattern", "flags")
+ * str.match(/pattern/flags)     → __regexMatch(str, "pattern", "flags")
+ * str.replace(/pattern/flags,r) → __regexReplace(str, "pattern", "flags", r)
+ * /pattern/flags.test(str)      → __regexTest("pattern", "flags", str)
+ */
+function rhinoRegexPlugin({ types: t }) {
+  function patternString(node) {
+    return t.stringLiteral(node.pattern);
+  }
+  function flagsString(node) {
+    return t.stringLiteral(node.flags || "");
+  }
+
+  return {
+    visitor: {
+      CallExpression(path) {
+        const { callee, arguments: args } = path.node;
+
+        // str.split(regex)  →  __regexSplit(str, pattern, flags)
+        if (
+          t.isMemberExpression(callee) &&
+          t.isIdentifier(callee.property, { name: "split" }) &&
+          args.length >= 1 &&
+          t.isRegExpLiteral(args[0])
+        ) {
+          const regex = args[0];
+          path.replaceWith(
+            t.callExpression(t.identifier("__regexSplit"), [
+              callee.object,
+              patternString(regex),
+              flagsString(regex),
+            ]),
+          );
+          return;
+        }
+
+        // str.match(regex)  →  __regexMatch(str, pattern, flags)
+        if (
+          t.isMemberExpression(callee) &&
+          t.isIdentifier(callee.property, { name: "match" }) &&
+          args.length >= 1 &&
+          t.isRegExpLiteral(args[0])
+        ) {
+          const regex = args[0];
+          path.replaceWith(
+            t.callExpression(t.identifier("__regexMatch"), [
+              callee.object,
+              patternString(regex),
+              flagsString(regex),
+            ]),
+          );
+          return;
+        }
+
+        // str.replace(regex, replacement)  →  __regexReplace(str, pattern, flags, replacement)
+        if (
+          t.isMemberExpression(callee) &&
+          t.isIdentifier(callee.property, { name: "replace" }) &&
+          args.length >= 1 &&
+          t.isRegExpLiteral(args[0])
+        ) {
+          const regex = args[0];
+          path.replaceWith(
+            t.callExpression(t.identifier("__regexReplace"), [
+              callee.object,
+              patternString(regex),
+              flagsString(regex),
+              args[1] || t.nullLiteral(),
+            ]),
+          );
+          return;
+        }
+
+        // regex.test(str)  →  __regexTest(pattern, flags, str)
+        if (
+          t.isMemberExpression(callee) &&
+          t.isRegExpLiteral(callee.object) &&
+          t.isIdentifier(callee.property, { name: "test" }) &&
+          args.length >= 1
+        ) {
+          const regex = callee.object;
+          path.replaceWith(
+            t.callExpression(t.identifier("__regexTest"), [
+              patternString(regex),
+              flagsString(regex),
+              args[0],
+            ]),
+          );
+          return;
+        }
+
+        // regex.exec(str)  →  __regexExec(pattern, flags, str)
+        if (
+          t.isMemberExpression(callee) &&
+          t.isRegExpLiteral(callee.object) &&
+          t.isIdentifier(callee.property, { name: "exec" }) &&
+          args.length >= 1
+        ) {
+          const regex = callee.object;
+          path.replaceWith(
+            t.callExpression(t.identifier("__regexExec"), [
+              patternString(regex),
+              flagsString(regex),
+              args[0],
+            ]),
+          );
+        }
+      },
+
+      // Standalone regex literals not in a call expression context
+      RegExpLiteral(path) {
+        if (t.isCallExpression(path.parent) && path.parent.arguments.includes(path.node)) {
+          return;
+        }
+        if (t.isMemberExpression(path.parent) && path.parent.object === path.node) {
+          return;
+        }
+        throw path.buildCodeFrameError(
+          "Regex literals must be used with .split(), .match(), .replace(), .test(), or .exec()",
+        );
+      },
+    },
+  };
+}
+
 // ═══════════════════════════════════════════════════════════════
 //  esbuild plugin
 // ═══════════════════════════════════════════════════════════════
@@ -390,6 +521,7 @@ const babelRhinoPlugin = {
           "@babel/preset-typescript",
         ],
         plugins: [
+          rhinoRegexPlugin,
           rhinoArrayMethodsPlugin,
           rhinoForOfPlugin,
           rhinoTemplatePlugin,

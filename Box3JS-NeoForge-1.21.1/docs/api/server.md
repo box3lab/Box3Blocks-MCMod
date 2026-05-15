@@ -2,7 +2,9 @@
 
 服务端脚本运行在 Minecraft 服务器线程上，入口文件是 `src/server/app.ts`，构建产物是 `dist/server.js`。服务端 API 负责世界状态、实体和玩家、方块读写、事件回调、持久化数据、网络请求以及服务端到客户端的事件下发。
 
-> 客户端 UI、键盘输入、本地音效和本地 GUI 不在服务端 API 中。相关能力见 [client.md](client.md)。
+::: info
+客户端 UI、键盘输入、本地音效和本地 GUI 不在服务端 API 中。相关能力见 [client.md](client.md)。
+:::
 
 ## 服务端全局对象
 
@@ -60,7 +62,7 @@ remoteChannel.sendClientEvent(entity, {
 | 实体交互 | `world.onInteract(handler)` |
 | 方块交互 | `world.onBlockActivate(handler)` |
 | 方块破坏/放置 | `world.onVoxelDestroy(handler)` / `world.onBlockPlace(handler)` |
-| 定时器 | `world.setTimeout(fn, ticks)` / `world.setInterval(fn, ticks)` |
+| 定时器 | `setTimeout(fn, ticks)` / `setInterval(fn, ticks)` |
 
 ```ts
 world.onChat((entity, message) => {
@@ -157,18 +159,23 @@ globalConfig.set("season", "spring");
 
 ## 跨端通信
 
-服务端使用 `remoteChannel` 与客户端脚本通信。发送前建议检查玩家是否安装了 Box3JS 客户端：
+服务端使用 `remoteChannel` 与客户端脚本通信。数据包为可选的（optional），未安装 Box3JS 的客户端会自动忽略，无需手动检测：
 
 ```ts
 world.onPlayerJoin((entity) => {
-  if (!entity.hasBox3JSClient()) {
-    return;
-  }
-
   remoteChannel.sendClientEvent(entity, {
     type: "welcome",
     text: "欢迎来到服务器",
   });
+});
+```
+
+向所有玩家广播客户端事件：
+
+```ts
+remoteChannel.broadcastClientEvent({
+  type: "serverNotice",
+  text: "服务器事件已触发",
 });
 ```
 
@@ -227,4 +234,3 @@ if (registries) {
 - 对所有长期事件监听保存 token，需要关闭玩法或重载模块时调用 `cancel()`。
 - 大范围 `voxels.fillVoxel()`、大量实体生成、同步 HTTP 请求都应控制频率，避免卡住服务器 tick。
 - 共享数据优先明确命名空间，例如 `storage.getDataStorage("arena/scores")` 或 `storage.getGroupStorage("global/season")`。
-

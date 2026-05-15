@@ -2,27 +2,18 @@ package com.box3lab.box3js;
 
 import com.box3lab.box3js.client.Box3JSClientEngine;
 import com.box3lab.box3js.client.Box3JSGuiProxy;
-import com.box3lab.box3js.client.screen.Box3JSScriptContainerScreen;
 import com.box3lab.box3js.registries.Box3JSRecipeManager;
 import com.box3lab.box3js.script.Box3ScriptCommand;
 import com.box3lab.box3js.script.Box3ScriptEngine;
 import com.box3lab.box3js.script.Box3JSGuiServerHandler;
-import com.box3lab.box3js.script.Box3JSScriptContainerMenu;
 import com.mojang.logging.LogUtils;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.flag.FeatureFlags;
-import net.minecraft.world.inventory.MenuType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.registries.DeferredRegister;
-import java.util.function.Supplier;
 
-import java.nio.file.Path;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,20 +36,7 @@ public class Box3JS {
     /** Tracks which connected players have Box3JS installed on their client. */
     public static final Set<UUID> clientsWithBox3JS = ConcurrentHashMap.newKeySet();
 
-    // ── Registries ──
-
-    private static final DeferredRegister<MenuType<?>> MENU_TYPES =
-        DeferredRegister.create(Registries.MENU, MODID);
-
-    /** Single MenuType for all script container sizes (1-6 rows). */
-    public static final Supplier<MenuType<Box3JSScriptContainerMenu>> SCRIPT_CONTAINER_MENU =
-        MENU_TYPES.register("script_container",
-            () -> new MenuType<>(new Box3JSScriptContainerMenu.Factory(), FeatureFlags.DEFAULT_FLAGS));
-
     public Box3JS(IEventBus modEventBus, ModContainer modContainer) {
-        // Register registries
-        MENU_TYPES.register(modEventBus);
-
         // Register custom payloads
         modEventBus.addListener(RegisterPayloadHandlersEvent.class, event -> {
             var registrar = event.registrar("1");
@@ -127,10 +105,6 @@ public class Box3JS {
                 }
             );
         });
-
-        // Register client-side screen for the script container
-        modEventBus.addListener(RegisterMenuScreensEvent.class, event ->
-            event.register(SCRIPT_CONTAINER_MENU.get(), Box3JSScriptContainerScreen::new));
 
         // Script commands
         NeoForge.EVENT_BUS.addListener(Box3ScriptCommand::register);
@@ -234,7 +208,7 @@ public class Box3JS {
                     event.getSource().getEntity());
         });
 
-        // Auto-load scripts from config/box3/script/<project>/app.js on server start
+        // Auto-load server scripts from config/box3/script/<project>/dist/server.js on server start
         NeoForge.EVENT_BUS.addListener((ServerStartedEvent event) -> {
             Box3ScriptEngine.get().autoLoad(event.getServer());
             Box3JSRecipeManager.init(event.getServer());

@@ -6,7 +6,9 @@
 
 **No Java knowledge required. Build unlimited Minecraft gameplay with TypeScript.**
 
-Box3JS is a server-side scripting engine (Mozilla Rhino) built into a NeoForge mod. Forget complex Java mod development — write TypeScript, hot-reload instantly, see changes live. PvP arenas, RPG dungeons, party games, world management, social tools — all achievable with scripts.
+Box3JS is a community-driven Minecraft mod (NeoForge 1.21.1) that embeds the Mozilla Rhino JavaScript engine in the server. Its API design is inspired by [Box3](https://box3.fun) (Shenzhen Qimengdao Technology Co., Ltd.) — bringing Box3's clean, efficient developer experience into Minecraft. Forget complex Java mod development: write TypeScript, hot-reload instantly, see changes live. PvP arenas, RPG dungeons, party games, world management, social tools — all achievable with scripts.
+
+> Curious about Box3JS's relationship with the Box3 platform? → [Box3JS & Box3](docs/guide/about-box3js_en.md)
 
 ## Installation
 
@@ -129,6 +131,7 @@ From zero to full mini-games. Every example is TypeScript-compiled and ESLint-ve
 docs/
 ├── guide/                  ← Getting Started
 │   ├── README.md           Guide overview
+│   ├── about-box3js.md     Box3JS & Box3 (origin, relationship, advantages)
 │   ├── getting-started.md  From zero (setup, first script, debug, deploy)
 │   ├── architecture.md     Internals (Rhino engine, scopes, build pipeline)
 │   └── js-vs-java.md       JS vs Java modding comparison

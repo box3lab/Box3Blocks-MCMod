@@ -17,14 +17,19 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
+import com.mojang.logging.LogUtils;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.ScriptableObject;
+import org.slf4j.Logger;
 
 import java.util.Map;
 import java.util.function.Consumer;
 
+@SuppressWarnings("deprecation")
 public class Box3JSPlayer {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     private final ServerPlayer player;
     private final MinecraftServer server;
@@ -361,8 +366,8 @@ public class Box3JSPlayer {
 
     // ---- Chat (player-level) ----
 
-    public void onChat(Function handler) {
-        engine.setPlayerChatHandler(player.getUUID(), handler);
+    public GameEventHandlerToken onChat(Function handler) {
+        return new GameEventHandlerToken(engine.setPlayerChatHandler(player.getUUID(), handler));
     }
 
     // ---- Link ----
@@ -380,14 +385,16 @@ public class Box3JSPlayer {
 
     public void setPlayerListName(String name) {
         try {
-            java.lang.reflect.Field f = net.minecraft.world.entity.player.Player.class.getDeclaredField("displayName");
+            java.lang.reflect.Field f = net.minecraft.world.entity.player.Player.class.getDeclaredField("displayname");
             f.setAccessible(true);
             f.set(player, Component.literal(name));
             server.getPlayerList().broadcastAll(
                 new net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket(
                     java.util.EnumSet.of(net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME),
                     java.util.List.of(player)));
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            LOGGER.warn("Failed to set player list name for {}", player.getGameProfile().getName(), e);
+        }
     }
 
     // ---- Look at (MC extension) ----

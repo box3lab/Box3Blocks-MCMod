@@ -8,13 +8,13 @@
 
 显示项目状态概览。
 
-```
+```js
 /box3script
 ```
 
 输出示例：
 
-```
+```text
 ══ Box3JS Script Engine ══
 
   Watch: ● Active    Sandbox: ● 1 project(s)
@@ -39,7 +39,7 @@
 
 创建新的 TypeScript 脚本项目。生成完整的 TS 脚手架，默认**禁用**。
 
-```
+```js
 /box3script create mygame
 ```
 
@@ -56,7 +56,7 @@ npm install && npm run build
 
 启用并加载项目。**不带参数** = 启用全部。**带项目名** = 只启用指定项目。**`all`** = 显式启用全部。
 
-```
+```js
 /box3script start              # 启用全部
 /box3script start all          # 启用全部（同无参数）
 /box3script start mygame       # 只启用 mygame
@@ -66,7 +66,7 @@ npm install && npm run build
 
 禁用并卸载项目。**不带参数** = 禁用全部。**带项目名** = 只禁用指定项目。**`all`** = 显式禁用全部。
 
-```
+```js
 /box3script stop               # 禁用全部
 /box3script stop all           # 禁用全部（同无参数）
 /box3script stop mygame        # 只禁用 mygame
@@ -76,7 +76,7 @@ npm install && npm run build
 
 重载脚本。**不带参数** = 停止全部，重新加载所有已启用项目。**带项目名** = 重载指定项目。
 
-```
+```js
 /box3script reload            # 重载全部已启用项目
 /box3script reload mygame     # 只重载 mygame
 ```
@@ -87,7 +87,7 @@ npm install && npm run build
 
 开启/关闭文件监听。监听所有项目的 `dist/` 目录，`.js` 文件变化时自动重载对应项目。
 
-```
+```js
 /box3script watch             # 切换 开/关
 ```
 
@@ -95,7 +95,7 @@ npm install && npm run build
 
 切换沙盒模式。开启后自动追踪该项目所有的方块/实体/世界状态变更，关闭时回滚并显示摘要。
 
-```
+```js
 /box3script sandbox mygame    # 切换 开/关
 ```
 
@@ -103,7 +103,7 @@ npm install && npm run build
 
 典型工作流：
 
-```
+```js
 /box3script sandbox mygame    # 开启沙盒
 /box3script start mygame      # 启用项目
 # ... 测试 ...
@@ -112,19 +112,25 @@ npm install && npm run build
 /box3script sandbox mygame    # 关闭沙盒 → 回滚全部修改
 ```
 
-> **注意：** 沙盒仅追踪通过脚本 API 修改的方块（`setVoxel`/`setVoxelId`/`fillVoxel`），手动挖掘不受影响。
+::: warning
+沙盒仅追踪通过脚本 API 修改的方块（`setVoxel`/`setVoxelId`/`fillVoxel`），手动挖掘不受影响。
+:::
 
 ### `/box3script compile <project>`
 
 将脚本项目编译为**轻量独立 JAR 模组**（~50KB），依赖 Box3JS 模组提供 Rhino 运行时和 API 绑定。
 
-```
+```js
 /box3script compile mygame
 ```
 
-> **依赖：** 脚本 JAR 不包含 Rhino 或 Box3JS API 类，需将 Box3JS 模组（`box3js`）一同放入 `mods/`。
+::: warning 依赖
+脚本 JAR 不包含 Rhino 或 Box3JS API 类，需将 Box3JS 模组（`box3js`）一同放入 `mods/`。
+:::
 
-> **自定义注册表：** 如果存在 `registries/blocks.json`、`items.json`、`sounds.json`、`creativeTabs.json` 和 `assets/`，编译时会自动注册方块/物品/音效，并将资源打包进 JAR。客户端也需安装该 JAR 才能正常渲染。详见 [registries.md](registries.md)。
+::: info 自定义注册表
+如果存在 `registries/blocks.json`、`items.json`、`sounds.json`、`creativeTabs.json` 和 `assets/`，编译时会自动注册方块/物品/音效，并将资源打包进 JAR。客户端也需安装该 JAR 才能正常渲染。详见 [registries.md](registries.md)。
+:::
 
 编译时**从 `package.json` 读取以下字段**写入 `neoforge.mods.toml`：
 
@@ -140,7 +146,9 @@ npm install && npm run build
 | `bugs.url` | `issueTrackerURL` | 问题反馈链接 |
 | `logoFile` | `logoFile` | 模组图标（项目中的 PNG 路径，打包为 `logo.png`） |
 
-> **`logoFile` 使用说明：** 填写项目根目录下的 PNG 文件相对路径（如 `"logoFile": "logo.png"`），编译时自动打包为 JAR 根目录的 `logo.png`，无需在 `neoforge.mods.toml` 中手动配置。NeoForge 建议尺寸 128×128 或 256×256，仅支持 PNG 格式。不填则使用默认模组图标。
+::: tip logoFile 使用说明
+填写项目根目录下的 PNG 文件相对路径（如 `"logoFile": "logo.png"`），编译时自动打包为 JAR 根目录的 `logo.png`，无需在 `neoforge.mods.toml` 中手动配置。NeoForge 建议尺寸 128×128 或 256×256，仅支持 PNG 格式。不填则使用默认模组图标。
+:::
 
 输出文件名格式：`dist/<name>-<version>.jar`。编译在后台线程运行，不阻塞服务器 tick，完成后聊天栏通知输出路径。
 
@@ -151,7 +159,7 @@ npm install && npm run build
 
 **输出 JAR 内容：**
 
-```
+```text
 mygame-1.0.0.jar
 ├── META-INF/neoforge.mods.toml      ← 模组元数据（依赖 box3js）
 ├── logo.png                         ← 模组图标（如有指定）
@@ -168,7 +176,7 @@ mygame-1.0.0.jar
 
 **部署：** 将脚本 JAR 与 Box3JS 模组一起放入 `mods/`：
 
-```
+```text
 mods/
 ├── box3js-1.0.0.jar       ← Box3JS 主模组
 └── mygame-1.0.0.jar       ← 编译的脚本模组
@@ -185,7 +193,9 @@ mods/
 | 热重载 | 支持 | 不支持（JAR 重启才生效） |
 | 适用场景 | 开发调试 | 分发部署 |
 
-> **注意：** 编译后的 JAR 是标准 NeoForge mod，由 NeoForge mod loader 管理，**不受** `/box3script start/stop/reload` 控制。多个编译 JAR 可同时放入 `mods/`，各自独立运行，互不干扰。
+::: warning
+编译后的 JAR 是标准 NeoForge mod，由 NeoForge mod loader 管理，**不受** `/box3script start/stop/reload` 控制。多个编译 JAR 可同时放入 `mods/`，各自独立运行，互不干扰。
+:::
 
 ## 配置文件
 
@@ -200,7 +210,7 @@ mods/
 
 ## 脚本目录结构
 
-```
+```text
 config/box3/
   ├── scripts.json             ← 项目开关配置
   ├── script/                   ← 脚本目录
