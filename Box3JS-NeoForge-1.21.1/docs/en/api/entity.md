@@ -48,20 +48,21 @@ entity.position.set(0, 100, 0);
 Readonly `GameVector3`. **LiveVec3**: reading syncs to current velocity; `.set(x,y,z)` directly sets the velocity vector.
 
 ```js
-entity.velocity.set(0, 1, 0);  // Launch upward
-entity.velocity.set(2, 0, 2);  // Horizontal velocity
+entity.velocity.set(0, 1, 0); // Launch upward
+entity.velocity.set(2, 0, 2); // Horizontal velocity
 ```
 
 ### entity.bounds
 
 Readonly `GameVector3`. The entity's bounding box **half-extents**:
+
 - `x` = width / 2
 - `y` = height / 2
 - `z` = width / 2
 
 ### entity.onGround
 
-⬆ MC Extension | Readonly. Whether the entity is standing on a block.
+Readonly. Whether the entity is standing on a block.
 
 ```js
 if (entity.onGround) {
@@ -71,7 +72,7 @@ if (entity.onGround) {
 
 ### entity.eyePosition
 
-⬆ MC Extension | Readonly `GameVector3`. Eye position (raycast origin).
+Readonly `GameVector3`. Eye position (raycast origin).
 
 ```js
 var eye = entity.eyePosition;
@@ -102,13 +103,13 @@ Deals `amount` generic damage to the entity (triggers damage events).
 Heals the entity by `amount` (capped at maxHp).
 
 ```js
-zombie.hurt(10);  // Deal 10 damage
-zombie.heal(5);   // Heal 5
+zombie.hurt(10); // Deal 10 damage
+zombie.heal(5); // Heal 5
 ```
 
 ### entity.invulnerable
 
-⬆ MC Extension | Gets/sets whether the entity is invulnerable (immune to damage).
+Gets/sets whether the entity is invulnerable (immune to damage).
 
 ```js
 entity.invulnerable = true;
@@ -128,7 +129,7 @@ The following properties control entity physics behavior.
 Gets/sets whether the entity participates in collisions. Default `true`. When `false`, disables physics for LivingEntity (setNoPhysics).
 
 ```js
-entity.collides = false;  // No-collision ghost
+entity.collides = false; // No-collision ghost
 ```
 
 ### entity.fixed
@@ -136,7 +137,7 @@ entity.collides = false;  // No-collision ghost
 Gets/sets whether the entity is fixed in place. Default `false`. When `true`, disables gravity and zeros velocity each tick.
 
 ```js
-entity.fixed = true;  // Stationary decoration, no gravity
+entity.fixed = true; // Stationary decoration, no gravity
 ```
 
 ### entity.gravity
@@ -144,7 +145,7 @@ entity.fixed = true;  // Stationary decoration, no gravity
 Gets/sets whether the entity is affected by gravity. Default `true`. When `false`, disables gravity (setNoGravity).
 
 ```js
-entity.gravity = false;  // Floats without gravity
+entity.gravity = false; // Floats without gravity
 ```
 
 ### entity.friction
@@ -167,7 +168,7 @@ var ball = world.createEntity({
   gravity: true,
   collides: true,
   restitution: 0.8,
-  mass: 0.5
+  mass: 0.5,
 });
 ```
 
@@ -178,13 +179,13 @@ var ball = world.createEntity({
 Controls entity invisibility.
 
 ```js
-entity.meshInvisible = true;  // Invisible
+entity.meshInvisible = true; // Invisible
 console.log(entity.meshInvisible);
 ```
 
 ### entity.glowing
 
-⬆ MC Extension | Gets/sets the glow outline effect (similar to spectral arrow).
+Gets/sets the glow outline effect (similar to spectral arrow).
 
 ```js
 entity.glowing = true;
@@ -193,47 +194,47 @@ console.log(entity.glowing);
 
 ### entity.setGlowColor(color)
 
-⬆ MC Extension | Sets the glow outline color via team color, mapping RGB to the nearest `ChatFormatting` (16 colors).
+Sets the glow outline color via team color, mapping RGB to the nearest `ChatFormatting` (16 colors).
 
 ```js
 entity.glowing = true;
-entity.setGlowColor(new GameRGBColor(1, 0, 0));  // Red glow
-entity.setGlowColor(new GameRGBColor(0, 0, 1));  // Blue glow
+entity.setGlowColor(new GameRGBColor(1, 0, 0)); // Red glow
+entity.setGlowColor(new GameRGBColor(0, 0, 1)); // Blue glow
 ```
 
 ### entity.setText(text)
 
-⬆ MC Extension | Sets the text content of a text display entity (only effective on `minecraft:text_display` entities).
+Sets the text content of a text display entity (only effective on `minecraft:text_display` entities).
 
 ### entity.setTextColor(color)
 
-⬆ MC Extension | Sets the text color for text display entities.
+Sets the text color for text display entities.
 
 ### entity.setTextBackgroundColor(color)
 
-⬆ MC Extension | Sets the background color for text display entities. `GameRGBAColor` can be used for semi-transparent backgrounds.
+Sets the background color for text display entities. `GameRGBAColor` can be used for semi-transparent backgrounds.
 
 ```js
 // Create a text display entity
 var textEntity = world.createEntity("minecraft:text_display", pos);
 textEntity.setText("Hello, World!");
-textEntity.setTextColor(new GameRGBColor(1, 1, 1));             // White text
+textEntity.setTextColor(new GameRGBColor(1, 1, 1)); // White text
 textEntity.setTextBackgroundColor(new GameRGBAColor(0, 0, 0, 0.5)); // Semi-transparent black background
 ```
 
 ### entity.nameTag
 
-⬆ MC Extension | Gets/sets the entity's custom display name (supports color codes). Empty string = no name.
+Gets/sets the entity's custom display name (supports color codes). Empty string = no name.
 
 ```js
 entity.nameTag = "§cBoss Mob";
-console.log(entity.nameTag);        // Property access
-entity.setNameTag("§eGuard");       // Method access
+console.log(entity.nameTag); // Property access
+entity.setNameTag("§eGuard"); // Method access
 ```
 
 ## Tag System
 
- Tags are string markers attached to entities (backed by Minecraft scoreboard tags), used for classification and queries.
+Tags are string markers attached to entities (backed by Minecraft scoreboard tags), used for classification and queries.
 
 ### entity.addTag(tag)
 
@@ -273,38 +274,38 @@ var bosses = world.querySelectorAll(".boss");
 
 ### entity.setFire(ticks)
 
-⬆ MC Extension | Sets the entity on fire for the given number of ticks. 20 ticks = 1 second.
+Sets the entity on fire for the given number of ticks. 20 ticks = 1 second.
 
 ### entity.clearFire()
 
-⬆ MC Extension | Extinguishes any fire on the entity.
+Extinguishes any fire on the entity.
 
 ```js
-entity.setFire(100);   // Ignite for 5 seconds
-entity.clearFire();    // Extinguish immediately
+entity.setFire(100); // Ignite for 5 seconds
+entity.clearFire(); // Extinguish immediately
 ```
 
 ## AI & Navigation
 
 ### entity.setAI(enabled)
 
-⬆ MC Extension | Enables/disables the entity's AI (Mob only). When disabled, the entity won't move or attack.
+Enables/disables the entity's AI (Mob only). When disabled, the entity won't move or attack.
 
 ```js
-entity.setAI(false);  // Freeze entity
+entity.setAI(false); // Freeze entity
 ```
 
 ### entity.setTarget(target)
 
-⬆ MC Extension | Sets the mob's attack target (Mob only). The mob will pathfind to and attack it.
+Sets the mob's attack target (Mob only). The mob will pathfind to and attack it.
 
 ### entity.getTarget()
 
-⬆ MC Extension | Returns the current attack target, or `null`.
+Returns the current attack target, or `null`.
 
 ### entity.clearTarget()
 
-⬆ MC Extension | Clears the attack target, stopping pursuit.
+Clears the attack target, stopping pursuit.
 
 ```js
 var boss = world.spawnEntity("minecraft:skeleton", new GameVector3(0, 100, 0));
@@ -316,7 +317,7 @@ boss.clearTarget();
 
 ### entity.navigateTo(x, y, z, speed)
 
-⬆ MC Extension | Orders a pathfinder mob to navigate to the given coordinates. Returns `true` if path calculation succeeded.
+Orders a pathfinder mob to navigate to the given coordinates. Returns `true` if path calculation succeeded.
 
 ### entity.navigateTo(pos, speed)
 
@@ -329,7 +330,7 @@ entity.navigateTo(target.position, 1.0);
 
 ### entity.lookAt(x, y, z)
 
-⬆ MC Extension | Makes the entity look at the given coordinates.
+Makes the entity look at the given coordinates.
 
 ### entity.lookAt(pos)
 
@@ -353,9 +354,9 @@ Applies a status effect. `duration` in ticks (20 ticks = 1 second), `amplifier` 
 Applies an effect, optionally hiding particles.
 
 ```js
-entity.addEffect("minecraft:speed", 600, 2);                    // Speed III, 30 seconds
-entity.addEffect("minecraft:strength", 99999, 1, true);         // Permanent Strength II, no particles
-entity.addEffect("minecraft:glowing", 200, 0);                  // Glowing 10 seconds
+entity.addEffect("minecraft:speed", 600, 2); // Speed III, 30 seconds
+entity.addEffect("minecraft:strength", 99999, 1, true); // Permanent Strength II, no particles
+entity.addEffect("minecraft:glowing", 200, 0); // Glowing 10 seconds
 
 // Common effects:
 // minecraft:speed, minecraft:slowness, minecraft:strength
@@ -372,14 +373,14 @@ All ⬆ MC Extension.
 
 Equips an item onto a mob. **Slot values:**
 
-| slot | Description |
-|------|-------------|
-| `"mainhand"` | Main hand |
-| `"offhand"` | Off hand |
-| `"head"`, `"helmet"`, `"helm"` | Helmet |
-| `"chest"`, `"chestplate"` | Chestplate |
-| `"legs"`, `"leggings"` | Leggings |
-| `"feet"`, `"boots"` | Boots |
+| slot                           | Description |
+| ------------------------------ | ----------- |
+| `"mainhand"`                   | Main hand   |
+| `"offhand"`                    | Off hand    |
+| `"head"`, `"helmet"`, `"helm"` | Helmet      |
+| `"chest"`, `"chestplate"`      | Chestplate  |
+| `"legs"`, `"leggings"`         | Leggings    |
+| `"feet"`, `"boots"`            | Boots       |
 
 ```js
 entity.setEquipment("mainhand", "minecraft:diamond_sword");
@@ -393,8 +394,8 @@ entity.setEquipment("feet", "minecraft:leather_boots");
 Sets the drop chance for an equipment slot, range 0.0–1.0. Use `"all"` for `slot` to set all slots at once (both hands + four armor slots).
 
 ```js
-entity.setDropChance("mainhand", 0.5);  // 50% chance to drop main hand item
-entity.setDropChance("all", 0);         // Drop nothing
+entity.setDropChance("mainhand", 0.5); // 50% chance to drop main hand item
+entity.setDropChance("all", 0); // Drop nothing
 ```
 
 ## Attributes
@@ -433,23 +434,23 @@ Destroys the entity. If a callback was registered via `setOnDestroy()`, it will 
 Registers a callback called when the entity is destroyed. `handler` receives one argument `(entity)`.
 
 ```js
-entity.setOnDestroy(function(e) {
+entity.setOnDestroy(function (e) {
   console.log("Entity " + e.id + " destroyed");
 });
 ```
 
 ### entity.setPersistent(v)
 
-⬆ MC Extension | When `true`, prevents the mob from despawning naturally (Mob only). Write-only method, no getter.
+When `true`, prevents the mob from despawning naturally (Mob only). Write-only method, no getter.
 
 ```js
 var boss = world.spawnEntity(
   "minecraft:wither_skeleton",
   new GameVector3(0, 100, 0),
 );
-boss.setPersistent(true);  // Won't despawn
+boss.setPersistent(true); // Won't despawn
 boss.setNameTag("§c§lWither Guard");
-boss.setOnDestroy(function(e) {
+boss.setOnDestroy(function (e) {
   world.say("Boss defeated!");
 });
 ```

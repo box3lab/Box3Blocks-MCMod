@@ -3,8 +3,8 @@
 `player` 通过 `entity.player` 获取，拥有 `entity` 的全部属性并额外提供背包、经验、飞行、消息、传送等玩家专属功能。
 
 ```js
-world.onPlayerJoin(function(entity, tick) {
-  var p = entity.player;  // p 即为 player 对象
+world.onPlayerJoin(function (entity, tick) {
+  var p = entity.player; // p 即为 player 对象
   p.directMessage("欢迎回来, " + p.name + "!");
 });
 ```
@@ -23,19 +23,19 @@ world.onPlayerJoin(function(entity, tick) {
 
 获取/设置玩家管理员权限等级 (0–4)。
 
-| 等级 | 说明 |
-|------|------|
-| 0 | 普通玩家 |
-| 1 | 可绕过出生点保护 |
-| 2 | 可使用大部分命令 |
-| 3 | 可管理玩家 |
-| 4 | 最高权限 (等同于 `/op`) |
+| 等级 | 说明                    |
+| ---- | ----------------------- |
+| 0    | 普通玩家                |
+| 1    | 可绕过出生点保护        |
+| 2    | 可使用大部分命令        |
+| 3    | 可管理玩家              |
+| 4    | 最高权限 (等同于 `/op`) |
 
 ```js
 if (player.opLevel >= 2) {
   // 需要权限等级 2 的操作
 }
-player.opLevel = 3;  // 属性方式设置为 3 级
+player.opLevel = 3; // 属性方式设置为 3 级
 ```
 
 另有 `player.getOpLevel()` 方法返回权限等级数字。
@@ -51,7 +51,7 @@ player.opLevel = 3;  // 属性方式设置为 3 级
 只读。玩家模型缩放比例（MC 原生 scale，非 Box3 scale）。
 
 ```js
-player.invisible = true;  // 隐形
+player.invisible = true; // 隐形
 console.log("玩家缩放: " + player.scale);
 ```
 
@@ -73,8 +73,6 @@ console.log("玩家缩放: " + player.scale);
 
 只读。玩家当前是否站在方块上。
 
-
-
 ### player.walkSpeed
 
 步行速度，对应 `MOVEMENT_SPEED` 属性基值。默认值约 0.1。
@@ -92,8 +90,8 @@ console.log("玩家缩放: " + player.scale);
 获取/设置是否允许跳跃。默认 `true`。设为 `false` 时保存当前跳跃力并将 `JUMP_STRENGTH` 设为 0；设回 `true` 时恢复。
 
 ```js
-player.enableJump = false;  // 禁止跳跃
-player.enableJump = true;   // 恢复跳跃
+player.enableJump = false; // 禁止跳跃
+player.enableJump = true; // 恢复跳跃
 ```
 
 ### player.crouchSpeed
@@ -105,38 +103,38 @@ player.enableJump = true;   // 恢复跳跃
 获取/设置游泳速度。底层映射到 `WATER_MOVEMENT_EFFICIENCY` 属性。
 
 ```js
-player.swimSpeed = 0.5;  // 游泳更快
+player.swimSpeed = 0.5; // 游泳更快
 ```
 
 ### player.moveState
 
 只读。当前移动状态字符串：
 
-| 值 | 说明 |
-|------|------|
+| 值         | 说明     |
+| ---------- | -------- |
 | `"FLYING"` | 正在飞行 |
-| `"SWIM"` | 在水中 |
-| `"JUMP"` | 向上跳跃 |
-| `"FALL"` | 下落中 |
+| `"SWIM"`   | 在水中   |
+| `"JUMP"`   | 向上跳跃 |
+| `"FALL"`   | 下落中   |
 | `"GROUND"` | 在地面上 |
 
 ### player.walkState
 
 只读。当前行走状态字符串：
 
-| 值 | 说明 |
-|------|------|
+| 值         | 说明   |
+| ---------- | ------ |
 | `"CROUCH"` | 潜行中 |
-| `"RUN"` | 奔跑中 |
-| `"WALK"` | 行走中 |
-| `"NONE"` | 静止 |
+| `"RUN"`    | 奔跑中 |
+| `"WALK"`   | 行走中 |
+| `"NONE"`   | 静止   |
 
 ```js
-player.walkSpeed = 0.2;   // 加速
-player.jumpPower = 0.6;   // 跳更高
-player.swimSpeed = 0.3;   // 游泳速度
+player.walkSpeed = 0.2; // 加速
+player.jumpPower = 0.6; // 跳更高
+player.swimSpeed = 0.3; // 游泳速度
 
-world.onTick(function() {
+world.onTick(function () {
   if (player.walkState === "RUN") {
     // 玩家在奔跑
   }
@@ -179,16 +177,16 @@ player.disableFly = true;
 
 ### player.collision
 
-⬆ MC 扩展 | 获取/设置团队内碰撞。设为 `false` 可防止多人推搡。底层修改玩家所在队伍的 `CollisionRule`（ALWAYS / NEVER）。
+获取/设置团队内碰撞。设为 `false` 可防止多人推搡。底层修改玩家所在队伍的 `CollisionRule`（ALWAYS / NEVER）。
 
 ```js
-player.collision = false;  // 禁用碰撞
+player.collision = false; // 禁用碰撞
 console.log(player.collision);
 ```
 
 ## 生命值
 
-⬆ MC 扩展 | 获取/设置玩家血量。`ServerPlayer` 本身是 `LivingEntity`，直接操作健康值。
+获取/设置玩家血量。`ServerPlayer` 本身是 `LivingEntity`，直接操作健康值。
 
 ### player.hp
 
@@ -204,8 +202,8 @@ console.log(player.collision);
 
 ```js
 // 设置职业血量
-player.maxHp = 40;  // 战士 40 HP
-player.hp = 40;     // 满血
+player.maxHp = 40; // 战士 40 HP
+player.hp = 40; // 满血
 
 // 设置后若当前血量超过新最大值会自动截断
 player.maxHp = 20;
@@ -223,16 +221,14 @@ if (player.dead) {
 获取/设置游戏模式。get 返回名称字符串，set 接受字符串或数字。
 
 ```js
-player.gameMode = "creative";   // 创造模式
-player.gameMode = "survival";   // 生存模式
-player.gameMode = "adventure";  // 冒险模式
-player.gameMode = "spectator";  // 旁观模式
+player.gameMode = "creative"; // 创造模式
+player.gameMode = "survival"; // 生存模式
+player.gameMode = "adventure"; // 冒险模式
+player.gameMode = "spectator"; // 旁观模式
 // 或数字: 0=生存, 1=创造, 2=冒险, 3=旁观
 ```
 
 ## 相机
-
-
 
 ### player.cameraMode
 
@@ -256,7 +252,7 @@ player.gameMode = "spectator";  // 旁观模式
 
 ### player.lookAt(x, y, z)
 
-⬆ MC 扩展 | 让玩家看向指定坐标。
+让玩家看向指定坐标。
 
 ### player.lookAt(pos)
 
@@ -301,7 +297,7 @@ console.log(player.spawnPoint);
 
 ### player.dimension
 
-⬆ MC 扩展 | 获取/设置玩家所在维度。set 可跨维度传送。
+获取/设置玩家所在维度。set 可跨维度传送。
 
 ```js
 player.teleport(new GameVector3(0, 100, 0));
@@ -334,11 +330,11 @@ player.kick("你已被移出游戏");
 
 ### player.directMessage(msg, color)
 
-⬆ MC 扩展 | 发送带颜色的聊天消息。
+发送带颜色的聊天消息。
 
 ```js
-player.directMessage("操作成功!", new GameRGBColor(0, 1, 0));   // 绿色
-player.directMessage("警告!", new GameRGBColor(1, 0.5, 0));    // 橙色
+player.directMessage("操作成功!", new GameRGBColor(0, 1, 0)); // 绿色
+player.directMessage("警告!", new GameRGBColor(1, 0.5, 0)); // 橙色
 ```
 
 ### player.actionBar(msg)
@@ -351,7 +347,7 @@ player.directMessage("警告!", new GameRGBColor(1, 0.5, 0));    // 橙色
 
 ### player.title(title, subtitle, fadeIn, stay, fadeOut)
 
-⬆ MC 扩展 | 完全参数的标题。`fadeIn`/`stay`/`fadeOut` 单位均为 tick (20 tick = 1秒)。
+完全参数的标题。`fadeIn`/`stay`/`fadeOut` 单位均为 tick (20 tick = 1秒)。
 
 ### player.dialog(config)
 
@@ -381,7 +377,7 @@ player.link("https://example.com");
 
 // 对话树
 player.directMessage("输入你的选择: A 或 B");
-player.onChat(function(entity, msg, tick) {
+player.onChat(function (entity, msg, tick) {
   if (msg === "A") {
     player.directMessage("你选择了 A");
   }
@@ -392,23 +388,23 @@ player.onChat(function(entity, msg, tick) {
 
 ### player.xp
 
-⬆ MC 扩展 | 获取/设置经验等级。
+获取/设置经验等级。
 
 ### player.addExperienceLevels(levels)
 
-⬆ MC 扩展 | 增加 `levels` 级经验。
+增加 `levels` 级经验。
 
 ### player.food
 
-⬆ MC 扩展 | 获取/设置饱食度（0–20）。
+获取/设置饱食度（0–20）。
 
 ### player.saturation
 
-⬆ MC 扩展 | 获取/设置饱和度（0–20，浮点数）。
+获取/设置饱和度（0–20，浮点数）。
 
 ```js
-player.xp = 10;                 // 设置 10 级
-player.addExperienceLevels(3);  // 加 3 级
+player.xp = 10; // 设置 10 级
+player.addExperienceLevels(3); // 加 3 级
 player.food = 20;
 player.saturation = 10;
 ```
@@ -465,7 +461,7 @@ player.giveNamedItem("minecraft:diamond_sword", 1, "§c§l烈焰之刃", [
 
 ```js
 var held = player.getHeldItem();
-console.log(held.id, held.count);  // "minecraft:diamond_sword" 1
+console.log(held.id, held.count); // "minecraft:diamond_sword" 1
 ```
 
 ### player.clearInventory()
@@ -478,30 +474,30 @@ player.clearInventory();
 
 ## 自定义容器 GUI
 
-⬆ MC 扩展 | 为玩家打开脚本控制的容器 GUI（类似箱子界面），可自定义格子内容、点击行为和关闭回调。
+为玩家打开脚本控制的容器 GUI（类似箱子界面），可自定义格子内容、点击行为和关闭回调。
 
 ### player.openGUI(config?)
 
 打开一个容器 GUI 并返回 `GUIController` 控制器对象。
 
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `title` | `string` | `"Container"` | 容器标题 |
-| `rows` | `number` | `3` | 行数 (1–6)，每行 9 格 |
-| `slots` | `{ [slot: number]: string }` | `{}` | 预填充物品，key 为格子索引，value 为物品 ID |
+| 参数    | 类型                         | 默认值        | 说明                                        |
+| ------- | ---------------------------- | ------------- | ------------------------------------------- |
+| `title` | `string`                     | `"Container"` | 容器标题                                    |
+| `rows`  | `number`                     | `3`           | 行数 (1–6)，每行 9 格                       |
+| `slots` | `{ [slot: number]: string }` | `{}`          | 预填充物品，key 为格子索引，value 为物品 ID |
 
 **返回值 `GUIController` 方法：**
 
-| 方法 | 说明 |
-|------|------|
-| `setItem(slot, itemId, count?)` | 在指定格子放置物品 |
-| `getItem(slot)` | 获取格子物品，返回 `{ id, count }` |
-| `onSlotClick(callback)` | 注册点击回调，`return false` 可取消点击 |
-| `onClose(callback)` | 注册关闭回调（ESC 或 `close()` 触发） |
-| `close()` | 关闭容器 |
+| 方法                            | 说明                                    |
+| ------------------------------- | --------------------------------------- |
+| `setItem(slot, itemId, count?)` | 在指定格子放置物品                      |
+| `getItem(slot)`                 | 获取格子物品，返回 `{ id, count }`      |
+| `onSlotClick(callback)`         | 注册点击回调，`return false` 可取消点击 |
+| `onClose(callback)`             | 注册关闭回调（ESC 或 `close()` 触发）   |
+| `close()`                       | 关闭容器                                |
 
 ```js
-world.onChat(function(entity, msg, tick) {
+world.onChat(function (entity, msg, tick) {
   if (msg === "!shop") {
     var gui = entity.player.openGUI({
       title: "§6§l商店",
@@ -515,12 +511,12 @@ world.onChat(function(entity, msg, tick) {
 
     gui.setItem(1, "minecraft:netherite_ingot", 5);
 
-    gui.onSlotClick(function(slot, player) {
+    gui.onSlotClick(function (slot, player) {
       console.log("点击格子: " + slot);
-      if (slot === 0) return false;  // 禁止拿走钻石
+      if (slot === 0) return false; // 禁止拿走钻石
     });
 
-    gui.onClose(function(player) {
+    gui.onClose(function (player) {
       player.directMessage("商店已关闭");
     });
   }
@@ -536,19 +532,19 @@ world.onChat(function(entity, msg, tick) {
 
 ### player.addEffect(effectId, duration, amplifier)
 
-⬆ MC 扩展 | 添加药水效果。`duration` 为 tick，`amplifier` 从 0 开始。
+添加药水效果。`duration` 为 tick，`amplifier` 从 0 开始。
 
 ### player.addEffect(effectId, duration, amplifier, hideParticles)
 
-⬆ MC 扩展 | 添加效果并可选择隐藏粒子。
+添加效果并可选择隐藏粒子。
 
 ### player.clearEffects()
 
-⬆ MC 扩展 | 移除所有药水效果。
+移除所有药水效果。
 
 ```js
 player.addEffect("minecraft:speed", 600, 2);
-player.addEffect("minecraft:jump_boost", 99999, 1, true);  // 永久，无粒子
+player.addEffect("minecraft:jump_boost", 99999, 1, true); // 永久，无粒子
 player.clearEffects();
 ```
 
@@ -556,11 +552,11 @@ player.clearEffects();
 
 ### player.playSound(path, volume, pitch)
 
-⬆ MC 扩展 | 向该玩家单独播放音效。`path` 为命名空间 ID（如 `"minecraft:block.note_block.pling"`），`volume` 0–1，`pitch` 0.5–2。
+向该玩家单独播放音效。`path` 为命名空间 ID（如 `"minecraft:block.note_block.pling"`），`volume` 0–1，`pitch` 0.5–2。
 
 ### player.runCommand(cmd)
 
-⬆ MC 扩展 | 以该玩家身份执行 Minecraft 命令。
+以该玩家身份执行 Minecraft 命令。
 
 ```js
 player.playSound("minecraft:block.note_block.pling", 0.8, 1.5);
@@ -571,11 +567,11 @@ player.runCommand("say hello");
 
 ### player.grantAdvancement(advancementId)
 
-⬆ MC 扩展 | 为该玩家授予成就/进度。
+为该玩家授予成就/进度。
 
 ### player.revokeAdvancement(advancementId)
 
-⬆ MC 扩展 | 撤销该玩家的成就/进度。
+撤销该玩家的成就/进度。
 
 ```js
 player.grantAdvancement("minecraft:story/mine_stone");
@@ -587,7 +583,7 @@ player.revokeAdvancement("minecraft:story/mine_stone");
 
 ### player.setPlayerListName(name)
 
-⬆ MC 扩展 | 修改该玩家在 Tab 列表中显示的名字（支持颜色代码）。
+修改该玩家在 Tab 列表中显示的名字（支持颜色代码）。
 
 ```js
 player.setPlayerListName("§e[CP3] §f" + player.name);

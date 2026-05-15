@@ -45,20 +45,21 @@ entity.position.set(0, 100, 0);
 只读 `GameVector3`。**LiveVec3**：读取时自动同步当前速度，`.set(x,y,z)` 直接设置速度向量。
 
 ```js
-entity.velocity.set(0, 1, 0);  // 向上弹射
-entity.velocity.set(2, 0, 2);  // 水平方向速度
+entity.velocity.set(0, 1, 0); // 向上弹射
+entity.velocity.set(2, 0, 2); // 水平方向速度
 ```
 
 ### entity.bounds
 
 只读 `GameVector3`。实体的包围盒**半尺寸** (half-extents)：
+
 - `x` = 宽度 / 2
 - `y` = 高度 / 2
 - `z` = 宽度 / 2
 
 ### entity.onGround
 
-⬆ MC 扩展 | 只读。实体是否站在方块上。
+只读。实体是否站在方块上。
 
 ```js
 if (entity.onGround) {
@@ -68,7 +69,7 @@ if (entity.onGround) {
 
 ### entity.eyePosition
 
-⬆ MC 扩展 | 只读 `GameVector3`。实体视线高度位置（射线检测起点）。
+只读 `GameVector3`。实体视线高度位置（射线检测起点）。
 
 ```js
 var eye = entity.eyePosition;
@@ -99,13 +100,13 @@ zombie.hp = 100;
 治疗实体 `amount` 点生命值（不超过 maxHp）。
 
 ```js
-zombie.hurt(10);  // 造成 10 点伤害
-zombie.heal(5);   // 治疗 5 点
+zombie.hurt(10); // 造成 10 点伤害
+zombie.heal(5); // 治疗 5 点
 ```
 
 ### entity.invulnerable
 
-⬆ MC 扩展 | 获取/设置实体是否无敌（不受伤害）。
+获取/设置实体是否无敌（不受伤害）。
 
 ```js
 entity.invulnerable = true;
@@ -125,7 +126,7 @@ console.log(entity.invulnerable);
 获取/设置实体是否参与碰撞。默认 `true`。设为 `false` 时对 LivingEntity 禁用物理 (setNoPhysics)。
 
 ```js
-entity.collides = false;  // 无碰撞幽灵
+entity.collides = false; // 无碰撞幽灵
 ```
 
 ### entity.fixed
@@ -133,7 +134,7 @@ entity.collides = false;  // 无碰撞幽灵
 获取/设置实体是否固定。默认 `false`。设为 `true` 时禁用重力并每 tick 清零移动速度。
 
 ```js
-entity.fixed = true;  // 固定装饰物，不受重力不掉落
+entity.fixed = true; // 固定装饰物，不受重力不掉落
 ```
 
 ### entity.gravity
@@ -141,7 +142,7 @@ entity.fixed = true;  // 固定装饰物，不受重力不掉落
 获取/设置实体是否受重力影响。默认 `true`。设为 `false` 时禁用重力 (setNoGravity)。
 
 ```js
-entity.gravity = false;  // 无重力漂浮
+entity.gravity = false; // 无重力漂浮
 ```
 
 ### entity.friction
@@ -164,7 +165,7 @@ var ball = world.createEntity({
   gravity: true,
   collides: true,
   restitution: 0.8,
-  mass: 0.5
+  mass: 0.5,
 });
 ```
 
@@ -175,13 +176,13 @@ var ball = world.createEntity({
 控制实体是否不可见（隐身）。
 
 ```js
-entity.meshInvisible = true;  // 隐身
+entity.meshInvisible = true; // 隐身
 console.log(entity.meshInvisible);
 ```
 
 ### entity.glowing
 
-⬆ MC 扩展 | 获取/设置发光效果（类似光灵箭轮廓高亮）。
+获取/设置发光效果（类似光灵箭轮廓高亮）。
 
 ```js
 entity.glowing = true;
@@ -190,42 +191,42 @@ console.log(entity.glowing);
 
 ### entity.setGlowColor(color)
 
-⬆ MC 扩展 | 设置发光轮廓颜色。通过队伍颜色实现，映射 RGB 到最接近的 `ChatFormatting`（16 色）。
+设置发光轮廓颜色。通过队伍颜色实现，映射 RGB 到最接近的 `ChatFormatting`（16 色）。
 
 ```js
 entity.glowing = true;
-entity.setGlowColor(new GameRGBColor(1, 0, 0));  // 红色发光
-entity.setGlowColor(new GameRGBColor(0, 0, 1));  // 蓝色发光
+entity.setGlowColor(new GameRGBColor(1, 0, 0)); // 红色发光
+entity.setGlowColor(new GameRGBColor(0, 0, 1)); // 蓝色发光
 ```
 
 ### entity.setText(text)
 
-⬆ MC 扩展 | 设置文字展示实体的文本内容（仅 `minecraft:text_display` 实体有效）。
+设置文字展示实体的文本内容（仅 `minecraft:text_display` 实体有效）。
 
 ### entity.setTextColor(color)
 
-⬆ MC 扩展 | 设置文字展示实体的文本颜色。
+设置文字展示实体的文本颜色。
 
 ### entity.setTextBackgroundColor(color)
 
-⬆ MC 扩展 | 设置文字展示实体的背景颜色，`GameRGBAColor` 可用于半透明背景。
+设置文字展示实体的背景颜色，`GameRGBAColor` 可用于半透明背景。
 
 ```js
 // 创建文字展示实体
 var textEntity = world.createEntity("minecraft:text_display", pos);
 textEntity.setText("Hello, World!");
-textEntity.setTextColor(new GameRGBColor(1, 1, 1));           // 白色文字
+textEntity.setTextColor(new GameRGBColor(1, 1, 1)); // 白色文字
 textEntity.setTextBackgroundColor(new GameRGBAColor(0, 0, 0, 0.5)); // 半透明黑色背景
 ```
 
 ### entity.nameTag
 
-⬆ MC 扩展 | 获取/设置实体的自定义名称（头上显示的名字，支持颜色代码）。空字符串 = 无名称。
+获取/设置实体的自定义名称（头上显示的名字，支持颜色代码）。空字符串 = 无名称。
 
 ```js
 entity.nameTag = "§cBoss 怪物";
-console.log(entity.nameTag);          // 属性方式读取
-entity.setNameTag("§e守卫");          // 方法方式设置
+console.log(entity.nameTag); // 属性方式读取
+entity.setNameTag("§e守卫"); // 方法方式设置
 ```
 
 ## 标签系统
@@ -270,38 +271,38 @@ var bosses = world.querySelectorAll(".boss");
 
 ### entity.setFire(ticks)
 
-⬆ MC 扩展 | 点燃实体指定 tick 数。20 ticks = 1 秒。
+点燃实体指定 tick 数。20 ticks = 1 秒。
 
 ### entity.clearFire()
 
-⬆ MC 扩展 | 扑灭实体火焰。
+扑灭实体火焰。
 
 ```js
-entity.setFire(100);   // 点燃 5 秒
-entity.clearFire();    // 立即扑灭
+entity.setFire(100); // 点燃 5 秒
+entity.clearFire(); // 立即扑灭
 ```
 
 ## AI 与导航
 
 ### entity.setAI(enabled)
 
-⬆ MC 扩展 | 启用/禁用实体 AI（仅 Mob 有效）。禁用后实体不会移动或攻击。
+启用/禁用实体 AI（仅 Mob 有效）。禁用后实体不会移动或攻击。
 
 ```js
-entity.setAI(false);  // 冻结实体
+entity.setAI(false); // 冻结实体
 ```
 
 ### entity.setTarget(target)
 
-⬆ MC 扩展 | 设置怪物的攻击目标（仅 Mob 有效）。怪物会自动寻路并攻击该目标。
+设置怪物的攻击目标（仅 Mob 有效）。怪物会自动寻路并攻击该目标。
 
 ### entity.getTarget()
 
-⬆ MC 扩展 | 获取当前攻击目标，返回 `GameEntity` 或 `null`。
+获取当前攻击目标，返回 `GameEntity` 或 `null`。
 
 ### entity.clearTarget()
 
-⬆ MC 扩展 | 清除攻击目标，停止追击。
+清除攻击目标，停止追击。
 
 ```js
 var boss = world.spawnEntity("minecraft:skeleton", new GameVector3(0, 100, 0));
@@ -313,7 +314,7 @@ boss.clearTarget();
 
 ### entity.navigateTo(x, y, z, speed)
 
-⬆ MC 扩展 | 让实体寻路到目标坐标（仅 PathfinderMob 有效）。返回 `true` 表示路径计算成功。
+让实体寻路到目标坐标（仅 PathfinderMob 有效）。返回 `true` 表示路径计算成功。
 
 ### entity.navigateTo(pos, speed)
 
@@ -326,7 +327,7 @@ entity.navigateTo(target.position, 1.0);
 
 ### entity.lookAt(x, y, z)
 
-⬆ MC 扩展 | 实体面朝目标坐标。
+实体面朝目标坐标。
 
 ### entity.lookAt(pos)
 
@@ -350,9 +351,9 @@ entity.lookAt(target.position);
 添加效果并可选择隐藏粒子。
 
 ```js
-entity.addEffect("minecraft:speed", 600, 2);                    // 速度 III，30 秒
-entity.addEffect("minecraft:strength", 99999, 1, true);         // 永久力量 II，无粒子
-entity.addEffect("minecraft:glowing", 200, 0);                  // 发光 10 秒
+entity.addEffect("minecraft:speed", 600, 2); // 速度 III，30 秒
+entity.addEffect("minecraft:strength", 99999, 1, true); // 永久力量 II，无粒子
+entity.addEffect("minecraft:glowing", 200, 0); // 发光 10 秒
 
 // 常用效果:
 // minecraft:speed, minecraft:slowness, minecraft:strength
@@ -369,14 +370,14 @@ entity.addEffect("minecraft:glowing", 200, 0);                  // 发光 10 秒
 
 给生物穿戴装备。**slot 值：**
 
-| slot | 说明 |
-|------|------|
-| `"mainhand"` | 主手 |
-| `"offhand"` | 副手 |
+| slot                           | 说明 |
+| ------------------------------ | ---- |
+| `"mainhand"`                   | 主手 |
+| `"offhand"`                    | 副手 |
 | `"head"`, `"helmet"`, `"helm"` | 头盔 |
-| `"chest"`, `"chestplate"` | 胸甲 |
-| `"legs"`, `"leggings"` | 护腿 |
-| `"feet"`, `"boots"` | 靴子 |
+| `"chest"`, `"chestplate"`      | 胸甲 |
+| `"legs"`, `"leggings"`         | 护腿 |
+| `"feet"`, `"boots"`            | 靴子 |
 
 ```js
 entity.setEquipment("mainhand", "minecraft:diamond_sword");
@@ -390,8 +391,8 @@ entity.setEquipment("feet", "minecraft:leather_boots");
 设置装备槽物品的掉落概率，范围 0.0–1.0。`slot` 设为 `"all"` 可一次性设置所有槽位（包括主副手和四个护甲槽）。
 
 ```js
-entity.setDropChance("mainhand", 0.5);  // 50% 概率掉落主手物品
-entity.setDropChance("all", 0);         // 不掉落任何装备
+entity.setDropChance("mainhand", 0.5); // 50% 概率掉落主手物品
+entity.setDropChance("all", 0); // 不掉落任何装备
 ```
 
 ## 属性
@@ -430,23 +431,23 @@ entity.setAttribute("minecraft:generic.armor", 10);
 设置销毁回调。`handler` 接收一个参数 `(entity)`。
 
 ```js
-entity.setOnDestroy(function(e) {
+entity.setOnDestroy(function (e) {
   console.log("实体 " + e.id + " 被销毁");
 });
 ```
 
 ### entity.setPersistent(v)
 
-⬆ MC 扩展 | 设为 `true` 时生物不会因远离玩家而自然消失（仅 Mob 有效）。仅写方法，无 getter。
+设为 `true` 时生物不会因远离玩家而自然消失（仅 Mob 有效）。仅写方法，无 getter。
 
 ```js
 var boss = world.spawnEntity(
   "minecraft:wither_skeleton",
   new GameVector3(0, 100, 0),
 );
-boss.setPersistent(true);  // 不会自然消失
+boss.setPersistent(true); // 不会自然消失
 boss.setNameTag("§c§l凋零守卫");
-boss.setOnDestroy(function(e) {
+boss.setOnDestroy(function (e) {
   world.say("Boss 被击败了！");
 });
 ```

@@ -73,7 +73,7 @@ Place a block, `voxelId` is the internal ID with encoded rotation.
 
 ### voxels.fillVoxel(x1, y1, z1, x2, y2, z2, voxel)
 
-⬆ MC Extension | Fill a rectangular region with a block. Corner coordinates are auto-sorted (no need to ensure x1 ≤ x2).
+Fill a rectangular region with a block. Corner coordinates are auto-sorted (no need to ensure x1 ≤ x2).
 
 ### voxels.fillVoxel(pos1, pos2, voxel)
 
@@ -143,7 +143,7 @@ var name = voxels.getVoxelName(new GameVector3(0, 100, 0));
 
 ### voxels.countVoxel(x1, y1, z1, x2, y2, z2, voxel)
 
-⬆ MC Extension | Count matching blocks in a region. `voxel` can be a string or numeric ID.
+Count matching blocks in a region. `voxel` can be a string or numeric ID.
 
 ### voxels.countVoxel(pos1, pos2, voxel)
 
@@ -171,7 +171,7 @@ var count = voxels.countVoxel(
 
 ### voxels.setSpawner(x, y, z, entityType)
 
-⬆ MC Extension | Set the spawn type of the spawner at the given coordinates. Only effective if that block is `minecraft:spawner`.
+Set the spawn type of the spawner at the given coordinates. Only effective if that block is `minecraft:spawner`.
 
 ### voxels.setSpawner(pos, entityType)
 

@@ -70,7 +70,7 @@ voxels.setVoxel(new GameVector3(0, 100, 0), "minecraft:oak_stairs", 2);
 
 ### voxels.fillVoxel(x1, y1, z1, x2, y2, z2, voxel)
 
-⬆ MC 扩展 | 在矩形区域内填充方块。坐标两端点会被自动排序（无需保证 x1≤x2）。
+在矩形区域内填充方块。坐标两端点会被自动排序（无需保证 x1≤x2）。
 
 ### voxels.fillVoxel(pos1, pos2, voxel)
 
@@ -140,7 +140,7 @@ var name = voxels.getVoxelName(new GameVector3(0, 100, 0));
 
 ### voxels.countVoxel(x1, y1, z1, x2, y2, z2, voxel)
 
-⬆ MC 扩展 | 统计区域内匹配方块的个数。`voxel` 可以是字符串或数字 ID。
+统计区域内匹配方块的个数。`voxel` 可以是字符串或数字 ID。
 
 ### voxels.countVoxel(pos1, pos2, voxel)
 
@@ -168,7 +168,7 @@ var count = voxels.countVoxel(
 
 ### voxels.setSpawner(x, y, z, entityType)
 
-⬆ MC 扩展 | 设置坐标处刷怪笼的刷出类型。只有该坐标是 `minecraft:spawner` 时才有效。
+设置坐标处刷怪笼的刷出类型。只有该坐标是 `minecraft:spawner` 时才有效。
 
 ### voxels.setSpawner(pos, entityType)
 

@@ -273,13 +273,13 @@ Box3JS API 按运行环境分为服务端、客户端和双端共享三类。服
 | `storage`        | 双端     | 数据持久化，见 [storage.md](storage.md)                                    |
 | `db`             | 双端     | SQLite 数据库，见 [database.md](database.md)                               |
 | `http`           | 双端     | HTTP 请求，见 [http.md](http.md)                                           |
-| `audio`          | 客户端   | 客户端音效、音乐、音量控制，见 [client.md](client.md)                      |
-| `client`         | 客户端   | 客户端生命周期，见 [client.md](client.md)                                  |
-| `input`          | 客户端   | 客户端键盘输入，见 [client.md](client.md)                                  |
-| `ui`             | 客户端   | 客户端屏幕 UI，见 [client.md](client.md)                                   |
-| `chat`           | 客户端   | 客户端聊天收发，见 [client.md](client.md)                                  |
-| `gui`            | 客户端   | 自定义容器 GUI，见 [client.md](client.md)                                  |
-| `remoteChannel`  | 双端     | 服务端↔客户端事件通信，见 [server.md](server.md) / [client.md](client.md)  |
+| `audio`          | 客户端   | 客户端音效、音乐、音量控制，见 [audio.md](audio.md)                      |
+| `client`         | 客户端   | 客户端生命周期，见 [client.md](client.md)                                |
+| `input`          | 客户端   | 客户端键盘输入，见 [input.md](input.md)                                  |
+| `ui`             | 客户端   | 客户端屏幕 UI，见 [ui.md](ui.md)                                         |
+| `chat`           | 客户端   | 客户端聊天收发，见 [chat.md](chat.md)                                    |
+| `gui`            | 客户端   | 自定义容器 GUI，见 [gui.md](gui.md)                                      |
+| `remoteChannel`  | 双端     | 服务端↔客户端事件通信，见 [remote-channel.md](remote-channel.md)         |
 | `registries`     | 服务端   | 自定义方块/物品/音效（编译模式），见 [registries.md](registries.md)        |
 | `console`        | 双端     | 控制台日志输出（`log`/`warn`/`error`/`debug`）                             |
 | `GameVector3`    | 双端     | 三维向量，见 [math.md](math.md)                                            |
@@ -319,7 +319,13 @@ Box3JS API 按运行环境分为服务端、客户端和双端共享三类。服
 | [storage.md](storage.md)       | 数据持久化存储                                                                    |
 | [database.md](database.md)     | SQLite 数据库                                                                     |
 | [http.md](http.md)             | HTTP 网络请求                                                                     |
-| [client.md](client.md)         | 客户端 API：生命周期、键盘输入、屏幕 UI、聊天、GUI、remoteChannel、客户端本地存储 |
+| [client.md](client.md)         | 客户端生命周期：onTick、getFPS、getPlayer、getLookingAt、getServerInfo、雾效      |
+| [audio.md](audio.md)           | 客户端音效/音乐播放与音量控制                                                      |
+| [input.md](input.md)           | 客户端键盘输入检测与鼠标事件                                                       |
+| [ui.md](ui.md)                 | 客户端屏幕 UI：标题、动作栏、自定义绘制文字                                        |
+| [chat.md](chat.md)             | 客户端聊天消息收发与命令发送                                                       |
+| [gui.md](gui.md)               | 自定义容器 GUI 界面                                                               |
+| [remote-channel.md](remote-channel.md) | 客户端↔服务端双向事件通信                                                  |
 | [registries.md](registries.md) | 自定义方块/物品/音效（blocks.json、items.json、sounds.json、creativeTabs.json）   |
 | [math.md](math.md)             | GameVector3、GameBounds3、GameRGBColor、GameRGBAColor、GameQuaternion             |
 | [commands.md](commands.md)     | `/box3script` 命令参考                                                            |

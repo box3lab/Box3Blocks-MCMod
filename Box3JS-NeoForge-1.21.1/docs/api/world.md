@@ -43,7 +43,7 @@ console.log(world.rainDensity); // 0.0 ~ 1.0
 
 ### world.thunderDensity
 
-⬆ MC 扩展 | 获取/设置雷暴强度，范围 0.0–1.0。
+获取/设置雷暴强度，范围 0.0–1.0。
 
 ```js
 world.thunderDensity = 0.5;
@@ -51,7 +51,7 @@ world.thunderDensity = 0.5;
 
 ### world.clearWeather()
 
-⬆ MC 扩展 | 同时清除雨和雷暴。
+同时清除雨和雷暴。
 
 ```js
 world.clearWeather();
@@ -118,11 +118,11 @@ world.setWorldSpawn(new GameVector3(0, 70, 0));
 
 ### world.getGameRule(name)
 
-⬆ MC 扩展 | 获取游戏规则布尔值。
+获取游戏规则布尔值。
 
 ### world.setGameRule(name, value)
 
-⬆ MC 扩展 | 设置游戏规则。`value` 为布尔值。
+设置游戏规则。`value` 为布尔值。
 
 **支持的规则：**
 
@@ -252,38 +252,38 @@ var token = world.onTick(function (info) {
 });
 ```
 
-| 事件                         | 类型    | 回调签名                                               | 触发时机                              |
-| ---------------------------- | ------- | ------------------------------------------------------ | ------------------------------------- |
-| `world.onTick(fn)`           | | `(info)` → `{tick, prevTick, elapsedTimeMS, skip}`     | 每 tick                               |
-| `world.onPlayerJoin(fn)`     | | `(entity, tick)`                                       | 玩家登录                              |
-| `world.onPlayerLeave(fn)`    | | `(entity, tick)`                                       | 玩家退出                              |
-| `world.onChat(fn)`           | | `(entity, message, tick) => boolean \| void`           | 玩家发送聊天消息；返回 `false` 可取消 |
-| `world.onVoxelDestroy(fn)`   | | `(entity, x, y, z, voxel, tick)`                       | 玩家破坏方块                          |
-| `world.onBlockPlace(fn)`     | ⬆ MC    | `(entity, x, y, z, voxel, voxelId, tick)`              | 玩家放置方块                          |
-| `world.onBlockActivate(fn)`  | ⬆ MC    | `(entity, x, y, z, voxel, tick)`                       | 玩家右键方块                          |
-| `world.onInteract(fn)`       | | `(entity, target, tick)`                               | 玩家右键实体                          |
-| `world.onVoxelContact(fn)`   | | `(entity, voxelId, x, y, z, contactType, force, tick)` | 实体接触方块                          |
-| `world.onEntityContact(fn)`  | | `(entity, other, tick)`                                | 两个实体接触                          |
-| `world.onEntitySeparate(fn)` | | `(entity, other, tick)`                                | 两个实体分离                          |
-| `world.onFluidEnter(fn)`     | | `(entity, fluid, x, y, z, tick)`                       | 实体进入液体                          |
-| `world.onFluidLeave(fn)`     | | `(entity, fluid, x, y, z, tick)`                       | 实体离开液体                          |
-| `world.onEntityDeath(fn)`    | ⬆ MC    | `(entity, killer, tick)`                               | 实体死亡；`killer` 可能为 null        |
-| `world.onEntityDamage(fn)`   | ⬆ MC    | `(entity, amount, source, attacker, tick)`             | 实体受伤（Pre 阶段）                  |
-| `world.onPlayerRespawn(fn)`  | ⬆ MC    | `(entity, tick)`                                       | 玩家重生                              |
-| `world.onButtonPressed(fn)`  | ⬆ MC    | `(entity, button, tick)`                               | 玩家按下按钮                          |
-| `world.onMessage(fn)`        | ⬆ MC    | `(from, data)`                                         | 收到 `world.sendMessage()` 消息       |
+| 事件                         | 类型 | 回调签名                                               | 触发时机                              |
+| ---------------------------- | ---- | ------------------------------------------------------ | ------------------------------------- |
+| `world.onTick(fn)`           |      | `(info)` → `{tick, prevTick, elapsedTimeMS, skip}`     | 每 tick                               |
+| `world.onPlayerJoin(fn)`     |      | `(entity, tick)`                                       | 玩家登录                              |
+| `world.onPlayerLeave(fn)`    |      | `(entity, tick)`                                       | 玩家退出                              |
+| `world.onChat(fn)`           |      | `(entity, message, tick) => boolean \| void`           | 玩家发送聊天消息；返回 `false` 可取消 |
+| `world.onVoxelDestroy(fn)`   |      | `(entity, x, y, z, voxel, tick)`                       | 玩家破坏方块                          |
+| `world.onBlockPlace(fn)`     | ⬆ MC | `(entity, x, y, z, voxel, voxelId, tick)`              | 玩家放置方块                          |
+| `world.onBlockActivate(fn)`  | ⬆ MC | `(entity, x, y, z, voxel, tick)`                       | 玩家右键方块                          |
+| `world.onInteract(fn)`       |      | `(entity, target, tick)`                               | 玩家右键实体                          |
+| `world.onVoxelContact(fn)`   |      | `(entity, voxelId, x, y, z, contactType, force, tick)` | 实体接触方块                          |
+| `world.onEntityContact(fn)`  |      | `(entity, other, tick)`                                | 两个实体接触                          |
+| `world.onEntitySeparate(fn)` |      | `(entity, other, tick)`                                | 两个实体分离                          |
+| `world.onFluidEnter(fn)`     |      | `(entity, fluid, x, y, z, tick)`                       | 实体进入液体                          |
+| `world.onFluidLeave(fn)`     |      | `(entity, fluid, x, y, z, tick)`                       | 实体离开液体                          |
+| `world.onEntityDeath(fn)`    | ⬆ MC | `(entity, killer, tick)`                               | 实体死亡；`killer` 可能为 null        |
+| `world.onEntityDamage(fn)`   | ⬆ MC | `(entity, amount, source, attacker, tick)`             | 实体受伤（Pre 阶段）                  |
+| `world.onPlayerRespawn(fn)`  | ⬆ MC | `(entity, tick)`                                       | 玩家重生                              |
+| `world.onButtonPressed(fn)`  | ⬆ MC | `(entity, button, tick)`                               | 玩家按下按钮                          |
+| `world.onMessage(fn)`        | ⬆ MC | `(from, data)`                                         | 收到 `world.sendMessage()` 消息       |
 
 ### GameButtonType
 
 `world.onButtonPressed` 回调的 `button` 参数为以下字符串常量之一：
 
-| 常量       | 说明       |
-| ---------- | ---------- |
-| `"WALK"`   | 行走（长按） |
-| `"RUN"`    | 奔跑（长按） |
-| `"CROUCH"` | 潜行（长按） |
-| `"JUMP"`   | 跳跃       |
-| `"FLY"`    | 飞行（长按） |
+| 常量        | 说明              |
+| ----------- | ----------------- |
+| `"WALK"`    | 行走（长按）      |
+| `"RUN"`     | 奔跑（长按）      |
+| `"CROUCH"`  | 潜行（长按）      |
+| `"JUMP"`    | 跳跃              |
+| `"FLY"`     | 飞行（长按）      |
 | `"ACTION0"` | 屏幕按钮0（轻点） |
 | `"ACTION1"` | 屏幕按钮1（轻点） |
 
@@ -594,14 +594,20 @@ world.launchFirework(new GameVector3(0, 100, 0), "red", "star");
 
 ### world.launchFirework(x, y, z, colors, shape)
 
-⬆ MC 扩展 | 使用 `GameRGBColor[]` 数组指定烟花颜色，支持任意 RGB 色彩。
+使用 `GameRGBColor[]` 数组指定烟花颜色，支持任意 RGB 色彩。
 
 ### world.launchFirework(pos, colors, shape)
 
 ⬆ GameVector3 + `GameRGBColor[]` 重载。
 
 ```js
-world.launchFirework(0, 100, 0, [new GameRGBColor(1, 0, 0), new GameRGBColor(1, 0.5, 0)], "large_ball");
+world.launchFirework(
+  0,
+  100,
+  0,
+  [new GameRGBColor(1, 0, 0), new GameRGBColor(1, 0.5, 0)],
+  "large_ball",
+);
 ```
 
 ### world.spawnParticle(type, x, y, z, count, dx, dy, dz, speed)
@@ -614,7 +620,7 @@ world.launchFirework(0, 100, 0, [new GameRGBColor(1, 0, 0), new GameRGBColor(1, 
 
 ### world.spawnParticle(x, y, z, color, count, dx, dy, dz, speed)
 
-⬆ MC 扩展 | 生成彩色粒子（类型为 `dust`），使用 `GameRGBColor` 指定颜色。
+生成彩色粒子（类型为 `dust`），使用 `GameRGBColor` 指定颜色。
 
 ### world.spawnParticle(pos, color, count, dx, dy, dz, speed)
 
@@ -622,10 +628,28 @@ world.launchFirework(0, 100, 0, [new GameRGBColor(1, 0, 0), new GameRGBColor(1, 
 
 ```js
 // 生成红色粒子
-world.spawnParticle(0, 100, 0, new GameRGBColor(1, 0, 0), 20, 0.5, 0.5, 0.5, 0.1);
+world.spawnParticle(
+  0,
+  100,
+  0,
+  new GameRGBColor(1, 0, 0),
+  20,
+  0.5,
+  0.5,
+  0.5,
+  0.1,
+);
 
 // 生成青色粒子
-world.spawnParticle(entity.position, new GameRGBColor(0, 1, 1), 10, 0.2, 0.2, 0.2, 0);
+world.spawnParticle(
+  entity.position,
+  new GameRGBColor(0, 1, 1),
+  10,
+  0.2,
+  0.2,
+  0.2,
+  0,
+);
 ```
 
 ### world.spawnParticleCircle(x, y, z, radius, type, count)
@@ -765,7 +789,7 @@ if (result.hit) {
 
 ### world.entitiesInRadius(x, y, z, radius)
 
-⬆ MC 扩展 | 返回球体范围内所有实体。`entitiesInArea` 的便捷封装。
+返回球体范围内所有实体。`entitiesInArea` 的便捷封装。
 
 ### world.entitiesInRadius(pos, radius)
 
@@ -782,7 +806,7 @@ for (var i = 0; i < nearby.length; i++) {
 
 ### world.getBiome(x, y, z)
 
-⬆ MC 扩展 | 返回生物群系的命名空间 ID 字符串。
+返回生物群系的命名空间 ID 字符串。
 
 ### world.getBiome(pos)
 
@@ -798,11 +822,11 @@ var biome = world.getBiome(entity.position);
 
 ### world.sendMessage(target, data)
 
-⬆ MC 扩展 | 发送消息给其他脚本项目。`target` 为 `"*"`（广播）或项目名。接收方用 `world.onMessage()` 监听。
+发送消息给其他脚本项目。`target` 为 `"*"`（广播）或项目名。接收方用 `world.onMessage()` 监听。
 
 ### world.runCommand(cmd)
 
-⬆ MC 扩展 | 以服务器控制台身份执行命令。
+以服务器控制台身份执行命令。
 
 ```js
 world.runCommand("time set day");
@@ -813,7 +837,7 @@ world.runCommand("weather clear");
 
 ### world.placeStructure(x, y, z, structureId)
 
-⬆ MC 扩展 | 在指定位置放置数据包中的结构模板 (NBT)。
+在指定位置放置数据包中的结构模板 (NBT)。
 
 ### world.placeStructure(pos, structureId)
 
@@ -831,7 +855,7 @@ world.placeStructure(pos, "box3js:arena");
 
 ### world.grantAdvancement(playerName, advancementId)
 
-⬆ MC 扩展 | 为指定玩家授予成就/进度。
+为指定玩家授予成就/进度。
 
 ```js
 world.grantAdvancement("Steve", "minecraft:story/mine_stone");
@@ -841,7 +865,7 @@ world.grantAdvancement("Steve", "minecraft:story/mine_stone");
 
 ### world.listRecipes(filter)
 
-⬆ MC 扩展 | 按关键字搜索配方 ID 列表。
+按关键字搜索配方 ID 列表。
 
 ```js
 var recipes = world.listRecipes("diamond");
@@ -850,7 +874,7 @@ console.log(recipes); // ["minecraft:diamond_sword", "minecraft:diamond_block", 
 
 ### world.removeRecipe(recipeId)
 
-⬆ MC 扩展 | 将指定配方加入黑名单并立即生效。返回是否成功。
+将指定配方加入黑名单并立即生效。返回是否成功。
 
 ```js
 world.removeRecipe("minecraft:iron_pickaxe");
@@ -858,7 +882,7 @@ world.removeRecipe("minecraft:iron_pickaxe");
 
 ### world.clearRecipes()
 
-⬆ MC 扩展 | 清除配方黑名单，恢复所有原始配方。
+清除配方黑名单，恢复所有原始配方。
 
 ```js
 world.clearRecipes();
