@@ -276,13 +276,13 @@ Server-side only. `registries` is `undefined` in client scripts. Only available 
 | `storage`        | Both         | Data persistence, see [storage.md](storage.md)                                         |
 | `db`             | Both         | SQLite database, see [database.md](database.md)                                        |
 | `http`           | Both         | HTTP requests, see [http.md](http.md)                                                  |
-| `audio`          | Client       | Client sound, music, volume control, see [client.md](client.md)                        |
+| `audio`          | Client       | Client sound, music, volume control, see [audio.md](audio.md)                          |
 | `client`         | Client       | Client lifecycle, see [client.md](client.md)                                           |
-| `input`          | Client       | Client keyboard input, see [client.md](client.md)                                      |
-| `ui`             | Client       | Client screen UI, see [client.md](client.md)                                           |
-| `chat`           | Client       | Client chat send/receive, see [client.md](client.md)                                   |
-| `gui`            | Client       | Custom container GUI, see [client.md](client.md)                                       |
-| `remoteChannel`  | Both         | Server↔client event channel, see [server.md](server.md) / [client.md](client.md) |
+| `input`          | Client       | Client keyboard input, see [input.md](input.md)                                        |
+| `ui`             | Client       | Client screen UI, see [ui.md](ui.md)                                                   |
+| `chat`           | Client       | Client chat send/receive, see [chat.md](chat.md)                                       |
+| `gui`            | Client       | Custom container GUI, see [gui.md](gui.md)                                             |
+| `remoteChannel`  | Both         | Server↔client event channel, see [remote-channel.md](remote-channel.md)               |
 | `registries`     | Server       | Custom blocks, items & sounds (compiled mode), see [registries.md](registries.md)      |
 | `console`        | Both         | Console logging (`log`/`warn`/`error`/`debug`)                                               |
 | `GameVector3`    | Both         | 3D vector, see [math.md](math.md)                                                      |
@@ -322,7 +322,13 @@ Each API document should follow this structure. Use the same style when adding f
 | [storage.md](storage.md)       | Persistent data storage                                                                                          |
 | [database.md](database.md)     | SQLite database API                                                                                              |
 | [http.md](http.md)             | HTTP request API                                                                                                 |
-| [client.md](client.md)         | Client API: lifecycle, keyboard, screen UI, chat, GUI, remoteChannel, client-side storage                        |
+| [client.md](client.md)         | Client lifecycle: onTick, getFPS, getPlayer, getLookingAt, getServerInfo, fog control                            |
+| [audio.md](audio.md)           | Client audio playback and volume control                                                                         |
+| [input.md](input.md)           | Client keyboard input detection and mouse events                                                                 |
+| [ui.md](ui.md)                 | Client screen UI: titles, action bar, custom drawn text                                                          |
+| [chat.md](chat.md)             | Client chat message sending/receiving and commands                                                               |
+| [gui.md](gui.md)               | Custom container GUI interface                                                                                   |
+| [remote-channel.md](remote-channel.md) | Client↔server bidirectional event communication                                                          |
 | [registries.md](registries.md) | Custom blocks, items & sounds (blocks.json, items.json, sounds.json, creativeTabs.json)                          |
 | [math.md](math.md)             | GameVector3, GameBounds3, GameRGBColor, GameRGBAColor, GameQuaternion                                            |
 | [commands.md](commands.md)     | `/box3script` command reference                                                                                  |

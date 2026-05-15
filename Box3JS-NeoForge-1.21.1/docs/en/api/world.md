@@ -48,7 +48,7 @@ console.log(world.rainDensity); // 0.0 ~ 1.0
 
 ### world.thunderDensity
 
-⬆ MC Extension | Get/set thunderstorm intensity, range 0.0–1.0.
+Get/set thunderstorm intensity, range 0.0–1.0.
 
 ```js
 world.thunderDensity = 0.5;
@@ -56,7 +56,7 @@ world.thunderDensity = 0.5;
 
 ### world.clearWeather()
 
-⬆ MC Extension | Clear both rain and thunder.
+Clear both rain and thunder.
 
 ```js
 world.clearWeather();
@@ -123,11 +123,11 @@ world.setWorldSpawn(new GameVector3(0, 70, 0));
 
 ### world.getGameRule(name)
 
-⬆ MC Extension | Get a game rule boolean value.
+Get a game rule boolean value.
 
 ### world.setGameRule(name, value)
 
-⬆ MC Extension | Set a game rule. `value` is a boolean.
+Set a game rule. `value` is a boolean.
 
 **Supported rules:**
 
@@ -257,38 +257,38 @@ var token = world.onTick(function (info) {
 });
 ```
 
-| Event                        | Type    | Callback Signature                                     | Trigger                                             |
-| ---------------------------- | ------- | ------------------------------------------------------ | --------------------------------------------------- |
-| `world.onTick(fn)`           | | `(info)` → `{tick, prevTick, elapsedTimeMS, skip}`     | Every tick                                          |
-| `world.onPlayerJoin(fn)`     | | `(entity, tick)`                                       | Player logs in                                      |
-| `world.onPlayerLeave(fn)`    | | `(entity, tick)`                                       | Player leaves                                       |
-| `world.onChat(fn)`           | | `(entity, message, tick) => boolean \| void`           | Player sends chat message; return `false` to cancel |
-| `world.onVoxelDestroy(fn)`   | | `(entity, x, y, z, voxel, tick)`                       | Player breaks a block                               |
-| `world.onBlockPlace(fn)`     | ⬆ MC    | `(entity, x, y, z, voxel, voxelId, tick)`              | Player places a block                               |
-| `world.onBlockActivate(fn)`  | ⬆ MC    | `(entity, x, y, z, voxel, tick)`                       | Player right-clicks a block                         |
-| `world.onInteract(fn)`       | | `(entity, target, tick)`                               | Player right-clicks an entity                       |
-| `world.onVoxelContact(fn)`   | | `(entity, voxelId, x, y, z, contactType, force, tick)` | Entity contacts a block                             |
-| `world.onEntityContact(fn)`  | | `(entity, other, tick)`                                | Two entities contact                                |
-| `world.onEntitySeparate(fn)` | | `(entity, other, tick)`                                | Two entities separate                               |
-| `world.onFluidEnter(fn)`     | | `(entity, fluid, x, y, z, tick)`                       | Entity enters a fluid                               |
-| `world.onFluidLeave(fn)`     | | `(entity, fluid, x, y, z, tick)`                       | Entity leaves a fluid                               |
-| `world.onEntityDeath(fn)`    | ⬆ MC    | `(entity, killer, tick)`                               | Entity dies; `killer` may be null                   |
-| `world.onEntityDamage(fn)`   | ⬆ MC    | `(entity, amount, source, attacker, tick)`             | Entity takes damage (Pre phase)                     |
-| `world.onPlayerRespawn(fn)`  | ⬆ MC    | `(entity, tick)`                                       | Player respawns                                     |
-| `world.onButtonPressed(fn)`  | ⬆ MC    | `(entity, button, tick)`                               | Player presses a button                             |
-| `world.onMessage(fn)`        | ⬆ MC    | `(from, data)`                                         | Receives `world.sendMessage()` message              |
+| Event                        | Type | Callback Signature                                     | Trigger                                             |
+| ---------------------------- | ---- | ------------------------------------------------------ | --------------------------------------------------- |
+| `world.onTick(fn)`           |      | `(info)` → `{tick, prevTick, elapsedTimeMS, skip}`     | Every tick                                          |
+| `world.onPlayerJoin(fn)`     |      | `(entity, tick)`                                       | Player logs in                                      |
+| `world.onPlayerLeave(fn)`    |      | `(entity, tick)`                                       | Player leaves                                       |
+| `world.onChat(fn)`           |      | `(entity, message, tick) => boolean \| void`           | Player sends chat message; return `false` to cancel |
+| `world.onVoxelDestroy(fn)`   |      | `(entity, x, y, z, voxel, tick)`                       | Player breaks a block                               |
+| `world.onBlockPlace(fn)`     | ⬆ MC | `(entity, x, y, z, voxel, voxelId, tick)`              | Player places a block                               |
+| `world.onBlockActivate(fn)`  | ⬆ MC | `(entity, x, y, z, voxel, tick)`                       | Player right-clicks a block                         |
+| `world.onInteract(fn)`       |      | `(entity, target, tick)`                               | Player right-clicks an entity                       |
+| `world.onVoxelContact(fn)`   |      | `(entity, voxelId, x, y, z, contactType, force, tick)` | Entity contacts a block                             |
+| `world.onEntityContact(fn)`  |      | `(entity, other, tick)`                                | Two entities contact                                |
+| `world.onEntitySeparate(fn)` |      | `(entity, other, tick)`                                | Two entities separate                               |
+| `world.onFluidEnter(fn)`     |      | `(entity, fluid, x, y, z, tick)`                       | Entity enters a fluid                               |
+| `world.onFluidLeave(fn)`     |      | `(entity, fluid, x, y, z, tick)`                       | Entity leaves a fluid                               |
+| `world.onEntityDeath(fn)`    | ⬆ MC | `(entity, killer, tick)`                               | Entity dies; `killer` may be null                   |
+| `world.onEntityDamage(fn)`   | ⬆ MC | `(entity, amount, source, attacker, tick)`             | Entity takes damage (Pre phase)                     |
+| `world.onPlayerRespawn(fn)`  | ⬆ MC | `(entity, tick)`                                       | Player respawns                                     |
+| `world.onButtonPressed(fn)`  | ⬆ MC | `(entity, button, tick)`                               | Player presses a button                             |
+| `world.onMessage(fn)`        | ⬆ MC | `(from, data)`                                         | Receives `world.sendMessage()` message              |
 
 ### GameButtonType
 
 The `button` parameter in `world.onButtonPressed` callbacks is one of the following string constants:
 
-| Constant    | Description        |
-| ----------- | ------------------ |
-| `"WALK"`    | Walk (hold)        |
-| `"RUN"`     | Run / sprint (hold) |
+| Constant    | Description           |
+| ----------- | --------------------- |
+| `"WALK"`    | Walk (hold)           |
+| `"RUN"`     | Run / sprint (hold)   |
 | `"CROUCH"`  | Crouch / sneak (hold) |
-| `"JUMP"`    | Jump               |
-| `"FLY"`     | Fly (hold)         |
+| `"JUMP"`    | Jump                  |
+| `"FLY"`     | Fly (hold)            |
 | `"ACTION0"` | Screen button 0 (tap) |
 | `"ACTION1"` | Screen button 1 (tap) |
 
@@ -599,14 +599,20 @@ world.launchFirework(new GameVector3(0, 100, 0), "red", "star");
 
 ### world.launchFirework(x, y, z, colors, shape)
 
-⬆ MC Extension | Launches a firework with an array of `GameRGBColor` values for arbitrary RGB colors.
+Launches a firework with an array of `GameRGBColor` values for arbitrary RGB colors.
 
 ### world.launchFirework(pos, colors, shape)
 
 ⬆ GameVector3 + `GameRGBColor[]` overload.
 
 ```js
-world.launchFirework(0, 100, 0, [new GameRGBColor(1, 0, 0), new GameRGBColor(1, 0.5, 0)], "large_ball");
+world.launchFirework(
+  0,
+  100,
+  0,
+  [new GameRGBColor(1, 0, 0), new GameRGBColor(1, 0.5, 0)],
+  "large_ball",
+);
 ```
 
 ### world.spawnParticle(type, x, y, z, count, dx, dy, dz, speed)
@@ -619,7 +625,7 @@ Spawn particles at coordinates. Particle type uses namespaced ID.
 
 ### world.spawnParticle(x, y, z, color, count, dx, dy, dz, speed)
 
-⬆ MC Extension | Spawns colored particles (dust type) using `GameRGBColor` to specify the color.
+Spawns colored particles (dust type) using `GameRGBColor` to specify the color.
 
 ### world.spawnParticle(pos, color, count, dx, dy, dz, speed)
 
@@ -627,10 +633,28 @@ Spawn particles at coordinates. Particle type uses namespaced ID.
 
 ```js
 // Spawn red particles
-world.spawnParticle(0, 100, 0, new GameRGBColor(1, 0, 0), 20, 0.5, 0.5, 0.5, 0.1);
+world.spawnParticle(
+  0,
+  100,
+  0,
+  new GameRGBColor(1, 0, 0),
+  20,
+  0.5,
+  0.5,
+  0.5,
+  0.1,
+);
 
 // Spawn cyan particles
-world.spawnParticle(entity.position, new GameRGBColor(0, 1, 1), 10, 0.2, 0.2, 0.2, 0);
+world.spawnParticle(
+  entity.position,
+  new GameRGBColor(0, 1, 1),
+  10,
+  0.2,
+  0.2,
+  0.2,
+  0,
+);
 ```
 
 ### world.spawnParticleCircle(x, y, z, radius, type, count)
@@ -770,7 +794,7 @@ Returns all entities within the AABB defined by two corner positions.
 
 ### world.entitiesInRadius(x, y, z, radius)
 
-⬆ MC Extension | Returns all entities within a spherical radius. Convenience wrapper around `entitiesInArea`.
+Returns all entities within a spherical radius. Convenience wrapper around `entitiesInArea`.
 
 ### world.entitiesInRadius(pos, radius)
 
@@ -787,7 +811,7 @@ for (var i = 0; i < nearby.length; i++) {
 
 ### world.getBiome(x, y, z)
 
-⬆ MC Extension | Returns the biome namespaced ID string.
+Returns the biome namespaced ID string.
 
 ### world.getBiome(pos)
 
@@ -803,11 +827,11 @@ var biome = world.getBiome(entity.position);
 
 ### world.sendMessage(target, data)
 
-⬆ MC Extension | Send a message to another script project. `target` is `"*"` (broadcast) or a project name. Receivers listen via `world.onMessage()`.
+Send a message to another script project. `target` is `"*"` (broadcast) or a project name. Receivers listen via `world.onMessage()`.
 
 ### world.runCommand(cmd)
 
-⬆ MC Extension | Execute a command as the server console.
+Execute a command as the server console.
 
 ```js
 world.runCommand("time set day");
@@ -818,7 +842,7 @@ world.runCommand("weather clear");
 
 ### world.placeStructure(x, y, z, structureId)
 
-⬆ MC Extension | Places a datapack structure template (NBT) at the given position.
+Places a datapack structure template (NBT) at the given position.
 
 ### world.placeStructure(pos, structureId)
 
@@ -836,7 +860,7 @@ world.placeStructure(pos, "box3js:arena");
 
 ### world.grantAdvancement(playerName, advancementId)
 
-⬆ MC Extension | Grants an advancement to a player by name.
+Grants an advancement to a player by name.
 
 ```js
 world.grantAdvancement("Steve", "minecraft:story/mine_stone");
@@ -846,7 +870,7 @@ world.grantAdvancement("Steve", "minecraft:story/mine_stone");
 
 ### world.listRecipes(filter)
 
-⬆ MC Extension | Searches recipe IDs matching a keyword.
+Searches recipe IDs matching a keyword.
 
 ```js
 var recipes = world.listRecipes("diamond");
@@ -855,7 +879,7 @@ console.log(recipes); // ["minecraft:diamond_sword", "minecraft:diamond_block", 
 
 ### world.removeRecipe(recipeId)
 
-⬆ MC Extension | Blacklists a recipe so it's no longer craftable. Returns whether successful.
+Blacklists a recipe so it's no longer craftable. Returns whether successful.
 
 ```js
 world.removeRecipe("minecraft:iron_pickaxe");
@@ -863,7 +887,7 @@ world.removeRecipe("minecraft:iron_pickaxe");
 
 ### world.clearRecipes()
 
-⬆ MC Extension | Clears the recipe blacklist, restoring all original recipes.
+Clears the recipe blacklist, restoring all original recipes.
 
 ```js
 world.clearRecipes();
