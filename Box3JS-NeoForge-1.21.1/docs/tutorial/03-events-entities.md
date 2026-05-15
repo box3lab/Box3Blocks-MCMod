@@ -265,7 +265,7 @@ world.onEntitySeparate((entityA, entityB, _tick) => {
 
 ## 3.8 常用实体类型
 
-```
+```js
 minecraft:zombie      僵尸
 minecraft:skeleton    骷髅
 minecraft:creeper     苦力怕

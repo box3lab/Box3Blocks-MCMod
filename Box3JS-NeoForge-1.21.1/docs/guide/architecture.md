@@ -1,25 +1,8 @@
 # Box3JS 运行原理
 
-本文深入讲解 Box3JS 的内部架构：JS 引擎如何嵌入 Minecraft、作用域如何管理、构建管线如何工作、网络通信如何实现。
-
-## 目录
-
-1. [整体架构](#整体架构)
-2. [Rhino 引擎](#rhino-引擎)
-3. [作用域与隔离](#作用域与隔离)
-4. [全局对象注入](#全局对象注入)
-5. [事件回调机制](#事件回调机制)
-6. [构建管线](#构建管线)
-7. [网络通信](#网络通信)
-8. [沙盒系统](#沙盒系统)
-9. [文件监控与热重载](#文件监控与热重载)
-10. [编译发布模式](#编译发布模式)
-
----
-
 ## 整体架构
 
-```
+```text
                           ┌──────────────────────────┐
                           │     Minecraft Server      │
                           │        (NeoForge)         │
@@ -57,7 +40,7 @@
 
 ### 关键包结构
 
-```
+```text
 com.box3lab.box3js
 ├── Box3JS.java                  ← @Mod 入口
 ├── script/                      ← 服务端引擎
@@ -82,8 +65,6 @@ com.box3lab.box3js
 └── standalone/                  ← JAR 编译发布
     └── ...
 ```
-
----
 
 ## Rhino 引擎
 
@@ -136,13 +117,11 @@ Java 对象暴露给 JS 时，Rhino 自动处理类型转换：
 
 Box3JS 返回的多是 **Java 原生对象**（如 `ServerPlayer` 包装器），JS 侧可直接调用方法。复杂的返回值（如 `querySelectorAll`）返回 Java `List`，Rhino 映射为 JS 数组。
 
----
-
 ## 作用域与隔离
 
 ### 每个项目独立作用域
 
-```
+```text
                         Rhino Context
                              │
               ┌──────────────┼──────────────┐
@@ -169,13 +148,11 @@ Box3JS 返回的多是 **Java 原生对象**（如 `ServerPlayer` 包装器）�
 3. 如果沙盒开启，回滚所有方块和实体修改
 4. 释放 Rhino scope，GC 回收
 
----
-
 ## 全局对象注入
 
 ### 注入流程
 
-```
+```text
 Box3ScriptEngine.setupScope(scope)
 │
 ├── scope.put("world",       scope, new Box3JSWorld(...))
@@ -197,7 +174,7 @@ Box3ScriptEngine.setupScope(scope)
 
 ### 客户端注入
 
-```
+```text
 Box3JSClientEngine.init(scope)
 │
 ├── scope.put("audio",    scope, audioObj)
@@ -231,13 +208,11 @@ console = {
 
 `.apply()` 确保多个参数正确传递给 Java varargs 方法。
 
----
-
 ## 事件回调机制
 
 ### 完整链路
 
-```
+```text
 Minecraft 事件发生
         │
         ▼
@@ -304,11 +279,9 @@ public class GameEventHandlerToken {
 }
 ```
 
----
-
 ## 构建管线
 
-```
+```text
 src/server/app.ts (TypeScript + ES2020 语法)
         │
         ▼
@@ -364,13 +337,11 @@ await build({
 });
 ```
 
----
-
 ## 网络通信
 
 ### remoteChannel 架构
 
-```
+```text
 ┌──────────────────────┐         ┌──────────────────────┐
 │   Server (Java)      │         │   Client (Java)      │
 │                      │         │                      │
@@ -394,7 +365,7 @@ await build({
 ### 数据流
 
 **服务端 → 客户端:**
-```
+```text
 JS: remoteChannel.sendClientEvent(player, { type: "boss_bar", hp: 50 })
   → Box3JSRemoteChannel.java
   → JSON.stringify(eventData)
@@ -407,7 +378,7 @@ JS: remoteChannel.sendClientEvent(player, { type: "boss_bar", hp: 50 })
 ```
 
 **客户端 → 服务端:**
-```
+```text
 JS: remoteChannel.sendServerEvent({ key: "space" })
   → Box3JSClientEngine
   → JSON.stringify
@@ -425,13 +396,11 @@ JS: remoteChannel.sendServerEvent({ key: "space" })
 - 数组 `[1, 2, 3]`
 - 不支持：函数、`GameVector3` 实例、Java 对象
 
----
-
 ## 沙盒系统
 
 ### 工作原理
 
-```
+```text
 /box3script sandbox mygame  ← 开启沙盒
         │
         ▼
@@ -470,13 +439,11 @@ class SandboxTracker {
 - **玩家测试** — 让玩家试玩新功能，结束时回滚不影响正式服
 - **调试** — 测试有破坏性的操作（explode、fillVoxel）
 
----
-
 ## 文件监控与热重载
 
 ### 工作流程
 
-```
+```text
 /box3script watch  ← 开启文件监控
         │
         ▼
@@ -501,13 +468,11 @@ Box3ScriptWatcher 启动
 - 300ms 防抖避免 esbuild 写入多个 chunk 时多次 reload
 - reload 是原子的：先停止旧脚本（清理回调 + 资源），再加载新脚本
 
----
-
 ## 编译发布模式
 
 ### `/box3script compile` 流程
 
-```
+```text
 输入: config/box3/script/mygame/
         │
         ▼
@@ -567,8 +532,6 @@ public static final DeferredBlock<Block> RUBY_BLOCK =
 ```
 
 **注意：** `registries` 只在编译 JAR 模式下可用。解释模式（`/box3script start`）中 `registries` 为 `undefined`。
-
----
 
 ## 性能考虑
 

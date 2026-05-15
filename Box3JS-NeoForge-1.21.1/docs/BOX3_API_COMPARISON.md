@@ -4,23 +4,6 @@
 
 > **图例**: ✅ 已实现 | ⚠️ 部分实现 | ❌ 未实现 | ⬆ 独有扩展
 
----
-
-## 目录
-
-1. [GameWorld (world)](#1-gameworld-world)
-2. [GameEntity (entity)](#2-gameentity-entity)
-3. [GamePlayerEntity (entity.player)](#3-gameplayerentity-entityplayer)
-4. [GameVoxels (voxels)](#4-gamevoxels-voxels)
-5. [GameDataStorage (storage)](#5-gamedatastorage-storage)
-6. [Math 类型](#6-math-类型)
-7. [其他服务端 API](#7-其他服务端-api)
-8. [客户端 API](#8-客户端-api)
-9. [Box3JS 独有 MC 扩展](#9-box3js-独有-mc-扩展)
-10. [总结](#10-总结)
-
----
-
 ## 1. GameWorld (world)
 
 ### 1.1 基础属性
@@ -34,32 +17,32 @@
 
 ### 1.2 天气
 
-| Box3 API                                   | Box3JS 实现                   | 状态 | 差异说明                                   |
-| ------------------------------------------ | ----------------------------- | ---- | ------------------------------------------ |
-| `world.rainDensity` (属性 0-1)             | `world.rainDensity` (属性)    | ✅   | 一致                                       |
-| —                                          | `world.thunderDensity` (属性) | ⬆    | MC 扩展。Box3 无打雷概念                   |
-| —                                          | `world.clearWeather()`        | ⬆    | MC 扩展。清除雨和雷                        |
-| `world.maxFog`                             | `client.setFogEndDistance(d)`            | ✅   | 客户端 API。设置雾完全遮挡距离（方块）         |
-| `world.fogColor`                           | `client.setFogColor(r, g, b)`            | ✅   | 客户端 API。RGB 0-255                        |
-| `world.fogStartDistance`                   | `client.setFogStartDistance(d)`          | ✅   | 客户端 API。雾开始距离（方块）                |
-| `world.fogHeightOffset`                    | —                             | ❌   |                                            |
-| `world.fogUniformDensity`                  | —                             | ❌   |                                            |
-| `world.fogHeightFalloff`                   | —                             | ❌   |                                            |
-| `world.rainSpeed`                          | —                             | ❌   |                                            |
-| `world.rainColor`                          | —                             | ❌   |                                            |
-| `world.rainDirection`                      | —                             | ❌   |                                            |
-| `world.rainInterference`                   | —                             | ❌   |                                            |
-| `world.rainSizeLo/Hi`                      | —                             | ❌   |                                            |
-| `world.snowColor`                          | —                             | ❌   | Box3 有独立雪花系统，MC 降雪依附于原版天气 |
-| `world.snowTexture`                        | —                             | ❌   |                                            |
-| `world.snowDensity`                        | —                             | ❌   |                                            |
-| `world.snowFallSpeed`                      | —                             | ❌   |                                            |
-| `world.snowSpinSpeed`                      | —                             | ❌   |                                            |
-| `world.snowSizeLo/Hi`                      | —                             | ❌   |                                            |
-| `world.lightMode`                          | —                             | ❌   | Box3 的手动/自然光照模式                   |
-| `world.sunFrequency/Phase/Direction/Light` | —                             | ❌   |                                            |
-| `world.skyLeftLight/RightLight/...`        | —                             | ❌   | Box3 六个方向环境光                        |
-| `world.lunarPhase`                         | —                             | ❌   |                                            |
+| Box3 API                                   | Box3JS 实现                     | 状态 | 差异说明                                   |
+| ------------------------------------------ | ------------------------------- | ---- | ------------------------------------------ |
+| `world.rainDensity` (属性 0-1)             | `world.rainDensity` (属性)      | ✅   | 一致                                       |
+| —                                          | `world.thunderDensity` (属性)   | ⬆    | MC 扩展。Box3 无打雷概念                   |
+| —                                          | `world.clearWeather()`          | ⬆    | MC 扩展。清除雨和雷                        |
+| `world.maxFog`                             | `client.setFogEndDistance(d)`   | ✅   | 客户端 API。设置雾完全遮挡距离（方块）     |
+| `world.fogColor`                           | `client.setFogColor(r, g, b)`   | ✅   | 客户端 API。RGB 0-255                      |
+| `world.fogStartDistance`                   | `client.setFogStartDistance(d)` | ✅   | 客户端 API。雾开始距离（方块）             |
+| `world.fogHeightOffset`                    | —                               | ❌   |                                            |
+| `world.fogUniformDensity`                  | —                               | ❌   |                                            |
+| `world.fogHeightFalloff`                   | —                               | ❌   |                                            |
+| `world.rainSpeed`                          | —                               | ❌   |                                            |
+| `world.rainColor`                          | —                               | ❌   |                                            |
+| `world.rainDirection`                      | —                               | ❌   |                                            |
+| `world.rainInterference`                   | —                               | ❌   |                                            |
+| `world.rainSizeLo/Hi`                      | —                               | ❌   |                                            |
+| `world.snowColor`                          | —                               | ❌   | Box3 有独立雪花系统，MC 降雪依附于原版天气 |
+| `world.snowTexture`                        | —                               | ❌   |                                            |
+| `world.snowDensity`                        | —                               | ❌   |                                            |
+| `world.snowFallSpeed`                      | —                               | ❌   |                                            |
+| `world.snowSpinSpeed`                      | —                               | ❌   |                                            |
+| `world.snowSizeLo/Hi`                      | —                               | ❌   |                                            |
+| `world.lightMode`                          | —                               | ❌   | Box3 的手动/自然光照模式                   |
+| `world.sunFrequency/Phase/Direction/Light` | —                               | ❌   |                                            |
+| `world.skyLeftLight/RightLight/...`        | —                               | ❌   | Box3 六个方向环境光                        |
+| `world.lunarPhase`                         | —                               | ❌   |                                            |
 
 **原因**: Box3 拥有独立的天气/光照渲染引擎，可以精细控制雾、雨、雪、光照参数。MC 的天气和光照系统由原版引擎控制，这些视觉效果需要客户端侧渲染 hook。Box3JS 客户端脚本引擎**已暴露雾颜色和距离 API**（`client.setFogColor` / `client.setFogStartDistance` / `client.setFogEndDistance` / `client.resetFog`）。雪花/光照等高级渲染参数 API 未来可继续扩展。
 
@@ -360,8 +343,6 @@ Box3 平台无独立数据库 API。Box3JS 通过 `db` 全局对象提供 SQLite
 
 每个脚本项目拥有独立的数据库文件 `config/box3/data/<project>.db`。
 
----
-
 ## 2. GameEntity (entity)
 
 ### 2.1 身份标识
@@ -540,8 +521,6 @@ Box3 的实体级事件非常丰富：
 | `entity.setAttribute(attributeId, value)`                                    | 设置属性值                                            |
 | `entity.lookAt(x, y, z)` / `entity.lookAt(pos)`                              | 使实体看向某位置                                      |
 
----
-
 ## 3. GamePlayerEntity (entity.player)
 
 ### 3.1 基础信息
@@ -679,53 +658,53 @@ Box3 的实体级事件非常丰富：
 
 Box3 的 `player.onPress/onRelease/onKeyDown/onKeyUp` 是客户端事件。Box3JS 通过客户端脚本引擎提供独立的 `input` 全局对象：
 
-| Box3 API                    | Box3JS 客户端实现                | 状态 | 差异说明                                   |
-| --------------------------- | -------------------------------- | ---- | ------------------------------------------ |
-| `player.onPress(handler)`   | `world.onButtonPressed(handler)` | ⚠️   | 服务端可检测按钮点击；客户端用 `input` API |
-| `player.onRelease(handler)` | —                                | ❌   |                                            |
+| Box3 API                    | Box3JS 客户端实现                 | 状态 | 差异说明                                   |
+| --------------------------- | --------------------------------- | ---- | ------------------------------------------ |
+| `player.onPress(handler)`   | `world.onButtonPressed(handler)`  | ⚠️   | 服务端可检测按钮点击；客户端用 `input` API |
+| `player.onRelease(handler)` | —                                 | ❌   |                                            |
 | `player.onKeyDown(handler)` | `input.onKeyPress(key, callback)` | ⚠️   | 客户端 `input` API，按键名如 `"f5"`、`"c"` |
-| `player.onKeyUp(handler)`   | —                                | ❌   |                                            |
+| `player.onKeyUp(handler)`   | —                                 | ❌   |                                            |
 
 **客户端 `input` 全局对象补充能力**：
 
-| Box3JS 客户端 API              | 说明                                |
-| ------------------------------ | ----------------------------------- |
-| `input.onKeyPress(key, fn)`    | 注册按键按下回调（如 `"f5"`）       |
-| `input.isKeyDown(key)`         | 检查按键是否正在按住                |
-| `input.onMouseClick(fn)`       | 鼠标点击回调 `(button, action, x, y)` |
-| `input.getMouseX()` / `getMouseY()` | 获取鼠标屏幕坐标                |
+| Box3JS 客户端 API                   | 说明                                  |
+| ----------------------------------- | ------------------------------------- |
+| `input.onKeyPress(key, fn)`         | 注册按键按下回调（如 `"f5"`）         |
+| `input.isKeyDown(key)`              | 检查按键是否正在按住                  |
+| `input.onMouseClick(fn)`            | 鼠标点击回调 `(button, action, x, y)` |
+| `input.getMouseX()` / `getMouseY()` | 获取鼠标屏幕坐标                      |
 
 ### 3.10 音效
 
 Box3 玩家有 14 种音效属性（`music`/`jumpSound`/`landSound` 等），这些是客户端音效控制。Box3JS 通过客户端脚本引擎提供 `audio` 全局对象：
 
-| Box3 API                 | Box3JS 实现                             | 状态 | 差异说明                                                                          |
-| ------------------------ | --------------------------------------- | ---- | --------------------------------------------------------------------------------- |
-| `player.music`           | `audio.playMusic(path, volume)`         | ⚠️   | 客户端 `audio` API，通过背景音乐类别播放                                          |
-| `player.action0Sound`    | —                                       | ❌   |                                                                                   |
-| `player.action1Sound`    | —                                       | ❌   |                                                                                   |
-| `player.crouchSound`     | —                                       | ❌   |                                                                                   |
-| `player.jumpSound`       | —                                       | ❌   |                                                                                   |
-| `player.doubleJumpSound` | —                                       | ❌   |                                                                                   |
-| `player.landSound`       | —                                       | ❌   |                                                                                   |
-| `player.enterWaterSound` | —                                       | ❌   |                                                                                   |
-| `player.leaveWaterSound` | —                                       | ❌   |                                                                                   |
-| `player.swimSound`       | —                                       | ❌   |                                                                                   |
-| `player.spawnSound`      | —                                       | ❌   |                                                                                   |
-| `player.stepSound`       | —                                       | ❌   |                                                                                   |
-| `player.startFlySound`   | —                                       | ❌   |                                                                                   |
-| `player.stopFlySound`    | —                                       | ❌   |                                                                                   |
-| `player.sound(config)`   | `player.playSound(path, volume, pitch)` | ⚠️   | Box3 接受完整 Sound 对象或路径；Box3JS 展开参数                                   |
+| Box3 API                 | Box3JS 实现                             | 状态 | 差异说明                                        |
+| ------------------------ | --------------------------------------- | ---- | ----------------------------------------------- |
+| `player.music`           | `audio.playMusic(path, volume)`         | ⚠️   | 客户端 `audio` API，通过背景音乐类别播放        |
+| `player.action0Sound`    | —                                       | ❌   |                                                 |
+| `player.action1Sound`    | —                                       | ❌   |                                                 |
+| `player.crouchSound`     | —                                       | ❌   |                                                 |
+| `player.jumpSound`       | —                                       | ❌   |                                                 |
+| `player.doubleJumpSound` | —                                       | ❌   |                                                 |
+| `player.landSound`       | —                                       | ❌   |                                                 |
+| `player.enterWaterSound` | —                                       | ❌   |                                                 |
+| `player.leaveWaterSound` | —                                       | ❌   |                                                 |
+| `player.swimSound`       | —                                       | ❌   |                                                 |
+| `player.spawnSound`      | —                                       | ❌   |                                                 |
+| `player.stepSound`       | —                                       | ❌   |                                                 |
+| `player.startFlySound`   | —                                       | ❌   |                                                 |
+| `player.stopFlySound`    | —                                       | ❌   |                                                 |
+| `player.sound(config)`   | `player.playSound(path, volume, pitch)` | ⚠️   | Box3 接受完整 Sound 对象或路径；Box3JS 展开参数 |
 
 **客户端 `audio` 全局对象补充能力**：
 
-| Box3JS 客户端 API                      | 说明                                        |
-| -------------------------------------- | ------------------------------------------- |
-| `audio.playSound(path, volume, pitch)` | 播放音效（支持原版和自定义音效）            |
-| `audio.playMusic(path, volume)`        | 播放背景音乐（MUSIC 类别）                  |
-| `audio.stopAll()`                      | 停止所有正在播放的音效和音乐                |
-| `audio.getVolume(category)`            | 获取指定音频类别的音量                      |
-| `audio.setVolume(category, value)`     | 设置指定音频类别的音量（0.0–1.0）           |
+| Box3JS 客户端 API                      | 说明                              |
+| -------------------------------------- | --------------------------------- |
+| `audio.playSound(path, volume, pitch)` | 播放音效（支持原版和自定义音效）  |
+| `audio.playMusic(path, volume)`        | 播放背景音乐（MUSIC 类别）        |
+| `audio.stopAll()`                      | 停止所有正在播放的音效和音乐      |
+| `audio.getVolume(category)`            | 获取指定音频类别的音量            |
+| `audio.setVolume(category, value)`     | 设置指定音频类别的音量（0.0–1.0） |
 
 > **注意**: Box3 的逐事件音效属性（如 `player.jumpSound`）需要 hook 每个游戏事件，Box3JS 目前提供的是主动播放 API。如需自动触发，可在 `client.onTick()` 中检测玩家状态变化后调用 `audio.playSound()`。
 
@@ -773,8 +752,6 @@ Box3 玩家有 14 种音效属性（`music`/`jumpSound`/`landSound` 等），这
 | `player.runCommand(cmd)`                                         | 以玩家身份执行命令                                         |
 | `player.lookAt(x, y, z)` / `player.lookAt(pos)`                  | 使玩家看向某位置                                           |
 | `player.setPlayerListName(name)`                                 | 设置 TAB 列表显示名称                                      |
-
----
 
 ## 4. GameVoxels (voxels)
 
@@ -827,8 +804,6 @@ Box3JS 的 Voxels 实现是所有 API 中**最完整**的。
 | `voxels.countVoxel(x1, y1, z1, x2, y2, z2, voxel)` / `voxels.countVoxel(pos1, pos2, voxel)` | 统计区域内匹配方块数量                        |
 | `voxels.setSpawner(x, y, z, entityType)` / `voxels.setSpawner(pos, entityType)`             | 设置刷怪笼类型                                |
 
----
-
 ## 5. GameDataStorage (storage)
 
 ### 5.1 存储空间管理
@@ -860,8 +835,6 @@ Box3JS 的 Voxels 实现是所有 API 中**最完整**的。
 3. **存储位置**: Box3 使用云端数据库，Box3JS 使用本地 JSON 文件（`config/box3/storage/`）。
 4. **速率限制**: Box3 有严格的读写速率限制，Box3JS 无限制。
 5. **错误处理**: Box3 有详细的错误码（400/429/500），Box3JS 静默失败。
-
----
 
 ## 6. Math 类型
 
@@ -984,8 +957,6 @@ Box3JS 的 Voxels 实现是所有 API 中**最完整**的。
 
 **GameQuaternion 是完全实现的**。
 
----
-
 ## 7. 其他服务端 API
 
 ### 7.1 GameAnimation
@@ -1029,13 +1000,13 @@ Box3JS 通过自定义网络数据包实现了完整的服务端↔客户端双�
 
 **服务端** (Box3JSWorld / Box3ScriptEngine):
 
-| Box3 API                                              | Box3JS 实现                                           | 状态 | 差异说明                                                    |
-| ----------------------------------------------------- | ----------------------------------------------------- | ---- | ----------------------------------------------------------- |
-| `remoteChannel.sendClientEvent(entities, event)`      | `remoteChannel.sendClientEvent(entities, event)`      | ✅   | 一致。entities 为单个 GamePlayerEntity 或数组               |
-| `remoteChannel.broadcastClientEvent(event)`           | `remoteChannel.broadcastClientEvent(event)`           | ✅   | 一致。向所有在线玩家广播                                    |
-| `remoteChannel.onServerEvent(handler)`                | `remoteChannel.onServerEvent(handler)`                | ✅   | 一致。回调接收 `{ tick, entity, args }`，返回 GameEventHandlerToken |
-| `remoteChannel.sendServerEvent(event)` (客户端)       | `remoteChannel.sendServerEvent(event)`                | ✅   | 一致。客户端发送事件到服务端                                |
-| `remoteChannel.onClientEvent(handler)` (客户端)       | `remoteChannel.onClientEvent(handler)`                | ✅   | 一致。回调接收 `{ tick, args }`，返回 GameEventHandlerToken |
+| Box3 API                                         | Box3JS 实现                                      | 状态 | 差异说明                                                            |
+| ------------------------------------------------ | ------------------------------------------------ | ---- | ------------------------------------------------------------------- |
+| `remoteChannel.sendClientEvent(entities, event)` | `remoteChannel.sendClientEvent(entities, event)` | ✅   | 一致。entities 为单个 GamePlayerEntity 或数组                       |
+| `remoteChannel.broadcastClientEvent(event)`      | `remoteChannel.broadcastClientEvent(event)`      | ✅   | 一致。向所有在线玩家广播                                            |
+| `remoteChannel.onServerEvent(handler)`           | `remoteChannel.onServerEvent(handler)`           | ✅   | 一致。回调接收 `{ tick, entity, args }`，返回 GameEventHandlerToken |
+| `remoteChannel.sendServerEvent(event)` (客户端)  | `remoteChannel.sendServerEvent(event)`           | ✅   | 一致。客户端发送事件到服务端                                        |
+| `remoteChannel.onClientEvent(handler)` (客户端)  | `remoteChannel.onClientEvent(handler)`           | ✅   | 一致。回调接收 `{ tick, args }`，返回 GameEventHandlerToken         |
 
 **客户端事件数据自动 JSON 序列化/反序列化传输**，支持任意可序列化的 JS 值。
 
@@ -1096,35 +1067,33 @@ Box3 的 `resources.ls(type?)` 浏览资源文件。MC 无对应资源管理 API
 
 Box3 的事件注册方法返回 `GameEventHandlerToken`，可调用 `.cancel()` / `.active()`。Box3JS 的所有 `world.onXxx()` 方法均返回 `GameEventHandlerToken`，支持 `.cancel()` 取消注册和 `.active()` 检查状态。`.resume()` 抛出 UnsupportedOperationException（需重新注册）。
 
----
-
 ## 8. 客户端 API
 
 Box3JS 现已支持**客户端脚本引擎**（`src/client/app.ts`），在玩家客户端上运行，提供与 Box3 客户端 API 对应的能力。客户端脚本通过 `remoteChannel` 与服务端双向通信。
 
 ### 8.1 客户端生命周期 (client)
 
-| Box3JS 客户端 API      | 说明                                                                                     |
-| ---------------------- | ---------------------------------------------------------------------------------------- |
-| `client.onTick(fn)`    | 注册每帧回调（每秒 20 次），返回 GameEventHandlerToken                                    |
-| `client.getFPS()`      | 获取当前帧率                                                                             |
-| `client.getPlayer()`   | 获取本地玩家信息 `{ name, uuid, health, maxHealth, food, saturation, xp, dimension, position }` |
-| `client.getLookingAt()` | 获取准星目标，返回 `{ type, position, entity?, blockPos?, direction? }` 或 null         |
-| `client.getServerInfo()` | 获取服务器信息 `{ ip, name, isLocal, playerCount, maxPlayers }`                        |
+| Box3JS 客户端 API        | 说明                                                                                            |
+| ------------------------ | ----------------------------------------------------------------------------------------------- |
+| `client.onTick(fn)`      | 注册每帧回调（每秒 20 次），返回 GameEventHandlerToken                                          |
+| `client.getFPS()`        | 获取当前帧率                                                                                    |
+| `client.getPlayer()`     | 获取本地玩家信息 `{ name, uuid, health, maxHealth, food, saturation, xp, dimension, position }` |
+| `client.getLookingAt()`  | 获取准星目标，返回 `{ type, position, entity?, blockPos?, direction? }` 或 null                 |
+| `client.getServerInfo()` | 获取服务器信息 `{ ip, name, isLocal, playerCount, maxPlayers }`                                 |
 
 ### 8.2 客户端 UI (ui)
 
 与 Box3 的 ClientUI 对应，Box3JS 提供 HUD 绘制和屏幕消息能力：
 
-| Box3JS 客户端 API                                | 说明                                                     |
-| ------------------------------------------------ | -------------------------------------------------------- |
-| `ui.showOverlay(text)`                           | 显示屏幕中央覆盖文字（2 秒自动消失）                     |
-| `ui.showTitle(title, subtitle, fadeIn, stay, fadeOut)` | 显示标题/副标题                                      |
-| `ui.showActionBar(text)`                         | 显示 ActionBar 消息                                      |
-| `ui.getScreenSize()`                             | 获取屏幕尺寸 `{ scaledWidth, scaledHeight, guiScale }`   |
-| `ui.drawText(id, x, y, text)`                    | 在屏幕指定位置绘制文字（每帧调用维持显示）               |
-| `ui.removeDrawText(id)`                          | 移除指定绘制文字                                         |
-| `ui.clearDrawTexts()`                            | 移除所有绘制文字                                         |
+| Box3JS 客户端 API                                      | 说明                                                   |
+| ------------------------------------------------------ | ------------------------------------------------------ |
+| `ui.showOverlay(text)`                                 | 显示屏幕中央覆盖文字（2 秒自动消失）                   |
+| `ui.showTitle(title, subtitle, fadeIn, stay, fadeOut)` | 显示标题/副标题                                        |
+| `ui.showActionBar(text)`                               | 显示 ActionBar 消息                                    |
+| `ui.getScreenSize()`                                   | 获取屏幕尺寸 `{ scaledWidth, scaledHeight, guiScale }` |
+| `ui.drawText(id, x, y, text)`                          | 在屏幕指定位置绘制文字（每帧调用维持显示）             |
+| `ui.removeDrawText(id)`                                | 移除指定绘制文字                                       |
+| `ui.clearDrawTexts()`                                  | 移除所有绘制文字                                       |
 
 **与 Box3 ClientUI 差异**: Box3 有完整的 2D UI 框架（盒子、文本、图片、输入框、滚动框等），Box3JS 目前提供轻量级的屏幕文字叠加层，不支持复杂的交互式 UI 控件。复杂 UI 建议通过 `gui.openGUI()` 使用容器 GUI。
 
@@ -1132,13 +1101,13 @@ Box3JS 现已支持**客户端脚本引擎**（`src/client/app.ts`），在玩�
 
 与 Box3 的 `player.onKeyDown/onKeyUp` 对应：
 
-| Box3JS 客户端 API              | 说明                                                      |
-| ------------------------------ | --------------------------------------------------------- |
-| `input.onKeyPress(key, fn)`    | 注册按键按下回调，key 如 `"f5"`、`"c"`、`"space"`         |
-| `input.isKeyDown(key)`         | 检查按键是否正在按住                                      |
-| `input.onMouseClick(fn)`       | 鼠标点击回调 `(button: 0=LMB/1=RMB/2=MMB, action, x, y)` |
-| `input.getMouseX()`            | 获取鼠标屏幕 X 坐标                                       |
-| `input.getMouseY()`            | 获取鼠标屏幕 Y 坐标                                       |
+| Box3JS 客户端 API           | 说明                                                     |
+| --------------------------- | -------------------------------------------------------- |
+| `input.onKeyPress(key, fn)` | 注册按键按下回调，key 如 `"f5"`、`"c"`、`"space"`        |
+| `input.isKeyDown(key)`      | 检查按键是否正在按住                                     |
+| `input.onMouseClick(fn)`    | 鼠标点击回调 `(button: 0=LMB/1=RMB/2=MMB, action, x, y)` |
+| `input.getMouseX()`         | 获取鼠标屏幕 X 坐标                                      |
+| `input.getMouseY()`         | 获取鼠标屏幕 Y 坐标                                      |
 
 **与 Box3 差异**: Box3 的 `player.onPress` 检测游戏内交互按钮（ACTION0/ACTION1/JUMP/WALK），Box3JS 的 `input.onKeyPress` 检测键盘按键。Box3 无鼠标事件，`input.onMouseClick` 是 Box3JS 独有扩展。
 
@@ -1146,24 +1115,24 @@ Box3JS 现已支持**客户端脚本引擎**（`src/client/app.ts`），在玩�
 
 与 Box3 的客户端聊天系统对应：
 
-| Box3JS 客户端 API                         | 说明                                                |
-| ----------------------------------------- | --------------------------------------------------- |
-| `chat.sendMessage(text)`                  | 发送聊天消息                                        |
-| `chat.sendCommand(cmd)`                   | 执行客户端命令（以 `/` 开头）                       |
-| `chat.onMessage(fn)`                      | 监听聊天消息 `(message, sender, isSystem)`，返回 false 可拦截 |
+| Box3JS 客户端 API        | 说明                                                          |
+| ------------------------ | ------------------------------------------------------------- |
+| `chat.sendMessage(text)` | 发送聊天消息                                                  |
+| `chat.sendCommand(cmd)`  | 执行客户端命令（以 `/` 开头）                                 |
+| `chat.onMessage(fn)`     | 监听聊天消息 `(message, sender, isSystem)`，返回 false 可拦截 |
 
 ### 8.5 客户端 GUI (gui)
 
 Box3JS 的容器 GUI 系统，与 Box3 的 UI 面板理念不同（Box3 是 2D UI 控件，Box3JS 是 MC 原版容器）：
 
-| Box3JS 客户端 API                  | 说明                                                             |
-| ---------------------------------- | ---------------------------------------------------------------- |
-| `gui.openGUI(config)`              | 打开自定义容器 GUI，config: `{ title, rows(1-6), slots? }`       |
-| `controller.setItem(slot, id, n)`  | 设置槽位物品                                                     |
-| `controller.getItem(slot)`         | 获取槽位物品 `{ id, count }`                                     |
-| `controller.onSlotClick(fn)`       | 槽位点击回调 `(slot)`                                            |
-| `controller.onClose(fn)`           | GUI 关闭回调                                                     |
-| `controller.close()`               | 主动关闭 GUI                                                     |
+| Box3JS 客户端 API                 | 说明                                                       |
+| --------------------------------- | ---------------------------------------------------------- |
+| `gui.openGUI(config)`             | 打开自定义容器 GUI，config: `{ title, rows(1-6), slots? }` |
+| `controller.setItem(slot, id, n)` | 设置槽位物品                                               |
+| `controller.getItem(slot)`        | 获取槽位物品 `{ id, count }`                               |
+| `controller.onSlotClick(fn)`      | 槽位点击回调 `(slot)`                                      |
+| `controller.onClose(fn)`          | GUI 关闭回调                                               |
+| `controller.close()`              | 主动关闭 GUI                                               |
 
 **与 Box3 差异**: Box3 的 UI 系统是基于 2D 画布的布局控件（盒子/文本/图片/输入框），Box3JS 使用 MC 原版容器 GUI（类似箱子界面），更适合物品交互场景。Box3 的 2D UI 控件体系暂无对应实现。
 
@@ -1171,13 +1140,13 @@ Box3JS 的容器 GUI 系统，与 Box3 的 UI 面板理念不同（Box3 是 2D U
 
 与 Box3 的 ClientAudio 对应：
 
-| Box3JS 客户端 API                      | 说明                                        |
-| -------------------------------------- | ------------------------------------------- |
-| `audio.playSound(path, volume, pitch)` | 播放音效（支持原版和自定义音效）            |
-| `audio.playMusic(path, volume)`        | 播放背景音乐（MUSIC 类别）                  |
-| `audio.stopAll()`                      | 停止所有正在播放的音效和音乐                |
-| `audio.getVolume(category)`            | 获取指定音频类别的音量                      |
-| `audio.setVolume(category, value)`     | 设置指定音频类别的音量（0.0–1.0）           |
+| Box3JS 客户端 API                      | 说明                              |
+| -------------------------------------- | --------------------------------- |
+| `audio.playSound(path, volume, pitch)` | 播放音效（支持原版和自定义音效）  |
+| `audio.playMusic(path, volume)`        | 播放背景音乐（MUSIC 类别）        |
+| `audio.stopAll()`                      | 停止所有正在播放的音效和音乐      |
+| `audio.getVolume(category)`            | 获取指定音频类别的音量            |
+| `audio.setVolume(category, value)`     | 设置指定音频类别的音量（0.0–1.0） |
 
 **与 Box3 差异**: Box3 的 `Sound` 对象支持 `pause/resume/stop/setCurrentTime` 精细控制。Box3JS 的 `playSound/playMusic` 是 fire-and-forget 模式，无法暂停/恢复播放中的声音。`stopAll()` 可批量停止。
 
@@ -1185,16 +1154,16 @@ Box3JS 的容器 GUI 系统，与 Box3 的 UI 面板理念不同（Box3 是 2D U
 
 客户端独立的本地持久化存储，与服务端 storage 完全隔离：
 
-| Box3JS 客户端 API            | 说明                                                       |
-| ---------------------------- | ---------------------------------------------------------- |
+| Box3JS 客户端 API                | 说明                                                           |
+| -------------------------------- | -------------------------------------------------------------- |
 | `storage.getDataStorage<T>(key)` | 获取具类型的数据存储空间（客户端本地），返回 `GameDataStorage` |
-| `ds.set(key, value)`         | 同步写入键值                                               |
-| `ds.get(key)`                | 同步读取，返回 value 或 null                               |
-| `ds.update(key, fn)`         | 原子更新                                                   |
-| `ds.increment(key, delta?)`  | 原子增减（数值类型）                                       |
-| `ds.list(options)`           | 分页列出 `{ pageSize?, ascending? }`                       |
-| `ds.remove(key)`             | 删除键                                                     |
-| `ds.keys()`                  | 返回所有键数组                                             |
+| `ds.set(key, value)`             | 同步写入键值                                                   |
+| `ds.get(key)`                    | 同步读取，返回 value 或 null                                   |
+| `ds.update(key, fn)`             | 原子更新                                                       |
+| `ds.increment(key, delta?)`      | 原子增减（数值类型）                                           |
+| `ds.list(options)`               | 分页列出 `{ pageSize?, ascending? }`                           |
+| `ds.remove(key)`                 | 删除键                                                         |
+| `ds.keys()`                      | 返回所有键数组                                                 |
 
 客户端存储位置: `config/box3/storage/<project>-client/`，与服务端存储文件分离。
 
@@ -1202,11 +1171,11 @@ Box3JS 的容器 GUI 系统，与 Box3 的 UI 面板理念不同（Box3 是 2D U
 
 客户端本地 SQLite 数据库（需安装 `minecraft-sqlite-jdbc` 模组）：
 
-| Box3JS 客户端 API               | 说明                                                      |
-| ------------------------------- | --------------------------------------------------------- |
-| `db.isAvailable()`              | 检查 SQLite 驱动是否可用                                  |
-| `db.sql(sql, ...params)`        | 执行 SQL 查询/更新，返回 `GameQueryResult`                |
-| `db.sql\`SELECT ... WHERE id = ${id}\`` | Tagged template 语法，自动参数化防注入           |
+| Box3JS 客户端 API                       | 说明                                       |
+| --------------------------------------- | ------------------------------------------ |
+| `db.isAvailable()`                      | 检查 SQLite 驱动是否可用                   |
+| `db.sql(sql, ...params)`                | 执行 SQL 查询/更新，返回 `GameQueryResult` |
+| `db.sql\`SELECT ... WHERE id = ${id}\`` | Tagged template 语法，自动参数化防注入     |
 
 **GameQueryResult**: `rows` (数组), `firstRow`, `columnNames`, `columnCount`, `rowCount`, `affectedRows`, `isQuery`
 
@@ -1216,10 +1185,10 @@ Box3JS 的容器 GUI 系统，与 Box3 的 UI 面板理念不同（Box3 是 2D U
 
 客户端 HTTP 请求，支持同步和异步模式：
 
-| Box3JS 客户端 API                       | 说明                                                         |
-| --------------------------------------- | ------------------------------------------------------------ |
-| `http.fetch(url, options?)`             | 发起 HTTP 请求，options 同服务端，额外支持 `async: true` + `onResponse/onError` 回调 |
-| `Response` 对象                         | `ok`, `status`, `headers`, `data`, `json()`, `text()`, `arrayBuffer()` |
+| Box3JS 客户端 API           | 说明                                                                                 |
+| --------------------------- | ------------------------------------------------------------------------------------ |
+| `http.fetch(url, options?)` | 发起 HTTP 请求，options 同服务端，额外支持 `async: true` + `onResponse/onError` 回调 |
+| `Response` 对象             | `ok`, `status`, `headers`, `data`, `json()`, `text()`, `arrayBuffer()`               |
 
 > **客户端特有**: 支持 `async: true` 异步模式，通过 `onResponse`/`onError` 回调接收结果，不阻塞渲染帧。
 
@@ -1229,29 +1198,27 @@ Box3JS 的容器 GUI 系统，与 Box3 的 UI 面板理念不同（Box3 是 2D U
 
 ### 8.11 客户端控制台 (console)
 
-| Box3JS API                 | 说明                         |
-| -------------------------- | ---------------------------- |
-| `console.log(...args)`     | 输出到客户端日志             |
-| `console.warn(...args)`    | 输出警告                     |
-| `console.error(...args)`   | 输出错误                     |
-| `console.debug(...args)`   | 输出调试信息                 |
-| `console.clear()`          | 清空控制台                   |
-| `console.assert(cond, ...)` | 条件断言输出               |
+| Box3JS API                  | 说明             |
+| --------------------------- | ---------------- |
+| `console.log(...args)`      | 输出到客户端日志 |
+| `console.warn(...args)`     | 输出警告         |
+| `console.error(...args)`    | 输出错误         |
+| `console.debug(...args)`    | 输出调试信息     |
+| `console.clear()`           | 清空控制台       |
+| `console.assert(cond, ...)` | 条件断言输出     |
 
 ### 8.12 与 Box3 客户端 API 差距
 
 以下 Box3 客户端能力 Box3JS **暂未实现**：
 
-| Box3 客户端功能           | 状态 | 说明                                                                                          |
-| ------------------------- | ---- | --------------------------------------------------------------------------------------------- |
-| 2D UI 控件体系            | ❌   | Box3 的盒子/文本/图片/输入框/滚动框等完整 UI 框架。Box3JS 仅有 drawText 叠加层 + 容器 GUI    |
-| `media` 录音/播放         | ❌   | MC 无内置录音 API                                                                             |
-| `navigator` 设备信息      | ❌   | MC 无对应 API                                                                                 |
-| 3D 渲染开关               | ❌   | MC 渲染始终开启                                                                               |
-| 客户端世界 API            | ❌   | Box3 客户端可控制 3D 渲染开关等，Box3JS 无对应                                                |
-| 自定义模型渲染            | ❌   | Box3 的 `entity.mesh` / `meshColor` / `meshScale` 等                                          |
-
----
+| Box3 客户端功能      | 状态 | 说明                                                                                      |
+| -------------------- | ---- | ----------------------------------------------------------------------------------------- |
+| 2D UI 控件体系       | ❌   | Box3 的盒子/文本/图片/输入框/滚动框等完整 UI 框架。Box3JS 仅有 drawText 叠加层 + 容器 GUI |
+| `media` 录音/播放    | ❌   | MC 无内置录音 API                                                                         |
+| `navigator` 设备信息 | ❌   | MC 无对应 API                                                                             |
+| 3D 渲染开关          | ❌   | MC 渲染始终开启                                                                           |
+| 客户端世界 API       | ❌   | Box3 客户端可控制 3D 渲染开关等，Box3JS 无对应                                            |
+| 自定义模型渲染       | ❌   | Box3 的 `entity.mesh` / `meshColor` / `meshScale` 等                                      |
 
 ## 9. Box3JS 独有 MC 扩展
 
@@ -1368,8 +1335,6 @@ Box3JS 客户端引擎提供的 Box3 平台**不存在**的能力：
 - Client-side `db` — 客户端本地 SQLite 数据库
 - Client-side `http.fetch(async: true)` — 非阻塞异步 HTTP 请求
 
----
-
 ## 10. 总结
 
 ### 10.1 实现统计
@@ -1415,6 +1380,7 @@ Box3JS 客户端引擎提供的 Box3 平台**不存在**的能力：
 Box3JS 虽然缺失部分 Box3 视觉/渲染/2D UI API，但提供了 Box3 平台**完全不具备**的能力：
 
 **服务端独有能力**：
+
 - **完整的原版方块系统** — 数百种方块类型、红石、容器、刷怪笼
 - **生物 AI/寻路/战斗** — 全套 MC 生物行为控制
 - **原版物品/装备/附魔** — 完整的物品系统
@@ -1428,6 +1394,7 @@ Box3JS 虽然缺失部分 Box3 视觉/渲染/2D UI API，但提供了 Box3 平�
 - **结构放置** — 数据包结构模板
 
 **客户端独有能力**：
+
 - **HUD 精确绘制** — `ui.drawText` 屏幕坐标文字，FPS 监控
 - **键盘快捷键** — `input.onKeyPress` 注册自定义热键
 - **鼠标事件** — `input.onMouseClick` 检测点击类型和坐标

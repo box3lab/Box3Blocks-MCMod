@@ -17,8 +17,9 @@
 | `gui` | `GameGUI` | 自定义容器 GUI 界面 |
 | `remoteChannel` | `RemoteChannel` | 客户端 ↔ 服务端事件通信 |
 
-> **前置条件：** 客户端必须安装 Box3JS mod，服务端必须启用该项目的客户端脚本并通过网络自动下发。
-> 客户端脚本放在 `src/client/` 目录下，服务端脚本放在 `src/server/` 目录下。客户端类型入口是 `types/client/index.d.ts`，不会包含服务端 `world` / `voxels` API。
+::: info 前置条件
+客户端必须安装 Box3JS mod，服务端必须启用该项目的客户端脚本并通过网络自动下发。客户端脚本放在 `src/client/` 目录下，服务端脚本放在 `src/server/` 目录下。客户端类型入口是 `types/client/index.d.ts`，不会包含服务端 `world` / `voxels` API。
+:::
 
 客户端脚本不能直接修改服务端世界。需要改变方块、玩家、实体或计分板时，应发送事件给服务端：
 
@@ -114,7 +115,9 @@ const token = client.onTick(() => {
 // token.cancel();
 ```
 
-> **注意：** 服务端也有 `world.onTick()`，但参数为 `TickInfo` 对象。客户端 `client.onTick()` 无参数。
+::: info 注意
+服务端也有 `world.onTick()`，但参数为 `TickInfo` 对象。客户端 `client.onTick()` 无参数。
+:::
 
 ### client.getFPS()
 
@@ -517,8 +520,9 @@ remoteChannel.onClientEvent((event) => {
 });
 ```
 
-> 服务端对应 API 为 `remoteChannel.sendClientEvent()` / `broadcastClientEvent()` / `onServerEvent()`。
-> 详见 `server.d.ts` 中的类型声明。
+::: info
+服务端对应 API 为 `remoteChannel.sendClientEvent()` / `broadcastClientEvent()` / `onServerEvent()`。详见 `server.d.ts` 中的类型声明。
+:::
 
 ## storage — 客户端存储
 

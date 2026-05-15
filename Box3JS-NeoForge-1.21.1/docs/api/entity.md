@@ -1,6 +1,6 @@
 # entity — 实体 API
 
-`entity` 代表 Minecraft 世界中的任意实体（怪物、动物、掉落物、玩家）。通过 `world.spawnEntity()`、`world.createEntity()`、`world.querySelector()`、`world.searchBox()`、`world.entitiesInRadius()` 或事件回调参数获取。
+`entity` 代表 Minecraft 世界中的任意实体（怪物、动物、掉落物、玩家）。
 
 通过 `entity.player` 可获取该实体对应的 `player` 对象（仅当是玩家时非 null）。
 
@@ -415,7 +415,9 @@ entity.setAttribute("minecraft:generic.knockback_resistance", 1.0);
 entity.setAttribute("minecraft:generic.armor", 10);
 ```
 
-> 注意：`maxHp` / `hp` / `walkSpeed` / `jumpPower` 等 Box3 便捷属性内部也使用这些 attribute，推荐优先使用便捷属性。仅当需要访问未封装的属性时才用 `setAttribute`。
+::: tip
+`maxHp` / `hp` / `walkSpeed` / `jumpPower` 等 Box3 便捷属性内部也使用这些 attribute，推荐优先使用便捷属性。仅当需要访问未封装的属性时才用 `setAttribute`。
+:::
 
 ## 生命周期
 

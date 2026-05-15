@@ -1,12 +1,11 @@
 # 常见问题与故障排查
 
-Box3JS 开发中经常遇到的问题及解决方案。
-
 ## 脚本加载
 
 ### Q: 脚本不执行，`/box3script` 显示项目为 ○（未加载）
 
 检查顺序：
+
 1. `npm run build` 是否成功？`dist/` 下是否生成了 `server.js`？
 2. `/box3script start <项目名>` 是否执行过？
 3. 服务端控制台是否有 `[Box3JS]` 前缀的错误日志？
@@ -44,6 +43,7 @@ npm install
 ### Q: TypeScript 报类型错误但运行正常
 
 TypeScript 只检查构建时类型，实际运行时 Rhino 不会做类型检查。修复步骤：
+
 1. 检查 `.d.ts` 中的 API 签名是否正确（`types/server/` 和 `types/client/`）
 2. 如果类型确实不对，可以加 `// @ts-expect-error` 临时跳过
 3. 同时考虑修复 `.d.ts` 文件
@@ -51,6 +51,7 @@ TypeScript 只检查构建时类型，实际运行时 Rhino 不会做类型检�
 ### Q: `npm run build` 成功但脚本报语法错误
 
 Babel 编译为 ES5 后，目标引擎是 Rhino 1.9.1（仅支持 ES5）。常见问题：
+
 - 不要在 `src/` 中使用 `async/await`（Babel 不会完整编译为 ES5）
 - 不要使用 `Promise`（Rhino 1.9.1 不支持）
 - `let`/`const`、`=>` 箭头函数、模板字符串由 Babel 处理，可以放心使用
@@ -73,6 +74,7 @@ Babel 编译为 ES5 后，目标引擎是 Rhino 1.9.1（仅支持 ES5）。常�
 ### Q: API 报 "xxx is not a function"
 
 先确认：
+
 1. 方法名拼写是否正确？参考 [API 文档](../api/README.md)
 2. 所在全局对象是否正确？如 `world.say()` 不是 `server.say()`
 3. 是否需要 `new`？如 `new GameVector3(x, y, z)`
@@ -81,6 +83,7 @@ Babel 编译为 ES5 后，目标引擎是 Rhino 1.9.1（仅支持 ES5）。常�
 ### Q: 脚本执行很慢/服务器卡顿
 
 Rhino 是解释型引擎（无 JIT），需要优化：
+
 - **不在 onTick 中做密集操作** — 用 `setInterval` 降低频率
 - **缓存查询结果** — 不要每到 tick 都调用 `querySelectorAll`
 - **减少 JS ↔ Java 交互** — 批处理比逐个调用快
@@ -106,6 +109,7 @@ Rhino 是解释型引擎（无 JIT），需要优化：
 ### Q: 如何防止 SQL 注入？
 
 用参数化查询（推荐）：
+
 ```js
 // ✅ 安全：参数化
 db.sql("SELECT * FROM t WHERE name = ?", userInput);
@@ -148,6 +152,7 @@ db.sql("SELECT * FROM t WHERE name = '" + userInput + "'");
 ### Q: 客户端和服务端可以同时使用 `remoteChannel` 吗？
 
 可以。`remoteChannel` 提供双向通道：
+
 - 客户端 → 服务端：`remoteChannel.sendServerEvent()` → `remoteChannel.onServerEvent()`
 - 服务端 → 客户端（定向）：`remoteChannel.sendClientEvent(entity, ...)` → `remoteChannel.onClientEvent()`
 - 服务端 → 客户端（广播）：`remoteChannel.broadcastClientEvent(...)` → `remoteChannel.onClientEvent()`
@@ -162,7 +167,7 @@ db.sql("SELECT * FROM t WHERE name = '" + userInput + "'");
 
 ### Q: 如何发布我的脚本？
 
-```
+```js
 /box3script compile <项目名>
 ```
 
@@ -170,17 +175,15 @@ db.sql("SELECT * FROM t WHERE name = '" + userInput + "'");
 
 ### Q: 编译的 JAR 和解释模式有什么区别？
 
-| 特性 | 解释模式 | 编译 JAR |
-|------|---------|---------|
-| registries | 不可用 | 可用（自定义方块/物品/音效） |
-| 热重载 | ✅ | ❌（需重启） |
-| 分发 | 复制整个项目目录 | 单个 JAR 文件 |
-| 更新 | 直接编辑 JS 文件 | 重新编译 |
+| 特性       | 解释模式         | 编译 JAR                     |
+| ---------- | ---------------- | ---------------------------- |
+| registries | 不可用           | 可用（自定义方块/物品/音效） |
+| 热重载     | ✅               | ❌（需重启）                 |
+| 分发       | 复制整个项目目录 | 单个 JAR 文件                |
+| 更新       | 直接编辑 JS 文件 | 重新编译                     |
 
 ### Q: registries 为什么只在编译模式可用？
 
 自定义方块/物品/音效需要 NeoForge 的 `DeferredRegister`，这必须在模组启动时注册。解释模式没有启动期注册阶段，所以 `registries` 只能在编译为 JAR 时使用。
-
----
 
 更多问题请在 [GitHub Issues](https://github.com/box3lab/Box3JS) 提出。

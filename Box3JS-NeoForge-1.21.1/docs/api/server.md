@@ -2,7 +2,9 @@
 
 服务端脚本运行在 Minecraft 服务器线程上，入口文件是 `src/server/app.ts`，构建产物是 `dist/server.js`。服务端 API 负责世界状态、实体和玩家、方块读写、事件回调、持久化数据、网络请求以及服务端到客户端的事件下发。
 
-> 客户端 UI、键盘输入、本地音效和本地 GUI 不在服务端 API 中。相关能力见 [client.md](client.md)。
+::: info
+客户端 UI、键盘输入、本地音效和本地 GUI 不在服务端 API 中。相关能力见 [client.md](client.md)。
+:::
 
 ## 服务端全局对象
 

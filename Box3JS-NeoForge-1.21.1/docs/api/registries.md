@@ -1,16 +1,14 @@
 # 自定义注册（registries API）
 
-> **仅服务端可用。** 客户端中 `registries` 为 `undefined`。客户端代码请直接使用 ResourceLocation 字符串（如 `audio.playSound("colorzone:victory_fanfare", 1.0, 1.0)`）。
->
-> **仅在编译 JAR 模式（`/box3script compile`）下可用。** 解释模式（`/box3script start`）中 `registries` 为 `undefined`。
->
-> **需要服务端和客户端都安装编译后的 JAR** 才能正确渲染方块纹理/模型。客户端没有 JAR 的话，方块会显示为紫黑缺失方块。
+::: warning
+仅编译 JAR 模式（`/box3script compile`）**服务端**可用。客户端及解释模式中 `registries` 为 `undefined`。JAR 需双端安装才能渲染。
+:::
 
 方块、物品和音效事件在 JSON 配置文件中声明，编译时生成 `DeferredRegister` 代码注入 `@Mod` 类。资源文件从项目 `assets/` 目录打包进 JAR。
 
 ## 项目布局
 
-```
+```text
 mygame/
 ├── registries/
 │   ├── blocks.json          ← 方块定义
@@ -137,7 +135,9 @@ mygame/
 }
 ```
 
-> **注意：** `creativeTab` 图标会自动从物品中查找（优先物品，其次方块）。如果 `creativeTabs.json` 的 `icon` 匹配某个物品 key，会使用该物品作为图标。
+::: tip
+`creativeTab` 图标会自动从物品中查找（优先物品，其次方块）。如果 `creativeTabs.json` 的 `icon` 匹配某个物品 key，会使用该物品作为图标。
+:::
 
 ### 装备类型（工具 & 盔甲）
 
@@ -198,7 +198,9 @@ mygame/
 }
 ```
 
-> **注意：** 装备的 `maxStackSize` 固定为 1（不可堆叠），无需手动设置。`nutrition`/`saturation`/`alwaysEdible` 仅用于 `"food"` 类型。
+::: tip
+装备的 `maxStackSize` 固定为 1（不可堆叠），无需手动设置。`nutrition`/`saturation`/`alwaysEdible` 仅用于 `"food"` 类型。
+:::
 
 ## sounds.json
 
@@ -234,7 +236,7 @@ mygame/
 
 对应文件：
 
-```
+```js
 assets/sounds/victory_fanfare.ogg
 assets/sounds/skill_cast.ogg
 assets/sounds/background_music.ogg
@@ -266,7 +268,7 @@ audio.playSound("colorzone:victory_fanfare", 1.0, 1.0);
 
 与 Minecraft 资源包结构一致：
 
-```
+```text
 assets/<modId>/
 ├── blockstates/<blockId>.json       ← 自动生成，可自定义覆盖
 ├── models/block/<blockId>.json      ← 自动生成，可自定义覆盖
@@ -281,7 +283,9 @@ assets/<modId>/
     └── item/<itemId>.png
 ```
 
-> **注意：** `<modId>` 来自 `package.json` 的 `name` 字段（从第二个 `/` 后取，如 `@scope/mygame` → `mygame`）。
+::: tip
+`<modId>` 来自 `package.json` 的 `name` 字段（从第二个 `/` 后取，如 `@scope/mygame` → `mygame`）。
+:::
 
 编译时自动将 `assets/` 打包为 `assets/<modId>/`。
 
@@ -289,7 +293,7 @@ assets/<modId>/
 
 语言文件需要在 `assets/lang/` 目录下**手动创建**，不会被自动生成。至少应提供 `en_us.json` 和 `zh_cn.json`，也可添加更多语言：
 
-```
+```text
 mygame/
 └── assets/
     └── lang/

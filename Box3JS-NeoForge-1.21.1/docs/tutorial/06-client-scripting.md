@@ -157,7 +157,9 @@ const color = client.getFogColor(); // 返回 GameRGBColor 或 null
 client.resetFog();
 ```
 
-> **注意**: 雾效修改在客户端本地生效。可通过 `remoteChannel` 让服务端指令触发客户端雾效变化，实现服务端控制的天气效果。
+::: warning
+雾效修改在客户端本地生效。可通过 `remoteChannel` 让服务端指令触发客户端雾效变化，实现服务端控制的天气效果。
+:::
 
 ## 6.9 storage — 客户端本地存储
 
@@ -264,7 +266,9 @@ function searchMobs(keyword: string): void {
 }
 ```
 
-> 未安装 `minecraft-sqlite-jdbc` 时，`db.isAvailable()` 返回 `false`，所有 SQL 调用静默返回空结果。
+::: warning
+未安装 `minecraft-sqlite-jdbc` 时，`db.isAvailable()` 返回 `false`，所有 SQL 调用静默返回空结果。
+:::
 
 ## 6.11 http — 客户端 HTTP 请求
 
@@ -389,7 +393,9 @@ remoteChannel.onServerEvent((event) => {
 
 ### 通讯数据格式
 
-> **重要：** 跨网络传输的数据必须是 JSON 可序列化的类型（string、number、boolean、null、普通对象、数组）。不能传函数、Java 对象或 `GameVector3`。
+::: warning
+跨网络传输的数据必须是 JSON 可序列化的类型（string、number、boolean、null、普通对象、数组）。不能传函数、Java 对象或 `GameVector3`。
+:::
 
 ## 6.13 完整实战：客户端 HUD 状态栏
 

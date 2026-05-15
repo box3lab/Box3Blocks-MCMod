@@ -1,10 +1,13 @@
-# 常用配方
+---
+---
 
-"想实现 X 功能，照模板改就行"。所有代码段均经过编译验证。
+# Common Recipes
 
-## 聊天命令
+"Want to implement X? Copy this template and tweak." All code is build-verified.
 
-### 基础命令路由
+## Chat Commands
+
+### Basic Command Router
 
 ```js
 world.onChat((entity, message) => {
@@ -16,64 +19,64 @@ world.onChat((entity, message) => {
     case "!heal":
       p.hp = p.maxHp;
       p.food = 20;
-      p.directMessage("§a已治愈！");
+      p.directMessage("§aHealed!");
       return false;
 
     case "!fly":
       p.canFly = !p.canFly;
       p.flying = p.canFly;
-      p.directMessage(p.canFly ? "§a飞行: 开启" : "§7飞行: 关闭");
+      p.directMessage(p.canFly ? "§aFlight: ON" : "§7Flight: OFF");
       return false;
 
     case "!gm":
-      if (p.opLevel < 2) { p.directMessage("§c权限不足"); return false; }
+      if (p.opLevel < 2) { p.directMessage("§cInsufficient permission"); return false; }
       const mode = args[1];
       const modes: Record<string, string> = { "0": "survival", "1": "creative", "2": "adventure", "3": "spectator" };
-      if (modes[mode]) { p.gameMode = modes[mode]; p.directMessage(`§a游戏模式: ${mode}`); }
-      else { p.directMessage("§c用法: !gm 0/1/2/3"); }
+      if (modes[mode]) { p.gameMode = modes[mode]; p.directMessage(`§aGame mode: ${mode}`); }
+      else { p.directMessage("§cUsage: !gm 0/1/2/3"); }
       return false;
   }
-  return true;  // 不是命令的消息正常发送
+  return true;  // Non-command messages pass through
 });
 ```
 
-### 权限检查
+### Permission Check
 
 ```js
-// opLevel: 0=普通玩家, 1-4=管理员
+// opLevel: 0=normal, 1-4=admin
 function requireOP(p: GamePlayer, level: number): boolean {
   if (p.opLevel < level) {
-    p.directMessage(`§c此命令需要 OP 等级 ≥ ${level}`);
+    p.directMessage(`§cThis command requires OP level ≥ ${level}`);
     return false;
   }
   return true;
 }
 
-// 使用
+// Usage
 if (message === "!admin") {
   if (!requireOP(p, 2)) return false;
-  // ... 管理员操作
+  // ... admin operations
 }
 ```
 
-## 经济系统
+## Economy System
 
-基于计分板的经济系统，玩家可以用 `/box3script reload` 不丢失数据（计分板独立于脚本生命周期）。
+Scoreboard-based economy. Data persists through `/box3script reload` (scoreboards are independent of script lifecycle).
 
 ```js
 const CURRENCY = "coins";
 
-// ── 初始化 ──
+// ── Initialization ──
 world.addScoreboard(CURRENCY);
 
 world.onPlayerJoin((entity) => {
-  // 新玩家初始化余额
+  // Initialize new players with starting balance
   if (world.getScore(entity.player.name, CURRENCY) === 0) {
-    world.setScore(entity.player.name, CURRENCY, 100);  // 初始 100 金币
+    world.setScore(entity.player.name, CURRENCY, 100);  // Start with 100 coins
   }
 });
 
-// ── API 函数 ──
+// ── API functions ──
 function getBalance(playerName: string): number {
   return world.getScore(playerName, CURRENCY);
 }
@@ -90,7 +93,7 @@ function transferCoins(from: string, to: string, amount: number): boolean {
   return true;
 }
 
-// ── 命令 ──
+// ── Commands ──
 world.onChat((entity, message) => {
   const p = entity.player;
   const args = message.trim().split(/\s+/);
@@ -98,31 +101,31 @@ world.onChat((entity, message) => {
 
   switch (cmd) {
     case "!coins":
-      p.directMessage(`§6金币: §f${getBalance(p.name)}`);
+      p.directMessage(`§6Coins: §f${getBalance(p.name)}`);
       return false;
 
     case "!pay": {
       const target = args[1];
       const amount = parseInt(args[2]);
       if (!target || isNaN(amount) || amount <= 0) {
-        p.directMessage("§c用法: !pay <玩家> <金额>"); return false;
+        p.directMessage("§cUsage: !pay <player> <amount>"); return false;
       }
       if (!transferCoins(p.name, target, amount)) {
-        p.directMessage("§c余额不足！"); return false;
+        p.directMessage("§cInsufficient balance!"); return false;
       }
-      p.directMessage(`§a已向 ${target} 转账 ${amount} 金币`);
+      p.directMessage(`§aSent ${amount} coins to ${target}`);
       const recipient = world.querySelector(target);
       if (recipient?.isPlayer()) {
-        recipient.player.directMessage(`§a${p.name} 向你转账 ${amount} 金币`);
+        recipient.player.directMessage(`§a${p.name} sent you ${amount} coins`);
       }
       return false;
     }
 
     case "!top": {
       const scores = world.listScores(CURRENCY);
-      p.directMessage("§6── 财富排行榜 ──");
+      p.directMessage("§6── Wealth Leaderboard ──");
       scores.slice(0, 5).forEach((s, i) => {
-        p.directMessage(`§e${i + 1}. §f${s.name} §7- §6${s.value} 金币`);
+        p.directMessage(`§e${i + 1}. §f${s.name} §7- §6${s.value} coins`);
       });
       return false;
     }
@@ -131,9 +134,9 @@ world.onChat((entity, message) => {
 });
 ```
 
-## 传送系统
+## Teleport System
 
-### 家传送（内存，重启丢失）
+### Home TP (in-memory, lost on restart)
 
 ```js
 const homes = new Map<string, GameVector3>();
@@ -143,15 +146,15 @@ world.onChat((entity, message) => {
 
   if (message === "!sethome") {
     homes.set(p.name, new GameVector3(p.position.x, p.position.y, p.position.z));
-    p.directMessage("§a家已设置！");
+    p.directMessage("§aHome set!");
     return false;
   }
 
   if (message === "!home") {
     const home = homes.get(p.name);
-    if (!home) { p.directMessage("§c先设置家: !sethome"); return false; }
+    if (!home) { p.directMessage("§cSet home first: !sethome"); return false; }
     p.teleport(home);
-    p.directMessage("§a已传送回家！");
+    p.directMessage("§aTeleported home!");
     p.playSound("minecraft:entity.enderman.teleport", 1.0, 1.0);
     return false;
   }
@@ -160,7 +163,7 @@ world.onChat((entity, message) => {
 });
 ```
 
-### 家传送（持久化，重启不丢失）
+### Home TP (persistent, survives restarts)
 
 ```js
 const homeStorage = storage.getDataStorage<{ x: number; y: number; z: number }>("homes");
@@ -172,15 +175,15 @@ world.onChat((entity, message) => {
     homeStorage.set(p.userId, {
       x: p.position.x, y: p.position.y, z: p.position.z,
     });
-    p.directMessage("§a家已设置（持久化）！");
+    p.directMessage("§aHome set (persistent)!");
     return false;
   }
 
   if (message === "!home") {
     const home = homeStorage.get(p.userId);
-    if (!home) { p.directMessage("§c先设置家: !sethome"); return false; }
+    if (!home) { p.directMessage("§cSet home first: !sethome"); return false; }
     p.teleport(new GameVector3(home.x, home.y, home.z));
-    p.directMessage("§a已传送回家！");
+    p.directMessage("§aTeleported home!");
     return false;
   }
 
@@ -188,7 +191,7 @@ world.onChat((entity, message) => {
 });
 ```
 
-### 地标传送（管理员设置，所有人可用）
+### Warp Points (admin sets, everyone uses)
 
 ```js
 const warps = new Map<string, GameVector3>();
@@ -200,21 +203,21 @@ world.onChat((entity, message) => {
 
   switch (cmd) {
     case "!setwarp":
-      if (p.opLevel < 2) { p.directMessage("§c需要管理员权限"); return false; }
+      if (p.opLevel < 2) { p.directMessage("§cAdmin only"); return false; }
       warps.set(args[1], new GameVector3(p.position.x, p.position.y, p.position.z));
-      world.say(`§a地标 §e${args[1]} §a已设置`);
+      world.say(`§aWarp §e${args[1]} §aset`);
       return false;
 
     case "!warp":
       const warp = warps.get(args[1]);
-      if (!warp) { p.directMessage("§c地标不存在"); return false; }
+      if (!warp) { p.directMessage("§cWarp not found"); return false; }
       p.teleport(warp);
-      p.directMessage(`§a已传送到 §e${args[1]}`);
+      p.directMessage(`§aTeleported to §e${args[1]}`);
       return false;
 
     case "!warps": {
       const list = Array.from(warps.keys()).join(", ");
-      p.directMessage(`§6地标: §f${list || "无"}`);
+      p.directMessage(`§6Warps: §f${list || "none"}`);
       return false;
     }
   }
@@ -222,26 +225,26 @@ world.onChat((entity, message) => {
 });
 ```
 
-## 重生保护
+## Respawn Protection
 
 ```js
-// 玩家重生后给予短暂无敌
+// Give brief invulnerability after respawn
 world.onPlayerRespawn((entity) => {
   const p = entity.player;
-  p.addEffect("minecraft:resistance", 100, 4, true); // 5秒 抗性V（无敌）
-  p.addEffect("minecraft:regeneration", 100, 2, true); // 5秒 生命恢复III
-  p.addEffect("minecraft:fire_resistance", 100, 0, true); // 5秒 防火
-  p.directMessage("§a你已获得 5 秒重生保护");
+  p.addEffect("minecraft:resistance", 100, 4, true); // 5s Resistance V (near-invulnerable)
+  p.addEffect("minecraft:regeneration", 100, 2, true); // 5s Regen III
+  p.addEffect("minecraft:fire_resistance", 100, 0, true); // 5s Fire Resistance
+  p.directMessage("§a5 seconds of respawn protection");
   p.playSound("minecraft:block.beacon.activate", 1.0, 1.5);
 });
 ```
 
-## 商店/NPC
+## Shop / NPC
 
-右键一个实体（如村民）弹出对话/交易：
+Right-click an entity (e.g. villager) to open a dialog/shop:
 
 ```js
-// 商店数据结构
+// Shop data structure
 interface ShopItem {
   id: string;
   displayName: string;
@@ -251,41 +254,41 @@ interface ShopItem {
 }
 
 const shopItems: ShopItem[] = [
-  { id: "apple", displayName: "苹果 x16", price: 5, item: "minecraft:apple", count: 16 },
-  { id: "diamond", displayName: "钻石", price: 50, item: "minecraft:diamond", count: 1 },
-  { id: "_sword", displayName: "铁剑", price: 30, item: "minecraft:iron_sword", count: 1 },
-  { id: "golden_apple", displayName: "金苹果", price: 20, item: "minecraft:golden_apple", count: 1 },
+  { id: "apple", displayName: "Apple x16", price: 5, item: "minecraft:apple", count: 16 },
+  { id: "diamond", displayName: "Diamond", price: 50, item: "minecraft:diamond", count: 1 },
+  { id: "_sword", displayName: "Iron Sword", price: 30, item: "minecraft:iron_sword", count: 1 },
+  { id: "golden_apple", displayName: "Golden Apple", price: 20, item: "minecraft:golden_apple", count: 1 },
 ];
 
-// 右击村民打开商店
+// Right-click villager to open shop
 world.onInteract((entity, target) => {
   if (target.entityType !== "minecraft:villager") return;
   const p = entity.player;
-  p.directMessage("§6── 商店 ──");
+  p.directMessage("§6── Shop ──");
   shopItems.forEach((item) => {
-    p.directMessage(`§f!buy ${item.id} §7- §6${item.price}金币 §7→ ${item.displayName}`);
+    p.directMessage(`§f!buy ${item.id} §7- §6${item.price} coins §7→ ${item.displayName}`);
   });
-  p.directMessage("§7用法: !buy <商品ID>");
+  p.directMessage("§7Usage: !buy <itemId>");
 });
 
-// 购买命令
+// Buy command
 world.onChat((entity, message) => {
   const p = entity.player;
   const args = message.trim().split(/\s+/);
 
   if (args[0].toLowerCase() === "!buy") {
     const item = shopItems.find((si) => si.id === args[1]);
-    if (!item) { p.directMessage("§c商品不存在"); return false; }
+    if (!item) { p.directMessage("§cItem not found"); return false; }
 
     const balance = world.getScore(p.name, "coins");
     if (balance < item.price) {
-      p.directMessage(`§c余额不足！需要 §6${item.price} §c金币，你有 §6${balance} §c金币`);
+      p.directMessage(`§cInsufficient funds! Need §6${item.price} §c, have §6${balance}`);
       return false;
     }
 
     world.setScore(p.name, "coins", balance - item.price);
     p.giveItem(item.item, item.count);
-    p.directMessage(`§a购买了 §e${item.displayName} §a，花费 §6${item.price} §a金币`);
+    p.directMessage(`§aBought §e${item.displayName} §afor §6${item.price} §acoins`);
     p.playSound("minecraft:entity.experience_orb.pickup", 1.0, 1.0);
     return false;
   }
@@ -293,7 +296,7 @@ world.onChat((entity, message) => {
 });
 ```
 
-## 每日奖励
+## Daily Rewards
 
 ```js
 const dailyRewards =
@@ -305,22 +308,24 @@ world.onChat((entity, message) => {
   if (message === "!daily") {
     const now = Date.now();
     const record = dailyRewards.get(p.userId);
-    const cooldown = 24 * 60 * 60 * 1000; // 24 小时
+    const cooldown = 24 * 60 * 60 * 1000; // 24 hours
 
     if (record && now - record.lastClaimed < cooldown) {
       const hours = Math.ceil((record.lastClaimed + cooldown - now) / 3600000);
-      p.directMessage(`§c请等待 ${hours} 小时后再领取`);
+      p.directMessage(`§cPlease wait ${hours} hours before claiming again`);
       return false;
     }
 
-    // 发放奖励
+    // Grant rewards
     p.giveItem("minecraft:diamond", 3);
     p.giveItem("minecraft:experience_bottle", 8);
     const bonus = 10 + Math.floor(Math.random() * 20);
     const coins = world.getScore(p.name, "coins");
     world.setScore(p.name, "coins", coins + bonus);
     dailyRewards.set(p.userId, { lastClaimed: now });
-    p.directMessage(`§a每日奖励已领取！获得 3 钻石 + 8 经验瓶 + ${bonus} 金币`);
+    p.directMessage(
+      `§aDaily reward claimed! 3 diamonds + 8 XP bottles + ${bonus} coins`,
+    );
     p.playSound("minecraft:entity.player.levelup", 1.0, 1.0);
     return false;
   }
@@ -328,14 +333,14 @@ world.onChat((entity, message) => {
 });
 ```
 
-## 排行榜
+## Leaderboards
 
 ```js
 function showLeaderboard(p: GamePlayer, board: string, title: string): void {
   const scores = world.listScores(board);
   p.directMessage(`§6── ${title} ──`);
   if (scores.length === 0) {
-    p.directMessage("§7暂无数据");
+    p.directMessage("§7No data yet");
     return;
   }
   scores.slice(0, 10).forEach((s, i) => {
@@ -344,19 +349,19 @@ function showLeaderboard(p: GamePlayer, board: string, title: string): void {
   });
 }
 
-// 命令
+// Command
 world.onChat((entity, message) => {
   if (message === "!topkills") {
-    showLeaderboard(entity.player, "kills", "击杀排行榜");
+    showLeaderboard(entity.player, "kills", "Kill Leaderboard");
     return false;
   }
   return true;
 });
 ```
 
-## 波次刷怪
+## Wave Spawning
 
-完整波次系统，难度递增：
+Complete wave system with scaling difficulty:
 
 ```js
 let wave = 0;
@@ -370,7 +375,7 @@ function spawnWave(pos: GameVector3): void {
   waveActive = true;
   const types = ["minecraft:zombie", "minecraft:skeleton", "minecraft:spider"];
 
-  world.say(`§c§l⚔ 第 ${wave} 波开始！§f ${count} 只怪物`);
+  world.say(`§c§l⚔ Wave ${wave} begins! §f${count} mobs`);
 
   for (let i = 0; i < count; i++) {
     setTimeout(() => {
@@ -379,47 +384,47 @@ function spawnWave(pos: GameVector3): void {
       const type = types[Math.floor(Math.random() * types.length)];
       const mob = world.spawnEntity(type, new GameVector3(x, pos.y, z));
       if (!mob) return;
-      mob.setNameTag(`§7[第${wave}波] ${type.split(":")[1]}`);
+      mob.setNameTag(`§7[Wave ${wave}] ${type.split(":")[1]}`);
       mob.maxHp = 20 + wave * 3;
       mob.hp = mob.maxHp;
       mob.setAI(true);
       mob.addTag("wave_mob");
-      // 每 5 波出精英
+      // Elites every 5 waves
       if (wave % 5 === 0) {
         mob.addEffect("minecraft:speed", 99999, 1, true);
-        mob.setNameTag(`§c[精英] ${type.split(":")[1]}`);
+        mob.setNameTag(`§c[Elite] ${type.split(":")[1]}`);
       }
     }, i * 150);
   }
 }
 ```
 
-## 缩圈机制
+## Shrinking Zone
 
 ```js
 function startShrinkPhase(centerX: number, centerZ: number, stages: { size: number; duration: number }[]): void {
   let stageIndex = 0;
 
   world.setBorderCenter(centerX, centerZ);
-  world.borderSize = stages[0].size * 2;  // 需要乘2（直径）
+  world.borderSize = stages[0].size * 2;  // Multiply by 2 (diameter)
   world.setBorderDamage(0.5);
 
   function nextStage(): void {
     if (stageIndex >= stages.length) {
-      world.say("§c边界已缩至最小！");
+      world.say("§cBorder at minimum size!");
       return;
     }
     const stage = stages[stageIndex];
-    world.say(`§c边界缩小至 ${stage.size} 格！(${stage.duration} 秒)`);
+    world.say(`§cBorder shrinking to ${stage.size} blocks! (${stage.duration}s)`);
     world.shrinkBorder(stage.size * 2, stage.duration);
     stageIndex++;
     setTimeout(nextStage, stage.duration * 20);
   }
 
-  setTimeout(nextStage, 100);  // 5 秒后开始
+  setTimeout(nextStage, 100);  // Start after 5 seconds
 }
 
-// 用法：100→50→25→10，每段 60 秒
+// Usage: 100→50→25→10, 60s per stage
 startShrinkPhase(0, 0, [
   { size: 100, duration: 60 },
   { size: 50, duration: 60 },
@@ -431,7 +436,7 @@ startShrinkPhase(0, 0, [
 ## HTTP Webhook
 
 ```js
-// 发送击杀事件到 Discord Webhook
+// Send kill events to Discord Webhook
 world.onEntityDeath((entity, killer) => {
   if (killer?.isPlayer() && entity.isPlayer()) {
     const kp = killer.player;
@@ -440,7 +445,7 @@ world.onEntityDeath((entity, killer) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        content: `⚔ **${kp.name}** 击杀了 **${entity.player.name}**`,
+        content: `⚔ **${kp.name}** eliminated **${entity.player.name}**`,
       }),
       timeout: 5000,
       async: true,
@@ -454,19 +459,18 @@ world.onEntityDeath((entity, killer) => {
   }
 });
 
-// 服务器状态上报
+// Periodic server status report
 const SERVER_NAME = "My Server";
 const WEBHOOK_URL = "https://discord.com/api/webhooks/YOUR_ID";
 
 setInterval(() => {
   const playerCount = world.querySelectorAll("*").length;
-  const tps = "20"; // 正常情况
 
   http.fetch(WEBHOOK_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      content: `📊 **${SERVER_NAME}** | 玩家: ${playerCount} | TPS: ${tps} | 时间: ${new Date().toLocaleTimeString()}`,
+      content: `📊 **${SERVER_NAME}** | Players: ${playerCount} | Time: ${new Date().toLocaleTimeString()}`,
     }),
     timeout: 5000,
     async: true,
@@ -474,14 +478,14 @@ setInterval(() => {
 }, 6000);
 ```
 
-## 客户端 HUD
+## Client HUD
 
-结合 `remoteChannel` 实现客户端自定义 HUD（服务端提供数据，客户端显示）：
+Combine `remoteChannel` for a custom client-side HUD (server provides data, client displays it):
 
-**服务端 `src/server/app.ts`：**
+**Server `src/server/app.ts`:**
 
 ```js
-// 接收客户端的位置请求
+// Respond to client's HUD data requests
 remoteChannel.onServerEvent((event) => {
   if (event.args.type === "requestHUDData") {
     const p = event.entity.player;
@@ -502,7 +506,7 @@ remoteChannel.onServerEvent((event) => {
 });
 ```
 
-**客户端 `src/client/app.ts`：**
+**Client `src/client/app.ts`:**
 
 ```js
 interface HUDData {
@@ -511,7 +515,7 @@ interface HUDData {
 }
 
 client.onTick(() => {
-  if (tickCount % 20 === 0) {  // 每秒请求一次
+  if (tickCount % 20 === 0) {  // Request once per second
     remoteChannel.sendServerEvent({ type: "requestHUDData" });
   }
 });
@@ -528,32 +532,32 @@ remoteChannel.onClientEvent((event) => {
 });
 ```
 
-## 跨脚本联动
+## Cross-Script Integration
 
-多个脚本项目之间通信：
+Multiple script projects communicating:
 
-**大厅脚本：**
+**Lobby script:**
 
 ```js
-// 接收其他脚本的状态更新并转发给玩家
+// Receive status updates from other scripts and forward to players
 world.onMessage((from, data) => {
   if (data?.type === "gameEnded") {
-    world.say(`§e[大厅] ${from} 的游戏已结束！${data.winner} 获胜`);
+    world.say(`§e[Lobby] Game on ${from} ended! ${data.winner} won`);
   }
 });
 ```
 
-**小游戏脚本：**
+**Minigame script:**
 
 ```js
-// 游戏结束时通知大厅
+// Notify the lobby when the game ends
 function endGame(): void {
   world.sendMessage("lobby", {
     type: "gameEnded",
-    winner: "红队",
+    winner: "Red Team",
     scores: { red: state.redScore, blue: state.blueScore },
   });
 }
 ```
 
-每个配方都是独立的，按需取用。更多细节参见 [API 文档](../api/README.md) 和 [教程系列](../tutorial/README.md)。
+Each recipe is self-contained — grab what you need. See the [API reference](../api/README.md) and [tutorials](../tutorial/README.md) for more detail.

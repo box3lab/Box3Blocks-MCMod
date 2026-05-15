@@ -1,41 +1,44 @@
-# 教程五：可视化特效与实战小游戏
+---
+---
 
-本教程涵盖粒子、烟花、闪电、爆炸等视觉效果，并提供三个经过验证的完整小游戏。
+# Tutorial 5: Visual Effects & Complete Mini-Games
 
-## 5.1 粒子效果
+This tutorial covers particles, fireworks, lightning, explosions, and other visual effects, plus three verified complete mini-games.
+
+## 5.1 Particle Effects
 
 ```js
-// 单点粒子: (类型, x, y, z, 数量, dx, dy, dz, 速度)
+// Single-point particles: (type, x, y, z, count, dx, dy, dz, speed)
 world.spawnParticle("minecraft:flame", 0, 100, 0, 20, 0.5, 0.5, 0.5, 0.05);
 world.spawnParticle("minecraft:portal", 0, 100, 0, 15, 0.5, 0.5, 0.5, 0.02);
 world.spawnParticle("minecraft:end_rod", 0, 100, 0, 8, 0.2, 0, 0.2, 0.01);
 world.spawnParticle("minecraft:witch", 0, 100, 0, 10, 0.3, 0.3, 0.3, 0.03);
 
-// 圆形粒子圈: (x, y, z, 半径, 类型, 数量)
+// Particle circle: (x, y, z, radius, type, count)
 world.spawnParticleCircle(0, 100, 0, 3.0, "minecraft:happy_villager", 30);
 world.spawnParticleCircle(0, 100, 0, 2.0, "minecraft:flame", 24);
 world.spawnParticleCircle(0, 100, 0, 4.0, "minecraft:end_rod", 36);
 ```
 
-常用粒子：
+Common particles:
 
-| 粒子 ID                     | 效果             |
-| --------------------------- | ---------------- |
-| `minecraft:flame`           | 火焰             |
-| `minecraft:cloud`           | 烟雾             |
-| `minecraft:happy_villager`  | 绿色粒子（正面） |
-| `minecraft:witch`           | 紫色粒子         |
-| `minecraft:portal`          | 传送门           |
-| `minecraft:end_rod`         | 末地烛光         |
-| `minecraft:heart`           | 爱心             |
-| `minecraft:note`            | 音符             |
-| `minecraft:dragon_breath`   | 龙息             |
-| `minecraft:angry_villager`  | 愤怒粒子（红色） |
-| `minecraft:soul_fire_flame` | 灵魂火焰（蓝色） |
-| `minecraft:redstone`        | 红石粒子         |
-| `minecraft:explosion`       | 爆炸粒子         |
+| Particle ID                 | Effect                     |
+| --------------------------- | -------------------------- |
+| `minecraft:flame`           | Fire                       |
+| `minecraft:cloud`           | Smoke                      |
+| `minecraft:happy_villager`  | Green particles (positive) |
+| `minecraft:witch`           | Purple particles           |
+| `minecraft:portal`          | Portal                     |
+| `minecraft:end_rod`         | End rod light              |
+| `minecraft:heart`           | Hearts                     |
+| `minecraft:note`            | Music notes                |
+| `minecraft:dragon_breath`   | Dragon's breath            |
+| `minecraft:angry_villager`  | Angry particles (red)      |
+| `minecraft:soul_fire_flame` | Soul fire (blue)           |
+| `minecraft:redstone`        | Redstone particles         |
+| `minecraft:explosion`       | Explosion particles        |
 
-### 螺旋上升粒子
+### Spiral Rising Particles
 
 ```js
 function spiralEffect(pos: GameVector3): void {
@@ -53,21 +56,21 @@ function spiralEffect(pos: GameVector3): void {
 }
 ```
 
-## 5.2 烟花
+## 5.2 Fireworks
 
 ```js
-// 烟花: (x, y, z, 颜色, 形状)
+// Firework: (x, y, z, color, shape)
 world.launchFirework(0, 100, 0, "gold", "large_ball");
 world.launchFirework(0, 100, 0, "red", "star");
 world.launchFirework(0, 100, 0, "purple", "burst");
 world.launchFirework(0, 100, 0, "green", "creeper");
 ```
 
-烟花颜色：`"red"` `"blue"` `"green"` `"yellow"` `"gold"` `"white"` `"aqua"` `"pink"` `"purple"`
+Firework colors: `"red"` `"blue"` `"green"` `"yellow"` `"gold"` `"white"` `"aqua"` `"pink"` `"purple"`
 
-烟花形状：`"ball"` `"large_ball"` `"star"` `"creeper"` `"burst"`
+Firework shapes: `"ball"` `"large_ball"` `"star"` `"creeper"` `"burst"`
 
-### 连续烟花秀
+### Sequential Firework Show
 
 ```js
 const colors = [
@@ -97,15 +100,15 @@ for (let i = 0; i < 8; i++) {
 }
 ```
 
-## 5.3 闪电
+## 5.3 Lightning
 
 ```js
-// 闪电: (x, y, z, 伤害)
-world.strikeLightning(0, 100, 0); // 默认伤害
-world.strikeLightning(0, 100, 0, 10); // 10 点伤害
-world.strikeLightning(0, 100, 0, 0); // 无伤害，纯视觉效果
+// Lightning: (x, y, z, damage)
+world.strikeLightning(0, 100, 0); // Default damage
+world.strikeLightning(0, 100, 0, 10); // 10 damage
+world.strikeLightning(0, 100, 0, 0); // No damage, visual only
 
-// 在玩家周围召唤闪电
+// Summon lightning around a player
 for (let i = 0; i < 3; i++) {
   setTimeout(() => {
     const lx = pos.x + (Math.random() - 0.5) * 12;
@@ -116,14 +119,14 @@ for (let i = 0; i < 3; i++) {
 world.playSound("minecraft:entity.lightning_bolt.thunder", pos, 1.0, 1.0);
 ```
 
-## 5.4 爆炸
+## 5.4 Explosions
 
 ```js
-// 爆炸: (x, y, z, 威力, 是否引火)
-world.explode(0, 100, 0, 4, false); // 威力 4，不引火
-world.explode(0, 100, 0, 8, true); // 威力 8，引火
+// Explosion: (x, y, z, power, causesFire)
+world.explode(0, 100, 0, 4, false); // Power 4, no fire
+world.explode(0, 100, 0, 8, true); // Power 8, causes fire
 
-// 玩家引爆自身周围（3 秒倒计时）
+// Player-triggered self-destruct (3-second countdown)
 world.playSound("minecraft:block.note_block.bass", pos, 1.0, 0.5);
 setTimeout(() => {
   world.spawnParticle(
@@ -144,37 +147,37 @@ setTimeout(() => {
 }, 60);
 ```
 
-## 5.5 音效
+## 5.5 Sounds
 
 ```js
-// 全局音效（所有玩家听到）
+// Global sound (all players hear it)
 world.playSound("minecraft:block.note_block.pling", pos, 1.0, 1.5);
 world.playSound("minecraft:entity.ender_dragon.growl", pos, 1.0, 1.0);
 
-// 仅某个玩家听到
+// Only one player hears it
 player.playSound("minecraft:entity.player.levelup", 1.0, 1.0);
 ```
 
-常用音效：
+Common sounds:
 
-| 音效 ID                                   | 用途               |
-| ----------------------------------------- | ------------------ |
-| `minecraft:block.note_block.pling`        | 铃铛提示           |
-| `minecraft:block.note_block.bass`         | 低音提示           |
-| `minecraft:entity.experience_orb.pickup`  | 经验球拾取         |
-| `minecraft:entity.player.levelup`         | 升级               |
-| `minecraft:entity.ender_dragon.growl`     | 龙吼（Boss 出场）  |
-| `minecraft:entity.wither.spawn`           | 凋零生成（压迫感） |
-| `minecraft:entity.lightning_bolt.thunder` | 雷鸣               |
-| `minecraft:entity.generic.explode`        | 爆炸               |
-| `minecraft:entity.witch.throw`            | 药水投掷           |
-| `minecraft:block.beacon.activate`         | 信标激活           |
-| `minecraft:block.anvil.land`              | 铁砧落地           |
-| `minecraft:ui.toast.challenge_complete`   | 挑战完成           |
-| `minecraft:entity.player.burp`            | 吃食物音效         |
-| `minecraft:entity.enderman.teleport`      | 传送音效           |
+| Sound ID                                  | Use                         |
+| ----------------------------------------- | --------------------------- |
+| `minecraft:block.note_block.pling`        | Bell chime                  |
+| `minecraft:block.note_block.bass`         | Bass note                   |
+| `minecraft:entity.experience_orb.pickup`  | XP orb pickup               |
+| `minecraft:entity.player.levelup`         | Level up                    |
+| `minecraft:entity.ender_dragon.growl`     | Dragon roar (boss entrance) |
+| `minecraft:entity.wither.spawn`           | Wither spawn (menacing)     |
+| `minecraft:entity.lightning_bolt.thunder` | Thunder                     |
+| `minecraft:entity.generic.explode`        | Explosion                   |
+| `minecraft:entity.witch.throw`            | Potion throw                |
+| `minecraft:block.beacon.activate`         | Beacon activation           |
+| `minecraft:block.anvil.land`              | Anvil landing               |
+| `minecraft:ui.toast.challenge_complete`   | Challenge complete          |
+| `minecraft:entity.player.burp`            | Eating sound                |
+| `minecraft:entity.enderman.teleport`      | Teleport sound              |
 
-## 5.6 玩家进出特效
+## 5.6 Player Join/Leave Effects
 
 ```js
 world.onPlayerJoin((entity, _tick) => {
@@ -206,33 +209,33 @@ world.onPlayerLeave((entity, _tick) => {
 });
 ```
 
-## 5.7 完整小游戏一：PvP 竞技场
+## 5.7 Complete Mini-Game 1: PvP Arena
 
-这是教程四中设计模式的实际应用——一个完整的红蓝两队 PvP 小游戏，整合了事件、BossBar、计分板、队伍、粒子、烟花、边界缩圈、空投等所有系统。
+This is a practical application of the design patterns from Tutorial 4 — a full red-vs-blue PvP mini-game integrating events, BossBar, scoreboard, teams, particles, fireworks, shrinking border, airdrops, and more.
 
-**命令：**
+**Commands:**
 
-- `!pvp join` — 加入游戏
-- `!pvp leave` — 退出等待
-- `!pvp start` — (OP) 开始游戏
-- `!pvp stop` — (OP) 强制结束
-- `!pvp status` — 查看状态
+- `!pvp join` — Join the game
+- `!pvp leave` — Leave the queue
+- `!pvp start` — (OP) Start the game
+- `!pvp stop` — (OP) Force end
+- `!pvp status` — Check status
 
-**特性：**
+**Features:**
 
-- 大厅倒计时 30 秒 → 游戏时长 300 秒
-- 红蓝两队自动分配 + 队伍前缀
-- 击杀计分 + 全局播报 + 烟花特效
-- BossBar 倒计时（超过 30% 绿色 → 低于 10% 红色）
-- 第 120 秒边界缩圈
-- 每 60 秒空投（闪电标记 + 末影珍珠/金苹果）
-- 最后 30 秒中心闪电
-- 结束烟花秀 + 自动重置
+- Lobby countdown 30s → game duration 300s
+- Auto-assign red/blue teams + team prefixes
+- Kill scoring + global announcements + firework effects
+- BossBar countdown (>30% green → <10% red)
+- Border shrinks at 120s
+- Airdrops every 60s (lightning marker + ender pearls/golden apples)
+- Center lightning strike in final 30s
+- Victory fireworks show + auto-reset
 
 ```js
 // ═══════════════════════════════════════════
-//  PvP 竞技场 — 完整示例
-//  (已验证: tsc + eslint + build 通过)
+//  PvP Arena — Complete Example
+//  (Verified: tsc + eslint + build pass)
 // ═══════════════════════════════════════════
 
 const ARENA = new GameVector3(0, 70, 0);
@@ -258,7 +261,7 @@ let pvpGameTimer: GameEventHandlerToken | null = null;
 let pvpAirdropTimer: GameEventHandlerToken | null = null;
 let pvpLobbyTimer: GameEventHandlerToken | null = null;
 
-// ── 初始化 ──
+// ── Initialization ──
 world.setGameRule("keepInventory", false);
 world.setGameRule("doMobSpawning", false);
 world.clearWeather();
@@ -268,25 +271,25 @@ world.addScoreboard("pvp_score");
 world.createTeam("red", "red");
 world.createTeam("blue", "blue");
 
-// ── 聊天命令 ──
+// ── Chat commands ──
 world.onChat((entity, message, _tick) => {
   const p = entity.player;
 
   switch (message) {
     case "!pvp":
-      p.directMessage("§6── PvP 竞技场 ──");
-      p.directMessage("§f!pvp join  §7- 加入游戏");
-      p.directMessage("§f!pvp start §7- (OP) 开始游戏");
+      p.directMessage("§6── PvP Arena ──");
+      p.directMessage("§f!pvp join  §7- Join game");
+      p.directMessage("§f!pvp start §7- (OP) Start game");
       return false;
 
     case "!pvp join":
-      if (state.phase !== "waiting") { p.directMessage("§c游戏已开始"); return false; }
+      if (state.phase !== "waiting") { p.directMessage("§cGame already in progress"); return false; }
       state.playersReady++;
       p.clearInventory();
       p.hp = 20; p.maxHp = 20; p.food = 20;
       p.gameMode = "adventure";
       p.teleport(ARENA);
-      p.directMessage(`§a已加入！当前 §f${state.playersReady} §a人`);
+      p.directMessage(`§aJoined! Current players: §f${state.playersReady}`);
       p.playSound("minecraft:block.note_block.pling", 1.0, 1.5);
       if (state.playersReady >= 2) { startLobby(); }
       return false;
@@ -304,19 +307,19 @@ world.onChat((entity, message, _tick) => {
   return true;
 });
 
-// ── 大厅倒计时 30 秒 ──
+// ── 30-second lobby countdown ──
 function startLobby(): void {
   state.phase = "starting";
   let cd = 30;
   pvpLobbyTimer = setInterval(() => {
     cd--;
     if (cd <= 0 && pvpLobbyTimer) { pvpLobbyTimer.cancel(); beginPvPGame(); }
-    else if (cd <= 5) { world.say(`§e游戏将在 §c${cd} §e秒后开始！`); }
-    else if (cd % 10 === 0) { world.say(`§7游戏将在 ${cd} 秒后开始...`); }
+    else if (cd <= 5) { world.say(`§eGame starts in §c${cd} §eseconds!`); }
+    else if (cd % 10 === 0) { world.say(`§7Game starts in ${cd} seconds...`); }
   }, 20);
 }
 
-// ── 开始游戏 ──
+// ── Start game ──
 function beginPvPGame(): void {
   state.phase = "playing";
   state.redScore = 0; state.blueScore = 0;
@@ -333,13 +336,13 @@ function beginPvPGame(): void {
     if (i % 2 === 0) {
       world.joinTeam(entity, "red");
       p.teleport(new GameVector3(-20, ARENA.y, ARENA.z));
-      p.setPlayerListName(`§c[红] §f${p.name}`);
+      p.setPlayerListName(`§c[Red] §f${p.name}`);
       p.giveItem("minecraft:iron_sword", 1);
       p.giveItem("minecraft:bow", 1);
     } else {
       world.joinTeam(entity, "blue");
       p.teleport(new GameVector3(20, ARENA.y, ARENA.z));
-      p.setPlayerListName(`§9[蓝] §f${p.name}`);
+      p.setPlayerListName(`§9[Blue] §f${p.name}`);
       p.giveItem("minecraft:iron_sword", 1);
       p.giveItem("minecraft:crossbow", 1);
     }
@@ -356,10 +359,10 @@ function beginPvPGame(): void {
   world.setBorderCenter(ARENA.x, ARENA.z);
   world.borderSize = ARENA_RADIUS * 2;
   world.setBorderDamage(1);
-  world.say("§c§l⚔ 竞技场开始！⚔");
+  world.say("§c§l⚔ Arena begins! ⚔");
   world.playSound("minecraft:entity.ender_dragon.growl", ARENA, 1.0, 1.0);
 
-  // 游戏倒计时
+  // Game countdown
   let remaining = DURATION;
   pvpGameTimer = setInterval(() => {
     remaining--;
@@ -372,14 +375,14 @@ function beginPvPGame(): void {
     else if (progress > 0.1) { color = "yellow"; }
 
     world.showBossbar("pvp_timer",
-      `§e战斗剩余: §f${mins}:${secs < 10 ? "0" : ""}${secs}`,
+      `§eTime remaining: §f${mins}:${secs < 10 ? "0" : ""}${secs}`,
       progress, color);
 
     if (remaining === SHRINK_AT) {
-      world.say("§c边界开始缩小！");
+      world.say("§cBorder is shrinking!");
       world.shrinkBorder(20, 60);
     }
-    if (remaining === 60) { world.say("§c最后一分钟！"); }
+    if (remaining === 60) { world.say("§cFinal minute!"); }
     if (remaining === 30) { world.strikeLightning(ARENA.x, ARENA.y, ARENA.z, 0); }
     if (remaining <= 0 && pvpGameTimer) {
       pvpGameTimer.cancel();
@@ -387,7 +390,7 @@ function beginPvPGame(): void {
     }
   }, 20);
 
-  // 空投
+  // Airdrops
   pvpAirdropTimer = setInterval(() => {
     if (state.phase !== "playing") return;
     const angle = Math.random() * Math.PI * 2;
@@ -399,12 +402,12 @@ function beginPvPGame(): void {
       world.dropItem(dx, ARENA.y + 1, dz, "minecraft:ender_pearl", 2);
       world.dropItem(dx, ARENA.y + 1, dz, "minecraft:golden_apple", 2);
       world.launchFirework(dx, ARENA.y + 3, dz, "yellow", "ball");
-      world.say("§e☄ 空投已降落！");
+      world.say("§e☄ Airdrop has landed!");
     }, 20);
   }, 1200);
 }
 
-// ── 击杀计分 ──
+// ── Kill scoring ──
 world.onEntityDeath((entity, killer, _tick) => {
   if (state.phase !== "playing") return;
   if (!killer?.isPlayer() || !entity.isPlayer()) return;
@@ -427,11 +430,11 @@ world.onEntityDeath((entity, killer, _tick) => {
 
   const killedTeam = world.getTeamOf(entity) || "";
   if (killedTeam !== team) {
-    world.say(`§${team === "red" ? "c" : "9"}[${team}] §f${kp.name} §7击杀了 §f[${killedTeam}] ${entity.player.name}`);
+    world.say(`§${team === "red" ? "c" : "9"}[${team}] §f${kp.name} §7eliminated §f[${killedTeam}] ${entity.player.name}`);
   }
 });
 
-// ── 重生处理 ──
+// ── Respawn handling ──
 world.onPlayerRespawn((entity, _tick) => {
   if (state.phase !== "playing") return;
   const team = world.getTeamOf(entity);
@@ -443,28 +446,28 @@ world.onPlayerRespawn((entity, _tick) => {
   p.addEffect("minecraft:resistance", 100, 2, true);
 });
 
-// ── 结束 ──
+// ── End game ──
 function endPvPGame(): void {
   state.phase = "ending";
   world.removeBossbar("pvp_timer");
   if (pvpAirdropTimer) { pvpAirdropTimer.cancel(); }
 
-  let winner = "平局！";
+  let winner = "Draw!";
   let color = "e";
-  if (state.redScore > state.blueScore) { winner = "红队 获胜！"; color = "c"; }
-  else if (state.blueScore > state.redScore) { winner = "蓝队 获胜！"; color = "9"; }
+  if (state.redScore > state.blueScore) { winner = "Red Team wins!"; color = "c"; }
+  else if (state.blueScore > state.redScore) { winner = "Blue Team wins!"; color = "9"; }
 
   world.querySelectorAll("*").forEach((entity) => {
     if (!entity.isPlayer()) return;
     const p = entity.player;
-    p.title(`§${color}§l${winner}`, "§7竞技场结束", 10, 80, 10);
+    p.title(`§${color}§l${winner}`, "§7Arena complete", 10, 80, 10);
     p.playSound("minecraft:ui.toast.challenge_complete", 1.0, 1.0);
     p.clearEffects();
   });
 
   world.say(`§${color}§l🏆 ${winner}`);
 
-  // 烟花庆祝
+  // Victory fireworks
   for (let i = 0; i < 8; i++) {
     setTimeout(() => {
       const cs = ["red", "gold", "green", "blue", "purple"];
@@ -479,31 +482,31 @@ function endPvPGame(): void {
     }, i * 400);
   }
 
-  // 30 秒后重置
+  // Reset after 30 seconds
   setTimeout(() => {
     state.phase = "waiting";
     state.playersReady = 0; state.redScore = 0; state.blueScore = 0;
     world.hideScoreboard("sidebar");
     world.setBorderCenter(0, 0);
     world.borderSize = 60000000;
-    world.say("§a竞技场已重置 — !pvp join 加入下一局");
+    world.say("§aArena reset — !pvp join for next round");
   }, 600);
 }
 ```
 
-## 5.8 完整小游戏二：领地争夺战
+## 5.8 Complete Mini-Game 2: Territory Rush
 
-已在 `colorzone` 的 `app.ts` 中实现。命令：`!cz` 加入、`!cz start` 开始、`!cz top` 排行榜。
+Implemented in the `colorzone` project's `app.ts`. Commands: `!cz` to join, `!cz start` to begin, `!cz top` for leaderboard.
 
-核心机制：玩家走过地面 → 自动染色为队伍颜色 → 定时发药水 + 速度效果 → 90 秒后按占地数量排名。
+Core mechanic: players walk over the ground → tiles auto-color to their team → periodic potions + speed buffs → after 90 seconds, ranking by territory claimed.
 
-详见 `src/server/app.ts` 中的 Territory Rush 实现。
+See `src/server/app.ts` for the full Territory Rush implementation.
 
-## 5.9 更多实用示例
+## 5.9 More Practical Examples
 
-以下简化示例可在 `src/examples/` 中找到完整验证版本：
+The following simplified examples have full verified versions in `src/examples/`:
 
-### 弹幕颜色命令
+### Colored Chat Command
 
 ```js
 world.onChat((entity, message, _tick) => {
@@ -517,10 +520,10 @@ world.onChat((entity, message, _tick) => {
   }
   return true;
 });
-// 用法: !r 大家好  → 红色发送
+// Usage: !r Hello everyone  → sends in red
 ```
 
-### 家传送
+### Home Teleport
 
 ```js
 const homeLocations = new Map<string, GameVector3>();
@@ -532,7 +535,7 @@ world.onChat((entity, message, _tick) => {
     homeLocations.set(p.userId, new GameVector3(
       p.position.x, p.position.y, p.position.z
     ));
-    p.directMessage("§a家已设置！输入 !home 回家");
+    p.directMessage("§aHome set! Type !home to return");
     p.playSound("minecraft:block.note_block.pling", 1.0, 1.5);
     return false;
   }
@@ -540,31 +543,31 @@ world.onChat((entity, message, _tick) => {
   if (message === "!home") {
     const home = homeLocations.get(p.userId);
     if (!home) {
-      p.directMessage("§c你还没有设置家！先输入 !sethome");
+      p.directMessage("§cYou haven't set a home yet! Use !sethome first");
       return false;
     }
     p.teleport(home);
-    p.directMessage("§a已传送回家！");
+    p.directMessage("§aTeleported home!");
     p.playSound("minecraft:entity.enderman.teleport", 1.0, 1.0);
     return false;
   }
 
-  // 分享坐标
+  // Share position
   if (message === "!sharepos") {
     const pos = p.position;
     world.say(
-      `§e${p.name} §f的坐标: §a[${Math.floor(pos.x)}, ${Math.floor(pos.y)}, ${Math.floor(pos.z)}]`
+      `§e${p.name} §fis at: §a[${Math.floor(pos.x)}, ${Math.floor(pos.y)}, ${Math.floor(pos.z)}]`
     );
     return false;
   }
 
-  // 随机传送
+  // Random teleport
   if (message === "!rtp") {
     const range = 500;
     const x = (Math.random() - 0.5) * range * 2;
     const z = (Math.random() - 0.5) * range * 2;
     p.teleport(new GameVector3(x, 150, z));
-    p.directMessage(`§a已随机传送到 (${Math.floor(x)}, ~, ${Math.floor(z)})`);
+    p.directMessage(`§aRandomly teleported to (${Math.floor(x)}, ~, ${Math.floor(z)})`);
     return false;
   }
 
@@ -572,7 +575,7 @@ world.onChat((entity, message, _tick) => {
 });
 ```
 
-### 波次刷怪
+### Wave Spawning
 
 ```js
 let wave = 0;
@@ -582,7 +585,7 @@ function startWave(pos: GameVector3): void {
   wave++;
   const count = wave * 3;
   mobsAlive = count;
-  world.say(`§c§l⚔ 第 ${wave} 波开始！§f生成 ${count} 只僵尸`);
+  world.say(`§c§l⚔ Wave ${wave} begins!§f Spawning ${count} zombies`);
 
   for (let i = 0; i < count; i++) {
     setTimeout(() => {
@@ -590,7 +593,7 @@ function startWave(pos: GameVector3): void {
       const z = pos.z + (Math.random() - 0.5) * 10;
       const zombie = world.spawnEntity("minecraft:zombie", new GameVector3(x, pos.y, z));
       if (!zombie) return;
-      zombie.setNameTag(`§7[第${wave}波] 僵尸`);
+      zombie.setNameTag(`§7[Wave ${wave}] Zombie`);
       zombie.maxHp = 20 + wave * 5;
       zombie.hp = zombie.maxHp;
       zombie.setAI(true);
@@ -603,15 +606,15 @@ world.onEntityDeath((entity, killer, _tick) => {
   if (!entity.hasTag("wave_mob")) return;
   mobsAlive--;
   if (mobsAlive <= 0) {
-    world.say(`§a§l✔ 第 ${wave} 波清除！`);
+    world.say(`§a§l✔ Wave ${wave} cleared!`);
     setTimeout(() => startWave(entity.position), 200);
   }
 });
 ```
 
-## 5.10 音阶测试
+## 5.10 Sound Scale Test
 
-一个快速音效测试命令：
+A quick sound test command:
 
 ```js
 world.onChat((entity, message, _tick) => {
@@ -623,13 +626,13 @@ world.onChat((entity, message, _tick) => {
         p.playSound("minecraft:block.note_block.pling", 1.0, pitch);
       }, i * 100);
     });
-    p.directMessage("§a音阶测试播放中...");
+    p.directMessage("§aPlaying sound scale test...");
     return false;
   }
   return true;
 });
 ```
 
-所有示例代码均已通过 `tsc --noEmit`、`eslint` 和 `node build.mjs` 完整验证。可直接使用。
+All example code has been verified with `tsc --noEmit`, `eslint`, and `node build.mjs`. Ready to use.
 
-更多 API 细节请参考 `docs/api/` 目录中的完整 API 文档。
+For more API details, refer to the complete API docs in the `docs/api/` directory.

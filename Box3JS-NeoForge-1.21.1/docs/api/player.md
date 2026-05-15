@@ -1,6 +1,6 @@
 # player — 玩家 API
 
-`player` 对象通过 `entity.player` 获取，代表登录的玩家。它拥有 `entity` 的全部属性和方法（如 `hp`、`position`、`tags()` 等），并额外提供玩家专属功能：背包、经验、飞行、消息、传送等。
+`player` 通过 `entity.player` 获取，拥有 `entity` 的全部属性并额外提供背包、经验、飞行、消息、传送等玩家专属功能。
 
 ```js
 world.onPlayerJoin(function(entity, tick) {

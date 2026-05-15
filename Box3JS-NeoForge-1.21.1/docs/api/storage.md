@@ -2,7 +2,9 @@
 
 `storage` 提供 JSON 文件持久化存储，带内存缓存加速读写。
 
-> **运行环境：** 服务端和客户端都可用。服务端数据保存在 `config/box3/storage/<项目名>/`；客户端数据保存在本地游戏目录的 `box3/client-storage/<项目名>/`。每个项目自动拥有独立命名空间。
+::: info 运行环境
+服务端和客户端都可用。服务端数据保存在 `config/box3/storage/<项目名>/`；客户端数据保存在本地游戏目录的 `box3/client-storage/<项目名>/`。每个项目自动拥有独立命名空间。
+:::
 
 ## 获取存储实例
 
@@ -18,7 +20,9 @@
 
 获取**跨项目共享**存储。所有项目通过同一 `name` 访问同一份数据（底层使用 `__shared__/` 命名空间）。适合做全服排行榜、全局配置等。
 
-> 仅服务端可用。客户端本地存储只提供 `getDataStorage(name)`。
+::: warning
+仅服务端可用。客户端本地存储只提供 `getDataStorage(name)`。
+:::
 
 ```js
 var store = storage.getDataStorage("leaderboard");
@@ -45,7 +49,9 @@ var winner = store.get("lastWinner"); // "Steve" (string)
 var cfg = store.get("config"); // {difficulty: "hard", ...} (object)
 ```
 
-> **注意：** 当数据从磁盘重新加载后，复杂对象会以普通 JSON 对象形式返回（例如 `Map` 风格对象），请避免依赖原始 JS 原型方法。
+::: warning 注意
+当数据从磁盘重新加载后，复杂对象会以普通 JSON 对象形式返回（例如 `Map` 风格对象），请避免依赖原始 JS 原型方法。
+:::
 
 ### store.keys()
 

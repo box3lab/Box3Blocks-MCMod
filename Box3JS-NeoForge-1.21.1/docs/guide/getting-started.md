@@ -1,36 +1,20 @@
 # 快速开始：从零到第一个 Box3JS 脚本
 
-本指南面向**零模组开发经验**的读者。你只需要会 JavaScript，就能在 10 分钟内写出第一个 Minecraft 服务端脚本，并在读完本指南后理解 Box3JS 的核心设计理念。
-
-## 目录
-
-1. [Box3JS 是什么](#box3js-是什么)
-2. [环境搭建](#环境搭建)
-3. [创建项目](#创建项目)
-4. [理解项目结构](#理解项目结构)
-5. [第一个脚本：逐行详解](#第一个脚本逐行详解)
-6. [核心设计理念：为什么这样设计 API](#核心设计理念为什么这样设计-api)
-7. [API 实战速览](#api-实战速览)
-8. [开发循环](#开发循环)
-9. [调试技巧](#调试技巧)
-10. [发布部署](#发布部署)
-11. [下一步](#下一步)
-
----
+面向**零模组开发经验**的读者，只需会 JavaScript 即可。
 
 ## Box3JS 是什么
 
-Box3JS 是一个 **Minecraft 模组**，它在 Minecraft 服务器内部嵌入了一个完整的 JavaScript 运行时，让你用 JS/TypeScript 编写游戏玩法逻辑。同时，可选下发客户端脚本，实现按键监听、屏幕 UI、客户端音效等本地交互。
+Box3JS 是一个 **Minecraft 模组**，在服务器内嵌入 JavaScript 运行时，让你用 JS/TypeScript 编写游戏玩法。客户端脚本可选下发，实现按键监听、屏幕 UI 等本地交互。
 
-> 了解 Box3JS 的起源和它与神奇代码岛的关系？→ [Box3JS 与神奇代码岛](about-box3js.md)
+Box3JS 的 API 设计继承自**[神奇代码岛](https://dao3.fun)（Box3）**——一款浏览器端的多人 3D 游戏创作平台，成千上万的创作者在上面用 JS 写游戏。神奇代码岛的 API 经过长期社区验证，简洁直观。Box3JS 把这套 API 带到了 Minecraft，让你用同一种编程范式在 MC 里构建小游戏、自定义玩法。
 
-### 一句话概括
-
-> Box3JS = Minecraft 服务端里的 Node.js，但不需要你懂 Java 或模组开发。
+::: tip 更多背景
+→ [Box3JS 与神奇代码岛](about-box3js.md)
+:::
 
 ### 核心架构一览
 
-```
+```text
 你在 VS Code 里写       构建工具帮你            Minecraft 帮你跑
   TypeScript    ───→   编译成 ES5 JS   ───→    Rhino 引擎执行
                                                 │
@@ -47,29 +31,6 @@ Box3JS 是一个 **Minecraft 模组**，它在 Minecraft 服务器内部嵌入�
 - **Rhino 在 JVM 内执行**，直接调用 Minecraft API
 - **服务端 + 客户端双端运行**，通过 `remoteChannel` 通信
 
-### 能做什么
-
-| 类别       | 示例                                      |
-| ---------- | ----------------------------------------- |
-| 聊天命令   | `!heal`、`!home`、`!shop`                 |
-| 事件响应   | 玩家进服欢迎、死亡惩罚、方块破坏记录      |
-| 实体控制   | 生成怪物、设置 AI、自定义 Boss            |
-| 小游戏     | PvP 竞技场、跑酷、波次刷怪                |
-| 世界操作   | 放置/替换方块、填充区域、修改天气时间     |
-| 数据持久化 | JSON 存储、SQLite 数据库                  |
-| 游戏系统   | 计分板、BossBar、队伍、世界边界           |
-| HTTP 请求  | 查询 Web API、Webhook 通知                |
-| 客户端脚本 | 按键监听、屏幕 UI、客户端音效、自定义 GUI |
-
-### 不能做什么
-
-- **渲染自定义模型/粒子** — 需要客户端资源包或 Java 模组
-- **添加新方块/物品（运行时）** — 需要编译为 JAR 模组（`/box3script compile`）
-- **修改原版机制** — 如修改合成表、生物 AI 行为，这些需要 Mixin
-- **使用现代 JS 语法在运行时** — Rhino 只支持 ES5，但源码中可以用 TypeScript 现代语法，构建时会转换
-
----
-
 ## 环境搭建
 
 ### 你需要
@@ -82,19 +43,17 @@ Box3JS 是一个 **Minecraft 模组**，它在 Minecraft 服务器内部嵌入�
 
 进入游戏，执行：
 
-```
+```js
 /box3script
 ```
 
 如果看到项目状态面板，说明 Box3JS 已正常运行。
 
-```
+```text
 ══ Box3JS Script Engine ══
   Watch: ○ Inactive    Sandbox: ○ Inactive
   Projects: 0 enabled  |  0 loaded
 ```
-
----
 
 ## 创建项目
 
@@ -102,7 +61,7 @@ Box3JS 是一个 **Minecraft 模组**，它在 Minecraft 服务器内部嵌入�
 
 在游戏内执行：
 
-```
+```js
 /box3script create mygame
 ```
 
@@ -110,7 +69,7 @@ Box3JS 是一个 **Minecraft 模组**，它在 Minecraft 服务器内部嵌入�
 
 ### 理解项目结构
 
-```
+```text
 config/box3/script/mygame/
 ├── package.json           ← 项目配置（名称、版本、构建依赖）
 ├── tsconfig.base.json     ← TypeScript 公共编译选项
@@ -160,8 +119,6 @@ npm install
 ```
 
 `npm install` 只需执行一次（安装 esbuild、Babel、TypeScript 等构建工具）。
-
----
 
 ## 第一个脚本：逐行详解
 
@@ -274,8 +231,6 @@ setInterval(() => {
 | 10 分钟 | 12,000 |
 | 30 分钟 | 36,000 |
 
----
-
 ## 核心设计理念：为什么这样设计 API
 
 理解 Box3JS API 的设计理念，能让你写出更高效、更安全的脚本。以下是最重要的几个设计决策及其原因。
@@ -340,7 +295,7 @@ if (token.active()) {
 
 ### 设计 4：项目作用域隔离
 
-```
+```text
 服务端同时运行 3 个脚本项目，互不影响：
 
 ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
@@ -364,7 +319,7 @@ Box3JS 给每个项目分配**独立的 Rhino 顶级作用域**，存储在独�
 
 ### 设计 5：双端架构 + remoteChannel
 
-```
+```text
 ┌──────────────────────┐         ┌──────────────────────┐
 │   服务端 (Server)     │         │   客户端 (Client)     │
 │                      │         │                      │
@@ -401,7 +356,7 @@ remoteChannel.sendServerEvent({ key: "space", pressed: true });
 
 ### 设计 6：TypeScript 源码 + Babel 编译为 ES5
 
-```
+```text
 src/server/app.ts         Babel               esbuild        dist/server.js
 (TypeScript, ES2020)  ───→  ES5 JavaScript  ───→  bundle  ───→  (一个文件)
 ```
@@ -436,15 +391,13 @@ world.onChat((entity, message) => {
 
 ### 设计 8：沙盒模式 — 安全测试
 
-```
+```js
 /box3script sandbox mygame    # 开启沙盒
 # ... 测试脚本（生成实体、修改方块、爆炸）...
 /box3script sandbox mygame    # 关闭 → 自动回滚所有修改
 ```
 
 **为什么？** 一旦脚本修改了世界，这些修改是永久性的（方块被替换、实体被生成）。沙盒模式追踪脚本对世界的所有修改，关闭时自动回滚。这让开发者可以大胆测试破坏性操作，不用担心搞坏正式服。
-
----
 
 ## API 实战速览
 
@@ -804,10 +757,10 @@ audio.playMusic("minecraft:music.game", 0.5, 1.0);
 audio.stopAll();
 
 // 雾效控制（客户端渲染）
-client.setFogColor(255, 100, 50);      // 红雾外观
-client.setFogStartDistance(10);        // 雾从 10 格开始
-client.setFogEndDistance(50);          // 50 格外完全遮挡
-client.resetFog();                     // 恢复默认
+client.setFogColor(255, 100, 50); // 红雾外观
+client.setFogStartDistance(10); // 雾从 10 格开始
+client.setFogEndDistance(50); // 50 格外完全遮挡
+client.resetFog(); // 恢复默认
 
 // 聊天
 chat.sendMessage("大家好！");
@@ -825,15 +778,13 @@ remoteChannel.onClientEvent((event) => {
 });
 ```
 
----
-
 ## 开发循环
 
 ### 标准流程
 
 每次修改代码后：
 
-```
+```js
 改代码 → npm run build → /box3script reload mygame → 测试
 ```
 
@@ -845,7 +796,7 @@ npm run build
 
 输出：
 
-```
+```js
   dist/server.js  7.1kb
 ⚡ Done in 240ms
 ```
@@ -860,7 +811,7 @@ npm run build
 
 在游戏内：
 
-```
+```js
 /box3script start mygame    # 首次启动
 /box3script reload mygame   # 修改后重载（无需重启服务器）
 ```
@@ -871,7 +822,7 @@ npm run build
 
 开启文件监控后，保存代码 + build 会自动触发 reload：
 
-```
+```js
 /box3script watch
 ```
 
@@ -879,15 +830,13 @@ npm run build
 
 ### 多项目管理
 
-```
+```js
 /box3script start mygame lobby    # 同时启动多个项目
 /box3script stop mygame           # 停止单个
 /box3script stopall               # 停止全部
 /box3script reload mygame          # 重载单个
 /box3script                        # 查看所有项目状态
 ```
-
----
 
 ## 调试技巧
 
@@ -918,7 +867,7 @@ npm run build
 
 沙盒模式允许安全测试：开启后所有世界修改被追踪，关闭时一键回滚。
 
-```
+```js
 /box3script sandbox mygame    # 开启沙盒
 # ... 测试脚本（生成实体、修改方块、爆炸等）...
 /box3script sandbox mygame    # 关闭 → 自动回滚所有修改
@@ -941,15 +890,13 @@ Box3JS 脚本运行在服务器主线程上，不合理的代码会影响 TPS：
 
 一个跑酷脚本的性能消耗通常 < 0.5ms/tick，对服务器 TPS 几乎无影响。
 
----
-
 ## 发布部署
 
 ### 开发模式 → 生产发布
 
 开发完成后，将脚本编译为**独立 JAR 模组**：
 
-```
+```js
 /box3script compile mygame
 ```
 
@@ -987,8 +934,6 @@ Box3JS 脚本运行在服务器主线程上，不合理的代码会影响 TPS：
 | `registries` | `undefined`                    | ✅ 可用                          |
 | 分发         | 需要源码                       | 只需 JAR                         |
 | 适用场景     | 开发、测试                     | 发布、分发                       |
-
----
 
 ## 下一步
 

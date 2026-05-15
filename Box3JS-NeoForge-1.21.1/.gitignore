@@ -32,6 +32,11 @@ bin/
 ### Mac OS ###
 .DS_Store
 
+### VitePress ###
+node_modules/
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+
 ### Minecraft Modding ###
 run/
 !**/src/**/run/
