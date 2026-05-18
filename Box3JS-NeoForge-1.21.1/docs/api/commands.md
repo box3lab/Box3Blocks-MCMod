@@ -43,6 +43,17 @@
 /box3script create mygame
 ```
 
+::: warning modId 命名规范
+项目名（也是编译为 JAR 时的 modId）必须符合 NeoForge 命名规范：`^[a-z][a-z0-9_]{1,63}$`
+
+- 首字符必须是**小写字母**
+- 后续字符只能用**小写字母、数字、下划线**
+- 长度 **2–64** 个字符
+- 不能用大写、连字符 `-`、点号 `.` 或其他特殊符号
+
+✅ 有效：`mygame`、`arena_battle`、`cq`；❌ 无效：`MyGame`、`my-game`、`c`
+:::
+
 创建后需要：
 
 ```bash
@@ -133,6 +144,10 @@ npm install && npm run build
 :::
 
 编译时**从 `package.json` 读取以下字段**写入 `neoforge.mods.toml`：
+
+::: warning modId 验证
+`name` 字段的 modId 会在编译时校验，必须符合 `^[a-z][a-z0-9_]{1,63}$`（小写字母开头，仅含小写字母/数字/下划线，2-64 字符）。不符合的 modId 会导致编译失败并提示具体原因。
+:::
 
 | package.json | mods.toml 字段 | 说明 |
 |-------------|---------------|------|
