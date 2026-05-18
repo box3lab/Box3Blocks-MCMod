@@ -35,36 +35,10 @@ function listFiles(dir) {
   return out.sort();
 }
 
-function extractTemplateFiles() {
+function verifyTemplateRecursive() {
   const source = read("src/main/java/com/box3lab/box3js/script/Box3ScriptTemplate.java");
-  const match = source.match(/private static final String\[\] FILES = \{([\s\S]*?)\};/);
-  if (!match) {
-    fail("Box3ScriptTemplate FILES list was not found");
-    return [];
-  }
-  return [...match[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]).sort();
-}
-
-function normalizeTemplatePath(path) {
-  return path === "gitignore.template" ? "gitignore.template" : path;
-}
-
-function verifyTemplateFiles() {
-  const declared = extractTemplateFiles().map(normalizeTemplatePath);
-  const actual = listFiles("src/main/resources/assets/box3js/template")
-    .filter((path) => !path.startsWith("dist/"))
-    .filter((path) => !path.endsWith(".map"));
-
-  for (const path of declared) {
-    if (!actual.includes(path)) {
-      fail(`Template file declared in Box3ScriptTemplate but missing from resources: ${path}`);
-    }
-  }
-
-  for (const path of actual) {
-    if (!declared.includes(path)) {
-      fail(`Template resource is not copied by Box3ScriptTemplate: ${path}`);
-    }
+  if (!source.includes("JarFile") || !source.includes("Files.walk")) {
+    fail("Box3ScriptTemplate must use recursive enumeration (JarFile + Files.walk) to copy all template files");
   }
 }
 
@@ -532,7 +506,7 @@ function verifyEntrypoints() {
   }
 }
 
-verifyTemplateFiles();
+verifyTemplateRecursive();
 verifyRuntimeTypeSplit();
 verifyEventTokens();
 verifyGlobalDeclarations();

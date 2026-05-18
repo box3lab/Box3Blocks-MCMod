@@ -78,7 +78,14 @@ public class Box3JSRegistryGen {
             double speedFactor, double jumpFactor,
             boolean noOcclusion, boolean noCollision,
             boolean requiresTool, boolean instabreak,
-            String creativeTab) {
+            String creativeTab, String renderType) {
+        public boolean isCutout() {
+            return "cutout".equals(renderType);
+        }
+
+        public boolean isTranslucent() {
+            return "translucent".equals(renderType);
+        }
     }
 
     /**
@@ -273,7 +280,7 @@ public class Box3JSRegistryGen {
         double hardness = 1.0, resistance = 1.0, friction = 0.6;
         double speedFactor = 1.0, jumpFactor = 1.0;
         int lightLevel = 0;
-        String sound = "stone", mapColor = "stone", creativeTab = "";
+        String sound = "stone", mapColor = "stone", creativeTab = "", renderType = "solid";
         boolean noOcclusion = false, noCollision = false;
         boolean requiresTool = false, instabreak = false;
 
@@ -321,11 +328,12 @@ public class Box3JSRegistryGen {
                 case "noCollision" -> noCollision = parseBool(body, valStart);
                 case "requiresTool" -> requiresTool = parseBool(body, valStart);
                 case "instabreak" -> instabreak = parseBool(body, valStart);
+                case "renderType" -> renderType = parseString(body, valStart, "solid");
             }
         }
         return new BlockDef(id, hardness, resistance, sound, lightLevel, mapColor,
                 friction, speedFactor, jumpFactor, noOcclusion, noCollision,
-                requiresTool, instabreak, creativeTab);
+                requiresTool, instabreak, creativeTab, renderType);
     }
 
     private static CreativeTabDef parseCreativeTabDef(String id, String body) {

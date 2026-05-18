@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "PROJECT_NAME:item/chocolate_bar"
+  }
+}

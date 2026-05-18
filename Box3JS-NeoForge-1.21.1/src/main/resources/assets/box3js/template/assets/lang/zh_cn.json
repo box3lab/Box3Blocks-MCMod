@@ -1,5 +1,9 @@
 {
-  "block.mygame.ruby_block": "红宝石块",
-  "item.mygame.chocolate": "巧克力棒",
-  "itemGroup.mygame.my_blocks": "我的方块"
+  "block.PROJECT_NAME.star_lamp": "星光灯",
+  "block.PROJECT_NAME.rainbow_cube": "彩虹方块",
+  "block.PROJECT_NAME.snowflake_lamp": "雪花灯",
+  "block.PROJECT_NAME.treasure_chest": "宝箱",
+  "block.PROJECT_NAME.candy": "糖果",
+  "item.PROJECT_NAME.chocolate_bar": "巧克力棒",
+  "itemGroup.PROJECT_NAME.my_blocks": "我的方块"
 }

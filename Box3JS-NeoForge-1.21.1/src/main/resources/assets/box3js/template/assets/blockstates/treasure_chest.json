@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": { "model": "PROJECT_NAME:block/treasure_chest" }
+  }
+}
