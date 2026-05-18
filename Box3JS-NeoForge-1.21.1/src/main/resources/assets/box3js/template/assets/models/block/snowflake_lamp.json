@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "PROJECT_NAME:block/snowflake_lamp_front",
+    "north": "PROJECT_NAME:block/snowflake_lamp_front",
+    "south": "PROJECT_NAME:block/snowflake_lamp_back",
+    "east": "PROJECT_NAME:block/snowflake_lamp_left",
+    "west": "PROJECT_NAME:block/snowflake_lamp_right",
+    "up": "PROJECT_NAME:block/snowflake_lamp_top",
+    "down": "PROJECT_NAME:block/snowflake_lamp_bottom"
+  }
+}

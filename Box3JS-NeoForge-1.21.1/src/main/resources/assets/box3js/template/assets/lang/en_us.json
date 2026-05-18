@@ -1,5 +1,9 @@
 {
-  "block.mymod.ruby_block": "Ruby Block",
-  "item.mymod.chocolate": "Chocolate Bar",
-  "itemGroup.mymod.my_blocks": "My Blocks"
+  "block.PROJECT_NAME.star_lamp": "Star Lamp",
+  "block.PROJECT_NAME.rainbow_cube": "Rainbow Cube",
+  "block.PROJECT_NAME.snowflake_lamp": "Snowflake Lamp",
+  "block.PROJECT_NAME.treasure_chest": "Treasure Chest",
+  "block.PROJECT_NAME.candy": "Candy",
+  "item.PROJECT_NAME.chocolate_bar": "Chocolate Bar",
+  "itemGroup.PROJECT_NAME.my_blocks": "My Blocks"
 }

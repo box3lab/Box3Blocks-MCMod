@@ -831,11 +831,11 @@ interface GameQueryResult<T = Record<string, any>> {
 
 /**
  * @zh SQLite 数据库，服务端存储在 `config/box3/data/<project>.db`，
- * 客户端存储在 `<gameDir>/box3/client-db/<project>.db`。
+ * 客户端存储在 `<gameDir>/config/box3/client-db/<project>.db`。
  * 通过全局 `db` 访问，支持 `?` 占位符和 tagged template 两种调用约定。
  *
  * @en SQLite database — server stores at `config/box3/data/<project>.db`,
- * client stores at `<gameDir>/box3/client-db/<project>.db`.
+ * client stores at `<gameDir>/config/box3/client-db/<project>.db`.
  * Access via global `db`, supports both `?` placeholder and tagged template calling conventions.
  */
 interface GameDatabase {
@@ -1031,7 +1031,10 @@ declare const http: GameHttpAPI;
  * }, 60);
  * // token.cancel(); // cancel before it fires
  */
-declare function setTimeout(handler: () => void, ticks: number): GameEventHandlerToken;
+declare function setTimeout(
+  handler: () => void,
+  ticks: number,
+): GameEventHandlerToken;
 
 /**
  * @zh 设置循环定时回调。Rhino 引擎不提供浏览器内置的 setInterval，由 Box3JS 提供。
@@ -1046,5 +1049,7 @@ declare function setTimeout(handler: () => void, ticks: number): GameEventHandle
  * }, 100);
  * // token.cancel(); // stop the interval
  */
-declare function setInterval(handler: () => void, ticks: number): GameEventHandlerToken;
-
+declare function setInterval(
+  handler: () => void,
+  ticks: number,
+): GameEventHandlerToken;

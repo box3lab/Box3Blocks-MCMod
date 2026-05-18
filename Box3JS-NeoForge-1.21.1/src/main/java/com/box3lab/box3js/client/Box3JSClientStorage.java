@@ -1,22 +1,28 @@
 package com.box3lab.box3js.client;
 
-import com.box3lab.box3js.script.Box3StorageTypes;
-import com.box3lab.box3js.script.Box3StorageSupport;
-import com.mojang.logging.LogUtils;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.slf4j.Logger;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import com.box3lab.box3js.script.Box3StorageSupport;
+import com.box3lab.box3js.script.Box3StorageTypes;
+import com.mojang.logging.LogUtils;
 
 /**
- * Client-side persistent key-value storage with ValueEntry/ReturnValue/QueryList support.
+ * Client-side persistent key-value storage with
+ * ValueEntry/ReturnValue/QueryList support.
  *
- * <p>Data is stored per-project under {@code <gameDir>/box3/client-storage/}.
+ * <p>
+ * Data is stored per-project under
+ * {@code <gameDir>/config/box3/client-storage/}.
  */
 public class Box3JSClientStorage {
 
@@ -27,7 +33,7 @@ public class Box3JSClientStorage {
     private final Map<Path, Map<String, Box3StorageTypes.ValueEntry>> cache = new ConcurrentHashMap<>();
 
     public Box3JSClientStorage(java.io.File gameDir, String projectName) {
-        this.baseDir = gameDir.toPath().resolve("box3").resolve("client-storage");
+        this.baseDir = gameDir.toPath().resolve("config").resolve("box3").resolve("client-storage");
         this.projectName = projectName;
         try {
             Files.createDirectories(baseDir);
@@ -36,7 +42,9 @@ public class Box3JSClientStorage {
         }
     }
 
-    public String getKey() { return ""; }
+    public String getKey() {
+        return "";
+    }
 
     public GameDataStorage getDataStorage(String name) {
         return new GameDataStorage(resolveName(name));
@@ -60,7 +68,9 @@ public class Box3JSClientStorage {
             this.data = cache.computeIfAbsent(path, p -> Box3StorageSupport.readData(p, "client"));
         }
 
-        public String getKey() { return name; }
+        public String getKey() {
+            return name;
+        }
 
         private void persist() {
             Box3StorageSupport.writeData(path, data, "client");
@@ -69,7 +79,8 @@ public class Box3JSClientStorage {
         // ── Basic API ──
 
         public void set(String key, Object value) {
-            if (key == null) return;
+            if (key == null)
+                return;
             long now = System.currentTimeMillis();
             synchronized (data) {
                 Box3StorageTypes.ValueEntry existing = data.get(key);
@@ -85,7 +96,8 @@ public class Box3JSClientStorage {
         }
 
         public Object get(String key) {
-            if (key == null) return null;
+            if (key == null)
+                return null;
             synchronized (data) {
                 Box3StorageTypes.ValueEntry entry = data.get(key);
                 return entry != null ? entry.value : null;
@@ -99,14 +111,16 @@ public class Box3JSClientStorage {
         }
 
         public void update(String key, Function handler) {
-            if (key == null || handler == null) return;
+            if (key == null || handler == null)
+                return;
             synchronized (data) {
                 Box3StorageTypes.ValueEntry entry = data.get(key);
-                if (entry == null) return;
+                if (entry == null)
+                    return;
                 long now = System.currentTimeMillis();
                 Context cx = Context.enter();
                 try {
-                    entry.value = handler.call(cx, handler, handler, new Object[]{entry.value});
+                    entry.value = handler.call(cx, handler, handler, new Object[] { entry.value });
                 } finally {
                     Context.exit();
                 }
@@ -117,7 +131,8 @@ public class Box3JSClientStorage {
         }
 
         public Object remove(String key) {
-            if (key == null) return null;
+            if (key == null)
+                return null;
             synchronized (data) {
                 Box3StorageTypes.ValueEntry entry = data.remove(key);
                 if (entry != null) {
@@ -129,7 +144,8 @@ public class Box3JSClientStorage {
         }
 
         public double increment(String key, double value) {
-            if (key == null) return 0;
+            if (key == null)
+                return 0;
             double delta = Double.isNaN(value) ? 1.0 : value;
             long now = System.currentTimeMillis();
             synchronized (data) {
@@ -172,7 +188,8 @@ public class Box3JSClientStorage {
             String constraintTarget = null;
 
             if (options != null) {
-                if (options.get("cursor") instanceof Number n) cursor = n.intValue();
+                if (options.get("cursor") instanceof Number n)
+                    cursor = n.intValue();
                 if (options.get("pageSize") instanceof Number n) {
                     pageSize = Math.max(1, Math.min(100, n.intValue()));
                 }
@@ -180,9 +197,12 @@ public class Box3JSClientStorage {
                     doSort = true;
                     ascending = Boolean.TRUE.equals(options.get("ascending"));
                 }
-                if (options.get("max") instanceof Number n) max = n.doubleValue();
-                if (options.get("min") instanceof Number n) min = n.doubleValue();
-                if (options.get("constraintTarget") instanceof String s) constraintTarget = s;
+                if (options.get("max") instanceof Number n)
+                    max = n.doubleValue();
+                if (options.get("min") instanceof Number n)
+                    min = n.doubleValue();
+                if (options.get("constraintTarget") instanceof String s)
+                    constraintTarget = s;
             }
 
             final String target = constraintTarget;
@@ -201,8 +221,10 @@ public class Box3JSClientStorage {
                 List<Box3StorageTypes.ReturnValue> filtered = new ArrayList<>();
                 for (Box3StorageTypes.ReturnValue rv : results) {
                     double v = extractSortValue(rv.value, target);
-                    if (min != null && v < min) continue;
-                    if (max != null && v > max) continue;
+                    if (min != null && v < min)
+                        continue;
+                    if (max != null && v > max)
+                        continue;
                     filtered.add(rv);
                 }
                 results = filtered;
@@ -213,7 +235,8 @@ public class Box3JSClientStorage {
 
         private double extractSortValue(Object value, String target) {
             if (target == null || target.isEmpty()) {
-                if (value instanceof Number n) return n.doubleValue();
+                if (value instanceof Number n)
+                    return n.doubleValue();
                 return 0;
             }
             Object current = value;
@@ -224,7 +247,8 @@ public class Box3JSClientStorage {
                     return 0;
                 }
             }
-            if (current instanceof Number n) return n.doubleValue();
+            if (current instanceof Number n)
+                return n.doubleValue();
             return 0;
         }
 

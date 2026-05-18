@@ -1,11 +1,44 @@
 {
-  "ruby_block": {
+  "star_lamp": {
+    "hardness": 3.0,
+    "resistance": 3.0,
+    "sound": "glass",
+    "lightLevel": 15,
+    "mapColor": "color_yellow",
+    "renderType": "cutout",
+    "creativeTab": "my_blocks"
+  },
+  "rainbow_cube": {
+    "hardness": 3.0,
+    "resistance": 3.0,
+    "sound": "glass",
+    "lightLevel": 10,
+    "mapColor": "color_light_blue",
+    "renderType": "cutout",
+    "creativeTab": "my_blocks"
+  },
+  "snowflake_lamp": {
+    "hardness": 3.0,
+    "resistance": 3.0,
+    "sound": "glass",
+    "lightLevel": 12,
+    "mapColor": "snow",
+    "renderType": "cutout",
+    "creativeTab": "my_blocks"
+  },
+  "treasure_chest": {
     "hardness": 5.0,
     "resistance": 6.0,
     "sound": "metal",
-    "lightLevel": 7,
-    "mapColor": "color_red",
-    "requiresTool": true,
+    "mapColor": "gold",
+    "creativeTab": "my_blocks"
+  },
+  "candy": {
+    "hardness": 1.0,
+    "resistance": 1.0,
+    "sound": "sand",
+    "mapColor": "color_pink",
+    "friction": 0.5,
     "creativeTab": "my_blocks"
   }
 }

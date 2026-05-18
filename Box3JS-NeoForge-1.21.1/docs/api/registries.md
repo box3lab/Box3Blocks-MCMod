@@ -43,6 +43,7 @@ mygame/
 | `noCollision` | bool | `false` | 无碰撞（可穿过） |
 | `requiresTool` | bool | `false` | 需要正确工具才掉落 |
 | `instabreak` | bool | `false` | 瞬间破坏 |
+| `renderType` | string | `"solid"` | 渲染类型：`"solid"`（默认）、`"cutout"`（带透明像素，如星形灯）、`"translucent"`（半透明，如染色玻璃） |
 | `creativeTab` | string | `""` | 所属创造标签页 ID（与 creativeTabs.json 中的 key 对应） |
 
 ### mapColor 可选值
@@ -67,6 +68,7 @@ mygame/
     "resistance": 0.3,
     "sound": "glass",
     "noOcclusion": true,
+    "renderType": "cutout",
     "creativeTab": "my_blocks"
   }
 }

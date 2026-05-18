@@ -6,7 +6,7 @@
 Box3JS exposes SQLite capabilities through the global `db` object. Connections are managed automatically.
 
 ::: info Runtime
-Available on both server and client. Server databases live at `config/box3/data/<project>.db`; client databases live under the local game directory at `box3/client-db/<project>.db`. The two sides do not share database files; use `remoteChannel` when data must be synchronized.
+Available on both server and client. Server databases live at `config/box3/data/<project>.db`; client databases live under the local game directory at `config/box3/client-db/<project>.db`. The two sides do not share database files; use `remoteChannel` when data must be synchronized.
 :::
 
 ## Dependency & Graceful Fallback
@@ -22,9 +22,10 @@ db API requires SQLite JDBC driver. Install the minecraft-sqlite-jdbc mod, then 
 After installing `minecraft-sqlite-jdbc` and restarting the server, the `db` API becomes available.
 
 ::: warning NeoForge dev environment
+
 - Put `minecraft-sqlite-jdbc` under `run/mods/`.
 - The file must be a `.jar` (for example, `xxx.jar`), not `.zip`, otherwise NeoForge will not load it.
-:::
+  :::
 
 ## `db.isAvailable()`
 
@@ -220,13 +221,13 @@ world.onPlayerLeave(function (entity) {
 
 ## Comparison with storage
 
-|      | `db` (SQLite)                 | `storage` (JSON)                |
-| ---- | ----------------------------- | ------------------------------- |
-| Query | SQL WHERE/JOIN/ORDER BY/LIMIT | Read all, filter in JS          |
-| Write | Single-row atomic             | Full overwrite                  |
-| Best for | Leaderboards, economy, logs, relational data | Config, flags, simple key-value |
-| File | `data/<project>.db`           | `storage/<project>/<name>.json` |
-| Concurrency | Naturally safe (WAL mode)     | Serial per-project is adequate  |
+|             | `db` (SQLite)                                | `storage` (JSON)                |
+| ----------- | -------------------------------------------- | ------------------------------- |
+| Query       | SQL WHERE/JOIN/ORDER BY/LIMIT                | Read all, filter in JS          |
+| Write       | Single-row atomic                            | Full overwrite                  |
+| Best for    | Leaderboards, economy, logs, relational data | Config, flags, simple key-value |
+| File        | `data/<project>.db`                          | `storage/<project>/<name>.json` |
+| Concurrency | Naturally safe (WAL mode)                    | Serial per-project is adequate  |
 
 ## Notes
 
@@ -240,14 +241,14 @@ world.onPlayerLeave(function (entity) {
 
 Box3JS uses the Rhino 1.9.1 engine. **TypeScript projects compiled with `npm run build` can use all modern syntax** — Babel plugins convert it to Rhino-compatible code:
 
-| Feature | Compilation |
-|---------|------------|
-| Arrow functions `(x) => x + 1` | Babel `@babel/preset-env` |
-| Template literals `` `Hello ${name}` `` | `rhinoTemplatePlugin` |
-| `for...of` (JS arrays + Java ArrayList) | `rhinoForOfPlugin` → indexed for + `.toArray()` |
-| `.map()` `.filter()` `.forEach()` `.find()` `.some()` `.every()` | `rhinoArrayMethodsPlugin` → IIFE + for loop |
-| `const` / `let` | Babel `@babel/preset-env` |
-| Destructuring `const { x, y } = obj` | Babel `@babel/preset-env` |
+| Feature                                                          | Compilation                                     |
+| ---------------------------------------------------------------- | ----------------------------------------------- |
+| Arrow functions `(x) => x + 1`                                   | Babel `@babel/preset-env`                       |
+| Template literals `` `Hello ${name}` ``                          | `rhinoTemplatePlugin`                           |
+| `for...of` (JS arrays + Java ArrayList)                          | `rhinoForOfPlugin` → indexed for + `.toArray()` |
+| `.map()` `.filter()` `.forEach()` `.find()` `.some()` `.every()` | `rhinoArrayMethodsPlugin` → IIFE + for loop     |
+| `const` / `let`                                                  | Babel `@babel/preset-env`                       |
+| Destructuring `const { x, y } = obj`                             | Babel `@babel/preset-env`                       |
 
 **Plain JS notes:**
 

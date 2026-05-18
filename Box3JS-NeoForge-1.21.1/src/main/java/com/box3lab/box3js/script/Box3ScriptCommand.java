@@ -138,6 +138,14 @@ public class Box3ScriptCommand {
                 .then(argument("name", StringArgumentType.word())
                         .executes(ctx -> {
                             String name = StringArgumentType.getString(ctx, "name");
+                            // Validate modId against NeoForge naming rules
+                            String validationError = Box3ScriptCompiler.validateModId(name);
+                            if (validationError != null) {
+                                ctx.getSource().sendFailure(
+                                        Component.literal("§cInvalid project name: " + validationError
+                                                + "\n§7NeoForge modId: [a-z][a-z0-9_]{1,63} (2-64 chars)"));
+                                return 0;
+                            }
                             Path projectDir = scriptDir(ctx.getSource().getServer())
                                     .resolve(name).normalize();
                             if (Files.exists(projectDir)) {
@@ -373,6 +381,14 @@ public class Box3ScriptCommand {
                             // Read package.json for metadata
                             String[] info = Box3ScriptCompiler.readPackageInfo(projectDir);
                             String modId = info[0];
+                            String validationError = Box3ScriptCompiler.validateModId(modId);
+                            if (validationError != null) {
+                                ctx.getSource().sendFailure(
+                                        Component.literal("§cInvalid modId: " + validationError
+                                                + "\n§7NeoForge modId: [a-z][a-z0-9_]{1,63} (2-64 chars)"
+                                                + "\n§7Fix: rename your project or set '--modId' in package.json"));
+                                return 0;
+                            }
                             String displayName = info[1];
                             String modVersion = info[2];
                             String description = info[3];

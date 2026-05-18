@@ -67,6 +67,17 @@ Box3JS 的 API 设计继承自**[神奇代码岛](https://dao3.fun)（Box3）**�
 
 这会在 `config/box3/script/mygame/` 生成完整的 TypeScript 项目。
 
+::: warning modId 命名规范
+项目名会作为 NeoForge 的 **modId** 使用，必须符合命名规则：
+- 正则：`^[a-z][a-z0-9_]{1,63}$`
+- 首字符必须是**小写字母** `[a-z]`
+- 后续字符只能用**小写字母、数字、下划线** `[a-z0-9_]`
+- 长度：**2–64** 个字符
+
+✅ 合法：`mygame`、`colorzone`、`arena_battle`、`sky_parkour_2`
+❌ 非法：`c`（太短）、`MyGame`（含大写）、`my-game`（含连字符）
+:::
+
 ### 理解项目结构
 
 ```text

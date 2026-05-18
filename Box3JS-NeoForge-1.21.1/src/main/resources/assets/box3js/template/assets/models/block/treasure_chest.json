@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "PROJECT_NAME:block/treasure_chest_front",
+    "north": "PROJECT_NAME:block/treasure_chest_front",
+    "south": "PROJECT_NAME:block/treasure_chest_back",
+    "east": "PROJECT_NAME:block/treasure_chest_left",
+    "west": "PROJECT_NAME:block/treasure_chest_right",
+    "up": "PROJECT_NAME:block/treasure_chest_top",
+    "down": "PROJECT_NAME:block/treasure_chest_bottom"
+  }
+}
