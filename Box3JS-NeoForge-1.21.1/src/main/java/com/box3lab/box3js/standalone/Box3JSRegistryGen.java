@@ -684,6 +684,35 @@ public class Box3JSRegistryGen {
     }
 
     /**
+     * Generates constructor-body calls to {@code Box3StandaloneBootstrap.addBlockRenderType()}
+     * for blocks that need non-solid render types. Returns empty string if none.
+     *
+     * <p>The generated code passes a method reference to the DeferredBlock
+     * (e.g. {@code STAR_LAMP::get}) as a {@code Supplier<Block>}. The actual
+     * {@code ItemBlockRenderTypes.setRenderLayer()} calls happen later in the
+     * main Box3JS mod's client setup — no client imports needed here.</p>
+     */
+    public static String generateClientRenderCalls(String modId, List<BlockDef> blocks) {
+        var cutout = blocks.stream().filter(BlockDef::isCutout).toList();
+        var translucent = blocks.stream().filter(BlockDef::isTranslucent).toList();
+        if (cutout.isEmpty() && translucent.isEmpty())
+            return "";
+
+        StringBuilder sb = new StringBuilder();
+        for (var b : cutout) {
+            sb.append("        Box3StandaloneBootstrap.addBlockRenderType(\"")
+                    .append(modId).append("\", ").append(b.id().toUpperCase())
+                    .append("::get, \"cutout\");\n");
+        }
+        for (var b : translucent) {
+            sb.append("        Box3StandaloneBootstrap.addBlockRenderType(\"")
+                    .append(modId).append("\", ").append(b.id().toUpperCase())
+                    .append("::get, \"translucent\");\n");
+        }
+        return sb.toString();
+    }
+
+    /**
      * Generates the additional import statements needed for the generated code.
      */
     public static String generateImports(boolean hasBlocks, boolean hasTabs,

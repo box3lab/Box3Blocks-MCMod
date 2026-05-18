@@ -29,7 +29,10 @@ import org.slf4j.Logger;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 /**
@@ -50,6 +53,37 @@ import java.util.function.Supplier;
 public class Box3StandaloneBootstrap {
 
     private static final Logger LOGGER = LogUtils.getLogger();
+
+    /** Record stored by addBlockRenderType(), consumed by Box3JSClientEvents on the client. */
+    public record BlockRenderEntry(Supplier<Block> blockSupplier, String renderType) {}
+
+    /** modId → list of blocks needing non-solid render types (cutout, translucent). */
+    private static final Map<String, List<BlockRenderEntry>> pendingRenderTypes = new ConcurrentHashMap<>();
+
+    /**
+     * Called by generated @Mod constructors to register a block that needs a
+     * non-solid render type. The actual {@code ItemBlockRenderTypes.setRenderLayer()}
+     * call happens later during FMLClientSetupEvent via {@code Box3JSClientEvents}.
+     *
+     * @param modId         the mod that owns the block
+     * @param blockSupplier deferred supplier (the DeferredBlock itself, e.g. {@code STAR_LAMP})
+     * @param renderType    "cutout" or "translucent"
+     */
+    public static void addBlockRenderType(String modId, Supplier<Block> blockSupplier, String renderType) {
+        pendingRenderTypes.computeIfAbsent(modId, k -> new ArrayList<>())
+                .add(new BlockRenderEntry(blockSupplier, renderType));
+        LOGGER.debug("Registered render type {} for block in mod {}", renderType, modId);
+    }
+
+    /**
+     * Returns all pending render type registrations, then clears the store.
+     * Called by Box3JSClientEvents during FMLClientSetupEvent.
+     */
+    public static Map<String, List<BlockRenderEntry>> drainPendingRenderTypes() {
+        Map<String, List<BlockRenderEntry>> result = Map.copyOf(pendingRenderTypes);
+        pendingRenderTypes.clear();
+        return result;
+    }
 
     private final String scriptResource;
     private final String projectName;

@@ -173,6 +173,21 @@ db.sql("SELECT * FROM t WHERE name = '" + userInput + "'");
 
 生成 `<项目名>-<版本>.jar`，放入 `mods/` 即可。接收方也需要安装 Box3JS 模组（作为运行时依赖）。自定义方块/物品需要客户端也安装 JAR。
 
+### Q: 编译时报 "is not a valid mod file" 或 "Invalid modId"
+
+这是由于项目名（modId）不符合 NeoForge 命名规范。modId 必须匹配：`^[a-z][a-z0-9_]{1,63}$`
+
+- ✅ 首字符必须是**小写字母**
+- ✅ 后续字符只能用**小写字母、数字、下划线**
+- ✅ 长度 **2–64** 个字符
+- ❌ 不能用大写、连字符 `-`、点号 `.` 或其他特殊符号
+
+**修复方法：**
+
+1. 检查 `package.json` 中的 `"name"` 字段
+2. 将项目名改为合法的 modId（如 `mygame`、`arena_battle`）
+3. 或在编译时指定：`/box3script compile mygame --modId mygame`
+
 ### Q: 编译的 JAR 和解释模式有什么区别？
 
 | 特性       | 解释模式         | 编译 JAR                     |

@@ -63,6 +63,33 @@ public class Box3ScriptCompiler {
     /** ModId of the main Box3JS mod that script JARs depend on. */
     public static final String BOX3JS_MOD_ID = "box3js";
 
+    /** NeoForge modId regex: lowercase letter + 1-63 alphanumeric/underscores. */
+    private static final Pattern MODID_PATTERN = Pattern.compile("^[a-z][a-z0-9_]{1,63}$");
+
+    /**
+     * Validates a modId against NeoForge naming rules.
+     * @return null if valid, or an error message string if invalid
+     */
+    public static String validateModId(String modId) {
+        if (modId == null || modId.isEmpty()) {
+            return "modId cannot be empty";
+        }
+        if (!MODID_PATTERN.matcher(modId).matches()) {
+            if (modId.length() < 2) {
+                return "modId '" + modId + "' is too short (min 2 chars)";
+            }
+            if (modId.length() > 64) {
+                return "modId '" + modId + "' is too long (max 64 chars)";
+            }
+            if (!Character.isLowerCase(modId.charAt(0))) {
+                return "modId '" + modId + "' must start with a lowercase letter [a-z]";
+            }
+            return "modId '" + modId + "' contains invalid characters. "
+                    + "Use only lowercase letters, digits, and underscores: [a-z][a-z0-9_]{1,63}";
+        }
+        return null;
+    }
+
     private final Path projectDir;
     private final Path outputJar;
     private final String modId;
@@ -96,6 +123,11 @@ public class Box3ScriptCompiler {
     }
 
     public void compile() throws Exception {
+        String validationError = validateModId(modId);
+        if (validationError != null) {
+            throw new IllegalArgumentException("Invalid modId: " + validationError);
+        }
+
         Path serverJs = projectDir.resolve("dist/server.js");
         if (!Files.exists(serverJs)) {
             throw new FileNotFoundException("dist/server.js not found in " + projectDir
@@ -215,6 +247,9 @@ public class Box3ScriptCompiler {
         String extraImports = Box3JSRegistryGen.generateImports(hasBlocks, hasTabs, hasItems, hasSounds, hasTools,
                 hasArmor);
 
+        // Client render type setup for cutout / translucent blocks
+        String clientRenderCalls = Box3JSRegistryGen.generateClientRenderCalls(modId, blocks);
+
         // Generate supplier map builder methods
         StringBuilder mapMethods = new StringBuilder();
         if (hasBlocks) {
@@ -304,10 +339,12 @@ public class Box3ScriptCompiler {
                     public %s(IEventBus modEventBus, ModContainer modContainer) {
                         super(modEventBus, modContainer, "%s", "%s"%s);
                         %s
-                    }
+                %s    }
                 }
-                """, pkg, hardcodedImports, extraImports, modId, className, fieldDecls, mapMethods,
-                className, resourcePath, modId, superArgs.toString(), constructorRegs);
+                """, pkg, hardcodedImports, extraImports, modId, className,
+                fieldDecls, mapMethods,
+                className, resourcePath, modId, superArgs.toString(), constructorRegs,
+                clientRenderCalls);
 
         Path out = genSrcDir.resolve(pkg.replace('.', '/')).resolve(className + ".java");
         Files.createDirectories(out.getParent());
@@ -713,6 +750,16 @@ public class Box3ScriptCompiler {
         String logoFile = info[8];
 
         String modId = opts.getOrDefault("modId", name);
+        String validationError = validateModId(modId);
+        if (validationError != null) {
+            System.err.println("Error: " + validationError);
+            System.err.println("NeoForge modId must match: ^[a-z][a-z0-9_]{1,63}$");
+            System.err.println("  - Must start with a lowercase letter");
+            System.err.println("  - Use only lowercase letters, digits, underscores");
+            System.err.println("  - Length: 2-64 characters");
+            System.err.println("  - Fix: rename your project or use --modId <valid_id>");
+            System.exit(1);
+        }
         String modName = opts.getOrDefault("name", displayName);
         String modVersion = opts.getOrDefault("version", version);
         Path output = Path.of(opts.getOrDefault("output",

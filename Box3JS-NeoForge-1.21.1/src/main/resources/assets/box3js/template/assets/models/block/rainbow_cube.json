@@ -1,5 +1,4 @@
 {
-  "render_type": "minecraft:cutout",
   "parent": "minecraft:block/cube",
   "textures": {
     "particle": "PROJECT_NAME:block/rainbow_cube_front",
