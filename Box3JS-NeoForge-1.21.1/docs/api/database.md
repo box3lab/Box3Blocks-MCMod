@@ -3,7 +3,7 @@
 Box3JS 通过全局 `db` 对象提供 SQLite 数据库能力，无需手动管理连接。
 
 ::: info 运行环境
-服务端和客户端都可用。服务端数据库位于 `config/box3/data/<project>.db`；客户端数据库位于本地游戏目录的 `box3/client-db/<project>.db`。两端数据库互不共享，需要同步数据时请使用 `remoteChannel`。
+服务端和客户端都可用。服务端数据库位于 `config/box3/data/<project>.db`；客户端数据库位于本地游戏目录的 `config/box3/client-db/<project>.db`。两端数据库互不共享，需要同步数据时请使用 `remoteChannel`。
 :::
 
 ## 依赖与降级行为
@@ -19,9 +19,10 @@ db API requires SQLite JDBC driver. Install the minecraft-sqlite-jdbc mod, then 
 安装 `minecraft-sqlite-jdbc` 并重启服务器后，`db` API 即可恢复可用。
 
 ::: warning NeoForge 开发环境
+
 - 请将 `minecraft-sqlite-jdbc` 放到 `run/mods/`。
 - 模组文件必须是 `.jar`（例如 `xxx.jar`），不要使用 `.zip`，否则不会被 NeoForge 加载。
-:::
+  :::
 
 ## `db.isAvailable()`
 
@@ -297,20 +298,21 @@ db.sql`SELECT * FROM players WHERE name = ${name}`;
 // ❌ 错误
 db.sql`SELECT * FROM ${table} WHERE name = ${name}`;
 ```
+
 :::
 
 ## Rhino 兼容性注意事项
 
 Box3JS 使用 Rhino 1.9.1 引擎。**TypeScript 项目用 `npm run build` 编译后，以下特性均可直接使用**（Babel 插件自动转为 Rhino 兼容代码）：
 
-| 特性 | 编译方式 |
-|------|---------|
-| 箭头函数 `(x) => x + 1` | Babel `@babel/preset-env` |
-| 模板字面量 `` `Hello ${name}` `` | `rhinoTemplatePlugin` |
-| `for...of` (JS 数组 + Java ArrayList) | `rhinoForOfPlugin` → 索引 for 循环 + `.toArray()` |
-| `.map()` `.filter()` `.forEach()` `.find()` `.some()` `.every()` | `rhinoArrayMethodsPlugin` → IIFE + for 循环 |
-| `const` / `let` | Babel `@babel/preset-env` |
-| 解构 `const { x, y } = obj` | Babel `@babel/preset-env` |
+| 特性                                                             | 编译方式                                          |
+| ---------------------------------------------------------------- | ------------------------------------------------- |
+| 箭头函数 `(x) => x + 1`                                          | Babel `@babel/preset-env`                         |
+| 模板字面量 `` `Hello ${name}` ``                                 | `rhinoTemplatePlugin`                             |
+| `for...of` (JS 数组 + Java ArrayList)                            | `rhinoForOfPlugin` → 索引 for 循环 + `.toArray()` |
+| `.map()` `.filter()` `.forEach()` `.find()` `.some()` `.every()` | `rhinoArrayMethodsPlugin` → IIFE + for 循环       |
+| `const` / `let`                                                  | Babel `@babel/preset-env`                         |
+| 解构 `const { x, y } = obj`                                      | Babel `@babel/preset-env`                         |
 
 **纯 JS 脚本注意事项：**
 

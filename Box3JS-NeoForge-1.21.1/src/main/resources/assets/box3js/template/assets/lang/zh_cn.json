@@ -1,5 +1,5 @@
 {
-  "block.mymod.ruby_block": "红宝石块",
-  "item.mymod.chocolate": "巧克力棒",
-  "itemGroup.mymod.my_blocks": "我的方块"
+  "block.mygame.ruby_block": "红宝石块",
+  "item.mygame.chocolate": "巧克力棒",
+  "itemGroup.mygame.my_blocks": "我的方块"
 }

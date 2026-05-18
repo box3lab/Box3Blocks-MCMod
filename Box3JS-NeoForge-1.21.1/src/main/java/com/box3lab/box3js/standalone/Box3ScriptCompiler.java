@@ -1,26 +1,41 @@
 package com.box3lab.box3js.standalone;
 
-import javax.tools.JavaCompiler;
-import javax.tools.JavaFileObject;
-import javax.tools.StandardJavaFileManager;
-import javax.tools.ToolProvider;
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.security.CodeSource;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.regex.Pattern;
 
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
+
 /**
  * Compiles a Box3JS TypeScript project into a lightweight NeoForge mod JAR.
  *
- * <p>Script JARs (~50KB) contain only the generated {@code @Mod} entry point
+ * <p>
+ * Script JARs (~50KB) contain only the generated {@code @Mod} entry point
  * and bundled JS source. They depend on the Box3JS mod ({@code box3js}) for
  * the Rhino runtime and API bindings — no classes are bundled.
  *
@@ -156,7 +171,8 @@ public class Box3ScriptCompiler {
 
     private void bundleAssets(Path workDir) throws IOException {
         Path src = projectDir.resolve("assets");
-        if (!Files.isDirectory(src)) return;
+        if (!Files.isDirectory(src))
+            return;
 
         Path dest = workDir.resolve("assets/" + modId);
         copyDir(src, dest);
@@ -166,7 +182,8 @@ public class Box3ScriptCompiler {
     private void generateSoundsFile(Path workDir,
             java.util.List<Box3JSRegistryGen.SoundDef> sounds) throws IOException {
         String soundsJson = Box3JSRegistryGen.generateSoundsJson(modId, sounds);
-        if (soundsJson == null) return;
+        if (soundsJson == null)
+            return;
         Path assetsDir = workDir.resolve("assets/" + modId);
         Files.createDirectories(assetsDir);
         Files.writeString(assetsDir.resolve("sounds.json"), soundsJson);
@@ -195,32 +212,34 @@ public class Box3ScriptCompiler {
         String[] registryCode = Box3JSRegistryGen.generateJavaCode(modId, blocks, tabs, items, sounds);
         String fieldDecls = registryCode[0];
         String constructorRegs = registryCode[1];
-        String extraImports = Box3JSRegistryGen.generateImports(hasBlocks, hasTabs, hasItems, hasSounds, hasTools, hasArmor);
+        String extraImports = Box3JSRegistryGen.generateImports(hasBlocks, hasTabs, hasItems, hasSounds, hasTools,
+                hasArmor);
 
         // Generate supplier map builder methods
         StringBuilder mapMethods = new StringBuilder();
         if (hasBlocks) {
             mapMethods.append("""
 
-                    private static java.util.Map<String, java.util.function.Supplier<Block>> buildBlockMap() {
-                        java.util.Map<String, java.util.function.Supplier<Block>> map = new java.util.HashMap<>();
-                """);
+                        private static java.util.Map<String, java.util.function.Supplier<Block>> buildBlockMap() {
+                            java.util.Map<String, java.util.function.Supplier<Block>> map = new java.util.HashMap<>();
+                    """);
             for (var b : blocks) {
                 String field = b.id().toUpperCase();
                 mapMethods.append("        map.put(\"").append(b.id())
-                    .append("\", () -> ").append(field).append(".get());\n");
+                        .append("\", () -> ").append(field).append(".get());\n");
             }
             mapMethods.append("        return map;\n    }\n");
 
-            mapMethods.append("""
+            mapMethods
+                    .append("""
 
-                    private static java.util.Map<String, java.util.function.Supplier<BlockItem>> buildBlockItemMap() {
-                        java.util.Map<String, java.util.function.Supplier<BlockItem>> map = new java.util.HashMap<>();
-                """);
+                                private static java.util.Map<String, java.util.function.Supplier<BlockItem>> buildBlockItemMap() {
+                                    java.util.Map<String, java.util.function.Supplier<BlockItem>> map = new java.util.HashMap<>();
+                            """);
             for (var b : blocks) {
                 String field = b.id().toUpperCase();
                 mapMethods.append("        map.put(\"").append(b.id())
-                    .append("\", () -> ").append(field).append("_ITEM.get());\n");
+                        .append("\", () -> ").append(field).append("_ITEM.get());\n");
             }
             mapMethods.append("        return map;\n    }\n");
         }
@@ -228,27 +247,28 @@ public class Box3ScriptCompiler {
         if (hasItems) {
             mapMethods.append("""
 
-                    private static java.util.Map<String, java.util.function.Supplier<Item>> buildItemMap() {
-                        java.util.Map<String, java.util.function.Supplier<Item>> map = new java.util.HashMap<>();
-                """);
+                        private static java.util.Map<String, java.util.function.Supplier<Item>> buildItemMap() {
+                            java.util.Map<String, java.util.function.Supplier<Item>> map = new java.util.HashMap<>();
+                    """);
             for (var it : items) {
                 String field = it.id().toUpperCase();
                 mapMethods.append("        map.put(\"").append(it.id())
-                    .append("\", () -> ").append(field).append(".get());\n");
+                        .append("\", () -> ").append(field).append(".get());\n");
             }
             mapMethods.append("        return map;\n    }\n");
         }
 
         if (hasSounds) {
-            mapMethods.append("""
+            mapMethods
+                    .append("""
 
-                    private static java.util.Map<String, java.util.function.Supplier<SoundEvent>> buildSoundMap() {
-                        java.util.Map<String, java.util.function.Supplier<SoundEvent>> map = new java.util.HashMap<>();
-                """);
+                                private static java.util.Map<String, java.util.function.Supplier<SoundEvent>> buildSoundMap() {
+                                    java.util.Map<String, java.util.function.Supplier<SoundEvent>> map = new java.util.HashMap<>();
+                            """);
             for (var s : sounds) {
                 String field = s.id().toUpperCase();
                 mapMethods.append("        map.put(\"").append(s.id())
-                    .append("\", () -> ").append(field).append(".get());\n");
+                        .append("\", () -> ").append(field).append(".get());\n");
             }
             mapMethods.append("        return map;\n    }\n");
         }
@@ -261,8 +281,10 @@ public class Box3ScriptCompiler {
         superArgs.append(", ").append(hasSounds ? "buildSoundMap()" : "null");
 
         var hardcodedImports = new StringBuilder();
-        if (hasItems) hardcodedImports.append("import net.minecraft.world.item.Item;\n");
-        if (hasSounds) hardcodedImports.append("import net.minecraft.sounds.SoundEvent;\n");
+        if (hasItems)
+            hardcodedImports.append("import net.minecraft.world.item.Item;\n");
+        if (hasSounds)
+            hardcodedImports.append("import net.minecraft.sounds.SoundEvent;\n");
 
         String src = String.format("""
                 package %s;
@@ -293,23 +315,20 @@ public class Box3ScriptCompiler {
     }
 
     private void compileJava(Path genSrcDir, Path classesDir) throws Exception {
-        List<Path> cpEntries = new ArrayList<>();
-        ClassLoader cl = getClass().getClassLoader();
-        if (cl instanceof URLClassLoader ucl) {
-            for (URL url : ucl.getURLs()) {
-                try {
-                    cpEntries.add(Path.of(url.toURI()));
-                } catch (Exception ignored) {
-                }
-            }
-        }
+        LinkedHashSet<Path> cpEntries = new LinkedHashSet<>();
+
+        collectFromClassLoader(cpEntries, getClass().getClassLoader());
+        collectFromJavaPathProperty(cpEntries, "java.class.path", File.pathSeparator);
+        collectFromJavaPathProperty(cpEntries, "jdk.module.path", File.pathSeparator);
+        collectFromLegacyClasspathFile(cpEntries);
+        collectFromCodeSource(cpEntries, Box3ScriptCompiler.class);
+        collectFromCodeSource(cpEntries, Box3StandaloneBootstrap.class);
+        collectFromRuntimeAnchors(cpEntries);
+
         if (cpEntries.isEmpty()) {
-            String cp = System.getProperty("java.class.path");
-            for (String entry : cp.split(File.pathSeparator)) {
-                Path p = Path.of(entry);
-                if (Files.exists(p))
-                    cpEntries.add(p);
-            }
+            throw new RuntimeException(
+                    "No classpath entries resolved for generated @Mod compilation. "
+                            + "Expected java.class.path or legacyClassPath.file to be available.");
         }
 
         List<File> sourceFiles = new ArrayList<>();
@@ -330,11 +349,9 @@ public class Box3ScriptCompiler {
             options.add("-d");
             options.add(classesDir.toString());
             options.add("-proc:none");
-            if (!cpEntries.isEmpty()) {
-                options.add("-classpath");
-                options.add(String.join(File.pathSeparator,
-                        cpEntries.stream().map(Path::toString).toList()));
-            }
+            options.add("-classpath");
+            options.add(String.join(File.pathSeparator,
+                    cpEntries.stream().map(Path::toString).toList()));
 
             JavaCompiler.CompilationTask task = jc.getTask(
                     null, fm, null, options, null, units);
@@ -343,6 +360,143 @@ public class Box3ScriptCompiler {
             }
         }
         System.out.println("  Compiled " + sourceFiles.size() + " generated source(s)");
+    }
+
+    private static void collectFromClassLoader(Set<Path> out, ClassLoader cl) {
+        if (!(cl instanceof URLClassLoader ucl)) {
+            return;
+        }
+        for (URL url : ucl.getURLs()) {
+            addPathFromLocation(out, url.toString());
+        }
+    }
+
+    private static void collectFromJavaPathProperty(Set<Path> out, String prop, String separator) {
+        String raw = System.getProperty(prop);
+        if (raw == null || raw.isBlank()) {
+            return;
+        }
+        for (String entry : raw.split(Pattern.quote(separator))) {
+            if (entry == null || entry.isBlank()) {
+                continue;
+            }
+            try {
+                Path p = Path.of(entry.trim());
+                if (Files.exists(p)) {
+                    out.add(p);
+                }
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    private static void collectFromLegacyClasspathFile(Set<Path> out) {
+        String legacyFile = System.getProperty("legacyClassPath.file");
+        if (legacyFile == null || legacyFile.isBlank()) {
+            return;
+        }
+        Path file = Path.of(legacyFile.trim());
+        if (!Files.isRegularFile(file)) {
+            return;
+        }
+
+        try {
+            String raw = Files.readString(file, StandardCharsets.UTF_8);
+            for (String token : raw.split("\\s+")) {
+                if (token == null || token.isBlank()) {
+                    continue;
+                }
+                try {
+                    Path p = Path.of(token.trim());
+                    if (Files.exists(p)) {
+                        out.add(p);
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        } catch (IOException ignored) {
+        }
+    }
+
+    private static void collectFromCodeSource(Set<Path> out, Class<?> type) {
+        try {
+            CodeSource cs = type.getProtectionDomain().getCodeSource();
+            if (cs == null || cs.getLocation() == null) {
+                return;
+            }
+            addPathFromLocation(out, cs.getLocation().toString());
+
+            URL classRes = type.getResource(type.getSimpleName() + ".class");
+            if (classRes != null) {
+                addPathFromLocation(out, classRes.toString());
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    private static void addPathFromLocation(Set<Path> out, String location) {
+        if (location == null || location.isBlank()) {
+            return;
+        }
+        Path p = pathFromLocation(location);
+        if (p != null && Files.exists(p)) {
+            out.add(p);
+        }
+    }
+
+    private static Path pathFromLocation(String location) {
+        String s = location.trim();
+        try {
+            if (s.startsWith("jar:")) {
+                s = s.substring("jar:".length());
+            }
+            if (s.startsWith("union:")) {
+                s = s.substring("union:".length());
+            }
+
+            int bang = s.indexOf("!/");
+            if (bang >= 0) {
+                s = s.substring(0, bang);
+            }
+
+            int marker = s.indexOf("%23");
+            if (marker >= 0) {
+                s = s.substring(0, marker);
+            }
+
+            s = URLDecoder.decode(s, StandardCharsets.UTF_8);
+
+            if (s.startsWith("file:")) {
+                return Path.of(URI.create(s));
+            }
+            if (s.startsWith("/")) {
+                return Path.of(s);
+            }
+
+            URI uri = URI.create(s);
+            if ("file".equalsIgnoreCase(uri.getScheme())) {
+                return Path.of(uri);
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    private static void collectFromRuntimeAnchors(Set<Path> out) {
+        String[] anchors = new String[] {
+                "net.minecraft.world.level.block.Block",
+                "net.minecraft.world.item.Item",
+                "net.neoforged.fml.common.Mod",
+                "net.neoforged.neoforge.registries.DeferredRegister",
+                "net.neoforged.bus.api.IEventBus"
+        };
+        for (String name : anchors) {
+            try {
+                Class<?> c = Class.forName(name);
+                collectFromCodeSource(out, c);
+            } catch (Throwable ignored) {
+            }
+        }
     }
 
     // ── Step 4: Metadata + packaging ──
@@ -435,17 +589,17 @@ public class Box3ScriptCompiler {
     private void addDirToJar(JarOutputStream jos, Path root, Path dir) throws IOException {
         try (var stream = Files.walk(dir)) {
             stream.filter(Files::isRegularFile)
-                .filter(f -> !f.getFileName().toString().equals(".DS_Store"))
-                .forEach(file -> {
-                try {
-                    String entryName = root.relativize(file).toString().replace('\\', '/');
-                    jos.putNextEntry(new JarEntry(entryName));
-                    Files.copy(file, jos);
-                    jos.closeEntry();
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
+                    .filter(f -> !f.getFileName().toString().equals(".DS_Store"))
+                    .forEach(file -> {
+                        try {
+                            String entryName = root.relativize(file).toString().replace('\\', '/');
+                            jos.putNextEntry(new JarEntry(entryName));
+                            Files.copy(file, jos);
+                            jos.closeEntry();
+                        } catch (IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                    });
         } catch (UncheckedIOException e) {
             throw e.getCause();
         }

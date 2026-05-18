@@ -32,7 +32,7 @@
       "accessorProperties": ["serverId", "rainDensity", "thunderDensity", "time", "timeScale", "difficulty", "spawnPoint", "ambientSound", "playerJoinSound", "playerLeaveSound", "placeVoxelSound", "breakVoxelSound", "borderSize"],
       "keepMethodNames": ["setTime"],
       "ignoreJava": ["setProjectName", "removeProject", "resetAll", "getProjectName", "getCurrentTick"],
-      "docs": ["docs/api/world.md", "docs/api/world_en.md"]
+      "docs": ["docs/api/world.md", "docs/en/api/world.md"]
     },
     {
       "name": "GameVector3",
@@ -85,7 +85,7 @@
       "ignoreJava": ["getEntity"],
       "accessorProperties": ["id", "entityType", "player", "position", "velocity", "bounds", "meshInvisible", "glowing", "nameTag", "onGround", "eyePosition", "destroyed", "hp", "maxHp", "collides", "fixed", "gravity", "friction", "mass", "restitution", "invulnerable"],
       "keepMethodNames": ["isPlayer", "setNameTag"],
-      "docs": ["docs/api/entity.md", "docs/api/entity_en.md"]
+      "docs": ["docs/api/entity.md", "docs/en/api/entity.md"]
     },
     {
       "name": "player",
@@ -95,7 +95,7 @@
       "iface": "GamePlayer",
       "ignoreJava": ["getPlayer"],
       "accessorProperties": ["position", "velocity", "bounds", "onGround", "name", "userId", "opLevel", "invisible", "scale", "walkSpeed", "runSpeed", "jumpPower", "moveState", "walkState", "enableJump", "crouchSpeed", "swimSpeed", "canFly", "flying", "collision", "spectator", "flySpeed", "gameMode", "dimension", "disableFly", "cameraMode", "cameraEntity", "cameraPitch", "cameraYaw", "facingDirection", "cameraTarget", "dead", "spawnPoint", "hp", "maxHp", "xp", "food", "saturation"],
-      "docs": ["docs/api/player.md", "docs/api/player_en.md"]
+      "docs": ["docs/api/player.md", "docs/en/api/player.md"]
     },
     {
       "name": "voxels",
@@ -104,7 +104,7 @@
       "dts": "src/main/resources/assets/box3js/template/types/server/voxels.d.ts",
       "iface": "GameVoxels",
       "ignoreJava": ["getId"],
-      "docs": ["docs/api/voxels.md", "docs/api/voxels_en.md"]
+      "docs": ["docs/api/voxels.md", "docs/en/api/voxels.md"]
     },
     {
       "name": "server storage",
@@ -113,7 +113,7 @@
       "dts": ["src/main/resources/assets/box3js/template/types/shared.d.ts", "src/main/resources/assets/box3js/template/types/server/server.d.ts"],
       "iface": "GameStorage",
       "accessorProperties": ["key"],
-      "docs": ["docs/api/storage.md", "docs/api/storage_en.md"]
+      "docs": ["docs/api/storage.md", "docs/en/api/storage.md"]
     },
     {
       "name": "server data storage",
@@ -123,7 +123,7 @@
       "iface": "GameDataStorage",
       "nestedClass": "GameDataStorage",
       "accessorProperties": ["key"],
-      "docs": ["docs/api/storage.md", "docs/api/storage_en.md"]
+      "docs": ["docs/api/storage.md", "docs/en/api/storage.md"]
     },
     {
       "name": "client storage",
@@ -146,7 +146,7 @@
       "java": "src/main/java/com/box3lab/box3js/script/Box3JSRemoteChannel.java",
       "dts": "src/main/resources/assets/box3js/template/types/server/server.d.ts",
       "iface": "RemoteChannel",
-      "docs": ["docs/api/server.md", "docs/api/server_en.md"]
+      "docs": ["docs/api/server.md", "docs/en/api/server.md"]
     },
     {
       "name": "http",
@@ -154,7 +154,7 @@
       "java": "src/main/java/com/box3lab/box3js/script/Box3JSHttp.java",
       "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts",
       "iface": "GameHttpAPI",
-      "docs": ["docs/api/http.md", "docs/api/http_en.md"]
+      "docs": ["docs/api/http.md", "docs/en/api/http.md"]
     },
     {
       "name": "client http",
@@ -168,7 +168,7 @@
       "java": "src/main/java/com/box3lab/box3js/script/Box3DatabaseBase.java",
       "dts": "src/main/resources/assets/box3js/template/types/shared.d.ts",
       "iface": "GameDatabase",
-      "docs": ["docs/api/database.md", "docs/api/database_en.md"]
+      "docs": ["docs/api/database.md", "docs/en/api/database.md"]
     },
     {
       "name": "query result",
@@ -194,7 +194,7 @@
       "javaObject": { "path": "src/main/java/com/box3lab/box3js/standalone/Box3StandaloneBootstrap.java", "variable": "registriesObj" },
       "dts": "src/main/resources/assets/box3js/template/types/server/server.d.ts",
       "iface": "GameRegistries",
-      "docs": ["docs/api/registries.md", "docs/api/registries_en.md"]
+      "docs": ["docs/api/registries.md", "docs/en/api/registries.md"]
     },
     {
       "name": "client",
@@ -202,7 +202,7 @@
       "javaObject": { "path": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java", "variable": "clientObj" },
       "dts": "src/main/resources/assets/box3js/template/types/client/client.d.ts",
       "iface": "GameClient",
-      "docs": ["docs/api/client.md", "docs/api/client_en.md"]
+      "docs": ["docs/api/client.md", "docs/en/api/client.md"]
     },
     {
       "name": "audio",
@@ -210,7 +210,7 @@
       "javaObject": { "path": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java", "variable": "audioObj" },
       "dts": "src/main/resources/assets/box3js/template/types/client/audio.d.ts",
       "iface": "GameAudio",
-      "docs": ["docs/api/client.md", "docs/api/client_en.md"]
+      "docs": ["docs/api/client.md", "docs/en/api/audio.md"]
     },
     {
       "name": "input",
@@ -218,7 +218,7 @@
       "javaObject": { "path": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java", "variable": "inputObj" },
       "dts": "src/main/resources/assets/box3js/template/types/client/input.d.ts",
       "iface": "GameInput",
-      "docs": ["docs/api/client.md", "docs/api/client_en.md"]
+      "docs": ["docs/api/client.md", "docs/en/api/input.md"]
     },
     {
       "name": "ui",
@@ -226,7 +226,7 @@
       "javaObject": { "path": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java", "variable": "uiObj" },
       "dts": "src/main/resources/assets/box3js/template/types/client/ui.d.ts",
       "iface": "GameUI",
-      "docs": ["docs/api/client.md", "docs/api/client_en.md"]
+      "docs": ["docs/api/client.md", "docs/en/api/ui.md"]
     },
     {
       "name": "chat",
@@ -234,7 +234,7 @@
       "javaObject": { "path": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java", "variable": "chatObj" },
       "dts": "src/main/resources/assets/box3js/template/types/client/chat.d.ts",
       "iface": "GameChat",
-      "docs": ["docs/api/client.md", "docs/api/client_en.md"]
+      "docs": ["docs/api/client.md", "docs/en/api/chat.md"]
     },
     {
       "name": "client remoteChannel",
@@ -242,7 +242,7 @@
       "javaObject": { "path": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java", "variable": "rcObj" },
       "dts": "src/main/resources/assets/box3js/template/types/client/client.d.ts",
       "iface": "RemoteChannel",
-      "docs": ["docs/api/client.md", "docs/api/client_en.md"]
+      "docs": ["docs/api/client.md", "docs/en/api/remote-channel.md"]
     },
     {
       "name": "client database",
@@ -262,7 +262,7 @@
       "javaObject": { "path": "src/main/java/com/box3lab/box3js/client/Box3JSClientEngine.java", "variable": "guiObj" },
       "dts": "src/main/resources/assets/box3js/template/types/client/gui.d.ts",
       "iface": "GameGUI",
-      "docs": ["docs/api/client.md", "docs/api/client_en.md"]
+      "docs": ["docs/api/client.md", "docs/en/api/gui.md"]
     },
     {
       "name": "gui controller",
@@ -271,7 +271,7 @@
       "dts": "src/main/resources/assets/box3js/template/types/client/gui.d.ts",
       "iface": "GuiController",
       "ignoreJava": ["fireSlotClick", "fireClose"],
-      "docs": ["docs/api/client.md", "docs/api/client_en.md"]
+      "docs": ["docs/api/client.md", "docs/en/api/gui.md"]
     }
   ]
 }

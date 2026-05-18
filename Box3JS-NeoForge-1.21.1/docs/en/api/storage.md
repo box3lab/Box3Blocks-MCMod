@@ -6,7 +6,7 @@
 `storage` provides JSON file persistence with in-memory caching for fast reads/writes.
 
 ::: info Runtime
-Available on both server and client. Server data is saved under `config/box3/storage/<project>/`; client data is saved under the local game directory at `box3/client-storage/<project>/`. Each project automatically gets an independent namespace.
+Available on both server and client. Server data is saved under `config/box3/storage/<project>/`; client data is saved under the local game directory at `config/box3/client-storage/<project>/`. Each project automatically gets an independent namespace.
 :::
 
 ## Getting a Storage Instance

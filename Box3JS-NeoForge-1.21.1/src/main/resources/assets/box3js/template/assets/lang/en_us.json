@@ -1,5 +1,5 @@
 {
-  "block.mymod.ruby_block": "Ruby Block",
-  "item.mymod.chocolate": "Chocolate Bar",
-  "itemGroup.mymod.my_blocks": "My Blocks"
+  "block.mygame.ruby_block": "Ruby Block",
+  "item.mygame.chocolate": "Chocolate Bar",
+  "itemGroup.mygame.my_blocks": "My Blocks"
 }

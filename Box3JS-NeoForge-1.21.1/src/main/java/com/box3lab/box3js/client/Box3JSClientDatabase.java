@@ -1,19 +1,24 @@
 package com.box3lab.box3js.client;
 
-import com.box3lab.box3js.script.Box3DatabaseBase;
-import com.box3lab.box3js.script.Box3JSQueryResult;
-import com.mojang.logging.LogUtils;
-import org.slf4j.Logger;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import org.slf4j.Logger;
+
+import com.box3lab.box3js.script.Box3DatabaseBase;
+import com.mojang.logging.LogUtils;
 
 /**
  * Client-side SQLite database exposed to JS as the {@code db} global.
  *
- * <p>Database files are stored at {@code <gameDir>/box3/client-db/<project>.db}.
+ * <p>
+ * Database files are stored at
+ * {@code <gameDir>/config/box3/client-db/<project>.db}.
  */
 public class Box3JSClientDatabase extends Box3DatabaseBase {
 
@@ -24,7 +29,7 @@ public class Box3JSClientDatabase extends Box3DatabaseBase {
     private Connection connection;
 
     public Box3JSClientDatabase(java.io.File gameDir) {
-        this.dataDir = gameDir.toPath().resolve("box3").resolve("client-db");
+        this.dataDir = gameDir.toPath().resolve("config").resolve("box3").resolve("client-db");
         try {
             Files.createDirectories(dataDir);
         } catch (IOException e) {
