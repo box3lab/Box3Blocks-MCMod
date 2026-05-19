@@ -268,55 +268,157 @@ audio.playSound("colorzone:victory_fanfare", 1.0, 1.0);
 
 ## assets/ 目录
 
-与 Minecraft 资源包结构一致：
+编译时 `assets/` 原样复制到 JAR 的 `assets/<modId>/` 下。**只有 `sounds.json` 由编译器从 `registries/sounds.json` 自动生成**，其他所有文件（模型、贴图、blockstate、语言文件）需要**手动创建**。
 
-```text
-assets/<modId>/
-├── blockstates/<blockId>.json       ← 自动生成，可自定义覆盖
-├── models/block/<blockId>.json      ← 自动生成，可自定义覆盖
-├── models/item/<blockId>.json       ← 方块自动生成；物品必须提供
-├── lang/
-│   ├── en_us.json                   ← 需手动创建
-│   ├── zh_cn.json                   ← 需手动创建
-│   └── ja_jp.json                   ← 可选：自行添加
-├── sounds.json                      ← 由 registries/sounds.json 自动生成
-└── textures/
-    ├── block/<blockId>_<face>.png
-    └── item/<itemId>.png
-```
-
-::: tip
+::: tip modId
 `<modId>` 来自 `package.json` 的 `name` 字段（从第二个 `/` 后取，如 `@scope/mygame` → `mygame`）。
 :::
 
-编译时自动将 `assets/` 打包为 `assets/<modId>/`。
-
-### 多语言
-
-语言文件需要在 `assets/lang/` 目录下**手动创建**，不会被自动生成。至少应提供 `en_us.json` 和 `zh_cn.json`，也可添加更多语言：
+### 完整目录结构
 
 ```text
-mygame/
-└── assets/
-    └── lang/
-        ├── en_us.json      ← 英文翻译
-        ├── zh_cn.json      ← 中文翻译
-        ├── ja_jp.json      ← 你的日文翻译
-        └── ko_kr.json      ← 你的韩文翻译
+assets/
+├── blockstates/<blockId>.json         ← 手动创建（每个方块一个）
+├── models/
+│   ├── block/<blockId>.json           ← 手动创建（方块模型）
+│   └── item/<itemId>.json             ← 手动创建（方块物品引用 block 模型，普通物品用 generated）
+├── textures/
+│   ├── block/<blockId>_<face>.png     ← 方块六面贴图
+│   ├── item/<itemId>.png              ← 物品贴图
+│   └── models/armor/                  ← 自定义护甲贴图（可选，用 armorTexture 属性时）
+│       ├── <name>_layer_1.png         ←   头盔 + 胸甲 + 鞋子
+│       └── <name>_layer_2.png         ←   护腿
+├── sounds/<soundId>.ogg               ← 音效文件（可选）
+└── lang/
+    ├── en_us.json                      ← 英文翻译（需手动创建）
+    └── zh_cn.json                      ← 中文翻译（需手动创建）
 ```
 
-格式与 Minecraft 标准 lang 文件一致：
+### Blockstate
+
+每个方块需要一个 blockstate JSON，格式固定：
 
 ```json
 {
-  "block.mygame.ruby_block": "Ruby Block",
-  "item.mygame.ruby_sword": "Ruby Sword",
-  "item.mygame.chocolate": "Chocolate Bar",
-  "itemGroup.mygame.my_blocks": "My Blocks"
+  "variants": {
+    "": { "model": "<modId>:block/<blockId>" }
+  }
 }
 ```
 
-MC 客户端会根据语言设置自动加载对应的文件，无需任何额外配置。
+### 方块模型
+
+使用 `minecraft:block/cube` 父模型，六个面分别指定贴图：
+
+```json
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "<modId>:block/<blockId>_top",
+    "down": "<modId>:block/<blockId>_bottom",
+    "north": "<modId>:block/<blockId>_front",
+    "south": "<modId>:block/<blockId>_back",
+    "west": "<modId>:block/<blockId>_left",
+    "east": "<modId>:block/<blockId>_right",
+    "particle": "<modId>:block/<blockId>_bottom"
+  }
+}
+```
+
+六个面使用相同贴图时可简化为 `"all": "<modId>:block/<blockId>"`。
+
+### 方块贴图
+
+贴图命名约定：`<blockId>_<face>.png`，六个面分别为 `top`、`bottom`、`front`、`back`、`left`、`right`。
+
+- 尺寸：16×16 到 64×64，PNG 格式
+- 动画贴图：添加同名 `.mcmeta` 文件，如 `star_lamp_front.png.mcmeta`：
+  ```json
+  {"animation":{"frametime":4}}
+  ```
+  `frametime` 表示每帧持续多少 tick（1 tick = 1/20 秒）。
+
+### 物品模型
+
+**方块物品**（方块自动成为物品，无需额外注册）——直接引用方块模型：
+
+```json
+{
+  "parent": "<modId>:block/<blockId>"
+}
+```
+
+**普通物品**（`items.json` 中注册的物品）——使用 `minecraft:item/generated` + `layer0` 贴图：
+
+```json
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "<modId>:item/<itemId>"
+  }
+}
+```
+
+物品贴图放在 `textures/item/<itemId>.png`。
+
+### 自定义护甲贴图
+
+在 `items.json` 中设置 `"armorTexture": "star"` 后，需在 `assets/textures/models/armor/` 提供两张贴图：
+
+```
+textures/models/armor/
+├── star_layer_1.png   ← 头盔 + 胸甲 + 鞋子
+└── star_layer_2.png   ← 护腿
+```
+
+`armorTexture` 留空则使用 `tier` 对应的原版护甲材质，无需提供贴图。详见上方 [装备类型](#装备类型-工具-盔甲) 章节。
+
+### 多语言
+
+语言文件需放在 `assets/lang/`，格式与 Minecraft 标准一致：
+
+| 类型 | 键名格式 | 示例 |
+|------|---------|------|
+| 方块 | `block.<modId>.<id>` | `block.mygame.ruby_block` |
+| 物品 | `item.<modId>.<id>` | `item.mygame.ruby_sword` |
+| 创造标签页 | `itemGroup.<modId>.<id>` | `itemGroup.mygame.my_blocks` |
+
+示例 `zh_cn.json`：
+
+```json
+{
+  "block.mygame.ruby_block": "红宝石块",
+  "block.mygame.glass_block": "玻璃块",
+  "item.mygame.ruby_sword": "红宝石剑",
+  "item.mygame.chocolate": "巧克力棒",
+  "itemGroup.mygame.my_blocks": "我的方块"
+}
+```
+
+客户端根据语言设置自动加载对应文件，无需额外配置。
+
+### 完整示例
+
+一个方块的最小文件组合：
+
+```text
+mygame/assets/
+├── blockstates/ruby_block.json
+├── models/block/ruby_block.json
+├── models/item/ruby_block.json
+├── textures/block/
+│   ├── ruby_block_top.png
+│   ├── ruby_block_bottom.png
+│   ├── ruby_block_front.png
+│   ├── ruby_block_back.png
+│   ├── ruby_block_left.png
+│   └── ruby_block_right.png
+└── lang/
+    ├── en_us.json
+    └── zh_cn.json
+```
+
+参考 `colorzone/assets/` 查看完整项目示例（含动画贴图、物品模型、自定义护甲、音效等）。
 
 ## registries 运行时 API
 

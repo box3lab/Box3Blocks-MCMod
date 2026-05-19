@@ -317,7 +317,6 @@ Box3JS 使用 Rhino 1.9.1 引擎。**TypeScript 项目用 `npm run build` 编译
 **纯 JS 脚本注意事项：**
 
 - `result.rows` 返回 `NativeArray`，不支持 ES5 数组方法，请使用 for 循环。
-- 避免正则字面量（如 `/\s+/`），改用字符串方法。
 - 箭头函数、模板字面量、for...of 等需要用 TypeScript 编译后才能使用。
 
 ## 注意事项

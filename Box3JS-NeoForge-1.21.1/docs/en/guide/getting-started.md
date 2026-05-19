@@ -96,9 +96,9 @@ This generates a complete TypeScript project at `config/box3/script/mygame/`.
 ```text
 config/box3/script/mygame/
 ├── package.json           ← Project config (name, version, build deps)
-├── tsconfig.base.json     ← Shared TS compiler options
-├── tsconfig.server.json   ← Server TS config (references server/ types)
-├── tsconfig.client.json   ← Client TS config (references client/ types)
+├── tsconfig.json          ← TS project references root (references server + client)
+├── tsconfig.server.json   ← Server TS config (standalone compilerOptions + server/ types)
+├── tsconfig.client.json   ← Client TS config (standalone compilerOptions + client/ types)
 ├── build.mjs              ← Build script (esbuild + Babel)
 ├── eslint.config.mjs      ← ESLint rules
 ├── types/                 ← ★ Type declarations (API reference)
@@ -130,7 +130,7 @@ config/box3/script/mygame/
 **Key insights:**
 
 - The `.d.ts` files in `types/` are your API reference — VS Code uses them for IntelliSense
-- `tsconfig.server.json` and `tsconfig.client.json` are **mutually exclusive** — server code never sees client globals like `client`, `input`, etc.
+- `tsconfig.json` manages two sub-projects via `references`; `tsconfig.server.json` and `tsconfig.client.json` each contain standalone `compilerOptions` and `include`, and are **mutually exclusive** — server code never sees client globals like `client`, `input`, etc.
 - You only need to write code in `src/server/app.ts` (and optionally `src/client/app.ts`); the build tooling handles everything else
 
 ### Install Dependencies

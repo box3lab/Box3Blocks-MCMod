@@ -340,9 +340,9 @@ Projects created with `/box3script create` come with a complete TS build environ
 ```text
 config/box3/script/mygame/
 ├── package.json          ← esbuild + Babel + @babel/preset-typescript
-├── tsconfig.base.json    ← Shared TS compiler options
-├── tsconfig.server.json  ← Server-side TS config
-├── tsconfig.client.json  ← Client-side TS config
+├── tsconfig.json         ← TS project references root (references server + client)
+├── tsconfig.server.json  ← Server-side TS config (standalone compilerOptions + include)
+├── tsconfig.client.json  ← Client-side TS config (standalone compilerOptions + include)
 ├── build.mjs             ← Babel TS→JS → esbuild bundle → dist/
 ├── types/
 │   ├── shared.d.ts       ← Shared types (server & client)
