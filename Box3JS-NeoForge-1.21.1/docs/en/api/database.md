@@ -253,7 +253,6 @@ Box3JS uses the Rhino 1.9.1 engine. **TypeScript projects compiled with `npm run
 **Plain JS notes:**
 
 - `result.rows` returns a `NativeArray` — use indexed for loops.
-- Avoid regex literals (e.g. `/\s+/`) — use string methods.
 - Arrow functions, template literals, `for...of` require TypeScript compilation.
 
 ## Tagged Template Safety

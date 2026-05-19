@@ -83,9 +83,9 @@ Box3JS 的 API 设计继承自**[神奇代码岛](https://dao3.fun)（Box3）**�
 ```text
 config/box3/script/mygame/
 ├── package.json           ← 项目配置（名称、版本、构建依赖）
-├── tsconfig.base.json     ← TypeScript 公共编译选项
-├── tsconfig.server.json   ← 服务端 TS 配置（引用 server/ 类型）
-├── tsconfig.client.json   ← 客户端 TS 配置（引用 client/ 类型）
+├── tsconfig.json          ← TS 项目引用根配置（references server + client）
+├── tsconfig.server.json   ← 服务端 TS 配置（独立 compilerOptions + server/ 类型）
+├── tsconfig.client.json   ← 客户端 TS 配置（独立 compilerOptions + client/ 类型）
 ├── build.mjs              ← 构建脚本（esbuild + Babel）
 ├── eslint.config.mjs      ← ESLint 规则
 ├── types/                 ← ★ 类型声明文件（API 的说明书）
@@ -117,7 +117,7 @@ config/box3/script/mygame/
 **关键理解：**
 
 - `types/` 下的 `.d.ts` 文件是 API 的说明书 — VS Code 靠它们提供智能提示
-- `tsconfig.server.json` 和 `tsconfig.client.json` 是**互斥的** — 服务端代码中不会出现 `client`、`input` 等客户端全局对象
+- `tsconfig.json` 通过 `references` 管理两个子项目，`tsconfig.server.json` 和 `tsconfig.client.json` 各自独立包含 `compilerOptions` 和 `include`，**互斥** — 服务端代码中不会出现 `client`、`input` 等客户端全局对象
 - 你只需要在 `src/server/app.ts` 里写代码，构建工具处理剩下的一切
 
 ### 安装依赖

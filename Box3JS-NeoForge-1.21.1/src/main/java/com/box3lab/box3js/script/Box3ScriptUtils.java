@@ -22,10 +22,62 @@ public class Box3ScriptUtils {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     /**
-     * Pure-JS regex helpers shared between server and client Rhino engines.
-     * Rhino can't load NativeRegExp in the MC classloader, so we provide
-     * a minimal regex implementation in pure JavaScript.
+     * Regex helpers backed by {@code java.util.regex.Pattern} and {@code java.util.regex.Matcher}.
+     * Rhino can't load {@code NativeRegExp} (Minecraft classloader isolation), so we delegate
+     * to the JDK's own regex engine via Rhino's Java interop.
+     *
+     * <p>The Babel build step converts every regex literal into a call to one of these helpers,
+     * so changing the implementation here fixes regex for all existing scripts.</p>
      */
+    public static final String REGEX_HELPERS_JS =
+        "(function(){" +
+        "var Pattern = java.util.regex.Pattern;" +
+        "var Matcher = java.util.regex.Matcher;" +
+        "function flagsToBits(f){" +
+        "  var bits=0;" +
+        "  if(!f)return bits;" +
+        "  if(f.indexOf('i')>=0)bits|=Pattern.CASE_INSENSITIVE;" +
+        "  if(f.indexOf('m')>=0)bits|=Pattern.MULTILINE;" +
+        "  if(f.indexOf('s')>=0)bits|=Pattern.DOTALL;" +
+        "  return bits;" +
+        "}" +
+        "__regexTest=function(p,f,s){" +
+        "  return Pattern.compile(p,flagsToBits(f)).matcher(s).find();" +
+        "};" +
+        "__regexExec=function(p,f,s){" +
+        "  var m=Pattern.compile(p,flagsToBits(f)).matcher(s);" +
+        "  if(!m.find())return null;" +
+        "  var gc=m.groupCount();" +
+        "  var r=[m.group()];" +
+        "  for(var i=1;i<=gc;i++)r.push(m.group(i));" +
+        "  r.index=m.start();" +
+        "  r.input=s;" +
+        "  return r;" +
+        "};" +
+        "__regexMatch=function(s,p,f){" +
+        "  return __regexExec(p,f,s);" +
+        "};" +
+        "__regexSplit=function(s,p,f){" +
+        "  var arr=Pattern.compile(p,flagsToBits(f)).split(s);" +
+        "  var r=[];" +
+        "  for(var i=0;i<arr.length;i++)r.push(String(arr[i]));" +
+        "  return r;" +
+        "};" +
+        "__regexReplace=function(s,p,f,rp){" +
+        "  var m=Pattern.compile(p,flagsToBits(f)).matcher(s);" +
+        "  if(typeof rp==='function'){" +
+        "    var sb=new java.lang.StringBuffer();" +
+        "    while(m.find()){" +
+        "      var rep=String(rp(m.group()));" +
+        "      m.appendReplacement(sb,Matcher.quoteReplacement(rep));" +
+        "    }" +
+        "    m.appendTail(sb);" +
+        "    return sb.toString();" +
+        "  }" +
+        "  return m.replaceAll(String(rp||''));" +
+        "};" +
+        "})();";
+
     /**
      * Shared JS snippet that creates the {@code console} object by forwarding
      * all method calls to the Java {@code _jConsole} backend via {@code .apply()}.
@@ -46,130 +98,6 @@ public class Box3ScriptUtils {
         "    }" +
         "  }" +
         "};";
-
-    public static final String REGEX_HELPERS_JS =
-        "(function(){" +
-        "function isSp(c){return c==' '||c=='\\t'||c=='\\n'||c=='\\r'||c=='\\f'||c=='\\v';}" +
-        "function isDi(c){return c>='0'&&c<='9';}" +
-        "function isWo(c){return(c>='a'&&c<='z')||(c>='A'&&c<='Z')||(c>='0'&&c<='9')||c=='_';}" +
-        "function parse(p,f){" +
-        "var a=[];var i=0;var ic=f.indexOf('i')>=0;" +
-        "while(i<p.length){" +
-        "var ch=p.charAt(i);var m;" +
-        "if(ch=='\\\\'){" +
-        "i++;var e=p.charAt(i);" +
-        "if(e=='s')m=isSp;" +
-        "else if(e=='S')m=function(c){return !isSp(c);};" +
-        "else if(e=='d')m=isDi;" +
-        "else if(e=='D')m=function(c){return !isDi(c);};" +
-        "else if(e=='w')m=isWo;" +
-        "else if(e=='W')m=function(c){return !isWo(c);};" +
-        "else m=function(c){return c==e;};" +
-        "i++;" +
-        "}else if(ch=='.'){" +
-        "m=function(c){return c!='\\n'&&c!='\\r';};i++;" +
-        "}else if(ch=='['){" +
-        "i++;var ne=false;if(p.charAt(i)=='^'){ne=true;i++;}" +
-        "var cs='';" +
-        "while(i<p.length&&p.charAt(i)!=']'){" +
-        "if(p.charAt(i)=='\\\\'){" +
-        "i++;var e2=p.charAt(i);" +
-        "if(e2=='s')cs+=' \\t\\n\\r\\f\\v';" +
-        "else if(e2=='d')cs+='0123456789';" +
-        "else if(e2=='w')cs+='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_';" +
-        "else cs+=e2;" +
-        "}else if(p.charAt(i)=='-'&&i+1<p.length&&p.charAt(i+1)!=']'){" +
-        "var sc=p.charCodeAt(i-1);var ec=p.charCodeAt(i+1);" +
-        "for(var cc=sc+1;cc<=ec;cc++)cs+=String.fromCharCode(cc);" +
-        "i+=2;continue;" +
-        "}else{cs+=p.charAt(i);}" +
-        "i++;" +
-        "}" +
-        "i++;" +
-        "if(ne)m=function(c){return cs.indexOf(c)<0;};" +
-        "else m=function(c){return cs.indexOf(c)>=0;};" +
-        "}else{" +
-        "var lit=ch;var low=ic?lit.toLowerCase():lit;var up=ic?lit.toUpperCase():lit;" +
-        "if(ic)m=function(c){return c==low||c==up;};" +
-        "else m=function(c){return c==lit;};" +
-        "i++;" +
-        "}" +
-        "var min=1,max=1;" +
-        "if(i<p.length){" +
-        "var q=p.charAt(i);" +
-        "if(q=='+'){min=1;max=-1;i++;}" +
-        "else if(q=='*'){min=0;max=-1;i++;}" +
-        "else if(q=='?'){min=0;max=1;i++;}" +
-        "}" +
-        "a.push({m:m,min:min,max:max});" +
-        "}" +
-        "return a;" +
-        "}" +
-        "function matchAt(s,a,pos){" +
-        "var p=pos;" +
-        "for(var ai=0;ai<a.length;ai++){" +
-        "var at=a[ai];var cnt=0;" +
-        "while(p<s.length&&at.m(s.charAt(p))){" +
-        "cnt++;p++;if(at.max>=0&&cnt>=at.max)break;" +
-        "}" +
-        "if(cnt<at.min)return -1;" +
-        "}" +
-        "return p-pos;" +
-        "}" +
-        "function findNext(s,a,pos){" +
-        "for(var i=pos;i<s.length;i++){" +
-        "var len=matchAt(s,a,i);" +
-        "if(len>0)return {index:i,length:len};" +
-        "}" +
-        "return null;" +
-        "}" +
-        "function findAll(s,a){" +
-        "var ms=[];var pos=0;" +
-        "while(pos<s.length){" +
-        "var m=findNext(s,a,pos);" +
-        "if(!m)break;" +
-        "ms.push(m);pos=m.index+m.length;" +
-        "if(m.length===0)pos++;" +
-        "}" +
-        "return ms;" +
-        "}" +
-        "var _ref={parse:parse,findNext:findNext,findAll:findAll};" +
-        "__regexSplit=function(s,p,f){" +
-        "var a=_ref.parse(p,f||'');var r=[];var pos=0;" +
-        "var ms=_ref.findAll(s,a);" +
-        "for(var i=0;i<ms.length;i++){" +
-        "var m=ms[i];r.push(s.substring(pos,m.index));" +
-        "pos=m.index+m.length;" +
-        "}" +
-        "r.push(s.substring(pos));return r;" +
-        "};" +
-        "__regexMatch=function(s,p,f){" +
-        "var a=_ref.parse(p,f||'');" +
-        "var m=_ref.findNext(s,a,0);" +
-        "if(!m)return null;" +
-        "var r=[s.substring(m.index,m.index+m.length)];" +
-        "r.index=m.index;r.input=s;return r;" +
-        "};" +
-        "__regexReplace=function(s,p,f,rp){" +
-        "var a=_ref.parse(p,f||'');" +
-        "var gl=(f||'').indexOf('g')>=0;" +
-        "var ms=_ref.findAll(s,a);var rs='';var pos=0;" +
-        "for(var i=0;i<ms.length;i++){" +
-        "var m=ms[i];rs+=s.substring(pos,m.index);" +
-        "if(typeof rp==='function')rs+=rp(s.substring(m.index,m.index+m.length));" +
-        "else rs+=rp;" +
-        "pos=m.index+m.length;if(!gl)break;" +
-        "}" +
-        "rs+=s.substring(pos);return rs;" +
-        "};" +
-        "__regexTest=function(p,f,s){" +
-        "var a=_ref.parse(p,f||'');" +
-        "return _ref.findNext(s,a,0)!==null;" +
-        "};" +
-        "__regexExec=function(p,f,s){" +
-        "return __regexMatch(s,p,f);" +
-        "};" +
-        "})();";
 
     public static Item lookupItem(String id) {
         ResourceLocation rl = ResourceLocation.tryParse(id);

@@ -337,9 +337,9 @@ Box3JS API 按运行环境分为服务端、客户端和双端共享三类。服
 ```text
 config/box3/script/mygame/
 ├── package.json          ← esbuild + Babel + @babel/preset-typescript
-├── tsconfig.base.json    ← 公共 TS 编译选项
-├── tsconfig.server.json  ← 服务端 TS 配置
-├── tsconfig.client.json  ← 客户端 TS 配置
+├── tsconfig.json         ← TS 项目引用根配置（references server + client）
+├── tsconfig.server.json  ← 服务端 TS 配置（独立 compilerOptions + include）
+├── tsconfig.client.json  ← 客户端 TS 配置（独立 compilerOptions + include）
 ├── build.mjs             ← Babel TS→JS → esbuild bundle → dist/
 ├── types/
 │   ├── shared.d.ts       ← 服务端&客户端共享类型
