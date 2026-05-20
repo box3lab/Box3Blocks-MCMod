@@ -36,17 +36,29 @@ function listFiles(dir) {
 }
 
 function verifyTemplateRecursive() {
-  const source = read("src/main/java/com/box3lab/box3js/script/Box3ScriptTemplate.java");
+  const source = read(
+    "src/main/java/com/box3lab/box3js/script/Box3ScriptTemplate.java",
+  );
   if (!source.includes("JarFile") || !source.includes("Files.walk")) {
-    fail("Box3ScriptTemplate must use recursive enumeration (JarFile + Files.walk) to copy all template files");
+    fail(
+      "Box3ScriptTemplate must use recursive enumeration (JarFile + Files.walk) to copy all template files",
+    );
   }
 }
 
 function verifyRuntimeTypeSplit() {
-  const serverIndex = read("src/main/resources/assets/box3js/template/types/server/index.d.ts");
-  const clientIndex = read("src/main/resources/assets/box3js/template/types/client/index.d.ts");
-  const serverConfig = read("src/main/resources/assets/box3js/template/tsconfig.server.json");
-  const clientConfig = read("src/main/resources/assets/box3js/template/tsconfig.client.json");
+  const serverIndex = read(
+    "src/main/resources/assets/box3js/template/types/server/index.d.ts",
+  );
+  const clientIndex = read(
+    "src/main/resources/assets/box3js/template/types/client/index.d.ts",
+  );
+  const serverConfig = read(
+    "src/main/resources/assets/box3js/template/tsconfig.server.json",
+  );
+  const clientConfig = read(
+    "src/main/resources/assets/box3js/template/tsconfig.client.json",
+  );
 
   if (serverIndex.includes("../client") || serverIndex.includes("./client")) {
     fail("Server DTS index references client types");
@@ -54,10 +66,16 @@ function verifyRuntimeTypeSplit() {
   if (clientIndex.includes("../server") || clientIndex.includes("./server")) {
     fail("Client DTS index references server types");
   }
-  if (serverConfig.includes("src/client") || serverConfig.includes("types/client")) {
+  if (
+    serverConfig.includes("src/client") ||
+    serverConfig.includes("types/client")
+  ) {
     fail("tsconfig.server.json includes client sources or types");
   }
-  if (clientConfig.includes("src/server") || clientConfig.includes("types/server")) {
+  if (
+    clientConfig.includes("src/server") ||
+    clientConfig.includes("types/server")
+  ) {
     fail("tsconfig.client.json includes server sources or types");
   }
 }
@@ -72,24 +90,34 @@ function verifyEventTokens() {
 
   for (const file of javaFiles) {
     const source = read(file);
-    for (const match of source.matchAll(/public\s+([A-Za-z0-9_<>, ?]+)\s+(on[A-Z]\w*)\s*\(/g)) {
+    for (const match of source.matchAll(
+      /public\s+([A-Za-z0-9_<>, ?]+)\s+(on[A-Z]\w*)\s*\(/g,
+    )) {
       const returnType = match[1].trim();
       const method = match[2];
       if (returnType !== "GameEventHandlerToken") {
-        fail(`${file}: ${method} returns ${returnType}, expected GameEventHandlerToken`);
+        fail(
+          `${file}: ${method} returns ${returnType}, expected GameEventHandlerToken`,
+        );
       }
     }
   }
 
-  for (const file of listFiles("src/main/resources/assets/box3js/template/types")) {
+  for (const file of listFiles(
+    "src/main/resources/assets/box3js/template/types",
+  )) {
     if (!file.endsWith(".d.ts")) continue;
     const path = `src/main/resources/assets/box3js/template/types/${file}`;
     const source = read(path);
-    for (const match of source.matchAll(/^\s*(on[A-Z]\w*)\s*\([\s\S]*?\):\s*([^;\n]+);/gm)) {
+    for (const match of source.matchAll(
+      /^\s*(on[A-Z]\w*)\s*\([\s\S]*?\):\s*([^;\n]+);/gm,
+    )) {
       const method = match[1];
       const returnType = match[2].trim();
       if (returnType !== "GameEventHandlerToken") {
-        fail(`${path}: ${method} returns ${returnType}, expected GameEventHandlerToken`);
+        fail(
+          `${path}: ${method} returns ${returnType}, expected GameEventHandlerToken`,
+        );
       }
     }
   }
@@ -112,13 +140,12 @@ function findMatchingBrace(source, openIndex) {
 }
 
 function stripBlockAndLineComments(source) {
-  return source
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/\/\/.*$/gm, "");
+  return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
 }
 
 function stripCommentsPreserveLength(source) {
-  return source.replace(/\/\*[\s\S]*?\*\//g, (comment) => " ".repeat(comment.length))
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, (comment) => " ".repeat(comment.length))
     .replace(/\/\/.*$/gm, (comment) => " ".repeat(comment.length));
 }
 
@@ -127,7 +154,10 @@ function extractDtsInterfaceMembers(paths, interfaceName) {
   const members = new Set();
   for (const path of files) {
     const source = stripBlockAndLineComments(read(path));
-    const interfaceRe = new RegExp(`(?:interface|declare\\s+class|class)\\s+${interfaceName}\\b[^\\{]*\\{`, "g");
+    const interfaceRe = new RegExp(
+      `(?:interface|declare\\s+class|class)\\s+${interfaceName}\\b[^\\{]*\\{`,
+      "g",
+    );
     let match;
     while ((match = interfaceRe.exec(source)) !== null) {
       const open = source.indexOf("{", match.index);
@@ -142,7 +172,11 @@ function extractDtsInterfaceMembers(paths, interfaceName) {
       let bracketDepth = 0;
       for (const line of body.split(/\r?\n/)) {
         if (parenDepth === 0 && braceDepth === 0 && bracketDepth === 0) {
-          const member = line.trim().match(/^(?:static\s+)?(?:readonly\s+)?([A-Za-z_$]\w*)\??\s*(?:<[^;{(]*>)?\s*[:(]/);
+          const member = line
+            .trim()
+            .match(
+              /^(?:static\s+)?(?:readonly\s+)?([A-Za-z_$]\w*)\??\s*(?:<[^;{(]*>)?\s*[:(]/,
+            );
           if (member) {
             if (member[1] !== "constructor") {
               members.add(member[1]);
@@ -177,7 +211,7 @@ function updateDepths(line, state) {
       }
       continue;
     }
-    if (ch === "\"" || ch === "'" || ch === "`") {
+    if (ch === '"' || ch === "'" || ch === "`") {
       inString = ch;
     } else if (ch === "(") {
       state.parenDepth++;
@@ -201,7 +235,10 @@ function extractDtsInterfaceMemberDetails(paths, interfaceName) {
   for (const path of files) {
     const source = read(path);
     const searchable = stripCommentsPreserveLength(source);
-    const interfaceRe = new RegExp(`(?:interface|declare\\s+class|class)\\s+${interfaceName}\\b[^\\{]*\\{`, "g");
+    const interfaceRe = new RegExp(
+      `(?:interface|declare\\s+class|class)\\s+${interfaceName}\\b[^\\{]*\\{`,
+      "g",
+    );
     let match;
     while ((match = interfaceRe.exec(searchable)) !== null) {
       const open = searchable.indexOf("{", match.index);
@@ -238,17 +275,29 @@ function extractDtsInterfaceMemberDetails(paths, interfaceName) {
           continue;
         }
 
-        if (state.parenDepth === 0 && state.braceDepth === 0 && state.bracketDepth === 0) {
+        if (
+          state.parenDepth === 0 &&
+          state.braceDepth === 0 &&
+          state.bracketDepth === 0
+        ) {
           const lineWithoutComment = line.replace(/\/\/.*$/, "");
-          const member = lineWithoutComment.trim().match(/^(?:static\s+)?(?:readonly\s+)?([A-Za-z_$]\w*)\??\s*(?:<[^;{(]*>)?\s*[:(]/);
+          const member = lineWithoutComment
+            .trim()
+            .match(
+              /^(?:static\s+)?(?:readonly\s+)?([A-Za-z_$]\w*)\??\s*(?:<[^;{(]*>)?\s*[:(]/,
+            );
           if (member) {
             const name = member[1];
             if (name === "constructor") {
               pendingComment = "";
               continue;
             }
-            const documented = pendingComment.includes("@zh") && pendingComment.includes("@en");
-            const current = members.get(name) ?? { documented: false, locations: [] };
+            const documented =
+              pendingComment.includes("@zh") && pendingComment.includes("@en");
+            const current = members.get(name) ?? {
+              documented: false,
+              locations: [],
+            };
             current.documented ||= documented;
             current.locations.push(path);
             members.set(name, current);
@@ -292,7 +341,10 @@ function extractJavaApiMembers(path, options = {}) {
   const accessorProperties = new Set(options.accessorProperties ?? []);
   const keepMethodNames = new Set(options.keepMethodNames ?? []);
   const members = new Set();
-  const defaultClassName = path.split("/").pop().replace(/\.java$/, "");
+  const defaultClassName = path
+    .split("/")
+    .pop()
+    .replace(/\.java$/, "");
   const javaBody = options.nestedClass
     ? extractClassBody(source, options.nestedClass)
     : extractClassBody(source, options.className ?? defaultClassName);
@@ -302,11 +354,13 @@ function extractJavaApiMembers(path, options = {}) {
     return members;
   }
 
-  const fieldRe = /^\s*public\s+(?:static\s+)?(?:final\s+)?[A-Za-z0-9_.<>\[\]?]+\s+([A-Za-z_$]\w*(?:\s*,\s*[A-Za-z_$]\w*)*)\s*(?:=|;)/gm;
+  const fieldRe =
+    /^\s*public\s+(?:static\s+)?(?:final\s+)?[A-Za-z0-9_.<>\[\]?]+\s+([A-Za-z_$]\w*(?:\s*,\s*[A-Za-z_$]\w*)*)\s*(?:=|;)/gm;
   let field;
   while ((field = fieldRe.exec(javaBody)) !== null) {
     const before = javaBody.slice(0, field.index);
-    const depth = (before.match(/\{/g) ?? []).length - (before.match(/\}/g) ?? []).length;
+    const depth =
+      (before.match(/\{/g) ?? []).length - (before.match(/\}/g) ?? []).length;
     if (depth === 0) {
       for (const name of field[1].split(",").map((part) => part.trim())) {
         if (!ignore.has(name)) {
@@ -316,11 +370,13 @@ function extractJavaApiMembers(path, options = {}) {
     }
   }
 
-  const methodRe = /^\s*public\s+(?:static\s+)?(?!class\b|interface\b)([A-Za-z0-9_.<>\[\], ?]+)\s+([A-Za-z_$]\w*)\s*\(/gm;
+  const methodRe =
+    /^\s*public\s+(?:static\s+)?(?!class\b|interface\b)([A-Za-z0-9_.<>\[\], ?]+)\s+([A-Za-z_$]\w*)\s*\(/gm;
   let match;
   while ((match = methodRe.exec(javaBody)) !== null) {
     const before = javaBody.slice(0, match.index);
-    const depth = (before.match(/\{/g) ?? []).length - (before.match(/\}/g) ?? []).length;
+    const depth =
+      (before.match(/\{/g) ?? []).length - (before.match(/\}/g) ?? []).length;
     if (depth !== 0) {
       continue;
     }
@@ -363,36 +419,102 @@ function hasDtsConst(paths, name, type) {
     const funcRe = new RegExp(`declare\\s+function\\s+${name}\\s*\\(`);
     return files.some((path) => funcRe.test(read(path)));
   }
-  const escapedType = type.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s*");
-  const declarationRe = new RegExp(`declare\\s+const\\s+${name}\\s*:\\s*${escapedType}\\s*;`);
+  const escapedType = type
+    .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    .replace(/\s+/g, "\\s*");
+  const declarationRe = new RegExp(
+    `declare\\s+const\\s+${name}\\s*:\\s*${escapedType}\\s*;`,
+  );
   return files.some((path) => declarationRe.test(read(path)));
 }
 
 function hasRuntimeScopeBinding(path, name) {
   const source = read(path);
-  const bindingRe = new RegExp(`ScriptableObject\\.putProperty\\(\\s*scope\\s*,\\s*"${name}"`);
+  const bindingRe = new RegExp(
+    `ScriptableObject\\.putProperty\\(\\s*scope\\s*,\\s*"${name}"`,
+  );
   return bindingRe.test(source);
 }
 
 function verifyGlobalDeclarations() {
   for (const global of apiManifest.globals) {
     if (!hasDtsConst(global.dts, global.name, global.type)) {
-      fail(`${global.side}: DTS missing global declaration 'declare const ${global.name}: ${global.type};'`);
+      fail(
+        `${global.side}: DTS missing global declaration 'declare const ${global.name}: ${global.type};'`,
+      );
     }
-    if (global.runtimeContains && !read(global.runtime).includes(global.runtimeContains)) {
-      fail(`${global.side}: runtime does not initialize global '${global.name}' via ${global.runtimeContains}`);
-    } else if (!global.runtimeContains && !hasRuntimeScopeBinding(global.runtime, global.name)) {
+    if (
+      global.runtimeContains &&
+      !read(global.runtime).includes(global.runtimeContains)
+    ) {
+      fail(
+        `${global.side}: runtime does not initialize global '${global.name}' via ${global.runtimeContains}`,
+      );
+    } else if (
+      !global.runtimeContains &&
+      !hasRuntimeScopeBinding(global.runtime, global.name)
+    ) {
       fail(`${global.side}: runtime does not bind global '${global.name}'`);
+    }
+
+    const docs = resolveGlobalDocs(global);
+    if (docs.length > 0 && !docsContainGlobalToken(docs, global.name)) {
+      fail(
+        `${global.side}: docs/api missing global reference '${global.name}' from ${docs.join(", ")}`,
+      );
     }
   }
 }
 
+function resolveGlobalDocs(global) {
+  const docs = [];
+  if (global.docs) {
+    if (Array.isArray(global.docs)) {
+      docs.push(...global.docs);
+    } else {
+      docs.push(global.docs);
+    }
+  }
+
+  for (const api of apiManifest.apis) {
+    if (api.prefix === global.name && api.docs) {
+      if (Array.isArray(api.docs)) {
+        docs.push(...api.docs);
+      } else {
+        docs.push(api.docs);
+      }
+    }
+  }
+
+  return [...new Set(docs)];
+}
+
+function docsContainGlobalToken(docs, name) {
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const tokenRe = new RegExp(`\\b${escaped}(?:\\.|\\b)`);
+  const headingRe = new RegExp("^#{2,4}\\s+`?" + escaped + "\\b", "m");
+  return docs.some((path) => {
+    const source = read(path);
+    return (
+      source.includes(`\`${name}\``) ||
+      tokenRe.test(source) ||
+      headingRe.test(source)
+    );
+  });
+}
+
 function extractDtsPublicTypeNames() {
   const names = new Set();
-  for (const file of listFiles("src/main/resources/assets/box3js/template/types")) {
+  for (const file of listFiles(
+    "src/main/resources/assets/box3js/template/types",
+  )) {
     if (!file.endsWith(".d.ts")) continue;
-    const source = read(`src/main/resources/assets/box3js/template/types/${file}`);
-    for (const match of source.matchAll(/^(?:declare\s+class|interface)\s+([A-Za-z_$]\w*)/gm)) {
+    const source = read(
+      `src/main/resources/assets/box3js/template/types/${file}`,
+    );
+    for (const match of source.matchAll(
+      /^(?:declare\s+class|interface)\s+([A-Za-z_$]\w*)/gm,
+    )) {
       names.add(match[1]);
     }
   }
@@ -401,10 +523,21 @@ function extractDtsPublicTypeNames() {
 
 function extractDtsGlobalNames() {
   const names = new Set();
-  for (const file of listFiles("src/main/resources/assets/box3js/template/types")) {
+  for (const file of listFiles(
+    "src/main/resources/assets/box3js/template/types",
+  )) {
     if (!file.endsWith(".d.ts")) continue;
-    const source = read(`src/main/resources/assets/box3js/template/types/${file}`);
-    for (const match of source.matchAll(/^declare\s+const\s+([A-Za-z_$]\w*)\s*:/gm)) {
+    const source = read(
+      `src/main/resources/assets/box3js/template/types/${file}`,
+    );
+    for (const match of source.matchAll(
+      /^declare\s+const\s+([A-Za-z_$]\w*)\s*:/gm,
+    )) {
+      names.add(match[1]);
+    }
+    for (const match of source.matchAll(
+      /^declare\s+function\s+([A-Za-z_$]\w*)\s*\(/gm,
+    )) {
       names.add(match[1]);
     }
   }
@@ -416,15 +549,21 @@ function verifyManifestCoverage() {
   const ignoredTypes = new Set(apiManifest.ignoredDtsTypes ?? []);
   for (const typeName of extractDtsPublicTypeNames()) {
     if (!coveredTypes.has(typeName) && !ignoredTypes.has(typeName)) {
-      fail(`manifest: public DTS type '${typeName}' is not covered by tools/box3js-api-manifest.json`);
+      fail(
+        `manifest: public DTS type '${typeName}' is not covered by tools/box3js-api-manifest.json`,
+      );
     }
   }
 
-  const coveredGlobals = new Set(apiManifest.globals.map((global) => global.name));
+  const coveredGlobals = new Set(
+    apiManifest.globals.map((global) => global.name),
+  );
   const ignoredGlobals = new Set(apiManifest.ignoredGlobals ?? []);
   for (const globalName of extractDtsGlobalNames()) {
     if (!coveredGlobals.has(globalName) && !ignoredGlobals.has(globalName)) {
-      fail(`manifest: global DTS const '${globalName}' is not covered by tools/box3js-api-manifest.json`);
+      fail(
+        `manifest: global DTS declaration '${globalName}' is not covered by tools/box3js-api-manifest.json`,
+      );
     }
   }
 }
@@ -434,25 +573,32 @@ function verifyJavaDtsApiParity() {
     const javaMembers = mapping.expectedMembers
       ? new Set(mapping.expectedMembers)
       : mapping.javaObject
-      ? extractJavaScriptableMembers(mapping.javaObject.path, mapping.javaObject.variable)
-      : extractJavaApiMembers(mapping.java, {
-        ignore: mapping.ignoreJava,
-        nestedClass: mapping.nestedClass,
-        className: mapping.className,
-        accessorProperties: mapping.accessorProperties,
-        keepMethodNames: mapping.keepMethodNames,
-      });
+        ? extractJavaScriptableMembers(
+            mapping.javaObject.path,
+            mapping.javaObject.variable,
+          )
+        : extractJavaApiMembers(mapping.java, {
+            ignore: mapping.ignoreJava,
+            nestedClass: mapping.nestedClass,
+            className: mapping.className,
+            accessorProperties: mapping.accessorProperties,
+            keepMethodNames: mapping.keepMethodNames,
+          });
     const dtsMembers = extractDtsInterfaceMembers(mapping.dts, mapping.iface);
 
     for (const member of javaMembers) {
       if (!dtsMembers.has(member)) {
-        fail(`${mapping.name}: Java exposes '${member}' but ${mapping.iface} DTS does not declare it`);
+        fail(
+          `${mapping.name}: Java exposes '${member}' but ${mapping.iface} DTS does not declare it`,
+        );
       }
     }
 
     for (const member of dtsMembers) {
       if (!javaMembers.has(member)) {
-        fail(`${mapping.name}: ${mapping.iface} DTS declares '${member}' but Java does not expose it`);
+        fail(
+          `${mapping.name}: ${mapping.iface} DTS declares '${member}' but Java does not expose it`,
+        );
       }
     }
   }
@@ -460,7 +606,10 @@ function verifyJavaDtsApiParity() {
 
 function docsContainApiMember(docs, prefix, member) {
   const token = `${prefix}.${member}`;
-  const headingRe = new RegExp(`^#{2,4}\\s+\`?${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "m");
+  const headingRe = new RegExp(
+    `^#{2,4}\\s+\`?${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
+    "m",
+  );
   return docs.some((path) => {
     const source = read(path);
     return source.includes(token) || headingRe.test(source);
@@ -469,10 +618,15 @@ function docsContainApiMember(docs, prefix, member) {
 
 function verifyDtsDocumentation() {
   for (const mapping of apiManifest.apis) {
-    const details = extractDtsInterfaceMemberDetails(mapping.dts, mapping.iface);
+    const details = extractDtsInterfaceMemberDetails(
+      mapping.dts,
+      mapping.iface,
+    );
     for (const [member, info] of details.entries()) {
       if (!info.documented) {
-        fail(`${mapping.name}: ${mapping.iface}.${member} DTS member must include @zh and @en documentation`);
+        fail(
+          `${mapping.name}: ${mapping.iface}.${member} DTS member must include @zh and @en documentation`,
+        );
       }
     }
   }
@@ -486,7 +640,9 @@ function verifyDocsApiSync() {
     const members = extractDtsInterfaceMembers(mapping.dts, mapping.iface);
     for (const member of members) {
       if (!docsContainApiMember(mapping.docs, mapping.prefix, member)) {
-        fail(`${mapping.name}: docs/api missing ${mapping.prefix}.${member} from ${mapping.docs.join(", ")}`);
+        fail(
+          `${mapping.name}: docs/api missing ${mapping.prefix}.${member} from ${mapping.docs.join(", ")}`,
+        );
       }
     }
   }
@@ -494,11 +650,19 @@ function verifyDocsApiSync() {
 
 function verifyEntrypoints() {
   const build = read("src/main/resources/assets/box3js/template/build.mjs");
-  const engine = read("src/main/java/com/box3lab/box3js/script/Box3ScriptEngine.java");
-  if (!build.includes("src/server/app.ts") || !build.includes("dist/server.js")) {
+  const engine = read(
+    "src/main/java/com/box3lab/box3js/script/Box3ScriptEngine.java",
+  );
+  if (
+    !build.includes("src/server/app.ts") ||
+    !build.includes("dist/server.js")
+  ) {
     fail("build.mjs must build src/server/app.ts to dist/server.js");
   }
-  if (!build.includes("src/client/app.ts") || !build.includes("dist/client.js")) {
+  if (
+    !build.includes("src/client/app.ts") ||
+    !build.includes("dist/client.js")
+  ) {
     fail("build.mjs must build src/client/app.ts to dist/client.js");
   }
   if (engine.includes("app.js")) {

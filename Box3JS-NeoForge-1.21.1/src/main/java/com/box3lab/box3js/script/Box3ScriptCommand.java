@@ -3,8 +3,11 @@ package com.box3lab.box3js.script;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
 import com.box3lab.box3js.standalone.Box3ScriptCompiler;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -24,6 +27,9 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
 public class Box3ScriptCommand {
 
     private static Box3ScriptWatcher watcher;
+    private static final Pattern BUILD_SCRIPT_PATTERN = Pattern
+            .compile("\"scripts\"\\s*:\\s*\\{[\\s\\S]*?\"build\"\\s*:");
+    private static final Pattern LOGO_FILE_PATTERN = Pattern.compile("[a-z0-9_./-]+");
 
     public static void register(RegisterCommandsEvent event) {
         event.getDispatcher().register(
@@ -65,6 +71,7 @@ public class Box3ScriptCommand {
         int enabledCount = 0;
         int loadedCount = 0;
         int sandboxCount = 0;
+        int jarPriorityCount = 0;
         for (var entry : projects.entrySet()) {
             if (Boolean.TRUE.equals(entry.getValue()))
                 enabledCount++;
@@ -72,6 +79,8 @@ public class Box3ScriptCommand {
                 loadedCount++;
             if (sandbox.isEnabled(entry.getKey()))
                 sandboxCount++;
+            if (engine.shouldPreferJarRuntime(entry.getKey()))
+                jarPriorityCount++;
         }
         int total = projects.size();
 
@@ -90,7 +99,8 @@ public class Box3ScriptCommand {
         // Summary
         sb.append("  §7Projects: §f").append(enabledCount).append("§7/").append(total)
                 .append(" enabled  §8|  §f").append(loadedCount)
-                .append(" §7loaded\n\n");
+                .append(" §7loaded  §8|  §f").append(jarPriorityCount)
+                .append(" §7jar-priority\n\n");
 
         // Divider
         sb.append("  §8────────────────────────────\n");
@@ -99,10 +109,13 @@ public class Box3ScriptCommand {
         projects.forEach((name, enabled) -> {
             boolean loaded = engine.isProjectLoaded(name);
             boolean sandboxed = sandbox.isEnabled(name);
+            boolean jarPreferred = engine.shouldPreferJarRuntime(name);
 
             String icon;
             if (loaded) {
                 icon = "§a◉"; // ◉ running
+            } else if (jarPreferred) {
+                icon = "§b◆"; // ◆ jar-priority
             } else if (enabled) {
                 icon = "§e○"; // ○ enabled but not loaded
             } else {
@@ -115,7 +128,10 @@ public class Box3ScriptCommand {
             if (sandboxed) {
                 sb.append(" §d▐SANDBOX▌");
             }
-            if (enabled && !loaded) {
+            if (jarPreferred) {
+                sb.append(" §b▐JAR_PRIORITY▌");
+            }
+            if (enabled && !loaded && !jarPreferred) {
                 sb.append(" §7§o(pending)");
             }
 
@@ -208,6 +224,13 @@ public class Box3ScriptCommand {
             source.sendFailure(Component.literal("§cUnknown project: " + project));
             return 0;
         }
+        if (Box3ScriptEngine.get().shouldPreferJarRuntime(project)) {
+            source.sendSuccess(
+                    () -> Component.literal("§eSkipped filesystem start for §f" + project
+                            + "§e — matching script JAR is loaded (jar has priority)"),
+                    false);
+            return 1;
+        }
         config.setEnabled(project, true);
         return safeRun(source, "§a◉ ON   §7" + project, () -> {
             Box3ScriptEngine engine = Box3ScriptEngine.get();
@@ -279,6 +302,15 @@ public class Box3ScriptCommand {
                         .suggests(Box3ScriptCommand::suggestProjects)
                         .executes(ctx -> {
                             String project = StringArgumentType.getString(ctx, "project");
+                            if (!projectExists(ctx.getSource(), project))
+                                return 0;
+                            if (Box3ScriptEngine.get().shouldPreferJarRuntime(project)) {
+                                ctx.getSource().sendSuccess(
+                                        () -> Component.literal("§eSkipped filesystem reload for §f" + project
+                                                + "§e — matching script JAR is loaded (jar has priority)"),
+                                        false);
+                                return 1;
+                            }
                             Box3ScriptConfig.get().setEnabled(project, true);
                             return safeRun(ctx.getSource(), "§aReloaded: §f" + project, () -> {
                                 Box3ScriptEngine engine = Box3ScriptEngine.get();
@@ -311,8 +343,14 @@ public class Box3ScriptCommand {
                                 () -> Component.literal("§c◉ File watching stopped"), false);
                     } else {
                         watcher.start();
-                        ctx.getSource().sendSuccess(
-                                () -> Component.literal("§a◉ File watching active — auto-reload on change"), false);
+                        if (watcher.isRunning()) {
+                            ctx.getSource().sendSuccess(
+                                    () -> Component.literal("§a◉ File watching active — auto-reload on change"), false);
+                        } else {
+                            ctx.getSource().sendFailure(
+                                    Component
+                                            .literal("§cFailed to start file watcher — check server logs for details"));
+                        }
                     }
                     return 1;
                 });
@@ -328,6 +366,8 @@ public class Box3ScriptCommand {
                         .suggests(Box3ScriptCommand::suggestProjects)
                         .executes(ctx -> {
                             String project = StringArgumentType.getString(ctx, "project");
+                            if (!projectExists(ctx.getSource(), project))
+                                return 0;
                             var sb = Box3ScriptEngine.get().getSandbox();
                             if (sb.isEnabled(project)) {
                                 var summary = sb.disable(project);
@@ -351,8 +391,8 @@ public class Box3ScriptCommand {
     }
 
     // ═══════════════════════════════════════════════════════════
-    // /box3script compile <project>     — 编译为独立 JAR
-    // /box3script compile runtime       — 构建共享 Rhino 运行时 JAR
+    // /box3script compile <project> — 编译为独立 JAR
+    // /box3script compile runtime — 构建共享 Rhino 运行时 JAR
     // ═══════════════════════════════════════════════════════════
 
     private static LiteralArgumentBuilder<CommandSourceStack> compileCommand() {
@@ -371,10 +411,31 @@ public class Box3ScriptCommand {
 
                             Path projectDir = scriptDir(ctx.getSource().getServer())
                                     .resolve(project).normalize();
+                            var checks = runCompilePreflight(projectDir);
+                            if (!checks.warnings().isEmpty()) {
+                                StringBuilder warningSb = new StringBuilder();
+                                warningSb.append("§eCompile preflight warnings\n");
+                                for (String warning : checks.warnings()) {
+                                    warningSb.append("§e- ").append(warning).append("\n");
+                                }
+                                ctx.getSource().sendSuccess(() -> Component.literal(warningSb.toString()), false);
+                            }
+                            if (!checks.problems().isEmpty()) {
+                                StringBuilder problemSb = new StringBuilder();
+                                problemSb.append("§cCompile preflight failed\n");
+                                for (String problem : checks.problems()) {
+                                    problemSb.append("§c- ").append(problem).append("\n");
+                                }
+                                problemSb.append("§7Fix issues above, then run compile again.");
+                                ctx.getSource().sendFailure(Component.literal(problemSb.toString()));
+                                return 0;
+                            }
+
                             Path serverJs = projectDir.resolve("dist/server.js");
                             if (!Files.exists(serverJs)) {
                                 ctx.getSource().sendFailure(
-                                        Component.literal("§cdist/server.js not found — run 'npm run build' first"));
+                                        Component.literal(
+                                                "§cdist/server.js not found — run 'npm run build' first"));
                                 return 0;
                             }
 
@@ -386,7 +447,7 @@ public class Box3ScriptCommand {
                                 ctx.getSource().sendFailure(
                                         Component.literal("§cInvalid modId: " + validationError
                                                 + "\n§7NeoForge modId: [a-z][a-z0-9_]{1,63} (2-64 chars)"
-                                                + "\n§7Fix: rename your project or set '--modId' in package.json"));
+                                                + "\n§7Fix: rename your project or set a valid 'name' in package.json"));
                                 return 0;
                             }
                             String displayName = info[1];
@@ -458,6 +519,101 @@ public class Box3ScriptCommand {
     // helpers
     // ═══════════════════════════════════════════════════════════
 
+    private record CompileCheckResult(List<String> problems, List<String> warnings) {
+    }
+
+    private static CompileCheckResult runCompilePreflight(Path projectDir) {
+        Path packageJson = projectDir.resolve("package.json");
+        Path buildMjs = projectDir.resolve("build.mjs");
+        Path srcServerTs = projectDir.resolve("src/server/app.ts");
+        Path srcClientTs = projectDir.resolve("src/client/app.ts");
+        Path distServerJs = projectDir.resolve("dist/server.js");
+        Path distClientJs = projectDir.resolve("dist/client.js");
+        Path nodeModules = projectDir.resolve("node_modules");
+
+        List<String> problems = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
+
+        if (!Files.exists(packageJson)) {
+            problems.add("Missing package.json");
+        }
+        if (!Files.exists(buildMjs)) {
+            warnings.add("Missing build.mjs (template build pipeline may be broken)");
+        }
+        if (!Files.exists(srcServerTs)) {
+            warnings.add("Missing src/server/app.ts (TypeScript source entry)");
+        }
+        if (!Files.exists(distServerJs)) {
+            problems.add("Missing server entry: dist/server.js");
+        }
+        if (!Files.exists(nodeModules)) {
+            warnings.add("node_modules not found (run npm install)");
+        }
+        if (!Files.exists(distClientJs)) {
+            warnings.add("dist/client.js not found (client script may be unavailable)");
+        }
+        if (Files.exists(srcClientTs) && !Files.exists(distClientJs)) {
+            warnings.add("src/client/app.ts exists but dist/client.js is missing (run npm run build)");
+        }
+        if (isDistOlderThanSource(srcServerTs, distServerJs)) {
+            warnings.add("dist/server.js is older than src/server/app.ts (rebuild recommended)");
+        }
+        if (isDistOlderThanSource(srcClientTs, distClientJs)) {
+            warnings.add("dist/client.js is older than src/client/app.ts (rebuild recommended)");
+        }
+
+        if (Files.exists(packageJson)) {
+            try {
+                String packageJsonText = Files.readString(packageJson);
+                if (!BUILD_SCRIPT_PATTERN.matcher(packageJsonText).find()) {
+                    warnings.add("package.json missing scripts.build (npm run build may fail)");
+                }
+                String[] info = Box3ScriptCompiler.readPackageInfo(projectDir);
+                String modId = info[0];
+                String displayName = info[1];
+                String modVersion = info[2];
+                String logoFile = info[8];
+                String validationError = Box3ScriptCompiler.validateModId(modId);
+                if (validationError != null) {
+                    problems.add("Invalid modId '" + modId + "': " + validationError);
+                }
+                if (net.neoforged.fml.ModList.get().getModContainerById(modId).isPresent()) {
+                    problems.add(
+                            "modId '" + modId + "' already exists in loaded mods (NeoForge requires unique modId)");
+                }
+                if (displayName == null || displayName.isBlank()) {
+                    warnings.add("displayName is empty (NeoForge mods.toml displayName is recommended)");
+                }
+                if (modVersion == null || modVersion.isBlank()) {
+                    problems.add("version is empty (NeoForge mods.toml requires mod version)");
+                } else if (modVersion.chars().anyMatch(Character::isWhitespace)) {
+                    warnings.add("version contains whitespace (may violate Maven-style versioning expectations)");
+                }
+                if (logoFile != null && !logoFile.isBlank()) {
+                    if (!LOGO_FILE_PATTERN.matcher(logoFile).matches()) {
+                        problems.add("logoFile contains invalid characters; NeoForge allows [a-z0-9_./-]");
+                    } else {
+                        Path resourcesRoot = projectDir.resolve("src/main/resources").toAbsolutePath().normalize();
+                        Path logoPath = resourcesRoot.resolve(logoFile).normalize();
+                        if (!logoPath.startsWith(resourcesRoot)) {
+                            problems.add("logoFile must stay inside src/main/resources");
+                        } else if (!Files.exists(logoPath)) {
+                            warnings.add("logoFile not found under src/main/resources: " + logoFile);
+                        }
+                    }
+                }
+            } catch (IOException | RuntimeException e) {
+                String err = e.getMessage();
+                if (err == null) {
+                    err = e.getClass().getSimpleName();
+                }
+                problems.add("Failed to parse package.json: " + err);
+            }
+        }
+
+        return new CompileCheckResult(problems, warnings);
+    }
+
     private static Consumer<String> chatReporter(CommandSourceStack source) {
         return msg -> source.sendFailure(Component.literal(msg));
     }
@@ -478,6 +634,17 @@ public class Box3ScriptCommand {
         }
     }
 
+    private static boolean projectExists(CommandSourceStack source, String project) {
+        var config = Box3ScriptConfig.get();
+        config.discover(source.getServer());
+        if (!config.listProjects().containsKey(project)) {
+            source.sendFailure(Component.literal("§cUnknown project: " + project
+                    + "\n§7Use §f/box3script §7to list projects, or create one with §f/box3script create <name>"));
+            return false;
+        }
+        return true;
+    }
+
     private static CompletableFuture<Suggestions> suggestProjects(
             CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder) {
         var config = Box3ScriptConfig.get();
@@ -488,6 +655,17 @@ public class Box3ScriptCommand {
             }
         }
         return builder.buildFuture();
+    }
+
+    private static boolean isDistOlderThanSource(Path source, Path dist) {
+        if (!Files.exists(source) || !Files.exists(dist)) {
+            return false;
+        }
+        try {
+            return Files.getLastModifiedTime(dist).compareTo(Files.getLastModifiedTime(source)) < 0;
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     private static Component clickableCmd(String text) {

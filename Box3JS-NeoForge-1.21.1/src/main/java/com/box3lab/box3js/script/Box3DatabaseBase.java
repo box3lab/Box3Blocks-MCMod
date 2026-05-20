@@ -1,14 +1,19 @@
 package com.box3lab.box3js.script;
 
-import com.mojang.logging.LogUtils;
-import org.mozilla.javascript.NativeArray;
-import org.slf4j.Logger;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.mozilla.javascript.NativeArray;
+import org.slf4j.Logger;
+
+import com.mojang.logging.LogUtils;
 
 /**
  * Abstract base for server and client SQLite database wrappers.
@@ -19,8 +24,7 @@ public abstract class Box3DatabaseBase {
 
     protected static final Logger LOGGER = LogUtils.getLogger();
     protected static final String SQLITE_DRIVER_CLASS = "org.sqlite.JDBC";
-    protected static final String SQLITE_MISSING_HINT =
-            "db API requires SQLite JDBC driver. Install the minecraft-sqlite-jdbc mod.";
+    protected static final String SQLITE_MISSING_HINT = "db API requires SQLite JDBC driver. Install the minecraft-sqlite-jdbc mod.";
     protected static final boolean SQLITE_AVAILABLE;
 
     static {
@@ -51,7 +55,8 @@ public abstract class Box3DatabaseBase {
     /**
      * Executes a SQL query or update.
      *
-     * <p>Two calling conventions are supported:
+     * <p>
+     * Two calling conventions are supported:
      * <ol>
      * <li>Regular: {@code db.sql("SELECT ... WHERE x = ?", value)}</li>
      * <li>Tagged template: {@code db.sql(["SELECT ... WHERE x = ", ""], value)}
@@ -107,8 +112,12 @@ public abstract class Box3DatabaseBase {
                 return new Box3JSQueryResult(count);
             }
         } catch (SQLException e) {
-            LOGGER.error("SQL error: {}", e.getMessage());
-            throw new RuntimeException("SQL error: " + e.getMessage(), e);
+            String preview = sql == null ? "" : sql.strip();
+            if (preview.length() > 120) {
+                preview = preview.substring(0, 120) + "...";
+            }
+            LOGGER.error("SQL error: {} | sql={}", e.getMessage(), preview);
+            throw new RuntimeException("SQL error: " + e.getMessage() + " | query: " + preview, e);
         }
     }
 

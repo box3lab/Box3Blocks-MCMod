@@ -19,10 +19,11 @@
 
   Watch: ● Active    Sandbox: ● 1 project(s)
 
-  Projects: 1/2 enabled  |  1 loaded
+  Projects: 1/2 enabled  |  1 loaded  |  1 jar-priority
 
   ────────────────────────────
   ● colorzone ▐SANDBOX▌
+  ◆ mygame ▐JAR_PRIORITY▌
   ◌ demo
   ────────────────────────────
 
@@ -32,8 +33,9 @@
   New    /box3script create <name>
 ```
 
-- `◉` = 已加载运行中，`○` = 已启用但未加载，`◌` = 已禁用
+- `◉` = 已加载运行中，`◆` = 已由同名脚本 JAR 接管（jar 优先），`○` = 已启用但未加载，`◌` = 已禁用
 - `▐SANDBOX▌` = 沙盒已开启
+- `▐JAR_PRIORITY▌` = 当前项目检测到对应脚本 JAR 已加载，文件模式将被跳过
 
 ### `/box3script create <name>`
 
@@ -73,6 +75,10 @@ npm install && npm run build
 /box3script start mygame       # 只启用 mygame
 ```
 
+::: info JAR 优先
+若检测到项目对应的脚本 JAR 已被 NeoForge 加载，`start` 会跳过文件模式加载并提示 `jar has priority`，避免同一项目重复运行。
+:::
+
 ### `/box3script stop [project|all]`
 
 禁用并卸载项目。**不带参数** = 禁用全部。**带项目名** = 只禁用指定项目。**`all`** = 显式禁用全部。
@@ -94,6 +100,10 @@ npm install && npm run build
 
 修改代码并 `npm run build` 后，用 `reload` 刷新。或者开启 `watch` 自动重载。
 
+::: info JAR 优先
+若同名脚本 JAR 已加载，`reload` 会跳过文件模式重载（同样遵循 jar 优先）。
+:::
+
 ### `/box3script watch`
 
 开启/关闭文件监听。监听所有项目的 `dist/` 目录，`.js` 文件变化时自动重载对应项目。
@@ -101,6 +111,8 @@ npm install && npm run build
 ```js
 /box3script watch             # 切换 开/关
 ```
+
+当某项目处于 `JAR_PRIORITY` 状态时，watcher 也会跳过该项目的文件重载。
 
 ### `/box3script sandbox <project>`
 
@@ -135,6 +147,13 @@ npm install && npm run build
 /box3script compile mygame
 ```
 
+`compile` 会先执行内置预检（preflight），在真正打包前输出：
+
+- `warnings`（警告，不阻止编译）
+- `problems`（问题，阻止编译）
+
+预检覆盖构建产物、`package.json` 元数据、NeoForge 约束（如 `modId`/`logoFile`）等关键项。
+
 ::: warning 依赖
 脚本 JAR 不包含 Rhino 或 Box3JS API 类，需将 Box3JS 模组（`box3js`）一同放入 `mods/`。
 :::
@@ -149,17 +168,17 @@ npm install && npm run build
 `name` 字段的 modId 会在编译时校验，必须符合 `^[a-z][a-z0-9_]{1,63}$`（小写字母开头，仅含小写字母/数字/下划线，2-64 字符）。不符合的 modId 会导致编译失败并提示具体原因。
 :::
 
-| package.json | mods.toml 字段 | 说明 |
-|-------------|---------------|------|
-| `name` | `modId` | 模组 ID |
-| `displayName` | `displayName` | 模组显示名称（默认同 `name`） |
-| `version` | `version` | 版本号 |
-| `description` | `description` | 模组简介 |
-| `author` | `credits` | 作者/致谢 |
-| `license` | `license` | 许可证（默认 `All Rights Reserved`） |
-| `homepage` | `displayURL` | 项目主页链接 |
-| `bugs.url` | `issueTrackerURL` | 问题反馈链接 |
-| `logoFile` | `logoFile` | 模组图标（项目中的 PNG 路径，打包为 `logo.png`） |
+| package.json  | mods.toml 字段    | 说明                                             |
+| ------------- | ----------------- | ------------------------------------------------ |
+| `name`        | `modId`           | 模组 ID                                          |
+| `displayName` | `displayName`     | 模组显示名称（默认同 `name`）                    |
+| `version`     | `version`         | 版本号                                           |
+| `description` | `description`     | 模组简介                                         |
+| `author`      | `credits`         | 作者/致谢                                        |
+| `license`     | `license`         | 许可证（默认 `All Rights Reserved`）             |
+| `homepage`    | `displayURL`      | 项目主页链接                                     |
+| `bugs.url`    | `issueTrackerURL` | 问题反馈链接                                     |
+| `logoFile`    | `logoFile`        | 模组图标（项目中的 PNG 路径，打包为 `logo.png`） |
 
 ::: tip logoFile 使用说明
 填写项目根目录下的 PNG 文件相对路径（如 `"logoFile": "logo.png"`），编译时自动打包为 JAR 根目录的 `logo.png`，无需在 `neoforge.mods.toml` 中手动配置。NeoForge 建议尺寸 128×128 或 256×256，仅支持 PNG 格式。不填则使用默认模组图标。
@@ -199,14 +218,14 @@ mods/
 
 **与解释模式的区别：**
 
-| | 解释模式 | 编译模式 |
-|---|---|---|
-| 加载方式 | `/box3script start` | 放入 `mods/` 启动服务器 |
-| 命令管理 | `/box3script start/stop/reload` | 不受 `/box3script` 管理 |
-| 启用/禁用 | `/box3script start/stop` | 增删 `mods/` 下的 JAR，重启服务器 |
-| 需要 Box3JS | 是 | 是 |
-| 热重载 | 支持 | 不支持（JAR 重启才生效） |
-| 适用场景 | 开发调试 | 分发部署 |
+|             | 解释模式                        | 编译模式                          |
+| ----------- | ------------------------------- | --------------------------------- |
+| 加载方式    | `/box3script start`             | 放入 `mods/` 启动服务器           |
+| 命令管理    | `/box3script start/stop/reload` | 不受 `/box3script` 管理           |
+| 启用/禁用   | `/box3script start/stop`        | 增删 `mods/` 下的 JAR，重启服务器 |
+| 需要 Box3JS | 是                              | 是                                |
+| 热重载      | 支持                            | 不支持（JAR 重启才生效）          |
+| 适用场景    | 开发调试                        | 分发部署                          |
 
 ::: warning
 编译后的 JAR 是标准 NeoForge mod，由 NeoForge mod loader 管理，**不受** `/box3script start/stop/reload` 控制。多个编译 JAR 可同时放入 `mods/`，各自独立运行，互不干扰。

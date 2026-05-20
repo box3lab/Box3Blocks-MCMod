@@ -85,9 +85,11 @@ npm install && npm run build
 | `/box3script reload [project]`     | 重载脚本（开发用）                |
 | `/box3script watch`                | 切换文件监控（自动热重载）        |
 | `/box3script sandbox <project>`    | 切换沙盒模式（开=追踪 / 关=回滚） |
-| `/box3script compile <project>`    | 编译为独立 JAR 模组               |
+| `/box3script compile <project>`    | 预检 + 编译为独立 JAR 模组        |
 
 所有 `<project>` 参数支持 **Tab 自动补全**。[完整命令文档 →](docs/api/commands.md)
+
+> 运行策略：若同名脚本 JAR 已被 NeoForge 加载，则 `/box3script start/reload/watch` 会跳过文件模式（jar 优先），避免重复执行。
 
 ## API 速览
 

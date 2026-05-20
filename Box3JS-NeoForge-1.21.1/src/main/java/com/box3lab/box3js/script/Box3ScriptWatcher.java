@@ -13,6 +13,7 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -34,6 +35,8 @@ class Box3ScriptWatcher {
     private ScheduledExecutorService scheduler;
     private Thread pollThread;
     private final Map<String, ScheduledFuture<?>> pending = new ConcurrentHashMap<>();
+    private final Set<Path> watchedDirs = ConcurrentHashMap.newKeySet();
+    private Path scriptRoot;
     private volatile boolean running;
 
     Box3ScriptWatcher(MinecraftServer server) {
@@ -55,7 +58,8 @@ class Box3ScriptWatcher {
             if (!Files.exists(scriptDir)) {
                 Files.createDirectories(scriptDir);
             }
-            registerDistDirs(scriptDir);
+            scriptRoot = scriptDir.toAbsolutePath().normalize();
+            registerProjectDirs(scriptRoot);
             scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
                 Thread t = new Thread(r, "Box3Script-Watcher");
                 t.setDaemon(true);
@@ -78,6 +82,8 @@ class Box3ScriptWatcher {
         closeWatchService();
         pending.values().forEach(future -> future.cancel(false));
         pending.clear();
+        watchedDirs.clear();
+        scriptRoot = null;
         if (scheduler != null) {
             scheduler.shutdownNow();
             scheduler = null;
@@ -100,23 +106,39 @@ class Box3ScriptWatcher {
         }
     }
 
-    /** Register only dist/ directories under each project. */
-    private void registerDistDirs(Path scriptDir) throws IOException {
+    private void registerProjectDirs(Path scriptDir) throws IOException {
+        registerDirectory(scriptDir);
         if (!Files.isDirectory(scriptDir))
             return;
         try (var dirs = Files.list(scriptDir)) {
             dirs.filter(Files::isDirectory).forEach(projectDir -> {
-                Path distDir = projectDir.resolve("dist");
-                if (Files.isDirectory(distDir)) {
-                    try {
-                        distDir.register(watchService, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_DELETE);
-                        Box3JS.LOGGER.info("Watching: {}", distDir);
-                    } catch (IOException e) {
-                        Box3JS.LOGGER.error("Failed to register watch: {}", distDir, e);
-                    }
+                try {
+                    registerProjectDir(projectDir);
+                } catch (IOException e) {
+                    Box3JS.LOGGER.error("Failed to register project watch: {}", projectDir, e);
                 }
             });
         }
+    }
+
+    private void registerProjectDir(Path projectDir) throws IOException {
+        registerDirectory(projectDir);
+        registerDistDir(projectDir.resolve("dist"));
+    }
+
+    private void registerDistDir(Path distDir) throws IOException {
+        if (Files.isDirectory(distDir)) {
+            registerDirectory(distDir);
+        }
+    }
+
+    private void registerDirectory(Path dir) throws IOException {
+        Path normalized = dir.toAbsolutePath().normalize();
+        if (!Files.isDirectory(normalized) || !watchedDirs.add(normalized)) {
+            return;
+        }
+        normalized.register(watchService, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_DELETE);
+        Box3JS.LOGGER.info("Watching: {}", normalized);
     }
 
     private void pollLoop() {
@@ -130,12 +152,44 @@ class Box3ScriptWatcher {
             if (key == null)
                 continue;
 
-            Path dir = (Path) key.watchable();
-            String project = dir.getParent().getFileName().toString();
+            Path dir = ((Path) key.watchable()).toAbsolutePath().normalize();
             for (WatchEvent<?> event : key.pollEvents()) {
                 WatchEvent.Kind<?> kind = event.kind();
                 if (kind == OVERFLOW)
                     continue;
+
+                Path changed = (Path) event.context();
+                if (scriptRoot != null && dir.equals(scriptRoot)) {
+                    if (kind != ENTRY_DELETE) {
+                        Path projectDir = scriptRoot.resolve(changed);
+                        if (Files.isDirectory(projectDir)) {
+                            try {
+                                registerProjectDir(projectDir);
+                            } catch (IOException e) {
+                                Box3JS.LOGGER.warn("Failed to watch new project directory: {}", projectDir, e);
+                            }
+                        }
+                    }
+                    continue;
+                }
+
+                if (scriptRoot != null && dir.getParent() != null && dir.getParent().equals(scriptRoot)) {
+                    if (kind != ENTRY_DELETE && "dist".equals(changed.toString())) {
+                        Path distDir = dir.resolve("dist");
+                        try {
+                            registerDistDir(distDir);
+                        } catch (IOException e) {
+                            Box3JS.LOGGER.warn("Failed to watch dist directory: {}", distDir, e);
+                        }
+                    }
+                    continue;
+                }
+
+                if (!"dist".equals(dir.getFileName().toString()) || dir.getParent() == null) {
+                    continue;
+                }
+
+                String project = dir.getParent().getFileName().toString();
                 String fileName = ((Path) event.context()).toString();
                 // Only react to JS output files in dist/
                 if (!fileName.endsWith(".js"))
@@ -149,9 +203,12 @@ class Box3ScriptWatcher {
             }
             boolean valid = key.reset();
             if (!valid) {
-                // dist/ was deleted — try re-registering
-                Box3JS.LOGGER.warn("Watch key invalid for {}/dist, attempting re-register", project);
-                retryRegister(project);
+                watchedDirs.remove(dir);
+                if (dir.getParent() != null && "dist".equals(dir.getFileName().toString())) {
+                    String project = dir.getParent().getFileName().toString();
+                    Box3JS.LOGGER.warn("Watch key invalid for {}/dist, attempting re-register", project);
+                    retryRegister(project);
+                }
             }
         }
     }
@@ -160,10 +217,7 @@ class Box3ScriptWatcher {
         try {
             Path distDir = config.getScriptDir(server).resolve(project).resolve("dist");
             Thread.sleep(2000); // wait for rebuild tool to recreate
-            if (Files.isDirectory(distDir)) {
-                distDir.register(watchService, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_DELETE);
-                Box3JS.LOGGER.info("Re-registered watch: {}", distDir);
-            }
+            registerDistDir(distDir);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } catch (IOException e) {
@@ -192,6 +246,10 @@ class Box3ScriptWatcher {
         server.execute(() -> {
             if (!running || !config.isEnabled(project))
                 return;
+            if (engine.shouldPreferJarRuntime(project)) {
+                Box3JS.LOGGER.info("Watcher skipped filesystem reload for '{}': script JAR has priority", project);
+                return;
+            }
             try {
                 engine.setCurrentProject(project);
                 try {

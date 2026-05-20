@@ -22,10 +22,11 @@ Example output:
 
   Watch: ● Active    Sandbox: ● 1 project(s)
 
-  Projects: 1/2 enabled  |  1 loaded
+  Projects: 1/2 enabled  |  1 loaded  |  1 jar-priority
 
   ────────────────────────────
   ● colorzone ▐SANDBOX▌
+  ◆ mygame ▐JAR_PRIORITY▌
   ◌ demo
   ────────────────────────────
 
@@ -35,8 +36,9 @@ Example output:
   New    /box3script create <name>
 ```
 
-- `◉` = loaded & running, `○` = enabled but not loaded, `◌` = disabled
+- `◉` = loaded & running, `◆` = superseded by matching script JAR (jar priority), `○` = enabled but not loaded, `◌` = disabled
 - `▐SANDBOX▌` = sandbox active
+- `▐JAR_PRIORITY▌` = matching script JAR detected; filesystem mode is skipped
 
 ### `/box3script create <name>`
 
@@ -65,6 +67,10 @@ Enable and load projects. **No args** = all projects. **Project name** = only th
 /box3script start mygame       # enable only mygame
 ```
 
+::: info JAR priority
+If a matching script JAR for the project is already loaded by NeoForge, `start` skips filesystem mode and reports `jar has priority` to avoid double execution.
+:::
+
 ### `/box3script stop [project|all]`
 
 Disable and unload projects. **No args** = all projects. **Project name** = only that project. **`all`** = explicitly all.
@@ -86,6 +92,10 @@ Reload scripts. **No args** = stop all, reload all enabled projects. **With proj
 
 After editing code and running `npm run build`, use `reload` to apply changes. Or enable `watch` for auto-reload.
 
+::: info JAR priority
+If a matching script JAR is loaded, `reload` also skips filesystem reload (same jar-first policy).
+:::
+
 ### `/box3script watch`
 
 Toggle file watching. When on, monitors `dist/` across all projects and auto-reloads on `.js` file changes.
@@ -93,6 +103,8 @@ Toggle file watching. When on, monitors `dist/` across all projects and auto-rel
 ```js
 /box3script watch             # toggle on/off
 ```
+
+When a project is in `JAR_PRIORITY` state, watcher reload for that project is skipped as well.
 
 ### `/box3script sandbox <project>`
 
@@ -125,6 +137,13 @@ Compiles a script project into a **lightweight standalone JAR mod** (~50KB) that
 /box3script compile mygame
 ```
 
+`compile` now runs an integrated preflight before packaging and reports:
+
+- `warnings` (non-blocking)
+- `problems` (blocking)
+
+Preflight covers build outputs, `package.json` metadata, and NeoForge-oriented constraints (such as `modId` and `logoFile`).
+
 ::: warning Dependency
 Script JARs do not bundle Rhino or Box3JS API classes. Place the Box3JS mod (`box3js`) alongside your script JAR(s) in `mods/`.
 :::
@@ -135,17 +154,17 @@ If `registries/blocks.json`, `items.json`, `sounds.json`, `creativeTabs.json` an
 
 The compiler **reads the following `package.json` fields** and writes them to `neoforge.mods.toml`:
 
-| package.json | mods.toml field | Description |
-|-------------|---------------|-------------|
-| `name` | `modId` | Mod identifier |
-| `displayName` | `displayName` | Display name (defaults to `name`) |
-| `version` | `version` | Mod version |
-| `description` | `description` | Mod description |
-| `author` | `credits` | Author / credits |
-| `license` | `license` | License (defaults to `All Rights Reserved`) |
-| `homepage` | `displayURL` | Project homepage link |
-| `bugs.url` | `issueTrackerURL` | Issue tracker link |
-| `logoFile` | `logoFile` | Mod icon (PNG path in project, bundled as `logo.png`) |
+| package.json  | mods.toml field   | Description                                           |
+| ------------- | ----------------- | ----------------------------------------------------- |
+| `name`        | `modId`           | Mod identifier                                        |
+| `displayName` | `displayName`     | Display name (defaults to `name`)                     |
+| `version`     | `version`         | Mod version                                           |
+| `description` | `description`     | Mod description                                       |
+| `author`      | `credits`         | Author / credits                                      |
+| `license`     | `license`         | License (defaults to `All Rights Reserved`)           |
+| `homepage`    | `displayURL`      | Project homepage link                                 |
+| `bugs.url`    | `issueTrackerURL` | Issue tracker link                                    |
+| `logoFile`    | `logoFile`        | Mod icon (PNG path in project, bundled as `logo.png`) |
 
 ::: tip logoFile usage
 Set to a relative path of a PNG file in the project root (e.g. `"logoFile": "logo.png"`). The file is automatically bundled as `logo.png` in the JAR root — no manual `neoforge.mods.toml` config needed. NeoForge recommends 128×128 or 256×256, PNG format only. Leave empty for the default mod icon.
@@ -185,14 +204,14 @@ mods/
 
 **Interpreted vs Compiled:**
 
-| | Interpreted | Compiled |
-|---|---|---|
-| Load via | `/box3script start` | Drop in `mods/`, start server |
-| Command control | `/box3script start/stop/reload` | Not managed by `/box3script` |
-| Enable/disable | `/box3script start/stop` | Add/remove JAR from `mods/`, restart server |
-| Requires Box3JS | Yes | Yes |
-| Hot reload | Yes | No (restart server to update) |
-| Use case | Development & debugging | Distribution & deployment |
+|                 | Interpreted                     | Compiled                                    |
+| --------------- | ------------------------------- | ------------------------------------------- |
+| Load via        | `/box3script start`             | Drop in `mods/`, start server               |
+| Command control | `/box3script start/stop/reload` | Not managed by `/box3script`                |
+| Enable/disable  | `/box3script start/stop`        | Add/remove JAR from `mods/`, restart server |
+| Requires Box3JS | Yes                             | Yes                                         |
+| Hot reload      | Yes                             | No (restart server to update)               |
+| Use case        | Development & debugging         | Distribution & deployment                   |
 
 ::: warning
 Compiled JARs are standard NeoForge mods managed by the NeoForge mod loader. They are **not** controlled by `/box3script start/stop/reload`. Multiple compiled JARs can coexist in `mods/` — each runs independently with its own hardcoded metadata.
