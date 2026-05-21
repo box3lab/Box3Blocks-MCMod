@@ -18,7 +18,9 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
 
+import com.box3lab.box3js.standalone.Box3ScriptCompiler;
 import com.mojang.logging.LogUtils;
+import net.neoforged.fml.ModList;
 import org.slf4j.Logger;
 
 public class Box3ScriptEngine {
@@ -136,6 +138,10 @@ public class Box3ScriptEngine {
                     .sorted()
                     .forEach(project -> {
                         String name = project.getFileName().toString();
+                        if (shouldPreferJarRuntime(name)) {
+                            LOGGER.info("Skip filesystem load for '{}': matching script JAR is already loaded", name);
+                            return;
+                        }
                         Path serverJs = project.resolve("dist/server.js");
                         if (!Files.exists(serverJs)) {
                             serverJs = project.resolve("server.js");
@@ -155,6 +161,21 @@ public class Box3ScriptEngine {
         } catch (IOException e) {
             LOGGER.warn("Failed to scan script directory for auto-load: {}", scriptDir, e);
         }
+    }
+
+    boolean shouldPreferJarRuntime(String projectName) {
+        if (server == null || projectName == null || projectName.isBlank()) {
+            return false;
+        }
+        Path projectDir = Box3ScriptConfig.get().getScriptDir(server).resolve(projectName).normalize();
+        String modId = projectName;
+        if (Files.isDirectory(projectDir)) {
+            String[] info = Box3ScriptCompiler.readPackageInfo(projectDir);
+            if (info.length > 0 && info[0] != null && !info[0].isBlank()) {
+                modId = info[0];
+            }
+        }
+        return ModList.get().getModContainerById(modId).isPresent();
     }
 
     public Object eval(String code) {
@@ -950,14 +971,14 @@ public class Box3ScriptEngine {
             ScriptableObject.putProperty(dbObj, "isAvailable", new BaseFunction() {
                 @Override
                 public Object call(Context cx, Scriptable scope,
-                                   Scriptable thisObj, Object[] args) {
+                        Scriptable thisObj, Object[] args) {
                     return Box3JSDatabase.isAvailable();
                 }
             });
             ScriptableObject.putProperty(dbObj, "sql", new BaseFunction() {
                 @Override
                 public Object call(Context cx, Scriptable scope,
-                                   Scriptable thisObj, Object[] args) {
+                        Scriptable thisObj, Object[] args) {
                     try {
                         return dbBinding.sql(args);
                     } catch (RuntimeException e) {
@@ -978,7 +999,7 @@ public class Box3ScriptEngine {
             ScriptableObject.putProperty(scope, "setTimeout", new BaseFunction() {
                 @Override
                 public Object call(Context cx, Scriptable scope,
-                                   Scriptable thisObj, Object[] args) {
+                        Scriptable thisObj, Object[] args) {
                     Function handler = (Function) args[0];
                     int ticks = ((Number) args[1]).intValue();
                     int id = scheduleTimeout(handler, ticks);
@@ -988,14 +1009,15 @@ public class Box3ScriptEngine {
             ScriptableObject.putProperty(scope, "setInterval", new BaseFunction() {
                 @Override
                 public Object call(Context cx, Scriptable scope,
-                                   Scriptable thisObj, Object[] args) {
+                        Scriptable thisObj, Object[] args) {
                     Function handler = (Function) args[0];
                     int ticks = ((Number) args[1]).intValue();
                     int id = scheduleInterval(handler, ticks);
                     return new GameEventHandlerToken(() -> clearTimer(id));
                 }
             });
-            ScriptableObject.putProperty(scope, "_jConsole", Context.javaToJS(new Box3JSConsole(() -> currentProject), scope));
+            ScriptableObject.putProperty(scope, "_jConsole",
+                    Context.javaToJS(new Box3JSConsole(() -> currentProject), scope));
             cx.evaluateString(scope, Box3ScriptUtils.CONSOLE_INIT_JS,
                     "console-init", 1, null);
             ScriptableObject.putProperty(scope, "require", new BaseFunction() {
@@ -1047,7 +1069,7 @@ public class Box3ScriptEngine {
                             "GamePlayerWalkState = { NONE: 'NONE', CROUCH: 'CROUCH', WALK: 'WALK', RUN: 'RUN' };",
                     "enums", 1, null);
             cx.evaluateString(scope, Box3ScriptUtils.REGEX_HELPERS_JS,
-                "regex-helpers", 1, null);
+                    "regex-helpers", 1, null);
         } finally {
             Context.exit();
         }

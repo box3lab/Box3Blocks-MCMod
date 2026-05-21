@@ -26,7 +26,7 @@ In-game (requires OP level ≥ 2):
 
 This creates a TypeScript project:
 
-```
+````
 config/box3/script/mygame/
 ├── package.json          ← npm dependencies (esbuild, Babel, TypeScript)
 ├── tsconfig.base.json     ← Shared TS compiler options
@@ -49,7 +49,7 @@ Build and start:
 ```bash
 cd config/box3/script/mygame
 npm install && npm run build
-```
+````
 
 ```
 /box3script sandbox mygame     # (recommended) enable sandbox for safe testing
@@ -60,19 +60,19 @@ Edit `src/app.ts`, re-run `npm run build`, then `/box3script reload mygame` — 
 
 ## Why Box3JS?
 
-| Feature              | Description                                                                      |
-| -------------------- | -------------------------------------------------------------------------------- |
-| **Zero barrier**     | Know JS/TS? You can build. No Gradle, no IDE, no restarts                        |
-| **Hot reload**       | Edit → build → reload in seconds. Enable `watch` for auto-reload                 |
-| **Sandbox**          | Toggle sandbox to track all script changes; disable to fully roll back           |
-| **TypeScript**       | Full `.d.ts` type declarations, esbuild + Babel pipeline, IDE IntelliSense       |
-| **20+ events**     | onTick, onPlayerJoin, onChat, onEntityDeath, onBlockActivate, onButtonPressed... |
-| **Visual effects**   | 13+ particles, fireworks, lightning, explosions, sounds                          |
-| **Client API**       | Keyboard input, screen UI, chat interception, sound/music control, client storage, SQLite, HTTP, bidirectional events |
-| **Game systems**     | Scoreboards, BossBar, teams, world border, cross-script messaging                |
-| **Custom registries** | JSON-configured blocks, items (food/tools/armor), sounds & creative tabs, compiled to standalone JAR |
-| **Data persistence** | JSON storage + SQLite database (leaderboards, economy, player data)              |
-| **Standalone JAR**   | `/box3script compile` packages scripts into a standalone JAR mod for distribution |
+| Feature               | Description                                                                                                           |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **Zero barrier**      | Know JS/TS? You can build. No Gradle, no IDE, no restarts                                                             |
+| **Hot reload**        | Edit → build → reload in seconds. Enable `watch` for auto-reload                                                      |
+| **Sandbox**           | Toggle sandbox to track all script changes; disable to fully roll back                                                |
+| **TypeScript**        | Full `.d.ts` type declarations, esbuild + Babel pipeline, IDE IntelliSense                                            |
+| **20+ events**        | onTick, onPlayerJoin, onChat, onEntityDeath, onBlockActivate, onButtonPressed...                                      |
+| **Visual effects**    | 13+ particles, fireworks, lightning, explosions, sounds                                                               |
+| **Client API**        | Keyboard input, screen UI, chat interception, sound/music control, client storage, SQLite, HTTP, bidirectional events |
+| **Game systems**      | Scoreboards, BossBar, teams, world border, cross-script messaging                                                     |
+| **Custom registries** | JSON-configured blocks, items (food/tools/armor), sounds & creative tabs, compiled to standalone JAR                  |
+| **Data persistence**  | JSON storage + SQLite database (leaderboards, economy, player data)                                                   |
+| **Standalone JAR**    | `/box3script compile` packages scripts into a standalone JAR mod for distribution                                     |
 
 ## Commands
 
@@ -85,29 +85,31 @@ Edit `src/app.ts`, re-run `npm run build`, then `/box3script reload mygame` — 
 | `/box3script reload [project]`     | Reload scripts (for development)         |
 | `/box3script watch`                | Toggle file watching (auto hot-reload)   |
 | `/box3script sandbox <project>`    | Toggle sandbox (on=track / off=rollback) |
-| `/box3script compile <project>`    | Compile to standalone JAR                |
+| `/box3script compile <project>`    | Preflight + compile to standalone JAR    |
 
 All `<project>` arguments support **Tab completion**. [Full command reference →](docs/api/commands_en.md)
 
+> Runtime policy: if a matching script JAR is already loaded by NeoForge, `/box3script start/reload/watch` skips filesystem mode (jar-first) to avoid duplicate execution.
+
 ## API Overview
 
-| Global                           | Purpose                                                                                                         |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `world`                          | World state, events, particles, fireworks, lightning, sounds, scoreboards, BossBar, teams, border |
-| `entity`                         | Entity properties, AI pathfinding, equipment, potion effects, tags, navigation                                  |
-| `player`                         | Inventory, flight, game mode, teleport, messaging, XP, sounds                                                   |
-| `voxels`                         | Block read/write, region fill, spawner control                                                                  |
-| `http`                           | HTTP requests (sync + async, GET/POST/JSON)                                                                     |
-| `remoteChannel`                  | Server ↔ client bidirectional event channel                                                                     |
-| `registries`                     | Custom blocks, items & sounds (compiled JAR mode), see [registries_en.md](docs/api/registries_en.md) |
-| `client` · `input` · `ui` · `chat` · `audio` | Client scripts: lifecycle, keyboard, screen text, chat, audio control                                          |
-| `storage`                        | JSON data persistence (server & client)                                                                         |
-| `db`                             | SQLite database (server & client)                                                                               |
-| `console`                        | Console logging (`log`/`warn`/`error`/`debug`/`assert`/`clear`)                                                 |
-| `GameVector3`                    | 3D vector (coordinate math)                                                                                     |
-| `GameBounds3`                    | Bounding box                                                                                                    |
-| `GameRGBColor` / `GameRGBAColor` | RGB / RGBA color                                                                                                |
-| `GameQuaternion`                 | Quaternion (rotation math)                                                                                      |
+| Global                                       | Purpose                                                                                              |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `world`                                      | World state, events, particles, fireworks, lightning, sounds, scoreboards, BossBar, teams, border    |
+| `entity`                                     | Entity properties, AI pathfinding, equipment, potion effects, tags, navigation                       |
+| `player`                                     | Inventory, flight, game mode, teleport, messaging, XP, sounds                                        |
+| `voxels`                                     | Block read/write, region fill, spawner control                                                       |
+| `http`                                       | HTTP requests (sync + async, GET/POST/JSON)                                                          |
+| `remoteChannel`                              | Server ↔ client bidirectional event channel                                                          |
+| `registries`                                 | Custom blocks, items & sounds (compiled JAR mode), see [registries_en.md](docs/api/registries_en.md) |
+| `client` · `input` · `ui` · `chat` · `audio` | Client scripts: lifecycle, keyboard, screen text, chat, audio control                                |
+| `storage`                                    | JSON data persistence (server & client)                                                              |
+| `db`                                         | SQLite database (server & client)                                                                    |
+| `console`                                    | Console logging (`log`/`warn`/`error`/`debug`/`assert`/`clear`)                                      |
+| `GameVector3`                                | 3D vector (coordinate math)                                                                          |
+| `GameBounds3`                                | Bounding box                                                                                         |
+| `GameRGBColor` / `GameRGBAColor`             | RGB / RGBA color                                                                                     |
+| `GameQuaternion`                             | Quaternion (rotation math)                                                                           |
 
 [Docs Home →](docs/README_en.md) · [API Overview →](docs/api/README_en.md) · [Find by Task →](docs/api/README_en.md#find-by-task--i-want-to)
 
@@ -118,7 +120,7 @@ From zero to full mini-games. Every example is TypeScript-compiled and ESLint-ve
 | #   | Tutorial                                                 | Time   | What you'll learn                                                 |
 | --- | -------------------------------------------------------- | ------ | ----------------------------------------------------------------- |
 | 1   | [Getting Started](docs/tutorial/01-basics.md)            | 10 min | Project setup, first script, chat commands, timers                |
-| 2   | [Players & Items](docs/tutorial/02-player-items.md)      | 15 min | Teleport, flight, items, enchantments, potions      |
+| 2   | [Players & Items](docs/tutorial/02-player-items.md)      | 15 min | Teleport, flight, items, enchantments, potions                    |
 | 3   | [Events & Entities](docs/tutorial/03-events-entities.md) | 15 min | Event callbacks, entity spawning, AI, combat, patrols             |
 | 4   | [Advanced Systems](docs/tutorial/04-advanced-systems.md) | 15 min | Scoreboards, BossBar, teams, world border, cross-script messaging |
 | 5   | [Mini-Games](docs/tutorial/05-examples.md)               | 20 min | PvP arena, particles & fireworks, wave mobs, visual effects       |

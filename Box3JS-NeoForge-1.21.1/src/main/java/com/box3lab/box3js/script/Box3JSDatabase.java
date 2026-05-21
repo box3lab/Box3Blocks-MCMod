@@ -11,8 +11,9 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
+
+import com.mojang.logging.LogUtils;
 
 /**
  * Per-project SQLite database exposed to JS as the {@code db} global.
@@ -103,22 +104,40 @@ public class Box3JSDatabase extends Box3DatabaseBase {
             throw new IllegalStateException("db: no active project context");
         }
 
-        return connections.computeIfAbsent(project, p -> {
+        Connection conn = connections.get(project);
+        if (conn != null) {
             try {
-                Path dbFile = dataDir.resolve(p + ".db");
-                Files.createDirectories(dbFile.getParent());
-                String url = "jdbc:sqlite:" + dbFile.toAbsolutePath().toString().replace('\\', '/');
-                Connection conn = DriverManager.getConnection(url);
-                // Enable WAL mode for better concurrent read performance
-                try (Statement stmt = conn.createStatement()) {
-                    stmt.execute("PRAGMA journal_mode=WAL");
+                if (!conn.isClosed()) {
+                    return conn;
                 }
-                LOGGER.info("Opened database for project {}: {}", p, dbFile);
-                return conn;
-            } catch (IOException | SQLException e) {
-                LOGGER.error("Failed to open database for project {}: {}", p, e.getMessage());
-                throw new RuntimeException("Failed to open database: " + e.getMessage(), e);
+                LOGGER.warn("Database connection was closed unexpectedly, reopening for project: {}", project);
+            } catch (SQLException e) {
+                LOGGER.warn("Failed to inspect database connection state for {}: {}", project, e.getMessage());
             }
-        });
+            connections.remove(project);
+        }
+
+        Connection reopened = openProjectConnection(project);
+        connections.put(project, reopened);
+        return reopened;
+    }
+
+    private Connection openProjectConnection(String project) {
+        try {
+            Path dbFile = dataDir.resolve(project + ".db");
+            Files.createDirectories(dbFile.getParent());
+            String url = "jdbc:sqlite:" + dbFile.toAbsolutePath().toString().replace('\\', '/');
+            Connection conn = DriverManager.getConnection(url);
+            try (Statement stmt = conn.createStatement()) {
+                stmt.execute("PRAGMA journal_mode=WAL");
+                stmt.execute("PRAGMA busy_timeout=5000");
+                stmt.execute("PRAGMA foreign_keys=ON");
+            }
+            LOGGER.info("Opened database for project {}: {}", project, dbFile);
+            return conn;
+        } catch (IOException | SQLException e) {
+            LOGGER.error("Failed to open database for project {}: {}", project, e.getMessage());
+            throw new RuntimeException("Failed to open database for project '" + project + "': " + e.getMessage(), e);
+        }
     }
 }
