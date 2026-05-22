@@ -100,6 +100,48 @@ public class GameBounds3 {
         return this;
     }
 
+    public double volume() {
+        return (hi.x - lo.x) * (hi.y - lo.y) * (hi.z - lo.z);
+    }
+
+    public boolean isEmpty() {
+        return hi.x <= lo.x || hi.y <= lo.y || hi.z <= lo.z;
+    }
+
+    public boolean equals(GameBounds3 b) {
+        if (b == null) return false;
+        return lo.x == b.lo.x && lo.y == b.lo.y && lo.z == b.lo.z &&
+               hi.x == b.hi.x && hi.y == b.hi.y && hi.z == b.hi.z;
+    }
+
+    public GameBounds3 union(GameBounds3 b) {
+        if (b == null) return new GameBounds3(new GameVector3(lo.x, lo.y, lo.z), new GameVector3(hi.x, hi.y, hi.z));
+        return new GameBounds3(
+            new GameVector3(Math.min(lo.x, b.lo.x), Math.min(lo.y, b.lo.y), Math.min(lo.z, b.lo.z)),
+            new GameVector3(Math.max(hi.x, b.hi.x), Math.max(hi.y, b.hi.y), Math.max(hi.z, b.hi.z)));
+    }
+
+    public GameBounds3 inflate(double amount) {
+        return new GameBounds3(
+            new GameVector3(lo.x - amount, lo.y - amount, lo.z - amount),
+            new GameVector3(hi.x + amount, hi.y + amount, hi.z + amount));
+    }
+
+    public GameBounds3 deflate(double amount) {
+        double hw = (hi.x - lo.x) / 2;
+        double hh = (hi.y - lo.y) / 2;
+        double hd = (hi.z - lo.z) / 2;
+        double cx = (lo.x + hi.x) / 2;
+        double cy = (lo.y + hi.y) / 2;
+        double cz = (lo.z + hi.z) / 2;
+        double nw = Math.max(0, hw - amount);
+        double nh = Math.max(0, hh - amount);
+        double nd = Math.max(0, hd - amount);
+        return new GameBounds3(
+            new GameVector3(cx - nw, cy - nh, cz - nd),
+            new GameVector3(cx + nw, cy + nh, cz + nd));
+    }
+
     public static GameBounds3 fromPoints(Object points) {
         if (!(points instanceof NativeArray arr)) return null;
         long len = arr.getLength();

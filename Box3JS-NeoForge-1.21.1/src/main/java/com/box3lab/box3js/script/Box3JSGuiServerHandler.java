@@ -120,10 +120,10 @@ public final class Box3JSGuiServerHandler {
         }
     }
 
-    public static void handleSetItem(ServerPlayer player, int slot, String itemId, int count) {
+    public static void handleSetItem(ServerPlayer player, int slot, String itemId, int count, String loreJson, boolean enchanted) {
         ActiveGui gui = activeGuis.get(player.getUUID());
         if (gui != null) {
-            gui.controller.setItem(slot, itemId, count);
+            gui.controller.setItem(slot, itemId, count, loreJson, enchanted);
         }
     }
 

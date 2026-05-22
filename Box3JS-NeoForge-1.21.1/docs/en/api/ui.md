@@ -80,3 +80,59 @@ Clears all texts drawn via `drawText()`.
 ```js
 ui.clearDrawTexts();
 ```
+
+## ui.drawItem(id, x, y, itemId, scale?)
+
+Draws an item icon on screen (persists every frame until removed via `removeDrawItem`).
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `id` | number | (required) | Icon ID for later removal or update |
+| `x` | number | (required) | X position (GUI-scaled coordinates) |
+| `y` | number | (required) | Y position (GUI-scaled coordinates) |
+| `itemId` | string | (required) | Item ID (e.g. `"minecraft:diamond"`) |
+| `scale` | number | `16` | Icon size in pixels |
+
+Returns the icon ID (same as the passed `id`).
+
+```js
+ui.drawItem(1, 10, 10, "minecraft:diamond");
+ui.drawItem(2, 30, 10, "minecraft:golden_apple", 24);
+```
+
+## ui.removeDrawItem(id)
+
+Removes the drawn item icon with the given ID.
+
+```js
+ui.removeDrawItem(1);
+```
+
+## ui.drawRect(id, x, y, w, h, color, alpha?)
+
+Draws a filled rectangle on screen (persists every frame until removed via `removeDrawRect`).
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `id` | number | (required) | Rectangle ID for later removal or update |
+| `x` | number | (required) | Top-left X position |
+| `y` | number | (required) | Top-left Y position |
+| `w` | number | (required) | Width in pixels |
+| `h` | number | (required) | Height in pixels |
+| `color` | GameRGBColor | (required) | Fill colour (RGB) |
+| `alpha` | number | `255` | Alpha / opacity (0–255) |
+
+Returns the rectangle ID (same as the passed `id`).
+
+```js
+var red = new GameRGBColor(1, 0, 0);
+ui.drawRect(1, 50, 50, 100, 60, red, 128); // Semi-transparent red rectangle
+```
+
+## ui.removeDrawRect(id)
+
+Removes the drawn rectangle with the given ID.
+
+```js
+ui.removeDrawRect(1);
+```

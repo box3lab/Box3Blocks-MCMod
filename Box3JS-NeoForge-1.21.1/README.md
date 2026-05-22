@@ -1,185 +1,219 @@
 # Box3JS — Minecraft 脚本引擎
 
-> **Beta** — 本项目处于早期测试阶段，API 可能变动，欢迎反馈。
+> **v0.1.0** — 首个公开测试版。API 可能变动，欢迎反馈。
 
 [简体中文](Readme.md) | [English](README_en.md)
 
-**无需 Java 知识，用 TypeScript 为你的 Minecraft 服务器创造无限玩法。**
+**无需 Java 知识。用 TypeScript 为 Minecraft 创造无限玩法。**
 
-Box3JS 是一个社区驱动的 Minecraft 模组，在服务端嵌入 Mozilla Rhino JavaScript 引擎。它的 API 设计延续了[神奇代码岛](https://box3.fun)（深圳奇梦岛科技有限公司）的风格——把 Box3 平台简洁高效的开发体验带进 Minecraft。告别复杂的 Java 模组开发：写 TypeScript，一键热重载，即时生效。PvP 竞技场、RPG 副本、派对小游戏、世界管理、社交工具，全能用脚本快速实现。
+Box3JS 在 Minecraft 嵌入 Mozilla Rhino JavaScript 引擎，API 设计延续[神奇代码岛](https://dao3.fun)简洁高效的风格——告别 Gradle、告别重启、告别复杂的环境配置。PvP 竞技场、塔防、RPG 副本、派对小游戏，写 TypeScript，一键加载，即时生效。
 
-> 了解 Box3JS 与神奇代码岛的关系？→ [Box3JS 与神奇代码岛](docs/guide/about-box3js.md)
+> Box3JS 与神奇代码岛的关系？→ [关于 Box3JS](docs/guide/about-box3js.md)
+
+```ts
+// 玩家加入时：弹窗欢迎 + 头顶粒子 + 升级音效
+world.onPlayerJoin((player) => {
+  player.player.dialog({ content: "欢迎来到 Box3JS 服务器！" });
+  const pos = new GameVector3(player.position.x, player.position.y + 1.8, player.position.z);
+  world.spawnParticle("minecraft:happy_villager", pos, 10, 0.5, 0.5, 0.5, 0.1);
+  world.playSound("minecraft:entity.player.levelup", pos, 1.0, 1.0);
+});
+
+// 聊天命令：!heal 回血、!firework 放烟花
+world.onChat((player, message) => {
+  if (message === "!heal") {
+    player.hp = player.maxHp;
+    player.player.actionBar("生命已恢复！");
+    return false; // 不广播此消息
+  }
+  if (message === "!firework") {
+    const pos = new GameVector3(player.position.x, player.position.y + 1, player.position.z);
+    world.launchFirework(pos, "green", "large_ball");
+    return false;
+  }
+});
+```
+
+<details>
+<summary>对比：用传统 Java Mod 实现同样功能</summary>
+
+```java
+// Java — 需要 ~60 行、3 个类才能实现同等功能
+@Mod.EventBusSubscriber(modid = "mymod")
+public class PlayerJoinListener {
+    @SubscribeEvent
+    public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
+        ServerPlayer player = (ServerPlayer) event.getEntity();
+        // 发送对话框需要在客户端处理，服务端无法直接弹窗
+        player.sendSystemMessage(
+            Component.literal("欢迎来到服务器！").withStyle(ChatFormatting.GREEN)
+        );
+        // 粒子需要获取 ServerLevel、ParticleOptions
+        ServerLevel level = player.serverLevel();
+        Vec3 pos = player.position().add(0, 1.8, 0);
+        level.sendParticles(
+            ParticleTypes.HAPPY_VILLAGER,
+            pos.x, pos.y, pos.z,
+            10, 0.5, 0.5, 0.5, 0.1
+        );
+        // 音效同理
+        level.playSound(
+            null, player.blockPosition(),
+            SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS,
+            1.0f, 1.0f
+        );
+    }
+}
+
+@Mod.EventBusSubscriber(modid = "mymod")
+public class ChatListener {
+    @SubscribeEvent
+    public static void onChat(ServerChatEvent event) {
+        ServerPlayer player = event.getPlayer();
+        String message = event.getMessage().getString();
+        if ("!heal".equals(message)) {
+            player.setHealth(player.getMaxHealth());
+            player.displayClientMessage(
+                Component.literal("生命已恢复！"), true
+            );
+            event.setCanceled(true);
+        }
+        if ("!firework".equals(message)) {
+            // 烟花需要手动构建 FireworkRocketEntity
+            FireworkRocketEntity firework = new FireworkRocketEntity(
+                player.level(),
+                player.getX(), player.getY() + 1, player.getZ(),
+                createFireworkItem("green", FireworkRocketEntity.Shape.LARGE_BALL)
+            );
+            player.level().addFreshEntity(firework);
+            event.setCanceled(true);
+        }
+    }
+    // 还需要 ~20 行构建烟花物品的辅助方法...
+}
+```
+</details>
+
+## 为什么选择 Box3JS？
+
+**零门槛上手** — 会 JS/TS 就能写模组。不需要 Gradle、不需要 IDE、不需要重启服务端。`/box3script create` 一键生成完整 TypeScript 项目。
+
+**秒级热重载** — 改代码 → 构建 → 重载，改动即时生效。开启 `watch` 模式连构建步骤都省了，保存即更新。
+
+**写起来像 Box3，跑在 Minecraft 里** — API 命名和设计延续神奇代码岛的开发体验，学过 Box3 的创作者可以无缝过渡。同时充分利用 Minecraft 原生能力：原版生物 AI、粒子效果、结构、进度、配方等。
+
+**沙盒保护，放心测试** — 开启沙盒后所有脚本修改自动追踪，关闭沙盒完整回滚。测试时不用担心破坏地图，开发环境即生产环境。
+
+**TypeScript 原生支持** — 完整 `.d.ts` 类型声明，中英双语 JSDoc 注释。构建管线：esbuild 打包 → Babel 转译 ES5 → 正则清理，全程自动。
+
+**双端脚本** — 服务端处理游戏逻辑、实体 AI、方块操作；客户端处理键盘输入、屏幕 UI、聊天、音效。通过 `remoteChannel` 双向实时通信。
+
+**数据持久化** — 内置 JSON 文件存储和 SQLite 数据库，排行榜、经济系统、玩家存档都能轻松实现。
+
+**独立分发** — `/box3script compile` 将脚本编译为独立 JAR 模组，像普通模组一样放入 `mods/` 即可运行，无需 Box3JS。
 
 ## 安装
 
 1. 将 `box3js-<version>.jar` 放入服务端 `mods/` 目录
-2. 如需使用 SQLite 数据库（`db` API），还需安装 [`minecraft-sqlite-jdbc`](https://modrinth.com/mod/minecraft-sqlite-jdbc)
+2. 如需 SQLite 数据库（`db` API），同时安装 [`minecraft-sqlite-jdbc`](https://modrinth.com/mod/minecraft-sqlite-jdbc)
 3. 启动服务器
 
-## 5 分钟快速开始
+## 快速开始
 
-在游戏中（需要 OP 权限等级 ≥ 2）：
+在聊天框输入（需 OP 权限 ≥ 2）：
 
 ```
-/box3script create mygame
+/box3script create mygame       # 创建 TypeScript 项目
 ```
 
-这会创建 TypeScript 项目：
-
-````
-config/box3/script/mygame/
-├── package.json          ← npm 依赖（esbuild、Babel、TypeScript）
-├── tsconfig.base.json     ← 公共 TS 编译选项
-├── tsconfig.server.json   ← 服务端 TS 配置
-├── tsconfig.client.json   ← 客户端 TS 配置
-├── build.mjs             ← 构建脚本（esbuild → Babel → Rhino）
-├── eslint.config.mjs
-├── types/
-│   ├── shared.d.ts       ← 服务端&客户端共享类型
-│   ├── server/           ← 服务端专属类型（server/entity/player/world/voxels）
-│   └── client/           ← 客户端专属类型（client/audio/input/ui/chat）
-└── src/
-    ├── server/
-    │   └── app.ts        ← 服务端入口（游戏逻辑）
-    └── client/
-        └── app.ts        ← 客户端入口（UI/按键/网络）
-
-构建并启动：
+然后构建并启动：
 
 ```bash
 cd config/box3/script/mygame
-npm install && npm run build
-````
-
-```
-/box3script sandbox mygame     # (推荐) 开启沙盒，放心测试
-/box3script start mygame       # 启动脚本
+npm install && npm run build     # 安装依赖 + 构建
 ```
 
-打开 `src/app.ts` 写入代码，保存后 `npm run build`，再 `/box3script reload mygame` 即时生效——**不需要重启服务器**。
+```
+/box3script sandbox mygame       # 开启沙盒（推荐，测试无忧）
+/box3script start mygame         # 启动脚本
+```
 
-## 为什么选择 Box3JS？
+打开 `src/server/app.ts` 写游戏逻辑，保存后 `npm run build`，再 `/box3script reload mygame` — **不需要重启服务器**。开启 `/box3script watch` 后，保存即自动重载。
 
-| 特性             | 说明                                                                               |
-| ---------------- | ---------------------------------------------------------------------------------- |
-| **零门槛**       | 会 JS/TS 就能写，无需 Gradle、无需 IDE、无需重启                                   |
-| **热重载**       | 改代码 → build → reload，秒级生效。开启 `watch` 自动重载                           |
-| **沙盒保护**     | 开启沙盒自动追踪所有脚本修改，关闭时完整回滚，服务器不留痕迹                       |
-| **TypeScript**   | 完整 `.d.ts` 类型声明，esbuild + Babel 编译管线，享受智能提示                      |
-| **20+ 种事件**   | onTick、onPlayerJoin、onChat、onEntityDeath、onBlockActivate、onButtonPressed...   |
-| **视觉效果**     | 13+ 粒子、烟花、闪电、爆炸、音效                                                   |
-| **客户端 API**   | 键盘输入、屏幕 UI、聊天拦截、音效/音乐控制、客户端存储、SQLite、HTTP、双向事件通道 |
-| **游戏系统**     | 计分板、BossBar、队伍、世界边界、跨脚本通信                                        |
-| **自定义注册表** | JSON 配置注册方块、物品（食物/工具/盔甲）、音效与创造标签页，编译为独立 JAR        |
-| **数据持久化**   | JSON 存储 + SQLite 数据库（排行榜、经济、玩家数据）                                |
-| **独立打包**     | `/box3script compile` 将脚本编译为独立 JAR 模组，便于分发部署                      |
+> [完整入门指南 →](docs/guide/getting-started.md)
 
-## 命令
+## 命令速查
 
-| 命令                               | 说明                              |
-| ---------------------------------- | --------------------------------- |
-| `/box3script`                      | 查看项目状态总览                  |
-| `/box3script create <name>`        | 创建新 TypeScript 项目            |
-| `/box3script start [project\|all]` | 启用并加载项目                    |
-| `/box3script stop [project\|all]`  | 禁用并卸载项目                    |
-| `/box3script reload [project]`     | 重载脚本（开发用）                |
-| `/box3script watch`                | 切换文件监控（自动热重载）        |
-| `/box3script sandbox <project>`    | 切换沙盒模式（开=追踪 / 关=回滚） |
-| `/box3script compile <project>`    | 预检 + 编译为独立 JAR 模组        |
+| 命令 | 说明 |
+|------|------|
+| `/box3script` | 查看所有项目运行状态 |
+| `/box3script create <name>` | 创建新 TypeScript 项目 |
+| `/box3script start [project\|all]` | 启用并加载项目 |
+| `/box3script stop [project\|all]` | 禁用并卸载项目 |
+| `/box3script reload [project]` | 重载脚本（开发用） |
+| `/box3script watch` | 切换文件监控（自动热重载） |
+| `/box3script sandbox <project>` | 切换沙盒（开=追踪修改 / 关=完整回滚） |
+| `/box3script compile <project>` | 编译为独立 JAR 模组 |
 
-所有 `<project>` 参数支持 **Tab 自动补全**。[完整命令文档 →](docs/api/commands.md)
-
-> 运行策略：若同名脚本 JAR 已被 NeoForge 加载，则 `/box3script start/reload/watch` 会跳过文件模式（jar 优先），避免重复执行。
+所有 `<project>` 参数支持 **Tab 自动补全**。[完整命令参考 →](docs/api/commands.md)
 
 ## API 速览
 
-| 全局对象                                     | 用途                                                                              |
-| -------------------------------------------- | --------------------------------------------------------------------------------- |
-| `world`                                      | 世界状态、事件回调、粒子、烟花、闪电、音效、计分板、BossBar、队伍、边界           |
-| `entity`                                     | 实体属性、AI 寻路、装备、药水效果、标签、导航                                     |
-| `player`                                     | 背包、飞行、游戏模式、传送、消息、经验、音效                                      |
-| `voxels`                                     | 方块读写、区域填充、刷怪笼                                                        |
-| `http`                                       | HTTP 网络请求（同步 + 异步，GET/POST/JSON）                                       |
-| `remoteChannel`                              | 服务端 ↔ 客户端双向事件通讯                                                       |
-| `registries`                                 | 自定义方块/物品/音效（编译 JAR 模式），见 [registries.md](docs/api/registries.md) |
-| `client` · `input` · `ui` · `chat` · `audio` | 客户端脚本：生命周期、键盘、屏幕文字、聊天、音频控制                              |
-| `storage`                                    | JSON 数据持久化（服务端 & 客户端）                                                |
-| `db`                                         | SQLite 数据库（服务端 & 客户端）                                                  |
-| `console`                                    | 控制台日志输出（`log`/`warn`/`error`/`debug`/`assert`/`clear`）                   |
-| `GameVector3`                                | 三维向量（坐标运算）                                                              |
-| `GameBounds3`                                | 包围盒                                                                            |
-| `GameRGBColor` / `GameRGBAColor`             | RGB/RGBA 颜色                                                                     |
-| `GameQuaternion`                             | 四元数（旋转运算）                                                                |
+| 全局对象 | 用途 |
+|----------|------|
+| `world` | 世界事件、实体查询、粒子、烟花、闪电、音效、计分板、BossBar、队伍、边界 |
+| `entity` | 实体属性、AI 寻路/攻击、装备、药水效果、属性修改 |
+| `player` | 背包、飞行、游戏模式、传送、消息、经验 |
+| `voxels` | 方块读写、区域填充、替换、刷怪笼 |
+| `remoteChannel` | 服务端 ↔ 客户端 双向事件通道 |
+| `client` · `input` · `ui` · `chat` · `audio` · `gui` | 客户端 API：生命周期、键盘、屏幕文字、聊天、音频、自定义容器 |
+| `http` | HTTP 请求（同步 + 异步） |
+| `storage` · `db` | JSON 持久化 / SQLite 数据库（双端） |
+| `registries` | 自定义方块/物品/音效（编译 JAR 模式） |
+| `GameVector3` · `GameBounds3` · `GameRGBColor` · `GameQuaternion` | 数学类型：向量、包围盒、颜色、四元数 |
 
-[文档首页 →](docs/README.md) · [API 总览 →](docs/api/README.md) · [按任务速查 →](docs/api/README.md#功能速查---我想)
+[API 总览 →](docs/api/README.md) · [按功能速查 →](docs/api/README.md#功能速查---我想) · [完整文档 →](docs/README.md)
 
 ## 教程
 
-从零到完整小游戏，每个示例均经过 TypeScript 编译 + ESLint 验证：
+从零到完整小游戏，每个示例均经 TypeScript 编译 + ESLint 验证：
 
-| #   | 教程                                                  | 时长   | 学什么                                   |
-| --- | ----------------------------------------------------- | ------ | ---------------------------------------- |
-| 1   | [从零开始](docs/tutorial/01-basics.md)                | 10 min | 创建项目、第一个脚本、聊天命令、定时任务 |
-| 2   | [玩家操控与物品](docs/tutorial/02-player-items.md)    | 15 min | 传送、飞行、物品、附魔、药水             |
-| 3   | [事件系统与实体](docs/tutorial/03-events-entities.md) | 15 min | 事件回调、实体生成、AI、战斗、巡逻       |
-| 4   | [高级游戏系统](docs/tutorial/04-advanced-systems.md)  | 15 min | 计分板、BossBar、队伍、边界、跨脚本通信  |
-| 5   | [实战小游戏](docs/tutorial/05-examples.md)            | 20 min | PvP 竞技场、粒子烟花、波次刷怪、特效大全 |
+| # | 教程 | 时长 | 学什么 |
+|---|------|------|--------|
+| 1 | [从零开始](docs/tutorial/01-basics.md) | 10 min | 项目搭建、第一个脚本、聊天命令、定时器 |
+| 2 | [玩家操控与物品](docs/tutorial/02-player-items.md) | 15 min | 传送、飞行、物品给予、附魔、药水效果 |
+| 3 | [事件系统与实体](docs/tutorial/03-events-entities.md) | 15 min | 全部事件回调、实体生成、AI 控制、巡逻守卫 |
+| 4 | [高级游戏系统](docs/tutorial/04-advanced-systems.md) | 15 min | 计分板、BossBar、队伍、世界边界、跨脚本通信 |
+| 5 | [实战小游戏](docs/tutorial/05-examples.md) | 20 min | PvP 竞技场、粒子与烟花、波次刷怪 |
+| 6 | [客户端脚本](docs/tutorial/06-client-scripting.md) | 15 min | 键盘输入、屏幕 UI、音效音乐、本地存储、remoteChannel |
 
 [教程总览 →](docs/tutorial/README.md)
 
-## 文档结构
-
-```
-docs/
-├── guide/                  ← 入门指南
-│   ├── README.md           指南总览
-│   ├── about-box3js.md     Box3JS 与神奇代码岛（起源、关系、优势）
-│   ├── getting-started.md  从零开始（环境、第一个脚本、调试、发布）
-│   ├── architecture.md     运行原理（Rhino 引擎、作用域、构建管线）
-│   └── js-vs-java.md       JS vs Java 模组开发对比
-├── api/                   ← API 参考
-│   ├── README.md          总览 + 功能速查
-│   ├── world.md           世界 API（事件、粒子、烟花、计分板...）
-│   ├── entity.md          实体 API（属性、AI、装备、效果...）
-│   ├── player.md          玩家 API（背包、消息、飞行、传送...）
-│   ├── voxels.md          方块 API（读写、填充、刷怪笼）
-│   ├── storage.md         存储 API（JSON 持久化）
-│   ├── database.md        数据库 API（SQLite）
-│   ├── http.md            HTTP 请求 API
-│   ├── client.md          客户端 API（UI、输入、聊天、通讯）
-│   ├── registries.md       自定义方块/物品/音效
-│   ├── math.md            数学 API（Vector3、Color、Quaternion）
-│   └── commands.md        /box3script 命令参考
-├── tutorial/              ← 入门教程
-│   ├── README.md          教程总览
-│   ├── 01-basics.md       从零开始
-│   ├── 02-player-items.md 玩家与物品
-│   ├── 03-events-entities.md 事件与实体
-│   ├── 04-advanced-systems.md 高级系统
-│   └── 05-examples.md     实战小游戏
-└── BOX3_API_COMPARISON.md ← Box3 平台 vs Box3JS API 对照表
-```
-
 ## 示例项目
 
-`run/config/box3/script/colorzone/` 包含完整的双向通讯游戏和 7 个功能示例，涵盖服务端逻辑、客户端 UI、键盘输入、HTTP 请求、数据库等全部教学场景。
+`run/config/box3/script/` 下包含多个完整游戏项目，可直接运行或作为参考：
 
-## 依赖说明
+| 项目 | 类型 | 亮点 |
+|------|------|------|
+| `patdef` | 塔防 | 四类塔（箭/冰/火/雷）、波次刷怪、GUI 商店、攻击光束特效 |
+| `bedwar` | 团队竞技 | 双队对抗、资源生成、装备升级、陷阱、床破坏机制 |
+| `coredf` | 核心防守 | 中文消息、多阶段波次、经济系统 |
+| `az` | 多阶段游戏 | 复杂状态机、阶段切换、多玩法融合 |
+| `colorzone` | 跑酷 + 教程 | 双向客户端通信、UI 示例、7 个功能演示 |
+| `mygame` | API 测试 | 覆盖所有 Box3JS API 的功能测试用例 |
 
-| 功能               | 依赖                                                                                  |
-| ------------------ | ------------------------------------------------------------------------------------- |
-| 脚本引擎核心       | 内嵌 Rhino 1.9.1，无需额外安装                                                        |
-| `db` API（SQLite） | 需安装 [`minecraft-sqlite-jdbc`](https://modrinth.com/mod/minecraft-sqlite-jdbc) 模组 |
-| 其他 API           | 无额外依赖                                                                            |
+每个项目都有独立的客户端 `dist/client.js` 和服务端 `dist/server.js`，开箱即用。
 
-> 未安装 `minecraft-sqlite-jdbc` 时，`db` 以外的所有 API 正常工作。只有调用 `db.sql()` 才会提示需要安装。
+## 依赖
 
-## 技术栈
+| 功能 | 要求 |
+|------|------|
+| 脚本引擎核心 | 内嵌 Rhino 1.9.1，无需额外安装 |
+| `db` API（SQLite） | 需 [`minecraft-sqlite-jdbc`](https://modrinth.com/mod/minecraft-sqlite-jdbc) |
+| 其他所有 API | 无额外依赖 |
 
-- **运行时：** Mozilla Rhino 1.9.1（Java 嵌入式 JS 引擎）
-- **编译工具：** esbuild 打包 → Babel 转译（Rhino 目标） → 正则清理
-- **语言：** TypeScript 编写，编译为 ES5 兼容 JS
-- **平台：** NeoForge 1.21.1，Java 21
+> 即使不装 SQLite 模组，除 `db` 外所有功能正常工作。
+
 
 ## 许可证
 

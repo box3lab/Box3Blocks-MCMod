@@ -15,7 +15,12 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.server.level.ServerBossEvent;
+import net.minecraft.world.BossEvent.BossBarColor;
+import net.minecraft.world.BossEvent.BossBarOverlay;
+import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.level.GameType;
 import com.mojang.logging.LogUtils;
 import org.mozilla.javascript.Function;
@@ -495,6 +500,24 @@ public class Box3JSPlayer {
         player.getInventory().clearContent();
     }
 
+    /** Remove up to `count` items of the given type from the player's inventory.
+     *  Returns the number of items actually removed. */
+    public int removeItem(String itemId, int count) {
+        Item item = Box3ScriptUtils.lookupItem(itemId);
+        if (item == null) return 0;
+        var inv = player.getInventory();
+        int remaining = count;
+        for (int i = 0; i < inv.getContainerSize() && remaining > 0; i++) {
+            var stack = inv.getItem(i);
+            if (stack.is(item)) {
+                int take = Math.min(remaining, stack.getCount());
+                stack.shrink(take);
+                remaining -= take;
+            }
+        }
+        return count - remaining;
+    }
+
     // ---- Advancements ----
 
     public void grantAdvancement(String advancementId) {
@@ -545,6 +568,98 @@ public class Box3JSPlayer {
         if (sound != null) {
             player.playNotifySound(sound.value(), net.minecraft.sounds.SoundSource.PLAYERS, (float) volume, (float) pitch);
         }
+    }
+
+    // ---- Bossbar (per-player) ----
+
+    private static final java.util.Map<java.util.UUID, java.util.Map<String, ServerBossEvent>> playerBossbars = new java.util.HashMap<>();
+
+    public void showBossbar(String name, String text, double progress, String color) {
+        var bars = playerBossbars.computeIfAbsent(player.getUUID(), k -> new java.util.HashMap<>());
+        ServerBossEvent bar = bars.get(name);
+        if (bar == null) {
+            bar = new ServerBossEvent(Component.literal(text), resolveBossBarColor(color), BossBarOverlay.PROGRESS);
+            bar.addPlayer(player);
+            bars.put(name, bar);
+        } else {
+            bar.setName(Component.literal(text));
+            if (color != null) bar.setColor(resolveBossBarColor(color));
+        }
+        bar.setProgress((float) Math.max(0, Math.min(1, progress)));
+    }
+
+    public void removeBossbar(String name) {
+        var bars = playerBossbars.get(player.getUUID());
+        if (bars == null) return;
+        ServerBossEvent bar = bars.remove(name);
+        if (bar != null) bar.removeAllPlayers();
+    }
+
+    private static BossBarColor resolveBossBarColor(String colorName) {
+        if (colorName == null) return BossBarColor.WHITE;
+        return switch (colorName.toLowerCase()) {
+            case "red" -> BossBarColor.RED;
+            case "blue" -> BossBarColor.BLUE;
+            case "green" -> BossBarColor.GREEN;
+            case "yellow" -> BossBarColor.YELLOW;
+            case "purple" -> BossBarColor.PURPLE;
+            case "pink" -> BossBarColor.PINK;
+            default -> BossBarColor.WHITE;
+        };
+    }
+
+    // ---- Hotbar ----
+
+    public void setHeldSlot(int slot) {
+        if (slot >= 0 && slot <= 8) {
+            player.getInventory().selected = slot;
+        }
+    }
+
+    // ---- Potion ----
+
+    public void givePotion(String itemId, String potionType, int count) {
+        var item = Box3ScriptUtils.lookupItem(itemId);
+        if (item == null) return;
+        var stack = new ItemStack(item, Math.max(1, Math.min(count, 64)));
+        var potionRl = ResourceLocation.tryParse(potionType);
+        if (potionRl != null) {
+            var potionRegistry = player.server.registryAccess().registryOrThrow(Registries.POTION);
+            var holder = potionRegistry.getHolder(ResourceKey.create(Registries.POTION, potionRl));
+            if (holder.isPresent()) {
+                stack.set(net.minecraft.core.component.DataComponents.POTION_CONTENTS,
+                    new PotionContents(holder.get()));
+            }
+        }
+        player.getInventory().add(stack);
+    }
+
+    // ---- Inventory Query ----
+
+    /** Number of empty slots in the player's main inventory (0–36). */
+    public int getInventoryFreeSlots() {
+        int free = 0;
+        var inv = player.getInventory();
+        for (int i = 0; i < 36; i++) {
+            if (inv.getItem(i).isEmpty()) free++;
+        }
+        return free;
+    }
+
+    public boolean hasItem(String itemId) {
+        return getItemCount(itemId) > 0;
+    }
+
+    public int getItemCount(String itemId) {
+        var item = Box3ScriptUtils.lookupItem(itemId);
+        if (item == null) return 0;
+        int count = 0;
+        var inv = player.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            var stack = inv.getItem(i);
+            if (stack.is(item)) count += stack.getCount();
+        }
+        return count;
     }
 
     // ---- Custom properties ----

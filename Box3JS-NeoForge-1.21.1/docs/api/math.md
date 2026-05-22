@@ -155,6 +155,12 @@ var bounds = new GameBounds3(
 | `bounds.closestPoint(v)`                   | `GameVector3`         | 包围盒上离点 `v` 最近的点          |
 | `bounds.move(offset)`                      | `GameBounds3`         | 平移 `offset`，返回新包围盒        |
 | `bounds.moveEq(offset)`                    | `GameBounds3`         | 原地平移 `offset`，返回自身        |
+| `bounds.volume()`                           | `number`              | 包围盒体积 (宽×高×深)              |
+| `bounds.isEmpty()`                          | `boolean`             | 包围盒是否为空 (任一维度 ≤ 0)      |
+| `bounds.equals(b)`                          | `boolean`             | 判断两个包围盒是否完全相等          |
+| `bounds.union(b)`                           | `GameBounds3`         | 返回同时包围两者自身和 b 的最小盒   |
+| `bounds.inflate(amount)`                    | `GameBounds3`         | 每面向外扩展 amount（返回新对象）   |
+| `bounds.deflate(amount)`                    | `GameBounds3`         | 每面向内收缩 amount（最小为 0）     |
 
 ### 静态方法
 

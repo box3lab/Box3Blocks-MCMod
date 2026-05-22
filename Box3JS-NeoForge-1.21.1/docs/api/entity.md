@@ -95,6 +95,10 @@ zombie.hp = 100;
 
 对实体造成 `amount` 点伤害（通用伤害类型，触发伤害事件）。
 
+### entity.hurt(amount, source)
+
+对实体造成伤害并指定伤害来源实体（用于击杀追踪）。`source` 为另一个 `GameEntity`。
+
 ### entity.heal(amount)
 
 治疗实体 `amount` 点生命值（不超过 maxHp）。
@@ -325,6 +329,19 @@ entity.navigateTo(10, 100, 10, 1.0);
 entity.navigateTo(target.position, 1.0);
 ```
 
+### entity.teleportTo(x, y, z)
+
+将实体传送到指定坐标。
+
+### entity.teleportTo(pos)
+
+⬆ GameVector3 重载。
+
+```js
+entity.teleportTo(0, 100, 0);
+entity.teleportTo(new GameVector3(10, 100, 20));
+```
+
 ### entity.lookAt(x, y, z)
 
 实体面朝目标坐标。
@@ -336,6 +353,19 @@ entity.navigateTo(target.position, 1.0);
 ```js
 entity.lookAt(0, 100, -10);
 entity.lookAt(target.position);
+```
+
+## 粒子
+
+⬆ MC 扩展。
+
+### entity.spawnParticle(type, count, dx, dy, dz, speed)
+
+在实体中心位置生成粒子。
+
+```js
+entity.spawnParticle("minecraft:flame", 10, 0.5, 0.5, 0.5, 0.1);
+entity.spawnParticle("minecraft:cloud", 5, 0.2, 0, 0.2, 0);
 ```
 
 ## 药水效果
@@ -386,6 +416,20 @@ entity.setEquipment("chest", "minecraft:iron_chestplate");
 entity.setEquipment("feet", "minecraft:leather_boots");
 ```
 
+### entity.setEquipmentWithEnchants(slot, itemId, enchants)
+
+给生物穿戴带附魔的装备。`enchants` 是 `{附魔ID: 等级}` 对象。
+
+```js
+entity.setEquipmentWithEnchants("mainhand", "minecraft:diamond_sword", {
+  "minecraft:sharpness": 5,
+  "minecraft:fire_aspect": 2,
+});
+entity.setEquipmentWithEnchants("head", "minecraft:diamond_helmet", {
+  "minecraft:protection": 4,
+});
+```
+
 ### entity.setDropChance(slot, chance)
 
 设置装备槽物品的掉落概率，范围 0.0–1.0。`slot` 设为 `"all"` 可一次性设置所有槽位（包括主副手和四个护甲槽）。
@@ -425,6 +469,14 @@ entity.setAttribute("minecraft:generic.armor", 10);
 ### entity.destroy()
 
 销毁实体。如果通过 `setOnDestroy()` 设置了回调，会触发它。
+
+### entity.remove()
+
+立即从世界中移除实体，不触发回调。与 `destroy()` 不同，`remove()` 不会调用 `setOnDestroy` 注册的回调。
+
+```js
+entity.remove(); // 简单移除，无回调
+```
 
 ### entity.setOnDestroy(handler)
 

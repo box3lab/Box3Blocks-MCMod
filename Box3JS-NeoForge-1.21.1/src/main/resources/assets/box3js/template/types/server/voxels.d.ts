@@ -127,6 +127,59 @@ interface GameVoxels {
     voxel: string | number,
   ): void;
   fillVoxel(pos1: GameVector3, pos2: GameVector3, voxel: string | number): void;
+  fillVoxel(bounds: GameBounds3, voxel: string | number): void;
+
+  /**
+   * @zh 将区域内所有 fromBlock 替换为 toBlock。
+   * @en Replaces all occurrences of fromBlock with toBlock within the region.
+   * @param fromBlock - @zh 被替换的方块名称或 ID @en the block to replace
+   * @param toBlock - @zh 替换后的方块名称或 ID @en the replacement block
+   */
+  replace(
+    x1: number,
+    y1: number,
+    z1: number,
+    x2: number,
+    y2: number,
+    z2: number,
+    fromBlock: string | number,
+    toBlock: string | number,
+  ): void;
+  replace(
+    pos1: GameVector3,
+    pos2: GameVector3,
+    fromBlock: string | number,
+    toBlock: string | number,
+  ): void;
+  replace(
+    bounds: GameBounds3,
+    fromBlock: string | number,
+    toBlock: string | number,
+  ): void;
+
+  /**
+   * @zh 将源区域的所有方块复制到目标位置 (包含方块状态和旋转)。
+   * @en Copies all blocks from the source region to the destination (preserving block state and rotation).
+   * @param destX, destY, destZ - @zh 目标区域最小角坐标 @en minimum corner of the destination region
+   */
+  clone(
+    x1: number,
+    y1: number,
+    z1: number,
+    x2: number,
+    y2: number,
+    z2: number,
+    destX: number,
+    destY: number,
+    destZ: number,
+  ): void;
+  clone(
+    pos1: GameVector3,
+    pos2: GameVector3,
+    destPos: GameVector3,
+  ): void;
+  clone(bounds: GameBounds3, destX: number, destY: number, destZ: number): void;
+  clone(bounds: GameBounds3, destPos: GameVector3): void;
 
   /**
    * @zh 统计区域内指定方块的数量。
@@ -145,6 +198,29 @@ interface GameVoxels {
     pos1: GameVector3,
     pos2: GameVector3,
     voxel: string | number,
+  ): number;
+  countVoxel(bounds: GameBounds3, voxel: string | number): number;
+
+  // ── @zh 带状态的方块放置 @en Stateful block placement ──
+
+  /**
+   * @zh 放置方块并指定方块状态属性 (如 facing, half, waterlogged 等)。
+   * @en Places a block with specific block state properties (e.g. facing, half, waterlogged).
+   * @param voxel - @zh 方块名称或数字 ID @en block name or numeric ID
+   * @param state - @zh 状态属性对象 (如 { "facing": "north", "half": "top" }) @en state properties map (e.g. { "facing": "north" })
+   * @returns @zh 基础方块 ID @en base block ID (without rotation encoding)
+   */
+  setVoxelState(
+    x: number,
+    y: number,
+    z: number,
+    voxel: string | number,
+    state: Record<string, string>,
+  ): number;
+  setVoxelState(
+    pos: GameVector3,
+    voxel: string | number,
+    state: Record<string, string>,
   ): number;
 
   // ── @zh 刷怪笼 @en Spawner ──

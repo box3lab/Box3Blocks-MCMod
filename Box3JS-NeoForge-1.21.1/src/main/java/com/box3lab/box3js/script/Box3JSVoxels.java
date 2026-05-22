@@ -12,6 +12,8 @@ import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 
+import org.mozilla.javascript.NativeObject;
+
 import java.util.*;
 
 public class Box3JSVoxels {
@@ -143,6 +145,47 @@ public class Box3JSVoxels {
         return setVoxel((int) pos.x, (int) pos.y, (int) pos.z, voxel, rotation);
     }
 
+    /** setVoxelState(x, y, z, blockId, state): number — place block with state properties */
+    public int setVoxelState(int x, int y, int z, Object voxel, NativeObject state) {
+        ServerLevel level = server.overworld();
+        BlockPos pos = new BlockPos(x, y, z);
+
+        if (sandbox != null) sandbox.trackBlock(engine.getCurrentProject(), pos);
+
+        if (isAir(voxel)) {
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+            return 0;
+        }
+
+        Block block = resolveBlock(voxel);
+        if (block == null) return 0;
+
+        BlockState blockState = block.defaultBlockState();
+        if (state != null) {
+            for (Object key : state.keySet()) {
+                String propName = key.toString();
+                String propValue = state.get(key).toString();
+                for (var prop : blockState.getProperties()) {
+                    if (prop.getName().equals(propName)) {
+                        @SuppressWarnings({"unchecked", "rawtypes"})
+                        var result = ((BlockState) blockState).setValue((net.minecraft.world.level.block.state.properties.Property) prop,
+                                (Comparable) prop.getValue(propValue).orElse(null));
+                        if (result != null) blockState = result;
+                        break;
+                    }
+                }
+            }
+        }
+
+        level.setBlock(pos, blockState, 3);
+        Integer baseId = blockToId.get(block);
+        return baseId != null ? baseId : 0;
+    }
+    /** setVoxelState(pos, blockId, state): number */
+    public int setVoxelState(GameVector3 pos, Object voxel, NativeObject state) {
+        return setVoxelState((int) pos.x, (int) pos.y, (int) pos.z, voxel, state);
+    }
+
     /** fillVoxel(x1, y1, z1, x2, y2, z2, voxel): void — fill a region */
     public void fillVoxel(int x1, int y1, int z1, int x2, int y2, int z2, Object voxel) {
         int minX = Math.min(x1, x2), maxX = Math.max(x1, x2);
@@ -159,6 +202,71 @@ public class Box3JSVoxels {
     /** fillVoxel(pos1, pos2, voxel): void */
     public void fillVoxel(GameVector3 pos1, GameVector3 pos2, Object voxel) {
         fillVoxel((int) pos1.x, (int) pos1.y, (int) pos1.z, (int) pos2.x, (int) pos2.y, (int) pos2.z, voxel);
+    }
+    /** fillVoxel(bounds, voxel): void */
+    public void fillVoxel(GameBounds3 bounds, Object voxel) {
+        fillVoxel(bounds.lo, bounds.hi, voxel);
+    }
+
+    /** replace(x1, y1, z1, x2, y2, z2, fromBlock, toBlock): void — replace blocks in a region */
+    public void replace(int x1, int y1, int z1, int x2, int y2, int z2, Object fromBlock, Object toBlock) {
+        Block from = resolveBlock(fromBlock);
+        Block to = resolveBlock(toBlock);
+        if (from == null || to == null) return;
+        int minX = Math.min(x1, x2), maxX = Math.max(x1, x2);
+        int minY = Math.min(y1, y2), maxY = Math.max(y1, y2);
+        int minZ = Math.min(z1, z2), maxZ = Math.max(z1, z2);
+        var level = server.overworld();
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    if (level.getBlockState(pos).getBlock() == from) {
+                        setVoxel(x, y, z, toBlock);
+                    }
+                }
+            }
+        }
+    }
+    /** replace(pos1, pos2, fromBlock, toBlock): void */
+    public void replace(GameVector3 pos1, GameVector3 pos2, Object fromBlock, Object toBlock) {
+        replace((int) pos1.x, (int) pos1.y, (int) pos1.z, (int) pos2.x, (int) pos2.y, (int) pos2.z, fromBlock, toBlock);
+    }
+    /** replace(bounds, fromBlock, toBlock): void */
+    public void replace(GameBounds3 bounds, Object fromBlock, Object toBlock) {
+        replace(bounds.lo, bounds.hi, fromBlock, toBlock);
+    }
+
+    /** clone(x1, y1, z1, x2, y2, z2, destX, destY, destZ): void — copy a block region */
+    public void clone(int x1, int y1, int z1, int x2, int y2, int z2, int destX, int destY, int destZ) {
+        int minX = Math.min(x1, x2), maxX = Math.max(x1, x2);
+        int minY = Math.min(y1, y2), maxY = Math.max(y1, y2);
+        int minZ = Math.min(z1, z2), maxZ = Math.max(z1, z2);
+        var level = server.overworld();
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    BlockState state = level.getBlockState(new BlockPos(x, y, z));
+                    int dx = destX + (x - minX);
+                    int dy = destY + (y - minY);
+                    int dz = destZ + (z - minZ);
+                    if (sandbox != null) sandbox.trackBlock(engine.getCurrentProject(), new BlockPos(dx, dy, dz));
+                    level.setBlock(new BlockPos(dx, dy, dz), state, 3);
+                }
+            }
+        }
+    }
+    /** clone(pos1, pos2, destPos): void */
+    public void clone(GameVector3 pos1, GameVector3 pos2, GameVector3 destPos) {
+        clone((int) pos1.x, (int) pos1.y, (int) pos1.z, (int) pos2.x, (int) pos2.y, (int) pos2.z, (int) destPos.x, (int) destPos.y, (int) destPos.z);
+    }
+    /** clone(bounds, destX, destY, destZ): void */
+    public void clone(GameBounds3 bounds, int destX, int destY, int destZ) {
+        clone((int) bounds.lo.x, (int) bounds.lo.y, (int) bounds.lo.z, (int) bounds.hi.x, (int) bounds.hi.y, (int) bounds.hi.z, destX, destY, destZ);
+    }
+    /** clone(bounds, destPos): void */
+    public void clone(GameBounds3 bounds, GameVector3 destPos) {
+        clone(bounds.lo, bounds.hi, destPos);
     }
 
     /** countVoxel(x1, y1, z1, x2, y2, z2, voxel): number — count matching blocks in region */
@@ -185,6 +293,10 @@ public class Box3JSVoxels {
     /** countVoxel(pos1, pos2, voxel): number */
     public int countVoxel(GameVector3 pos1, GameVector3 pos2, Object voxel) {
         return countVoxel((int) pos1.x, (int) pos1.y, (int) pos1.z, (int) pos2.x, (int) pos2.y, (int) pos2.z, voxel);
+    }
+    /** countVoxel(bounds, voxel): number */
+    public int countVoxel(GameBounds3 bounds, Object voxel) {
+        return countVoxel(bounds.lo, bounds.hi, voxel);
     }
 
     /** setVoxelId(x, y, z, voxel: number): number — rotation already encoded in the ID */

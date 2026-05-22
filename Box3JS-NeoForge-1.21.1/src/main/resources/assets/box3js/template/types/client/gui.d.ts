@@ -43,6 +43,14 @@ interface GuiController {
    * @param count - @zh 数量（可选，默认 1） @en Count (optional, default 1)
    */
   setItem(slot: number, itemId: string, count?: number): void;
+  /**
+   * @zh 设置指定槽位的物品（带选项）。
+   * @en Sets the item in the given slot with options.
+   * @param slot - @zh 槽位索引 @en Slot index
+   * @param itemId - @zh 物品 ID @en Item ID
+   * @param options - @zh 选项 @en Options
+   */
+  setItem(slot: number, itemId: string, options: { count?: number; lore?: string[]; enchanted?: boolean }): void;
 
   /**
    * @zh 获取指定槽位的物品。

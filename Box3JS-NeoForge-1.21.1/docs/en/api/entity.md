@@ -98,6 +98,10 @@ zombie.hp = 100;
 
 Deals `amount` generic damage to the entity (triggers damage events).
 
+### entity.hurt(amount, source)
+
+Deals damage to the entity with a source entity for kill tracking. `source` is another `GameEntity`.
+
 ### entity.heal(amount)
 
 Heals the entity by `amount` (capped at maxHp).
@@ -328,6 +332,19 @@ entity.navigateTo(10, 100, 10, 1.0);
 entity.navigateTo(target.position, 1.0);
 ```
 
+### entity.teleportTo(x, y, z)
+
+Teleports the entity to the given coordinates.
+
+### entity.teleportTo(pos)
+
+⬆ GameVector3 overload.
+
+```js
+entity.teleportTo(0, 100, 0);
+entity.teleportTo(new GameVector3(10, 100, 20));
+```
+
 ### entity.lookAt(x, y, z)
 
 Makes the entity look at the given coordinates.
@@ -339,6 +356,19 @@ Makes the entity look at the given coordinates.
 ```js
 entity.lookAt(0, 100, -10);
 entity.lookAt(target.position);
+```
+
+## Particles
+
+⬆ MC Extension.
+
+### entity.spawnParticle(type, count, dx, dy, dz, speed)
+
+Spawns particles at the entity's center position.
+
+```js
+entity.spawnParticle("minecraft:flame", 10, 0.5, 0.5, 0.5, 0.1);
+entity.spawnParticle("minecraft:cloud", 5, 0.2, 0, 0.2, 0);
 ```
 
 ## Status Effects
@@ -389,6 +419,20 @@ entity.setEquipment("chest", "minecraft:iron_chestplate");
 entity.setEquipment("feet", "minecraft:leather_boots");
 ```
 
+### entity.setEquipmentWithEnchants(slot, itemId, enchants)
+
+Equips an enchanted item onto a mob's equipment slot. `enchants` is an `{enchantmentId: level}` object.
+
+```js
+entity.setEquipmentWithEnchants("mainhand", "minecraft:diamond_sword", {
+  "minecraft:sharpness": 5,
+  "minecraft:fire_aspect": 2,
+});
+entity.setEquipmentWithEnchants("head", "minecraft:diamond_helmet", {
+  "minecraft:protection": 4,
+});
+```
+
 ### entity.setDropChance(slot, chance)
 
 Sets the drop chance for an equipment slot, range 0.0–1.0. Use `"all"` for `slot` to set all slots at once (both hands + four armor slots).
@@ -428,6 +472,14 @@ entity.setAttribute("minecraft:generic.armor", 10);
 ### entity.destroy()
 
 Destroys the entity. If a callback was registered via `setOnDestroy()`, it will be invoked.
+
+### entity.remove()
+
+Immediately removes the entity from the world without triggering the destroy callback. Unlike `destroy()`, `remove()` does not invoke the `setOnDestroy` handler.
+
+```js
+entity.remove(); // Simple removal, no callback
+```
 
 ### entity.setOnDestroy(handler)
 

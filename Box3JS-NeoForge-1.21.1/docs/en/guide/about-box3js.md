@@ -1,11 +1,8 @@
----
----
-
-# Box3JS and Box3 (Shenqi Code Island)
+# Box3JS and Box3
 
 ## What is Box3 (神奇代码岛)
 
-[Box3](https://box3.fun) (also known as 神奇代码岛 or "Code Island 3.0") is a **multiplayer 3D game creation platform** developed by Shenzhen Qimengdao Technology Co., Ltd. (深圳奇梦岛科技有限公司), a brand under Codemao (编程猫). Users create racing games, PvP arenas, RPGs, FPS shooters, and even MOBAs — all in a browser, using nothing but JavaScript.
+[Box3](https://box3.fun) (also known as 神奇代码岛 or "Box3") is a **multiplayer 3D game creation platform**. Users create racing games, PvP arenas, RPGs, FPS shooters, and even MOBAs — all in a browser, using nothing but JavaScript.
 
 Key features:
 
@@ -67,7 +64,7 @@ world.onChat((entity, message) => {
 });
 ```
 
-For a detailed API comparison, see [Box3 API vs Box3JS](../BOX3_API_COMPARISON.md).
+For a detailed API comparison, see [Box3 API vs Box3JS](../../BOX3_API_COMPARISON.md).
 
 ### 2. Real Minecraft World
 
@@ -129,7 +126,7 @@ Box3JS is not a 1:1 copy of Box3's API. Differences stem from the fundamental di
 | Database            | Built-in KV storage                                 | JSON storage + SQLite (requires sqlite-jdbc mod)                |
 | Networking          | Platform-managed                                    | `remoteChannel` custom payloads                                 |
 
-**Design principle:** Keep API naming and semantics consistent where possible, but don't force-fit MC-incompatible features. For a detailed comparison, see [Box3 API vs Box3JS](../BOX3_API_COMPARISON.md).
+**Design principle:** Keep API naming and semantics consistent where possible, but don't force-fit MC-incompatible features. For a detailed comparison, see [Box3 API vs Box3JS](../../BOX3_API_COMPARISON.md).
 
 ## Next Steps
 

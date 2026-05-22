@@ -45,6 +45,22 @@ var mx = input.getMouseX();
 var my = input.getMouseY();
 ```
 
+## input.getMouseDeltaX()
+
+获取当前帧鼠标 X 轴增量（自上一帧的移动量）。
+
+```js
+var dx = input.getMouseDeltaX();
+```
+
+## input.getMouseDeltaY()
+
+获取当前帧鼠标 Y 轴增量（自上一帧的移动量）。
+
+```js
+var dy = input.getMouseDeltaY();
+```
+
 ## input.onMouseClick(callback)
 
 注册鼠标按键回调。返回 `GameEventHandlerToken`，调用 `.cancel()` 取消。

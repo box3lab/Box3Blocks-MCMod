@@ -81,7 +81,7 @@ public class Box3JS {
                             case 0 -> Box3JSGuiServerHandler.handleOpen(
                                 sp, payload.title(), payload.rows(), payload.slotsJson());
                             case 1 -> Box3JSGuiServerHandler.handleSetItem(
-                                sp, payload.slot(), payload.itemId(), payload.count());
+                                sp, payload.slot(), payload.itemId(), payload.count(), payload.loreJson(), payload.enchanted());
                             case 2 -> Box3JSGuiServerHandler.handleRegisterCallbacks(
                                 sp, payload.hasSlotClick(), payload.hasClose());
                             case 3 -> Box3JSGuiServerHandler.handleClose(sp);
@@ -129,28 +129,36 @@ public class Box3JS {
         // Block break
         NeoForge.EVENT_BUS.addListener((BlockEvent.BreakEvent event) -> {
             if (event.getPlayer() instanceof ServerPlayer sp) {
-                Box3ScriptEngine.get().fireVoxelDestroy(sp, event.getPos());
+                if (Box3ScriptEngine.get().fireVoxelDestroy(sp, event.getPos())) {
+                    event.setCanceled(true);
+                }
             }
         });
 
         // Block place
         NeoForge.EVENT_BUS.addListener((BlockEvent.EntityPlaceEvent event) -> {
             if (event.getEntity() instanceof ServerPlayer sp) {
-                Box3ScriptEngine.get().fireBlockPlace(sp, event.getPos(), event.getPlacedBlock());
+                if (Box3ScriptEngine.get().fireBlockPlace(sp, event.getPos(), event.getPlacedBlock())) {
+                    event.setCanceled(true);
+                }
             }
         });
 
         // Interact (entity)
         NeoForge.EVENT_BUS.addListener((PlayerInteractEvent.EntityInteract event) -> {
             if (event.getEntity() instanceof ServerPlayer sp) {
-                Box3ScriptEngine.get().fireInteract(sp, event.getTarget());
+                if (Box3ScriptEngine.get().fireInteract(sp, event.getTarget())) {
+                    event.setCanceled(true);
+                }
             }
         });
 
         // Right-click block
         NeoForge.EVENT_BUS.addListener((PlayerInteractEvent.RightClickBlock event) -> {
             if (event.getEntity() instanceof ServerPlayer sp) {
-                Box3ScriptEngine.get().fireBlockActivate(sp, event.getPos(), event.getLevel().getBlockState(event.getPos()));
+                if (Box3ScriptEngine.get().fireBlockActivate(sp, event.getPos(), event.getLevel().getBlockState(event.getPos()))) {
+                    event.setCanceled(true);
+                }
                 Box3ScriptEngine.get().fireActionButton(sp, "ACTION1");
             }
         });
@@ -202,10 +210,12 @@ public class Box3JS {
 
         // Entity damage
         NeoForge.EVENT_BUS.addListener((LivingDamageEvent.Pre event) -> {
-            Box3ScriptEngine.get().fireEntityDamage(event.getEntity(),
+            if (Box3ScriptEngine.get().fireEntityDamage(event.getEntity(),
                     event.getNewDamage(),
                     event.getSource().getMsgId(),
-                    event.getSource().getEntity());
+                    event.getSource().getEntity())) {
+                event.setNewDamage(0);
+            }
         });
 
         // Auto-load server scripts from config/box3/script/<project>/dist/server.js on server start

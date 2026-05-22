@@ -18,8 +18,11 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
 
+import com.box3lab.box3js.Box3JS;
 import com.box3lab.box3js.standalone.Box3ScriptCompiler;
 import com.mojang.logging.LogUtils;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.neoforged.fml.ModList;
 import org.slf4j.Logger;
 
@@ -189,11 +192,18 @@ public class Box3ScriptEngine {
         }
     }
 
-    /** Report error to the current errorReporter (player), or just log if none. */
+    /** Report error to the current errorReporter (player), broadcast to Box3JS clients, and log. */
     void reportError(String msg) {
         LOGGER.error(msg);
         if (errorReporter != null)
             errorReporter.accept(msg);
+        if (server != null) {
+            for (ServerPlayer sp : server.getPlayerList().getPlayers()) {
+                if (Box3JS.clientsWithBox3JS.contains(sp.getUUID())) {
+                    sp.sendSystemMessage(Component.literal("[Box3JS] " + msg).withStyle(ChatFormatting.RED));
+                }
+            }
+        }
     }
 
     /**
@@ -234,8 +244,11 @@ public class Box3ScriptEngine {
 
     public Runnable addVoxelDestroyCallback(VoxelDestroyCallback cb) {
         String project = currentProject;
-        VoxelDestroyCallback wrapped = (e, x, y, z, v, t) -> runInContext(project,
-                () -> cb.onDestroy(e, x, y, z, v, t));
+        VoxelDestroyCallback wrapped = (e, x, y, z, v, t) -> {
+            java.util.concurrent.atomic.AtomicReference<Object> result = new java.util.concurrent.atomic.AtomicReference<>();
+            runInContext(project, () -> result.set(cb.onDestroy(e, x, y, z, v, t)));
+            return result.get();
+        };
         bus.addVoxelDestroy(project, wrapped);
         return () -> bus.removeVoxelDestroy(project, wrapped);
     }
@@ -250,7 +263,11 @@ public class Box3ScriptEngine {
 
     public Runnable addInteractCallback(InteractCallback cb) {
         String project = currentProject;
-        InteractCallback wrapped = (e, tgt, tick) -> runInContext(project, () -> cb.onInteract(e, tgt, tick));
+        InteractCallback wrapped = (e, tgt, tick) -> {
+            java.util.concurrent.atomic.AtomicReference<Object> result = new java.util.concurrent.atomic.AtomicReference<>();
+            runInContext(project, () -> result.set(cb.onInteract(e, tgt, tick)));
+            return result.get();
+        };
         bus.addInteract(project, wrapped);
         return () -> bus.removeInteract(project, wrapped);
     }
@@ -296,8 +313,11 @@ public class Box3ScriptEngine {
 
     public Runnable addBlockPlaceCallback(BlockPlaceCallback cb) {
         String project = currentProject;
-        BlockPlaceCallback wrapped = (e, x, y, z, v, vid, t) -> runInContext(project,
-                () -> cb.onPlace(e, x, y, z, v, vid, t));
+        BlockPlaceCallback wrapped = (e, x, y, z, v, vid, t) -> {
+            java.util.concurrent.atomic.AtomicReference<Object> result = new java.util.concurrent.atomic.AtomicReference<>();
+            runInContext(project, () -> result.set(cb.onPlace(e, x, y, z, v, vid, t)));
+            return result.get();
+        };
         bus.addBlockPlace(project, wrapped);
         return () -> bus.removeBlockPlace(project, wrapped);
     }
@@ -318,15 +338,22 @@ public class Box3ScriptEngine {
 
     public Runnable addBlockActivateCallback(BlockActivateCallback cb) {
         String project = currentProject;
-        BlockActivateCallback wrapped = (e, x, y, z, v, t) -> runInContext(project,
-                () -> cb.onActivate(e, x, y, z, v, t));
+        BlockActivateCallback wrapped = (e, x, y, z, v, t) -> {
+            java.util.concurrent.atomic.AtomicReference<Object> result = new java.util.concurrent.atomic.AtomicReference<>();
+            runInContext(project, () -> result.set(cb.onActivate(e, x, y, z, v, t)));
+            return result.get();
+        };
         bus.addBlockActivate(project, wrapped);
         return () -> bus.removeBlockActivate(project, wrapped);
     }
 
     public Runnable addEntityDamageCallback(EntityDamageCallback cb) {
         String project = currentProject;
-        EntityDamageCallback wrapped = (e, a, s, at, t) -> runInContext(project, () -> cb.onDamage(e, a, s, at, t));
+        EntityDamageCallback wrapped = (e, a, s, at, t) -> {
+            java.util.concurrent.atomic.AtomicReference<Object> result = new java.util.concurrent.atomic.AtomicReference<>();
+            runInContext(project, () -> result.set(cb.onDamage(e, a, s, at, t)));
+            return result.get();
+        };
         bus.addEntityDamage(project, wrapped);
         return () -> bus.removeEntityDamage(project, wrapped);
     }
@@ -676,7 +703,9 @@ public class Box3ScriptEngine {
         return key != null ? key.toString() : "minecraft:air";
     }
 
-    public void fireVoxelDestroy(ServerPlayer player, BlockPos pos) {
+    /** @return true if any destroy callback returned false to cancel */
+    public boolean fireVoxelDestroy(ServerPlayer player, BlockPos pos) {
+        java.util.concurrent.atomic.AtomicBoolean cancelled = new java.util.concurrent.atomic.AtomicBoolean(false);
         String voxel = null;
         long tick = -1;
         Box3JSEntity entity = null;
@@ -692,16 +721,24 @@ public class Box3ScriptEngine {
             long t = tick;
             String v = voxel;
             runInContext(entry.getKey(), () -> {
-                for (var cb : entry.getValue())
-                    cb.onDestroy(e, pos.getX(), pos.getY(), pos.getZ(), v, t);
+                for (var cb : entry.getValue()) {
+                    Object result = cb.onDestroy(e, pos.getX(), pos.getY(), pos.getZ(), v, t);
+                    if (result instanceof Boolean && !((Boolean) result)) {
+                        cancelled.set(true);
+                    }
+                }
             });
         }
-        String s = worldBinding.getBreakVoxelSound();
-        if (s != null && !s.isEmpty())
-            worldBinding.playSound(s, pos.getX(), pos.getY(), pos.getZ(), 1.0, 1.0);
+        if (!cancelled.get()) {
+            String s = worldBinding.getBreakVoxelSound();
+            if (s != null && !s.isEmpty())
+                worldBinding.playSound(s, pos.getX(), pos.getY(), pos.getZ(), 1.0, 1.0);
+        }
+        return cancelled.get();
     }
 
-    public void fireInteract(ServerPlayer player, net.minecraft.world.entity.Entity target) {
+    public boolean fireInteract(ServerPlayer player, net.minecraft.world.entity.Entity target) {
+        java.util.concurrent.atomic.AtomicBoolean cancelled = new java.util.concurrent.atomic.AtomicBoolean(false);
         Box3JSEntity entity = null;
         Box3JSEntity targetEntity = null;
         long tick = -1;
@@ -717,10 +754,15 @@ public class Box3ScriptEngine {
             Box3JSEntity te = targetEntity;
             long t = tick;
             runInContext(entry.getKey(), () -> {
-                for (var cb : entry.getValue())
-                    cb.onInteract(e, te, t);
+                for (var cb : entry.getValue()) {
+                    Object result = cb.onInteract(e, te, t);
+                    if (result instanceof Boolean && !((Boolean) result)) {
+                        cancelled.set(true);
+                    }
+                }
             });
         }
+        return cancelled.get();
     }
 
     /** @return true if any chat callback returned false to cancel */
@@ -759,7 +801,9 @@ public class Box3ScriptEngine {
         return cancelled.get();
     }
 
-    public void fireBlockPlace(ServerPlayer player, BlockPos pos, BlockState state) {
+    /** @return true if any place callback returned false to cancel */
+    public boolean fireBlockPlace(ServerPlayer player, BlockPos pos, BlockState state) {
+        java.util.concurrent.atomic.AtomicBoolean cancelled = new java.util.concurrent.atomic.AtomicBoolean(false);
         Box3JSEntity entity = null;
         long tick = -1;
         int voxelId = -1;
@@ -779,13 +823,20 @@ public class Box3ScriptEngine {
             int vid = voxelId;
             String v = voxel;
             runInContext(entry.getKey(), () -> {
-                for (var cb : entry.getValue())
-                    cb.onPlace(e, pos.getX(), pos.getY(), pos.getZ(), v, vid, t);
+                for (var cb : entry.getValue()) {
+                    Object result = cb.onPlace(e, pos.getX(), pos.getY(), pos.getZ(), v, vid, t);
+                    if (result instanceof Boolean && !((Boolean) result)) {
+                        cancelled.set(true);
+                    }
+                }
             });
         }
-        String s = worldBinding.getPlaceVoxelSound();
-        if (s != null && !s.isEmpty())
-            worldBinding.playSound(s, pos.getX(), pos.getY(), pos.getZ(), 1.0, 1.0);
+        if (!cancelled.get()) {
+            String s = worldBinding.getPlaceVoxelSound();
+            if (s != null && !s.isEmpty())
+                worldBinding.playSound(s, pos.getX(), pos.getY(), pos.getZ(), 1.0, 1.0);
+        }
+        return cancelled.get();
     }
 
     public void fireEntityDeath(net.minecraft.world.entity.Entity deadEntity,
@@ -830,7 +881,8 @@ public class Box3ScriptEngine {
         }
     }
 
-    public void fireBlockActivate(ServerPlayer player, BlockPos pos, BlockState state) {
+    public boolean fireBlockActivate(ServerPlayer player, BlockPos pos, BlockState state) {
+        java.util.concurrent.atomic.AtomicBoolean cancelled = new java.util.concurrent.atomic.AtomicBoolean(false);
         Box3JSEntity entity = null;
         long tick = -1;
         String voxel = null;
@@ -847,14 +899,20 @@ public class Box3ScriptEngine {
             long t = tick;
             String v = voxel;
             runInContext(entry.getKey(), () -> {
-                for (var cb : entry.getValue())
-                    cb.onActivate(e, pos.getX(), pos.getY(), pos.getZ(), v, t);
+                for (var cb : entry.getValue()) {
+                    Object result = cb.onActivate(e, pos.getX(), pos.getY(), pos.getZ(), v, t);
+                    if (result instanceof Boolean && !((Boolean) result)) {
+                        cancelled.set(true);
+                    }
+                }
             });
         }
+        return cancelled.get();
     }
 
-    public void fireEntityDamage(net.minecraft.world.entity.Entity damagedEntity, double amount, String source,
+    public boolean fireEntityDamage(net.minecraft.world.entity.Entity damagedEntity, double amount, String source,
             net.minecraft.world.entity.Entity attacker) {
+        java.util.concurrent.atomic.AtomicBoolean cancelled = new java.util.concurrent.atomic.AtomicBoolean(false);
         Box3JSEntity entity = null;
         Box3JSEntity attackerEntity = null;
         long tick = -1;
@@ -870,10 +928,15 @@ public class Box3ScriptEngine {
             Box3JSEntity ae = attackerEntity;
             long t = tick;
             runInContext(entry.getKey(), () -> {
-                for (var cb : entry.getValue())
-                    cb.onDamage(e, amount, source, ae, t);
+                for (var cb : entry.getValue()) {
+                    Object result = cb.onDamage(e, amount, source, ae, t);
+                    if (result instanceof Boolean && !((Boolean) result)) {
+                        cancelled.set(true);
+                    }
+                }
             });
         }
+        return cancelled.get();
     }
 
     public void firePlayerJoin(ServerPlayer player) {

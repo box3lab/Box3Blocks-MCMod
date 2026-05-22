@@ -105,7 +105,9 @@ public final class Box3JSNetwork {
         String itemId,         // for SET_ITEM
         int count,             // for SET_ITEM
         boolean hasSlotClick,  // for REGISTER_CALLBACKS
-        boolean hasClose       // for REGISTER_CALLBACKS
+        boolean hasClose,      // for REGISTER_CALLBACKS
+        String loreJson,       // for SET_ITEM (JSON array of lore strings)
+        boolean enchanted      // for SET_ITEM (enchantment glint override)
     ) implements CustomPacketPayload {
 
         public static final Type<GUIServerboundPayload> TYPE =
@@ -123,6 +125,8 @@ public final class Box3JSNetwork {
                         buf.writeVarInt(p.count);
                         buf.writeBoolean(p.hasSlotClick);
                         buf.writeBoolean(p.hasClose);
+                        buf.writeUtf(p.loreJson);
+                        buf.writeBoolean(p.enchanted);
                     },
                     buf -> new GUIServerboundPayload(
                         buf.readVarInt(),
@@ -133,6 +137,8 @@ public final class Box3JSNetwork {
                         buf.readUtf(),
                         buf.readVarInt(),
                         buf.readBoolean(),
+                        buf.readBoolean(),
+                        buf.readUtf(),
                         buf.readBoolean()
                     )
                 );

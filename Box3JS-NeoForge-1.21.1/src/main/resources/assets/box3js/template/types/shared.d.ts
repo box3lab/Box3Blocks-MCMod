@@ -230,6 +230,24 @@ declare class GameBounds3 {
   /** @zh 原地平移包围盒。 @en Translates the bounds in‑place. */
   moveEq(offset: GameVector3): GameBounds3;
 
+  /** @zh 包围盒体积 (宽×高×深)。 @en Volume of the bounds (width × height × depth). */
+  volume(): number;
+
+  /** @zh 包围盒是否为空 (任一维度 ≤ 0)。 @en Whether the bounds is empty (any dimension ≤ 0). */
+  isEmpty(): boolean;
+
+  /** @zh 判断两个包围盒是否完全相等。 @en Whether this bounds exactly equals another. */
+  equals(b: GameBounds3): boolean;
+
+  /** @zh 返回同时包围自身和 b 的最小包围盒。 @en Returns the smallest bounds containing both this and b. */
+  union(b: GameBounds3): GameBounds3;
+
+  /** @zh 每面向外扩展 amount（返回新对象，等效 expand）。 @en Inflates the bounds outward by amount on all six faces (returns new object; equivalent to expand). */
+  inflate(amount: number): GameBounds3;
+
+  /** @zh 每面向内收缩 amount（返回新对象，最小收缩到零体积）。 @en Deflates the bounds inward by amount on all six faces (clamped to zero volume). */
+  deflate(amount: number): GameBounds3;
+
   /** @zh 从 GameVector3 数组创建最小包围盒。 @en Creates bounds from an array of GameVector3. */
   static fromPoints(points: GameVector3[]): GameBounds3 | null;
 

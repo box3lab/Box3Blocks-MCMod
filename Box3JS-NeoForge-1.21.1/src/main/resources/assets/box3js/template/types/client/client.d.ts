@@ -132,6 +132,40 @@ interface GameClient {
    * @en Resets fog to Minecraft's default behaviour.
    */
   resetFog(): void;
+
+  // ── Camera control ──
+
+  /**
+   * @zh 将相机切换到目标实体的视角（旁观模式效果）。
+   * @en Switches the camera to spectate the given entity (spectator-style view).
+   * @param entityUuid - @zh 目标实体的 UUID 字符串 @en the target entity's UUID string
+   */
+  setCameraTarget(entityUuid: string): void;
+
+  /**
+   * @zh 重置相机到本地玩家视角。
+   * @en Resets the camera back to the local player.
+   */
+  resetCamera(): void;
+
+  // ── Block query ──
+
+  /**
+   * @zh 在客户端查询指定坐标的方块状态（从渲染区块缓存读取）。
+   * @en Queries the block state at a position from the client's render chunk cache.
+   * @returns @zh `{ id: string }` 或空气/null 时返回 null @en `{ id: string }` or null for air/unloaded
+   */
+  getBlockState(x: number, y: number, z: number): { id: string } | null;
+
+  // ── Render callback ──
+
+  /**
+   * @zh 注册每 Render 帧回调（仅在 HUD 渲染阶段触发）。
+   * @en Registers a callback invoked every render frame (during HUD render phase).
+   * @param callback - @zh 接收 partialTick（0‑1）的回调 @en callback receiving partialTick (0–1)
+   * @returns @zh GameEventHandlerToken — 调用 .cancel() 取消 @en GameEventHandlerToken — call .cancel() to unsubscribe
+   */
+  onRender(callback: (partialTick: number) => void): GameEventHandlerToken;
 }
 
 // ── §7 @zh 全局声明（客户端） @en Global Declarations (client) ──

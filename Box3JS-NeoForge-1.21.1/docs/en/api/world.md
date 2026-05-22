@@ -665,6 +665,14 @@ Spawn particles evenly on a horizontal circle.
 
 ⬆ GameVector3 overload.
 
+### world.spawnParticleLine(x1, y1, z1, x2, y2, z2, type, count)
+
+Spawn particles evenly along a line between two points. ⬆ MC Extension.
+
+### world.spawnParticleLine(from, to, type, count)
+
+⬆ GameVector3 overload.
+
 ```js
 // Point particles
 world.spawnParticle("minecraft:flame", 0, 100, 0, 10, 0.5, 0.5, 0.5, 0.1);
@@ -676,6 +684,15 @@ world.spawnParticleCircle(
   new GameVector3(0, 100, 0),
   2.0,
   "minecraft:happy_villager",
+  20,
+);
+
+// Particle line (between two points)
+world.spawnParticleLine(0, 100, 0, 10, 100, 10, "minecraft:flame", 20);
+world.spawnParticleLine(
+  new GameVector3(0, 100, 0),
+  new GameVector3(10, 100, 10),
+  "minecraft:flame",
   20,
 );
 
@@ -791,6 +808,10 @@ if (result.hit) {
 ### world.entitiesInArea(pos1, pos2)
 
 Returns all entities within the AABB defined by two corner positions.
+
+### world.entitiesInArea(bounds)
+
+⬆ GameBounds3 overload.
 
 ### world.entitiesInRadius(x, y, z, radius)
 

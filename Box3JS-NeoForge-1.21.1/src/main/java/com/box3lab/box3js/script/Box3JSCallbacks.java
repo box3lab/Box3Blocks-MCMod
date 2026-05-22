@@ -12,7 +12,7 @@ interface PlayerLeaveCallback {
 
 @FunctionalInterface
 interface VoxelDestroyCallback {
-    void onDestroy(Box3JSEntity entity, int x, int y, int z, String voxel, long tick);
+    Object onDestroy(Box3JSEntity entity, int x, int y, int z, String voxel, long tick);
 }
 
 @FunctionalInterface
@@ -22,7 +22,7 @@ interface VoxelContactCallback {
 
 @FunctionalInterface
 interface InteractCallback {
-    void onInteract(Box3JSEntity entity, Box3JSEntity target, long tick);
+    Object onInteract(Box3JSEntity entity, Box3JSEntity target, long tick);
 }
 
 @FunctionalInterface
@@ -52,7 +52,7 @@ interface EntitySeparateCallback {
 
 @FunctionalInterface
 interface BlockPlaceCallback {
-    void onPlace(Box3JSEntity entity, int x, int y, int z, String voxel, int voxelId, long tick);
+    Object onPlace(Box3JSEntity entity, int x, int y, int z, String voxel, int voxelId, long tick);
 }
 
 @FunctionalInterface
@@ -67,12 +67,12 @@ interface PlayerRespawnCallback {
 
 @FunctionalInterface
 interface BlockActivateCallback {
-    void onActivate(Box3JSEntity entity, int x, int y, int z, String voxel, long tick);
+    Object onActivate(Box3JSEntity entity, int x, int y, int z, String voxel, long tick);
 }
 
 @FunctionalInterface
 interface EntityDamageCallback {
-    void onDamage(Box3JSEntity entity, double amount, String source, Box3JSEntity attacker, long tick);
+    Object onDamage(Box3JSEntity entity, double amount, String source, Box3JSEntity attacker, long tick);
 }
 
 @FunctionalInterface

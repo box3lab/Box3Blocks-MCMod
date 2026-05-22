@@ -158,6 +158,12 @@ var bounds = new GameBounds3(
 | `bounds.closestPoint(v)`                   | `GameVector3`         | Closest point on the bounds to point `v`                   |
 | `bounds.move(offset)`                      | `GameBounds3`         | Translate by `offset`, returns new bounds                  |
 | `bounds.moveEq(offset)`                    | `GameBounds3`         | In-place translate by `offset`, returns this               |
+| `bounds.volume()`                           | `number`              | Volume of the bounds (width × height × depth)              |
+| `bounds.isEmpty()`                          | `boolean`             | Whether the bounds is empty (any dimension ≤ 0)            |
+| `bounds.equals(b)`                          | `boolean`             | Whether this bounds exactly equals another                 |
+| `bounds.union(b)`                           | `GameBounds3`         | Returns the smallest bounds containing both this and b     |
+| `bounds.inflate(amount)`                    | `GameBounds3`         | Expand outward by amount on all six faces (returns new object) |
+| `bounds.deflate(amount)`                    | `GameBounds3`         | Shrink inward by amount on all six faces (clamped to zero) |
 
 ### Static Methods
 

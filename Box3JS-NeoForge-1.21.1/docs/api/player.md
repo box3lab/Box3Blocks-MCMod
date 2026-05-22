@@ -472,6 +472,64 @@ console.log(held.id, held.count); // "minecraft:diamond_sword" 1
 player.clearInventory();
 ```
 
+### player.removeItem(itemId, count)
+
+从背包中移除指定数量的物品。返回实际移除的数量。
+
+```js
+// 移除 3 个铁锭
+const removed = player.removeItem("minecraft:iron_ingot", 3);
+console.log("实际移除: " + removed);
+```
+
+### player.setHeldSlot(slot)
+
+设置玩家手持快捷栏槽位 (0–8)。
+
+```js
+player.setHeldSlot(0); // 切换到第 1 格
+player.setHeldSlot(4); // 切换到第 5 格
+```
+
+### player.inventoryFreeSlots
+
+只读 `number`。返回背包空余槽位数（0–36）。
+
+```js
+if (player.inventoryFreeSlots < 2) {
+  player.directMessage("背包空间不足！");
+}
+```
+
+### player.hasItem(itemId)
+
+检查背包中是否拥有某物品。
+
+```js
+if (player.hasItem("minecraft:diamond")) {
+  player.directMessage("你有一颗钻石!");
+}
+```
+
+### player.getItemCount(itemId)
+
+统计背包中某物品的总数量。
+
+```js
+var count = player.getItemCount("minecraft:iron_ingot");
+console.log("背包里有 " + count + " 个铁锭");
+```
+
+### player.givePotion(itemId, potionType, count)
+
+给予玩家指定类型的药水（带有 `PotionContents` 组件，适用于 1.21.1+）。
+
+```js
+player.givePotion("minecraft:potion", "minecraft:healing", 3);
+player.givePotion("minecraft:splash_potion", "minecraft:poison", 1);
+player.givePotion("minecraft:lingering_potion", "minecraft:regeneration", 2);
+```
+
 ## 自定义容器 GUI
 
 为玩家打开脚本控制的容器 GUI（类似箱子界面），可自定义格子内容、点击行为和关闭回调。
@@ -577,6 +635,31 @@ player.runCommand("say hello");
 player.grantAdvancement("minecraft:story/mine_stone");
 player.grantAdvancement("minecraft:adventure/kill_a_mob");
 player.revokeAdvancement("minecraft:story/mine_stone");
+```
+
+## Bossbar
+
+### player.showBossbar(name, text, progress, color)
+
+向该玩家显示一个独立的 Bossbar。
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `name` | string | Bossbar 唯一标识名，用于后续移除 |
+| `text` | string | 显示文字 |
+| `progress` | number | 进度条 (0–1) |
+| `color` | string | 颜色：`"pink"` / `"blue"` / `"red"` / `"green"` / `"yellow"` / `"purple"` / `"white"` |
+
+```js
+player.showBossbar("boss_health", "§c§lBoss HP", 0.75, "red");
+```
+
+### player.removeBossbar(name)
+
+移除指定名称的 Bossbar。
+
+```js
+player.removeBossbar("boss_health");
 ```
 
 ## Tab 列表

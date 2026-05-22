@@ -539,6 +539,23 @@ public class Box3JSWorld {
         spawnParticleCircle(pos.x, pos.y, pos.z, radius, type, count);
     }
 
+    // ---- Particle Line ----
+
+    public void spawnParticleLine(double x1, double y1, double z1, double x2, double y2, double z2, String type, int count) {
+        var particle = Box3ScriptUtils.lookupParticle(type);
+        if (particle == null) return;
+        for (int i = 0; i < count; i++) {
+            double t = count > 1 ? (double) i / (count - 1) : 0;
+            double x = x1 + (x2 - x1) * t;
+            double y = y1 + (y2 - y1) * t;
+            double z = z1 + (z2 - z1) * t;
+            server.overworld().sendParticles(particle, x, y, z, 1, 0, 0, 0, 0);
+        }
+    }
+    public void spawnParticleLine(GameVector3 from, GameVector3 to, String type, int count) {
+        spawnParticleLine(from.x, from.y, from.z, to.x, to.y, to.z, type, count);
+    }
+
     // ---- Drop Item ----
 
     public void dropItem(double x, double y, double z, String itemId, int count) {
@@ -556,6 +573,7 @@ public class Box3JSWorld {
     public Object raycast(GameVector3 origin, GameVector3 direction) { return query.raycast(origin, direction); }
     public Object raycast(GameVector3 origin, GameVector3 direction, double maxDistance) { return query.raycast(origin, direction, maxDistance); }
     public List<Box3JSEntity> entitiesInArea(GameVector3 pos1, GameVector3 pos2) { return query.entitiesInArea(pos1, pos2); }
+    public List<Box3JSEntity> entitiesInArea(GameBounds3 bounds) { return query.entitiesInArea(bounds.lo, bounds.hi); }
     public List<Box3JSEntity> entitiesInRadius(double x, double y, double z, double radius) { return query.entitiesInRadius(x, y, z, radius); }
     public List<Box3JSEntity> entitiesInRadius(GameVector3 pos, double radius) { return query.entitiesInRadius(pos, radius); }
     public String getBiome(int x, int y, int z) { return query.getBiome(x, y, z); }
