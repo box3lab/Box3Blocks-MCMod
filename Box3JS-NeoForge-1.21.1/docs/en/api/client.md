@@ -157,6 +157,52 @@ Resets fog to Minecraft's default behaviour.
 client.resetFog();
 ```
 
+## Camera Control
+
+### client.setCameraTarget(entityUuid)
+
+Switches the camera to spectate the given entity (spectator-style view).
+
+```js
+// Switch to spectate a specific entity
+client.setCameraTarget("550e8400-e29b-41d4-a716-446655440000");
+```
+
+### client.resetCamera()
+
+Resets the camera back to the local player.
+
+```js
+client.resetCamera();
+```
+
+## Block Query
+
+### client.getBlockState(x, y, z)
+
+Queries the block state at a position from the client's render chunk cache. Returns `{ id: string }` or `null` for air/unloaded chunks.
+
+```js
+var block = client.getBlockState(0, 100, 0);
+if (block) {
+  console.log("Block ID: " + block.id);
+}
+```
+
+## Render Callback
+
+### client.onRender(callback)
+
+Registers a callback invoked every render frame (during HUD render phase). The callback receives `partialTick` (0–1), the frame interpolation factor.
+
+Returns a `GameEventHandlerToken`; call `.cancel()` to unsubscribe.
+
+```js
+var token = client.onRender(function (partialTick) {
+  // Use partialTick for smooth custom rendering
+});
+```
+
 ## Complete Client Example
 
 ```js

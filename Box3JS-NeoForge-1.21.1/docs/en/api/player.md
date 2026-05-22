@@ -475,6 +475,63 @@ Clears the entire inventory (including armor slots and offhand).
 player.clearInventory();
 ```
 
+### player.removeItem(itemId, count)
+
+Removes a specified count of the given item from the player's inventory. Returns the actual number of items removed.
+
+```js
+var removed = player.removeItem("minecraft:iron_ingot", 3);
+console.log("Removed: " + removed);
+```
+
+### player.setHeldSlot(slot)
+
+Sets the player's selected hotbar slot (0–8).
+
+```js
+player.setHeldSlot(0); // Switch to first slot
+player.setHeldSlot(4); // Switch to fifth slot
+```
+
+### player.inventoryFreeSlots
+
+Readonly `number`. Number of empty slots in the player's main inventory (0–36).
+
+```js
+if (player.inventoryFreeSlots < 2) {
+  player.directMessage("Not enough inventory space!");
+}
+```
+
+### player.hasItem(itemId)
+
+Checks whether the player has at least one of the given item in inventory.
+
+```js
+if (player.hasItem("minecraft:diamond")) {
+  player.directMessage("You have a diamond!");
+}
+```
+
+### player.getItemCount(itemId)
+
+Counts the total number of the given item in the player's inventory.
+
+```js
+var count = player.getItemCount("minecraft:iron_ingot");
+console.log("You have " + count + " iron ingots");
+```
+
+### player.givePotion(itemId, potionType, count)
+
+Gives the player a potion with a `PotionContents` component (1.21.1+).
+
+```js
+player.givePotion("minecraft:potion", "minecraft:healing", 3);
+player.givePotion("minecraft:splash_potion", "minecraft:poison", 1);
+player.givePotion("minecraft:lingering_potion", "minecraft:regeneration", 2);
+```
+
 ## Custom Container GUI
 
 Opens a script-controlled container GUI (chest-like screen) for the player, with custom slot contents, click behavior, and close callbacks.
@@ -575,6 +632,31 @@ Revokes an advancement from this player.
 player.grantAdvancement("minecraft:story/mine_stone");
 player.grantAdvancement("minecraft:adventure/kill_a_mob");
 player.revokeAdvancement("minecraft:story/mine_stone");
+```
+
+## Bossbar
+
+### player.showBossbar(name, text, progress, color)
+
+Shows a per-player bossbar (adds the player to a `ServerBossEvent`).
+
+| Parameter  | Type   | Description |
+|------------|--------|-------------|
+| `name`     | string | Unique bossbar identifier for later removal |
+| `text`     | string | Display text |
+| `progress` | number | Progress bar fill (0–1) |
+| `color`    | string | Color: `"pink"` / `"blue"` / `"red"` / `"green"` / `"yellow"` / `"purple"` / `"white"` |
+
+```js
+player.showBossbar("boss_health", "§c§lBoss HP", 0.75, "red");
+```
+
+### player.removeBossbar(name)
+
+Removes a per-player bossbar by name.
+
+```js
+player.removeBossbar("boss_health");
 ```
 
 ## Tab List

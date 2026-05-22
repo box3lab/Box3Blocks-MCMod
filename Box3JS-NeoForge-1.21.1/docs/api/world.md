@@ -258,17 +258,17 @@ var token = world.onTick(function (info) {
 | `world.onPlayerJoin(fn)`     |      | `(entity, tick)`                                       | 玩家登录                              |
 | `world.onPlayerLeave(fn)`    |      | `(entity, tick)`                                       | 玩家退出                              |
 | `world.onChat(fn)`           |      | `(entity, message, tick) => boolean \| void`           | 玩家发送聊天消息；返回 `false` 可取消 |
-| `world.onVoxelDestroy(fn)`   |      | `(entity, x, y, z, voxel, tick)`                       | 玩家破坏方块                          |
-| `world.onBlockPlace(fn)`     | ⬆ MC | `(entity, x, y, z, voxel, voxelId, tick)`              | 玩家放置方块                          |
-| `world.onBlockActivate(fn)`  | ⬆ MC | `(entity, x, y, z, voxel, tick)`                       | 玩家右键方块                          |
-| `world.onInteract(fn)`       |      | `(entity, target, tick)`                               | 玩家右键实体                          |
+| `world.onVoxelDestroy(fn)`   |      | `(entity, x, y, z, voxel, tick) => boolean \| void`    | 玩家破坏方块；返回 `false` 可取消     |
+| `world.onBlockPlace(fn)`     | ⬆ MC | `(entity, x, y, z, voxel, voxelId, tick) => boolean \| void` | 玩家放置方块；返回 `false` 可取消     |
+| `world.onBlockActivate(fn)`  | ⬆ MC | `(entity, x, y, z, voxel, tick) => boolean \| void`    | 玩家右键方块；返回 `false` 可取消交互    |
+| `world.onInteract(fn)`       |      | `(entity, target, tick) => boolean \| void`            | 玩家右键实体；返回 `false` 可取消交互    |
 | `world.onVoxelContact(fn)`   |      | `(entity, voxelId, x, y, z, contactType, force, tick)` | 实体接触方块                          |
 | `world.onEntityContact(fn)`  |      | `(entity, other, tick)`                                | 两个实体接触                          |
 | `world.onEntitySeparate(fn)` |      | `(entity, other, tick)`                                | 两个实体分离                          |
 | `world.onFluidEnter(fn)`     |      | `(entity, fluid, x, y, z, tick)`                       | 实体进入液体                          |
 | `world.onFluidLeave(fn)`     |      | `(entity, fluid, x, y, z, tick)`                       | 实体离开液体                          |
 | `world.onEntityDeath(fn)`    | ⬆ MC | `(entity, killer, tick)`                               | 实体死亡；`killer` 可能为 null        |
-| `world.onEntityDamage(fn)`   | ⬆ MC | `(entity, amount, source, attacker, tick)`             | 实体受伤（Pre 阶段）                  |
+| `world.onEntityDamage(fn)`   | ⬆ MC | `(entity, amount, source, attacker, tick)` => `boolean\|void` | 实体受伤（Pre 阶段）；返回 `false` 可取消伤害 |
 | `world.onPlayerRespawn(fn)`  | ⬆ MC | `(entity, tick)`                                       | 玩家重生                              |
 | `world.onButtonPressed(fn)`  | ⬆ MC | `(entity, button, tick)`                               | 玩家按下按钮                          |
 | `world.onMessage(fn)`        | ⬆ MC | `(from, data)`                                         | 收到 `world.sendMessage()` 消息       |
@@ -786,6 +786,10 @@ if (result.hit) {
 ### world.entitiesInArea(pos1, pos2)
 
 返回 AABB 包围盒内所有实体。
+
+### world.entitiesInArea(bounds)
+
+⬆ GameBounds3 重载。
 
 ### world.entitiesInRadius(x, y, z, radius)
 

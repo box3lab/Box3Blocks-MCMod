@@ -76,6 +76,10 @@ voxels.setVoxel(new GameVector3(0, 100, 0), "minecraft:oak_stairs", 2);
 
 ⬆ GameVector3 重载。
 
+### voxels.fillVoxel(bounds, voxel)
+
+⬆ GameBounds3 重载。
+
 ```js
 // 填充一个 5×1×5 的平台
 voxels.fillVoxel(-2, 100, -2, 2, 100, 2, "minecraft:white_concrete");
@@ -92,6 +96,77 @@ voxels.fillVoxel(
   "minecraft:air",
 );
 ```
+
+### voxels.replace(x1, y1, z1, x2, y2, z2, fromBlock, toBlock)
+
+在矩形区域内，将所有 `fromBlock` 替换为 `toBlock`。
+
+### voxels.replace(pos1, pos2, fromBlock, toBlock)
+
+⬆ GameVector3 重载。
+
+### voxels.replace(bounds, fromBlock, toBlock)
+
+⬆ GameBounds3 重载。
+
+```js
+// 清除所有羊毛方块
+voxels.replace(-10, 60, -10, 10, 80, 10, "minecraft:white_wool", "minecraft:air");
+voxels.replace(
+  new GameVector3(-10, 60, -10),
+  new GameVector3(10, 80, 10),
+  "minecraft:red_wool",
+  "minecraft:blue_wool",
+);
+```
+
+### voxels.clone(x1, y1, z1, x2, y2, z2, destX, destY, destZ)
+
+将源区域的所有方块复制到目标位置（含方块状态和旋转）。
+
+### voxels.clone(pos1, pos2, destPos)
+
+⬆ GameVector3 重载。
+
+### voxels.clone(bounds, destX, destY, destZ)
+
+⬆ GameBounds3 重载，目标坐标为原始坐标。
+
+### voxels.clone(bounds, destPos)
+
+⬆ GameBounds3 重载，目标坐标为 GameVector3。
+
+```js
+// 复制一个 5×5×5 的结构到新位置
+voxels.clone(0, 100, 0, 5, 105, 5, 10, 100, 10);
+voxels.clone(
+  new GameVector3(0, 100, 0),
+  new GameVector3(5, 105, 5),
+  new GameVector3(10, 100, 10),
+);
+```
+
+### voxels.setVoxelState(x, y, z, voxel, state)
+
+放置方块并指定 BlockState 属性。`state` 是一个键值对对象，key 为属性名，value 为属性值。
+
+```js
+// 放置朝北的橡木楼梯
+voxels.setVoxelState(0, 100, 0, "minecraft:oak_stairs", {
+  facing: "north",
+  half: "top",
+});
+
+// 放置点燃的蜡烛
+voxels.setVoxelState(0, 100, 0, "minecraft:candle", {
+  candles: "3",
+  lit: "true",
+});
+```
+
+### voxels.setVoxelState(pos, voxel, state)
+
+⬆ GameVector3 重载。
 
 ## 读取方块
 
@@ -145,6 +220,10 @@ var name = voxels.getVoxelName(new GameVector3(0, 100, 0));
 ### voxels.countVoxel(pos1, pos2, voxel)
 
 ⬆ GameVector3 重载。
+
+### voxels.countVoxel(bounds, voxel)
+
+⬆ GameBounds3 重载。
 
 ```js
 // 统计区域内有多少个钻石块

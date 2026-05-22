@@ -35,6 +35,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -76,7 +78,10 @@ public class Box3JSClientEngine {
     private volatile boolean renderRegistered;
     private volatile boolean mouseRegistered;
     private final Map<Integer, DrawTextEntry> drawTexts = new ConcurrentHashMap<>();
-    private final AtomicInteger drawTextIdCounter = new AtomicInteger(0);
+    private final Map<Integer, DrawItemEntry> drawItems = new ConcurrentHashMap<>();
+    private final Map<Integer, DrawRectEntry> drawRects = new ConcurrentHashMap<>();
+    private final AtomicInteger drawIdCounter = new AtomicInteger(0);
+    private final List<Function> renderCallbacks = new CopyOnWriteArrayList<>();
     private final List<Function> mouseClickHandlers = new CopyOnWriteArrayList<>();
     private String currentProject = "";
     private Box3JSClientStorage storage;
@@ -94,6 +99,7 @@ public class Box3JSClientEngine {
     private volatile float fogStartDist = -1f;
     private volatile float fogEndDist = -1f;
     private volatile boolean fogRegistered;
+    private double prevMouseX, prevMouseY, mouseDeltaX, mouseDeltaY;
 
     // ── Timers ──
     private final List<TimerEntry> timers = new CopyOnWriteArrayList<>();
@@ -379,6 +385,75 @@ public class Box3JSClientEngine {
                 }
             });
 
+            // client.setCameraTarget(entityUuid) — spectate an entity
+            ScriptableObject.putProperty(clientObj, "setCameraTarget", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    if (args.length < 1) return Undefined.instance;
+                    String uuid = args[0].toString();
+                    Minecraft.getInstance().execute(() -> {
+                        var level = Minecraft.getInstance().level;
+                        if (level == null) return;
+                        for (var entity : level.entitiesForRendering()) {
+                            if (entity.getStringUUID().equals(uuid)) {
+                                Minecraft.getInstance().setCameraEntity(entity);
+                                return;
+                            }
+                        }
+                    });
+                    return Undefined.instance;
+                }
+            });
+
+            // client.resetCamera() — back to local player
+            ScriptableObject.putProperty(clientObj, "resetCamera", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    Minecraft.getInstance().execute(() -> {
+                        Minecraft.getInstance().setCameraEntity(
+                                Minecraft.getInstance().player);
+                    });
+                    return Undefined.instance;
+                }
+            });
+
+            // client.getBlockState(x, y, z) -> { id: string } | null
+            ScriptableObject.putProperty(clientObj, "getBlockState", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    if (args.length < 3) return null;
+                    int x = ((Number) args[0]).intValue();
+                    int y = ((Number) args[1]).intValue();
+                    int z = ((Number) args[2]).intValue();
+                    var level = Minecraft.getInstance().level;
+                    if (level == null) return null;
+                    var state = level.getBlockState(new BlockPos(x, y, z));
+                    if (state == null || state.isAir()) return null;
+                    Scriptable obj = cx.newObject(scope);
+                    ScriptableObject.putProperty(obj, "id",
+                            net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(
+                                    state.getBlock()).toString());
+                    return obj;
+                }
+            });
+
+            // client.onRender(callback) — fires every render frame
+            ScriptableObject.putProperty(clientObj, "onRender", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    if (args.length > 0 && args[0] instanceof Function fn) {
+                        renderCallbacks.add(fn);
+                        registerRenderListener();
+                        return new GameEventHandlerToken(() -> renderCallbacks.remove(fn));
+                    }
+                    return Undefined.instance;
+                }
+            });
+
             ScriptableObject.putProperty(scope, "client", clientObj);
 
             // -- audio global (sound playback) ------------------------------
@@ -524,6 +599,24 @@ public class Box3JSClientEngine {
                 }
             });
 
+            // input.getMouseDeltaX()
+            ScriptableObject.putProperty(inputObj, "getMouseDeltaX", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    return mouseDeltaX;
+                }
+            });
+
+            // input.getMouseDeltaY()
+            ScriptableObject.putProperty(inputObj, "getMouseDeltaY", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    return mouseDeltaY;
+                }
+            });
+
             // input.onMouseClick(callback) — returns GameEventHandlerToken
             ScriptableObject.putProperty(inputObj, "onMouseClick", new BaseFunction() {
                 @Override
@@ -627,7 +720,7 @@ public class Box3JSClientEngine {
                 public Object call(Context cx, Scriptable scope,
                                    Scriptable thisObj, Object[] args) {
                     if (args.length < 4) return -1;
-                    int id = args[0] instanceof Number n ? n.intValue() : drawTextIdCounter.incrementAndGet();
+                    int id = args[0] instanceof Number n ? n.intValue() : drawIdCounter.incrementAndGet();
                     int x = ((Number) args[1]).intValue();
                     int y = ((Number) args[2]).intValue();
                     String text = args[3].toString();
@@ -662,6 +755,67 @@ public class Box3JSClientEngine {
                 public Object call(Context cx, Scriptable scope,
                                    Scriptable thisObj, Object[] args) {
                     drawTexts.clear();
+                    return Undefined.instance;
+                }
+            });
+
+            // ui.drawItem(id, x, y, itemId, scale?)
+            ScriptableObject.putProperty(uiObj, "drawItem", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    if (args.length < 4) return -1;
+                    int id = args[0] instanceof Number n ? n.intValue() : drawIdCounter.incrementAndGet();
+                    int x = ((Number) args[1]).intValue();
+                    int y = ((Number) args[2]).intValue();
+                    String itemId = args[3].toString();
+                    int scale = args.length > 4 && args[4] instanceof Number n ? n.intValue() : 16;
+                    drawItems.put(id, new DrawItemEntry(x, y, itemId, scale));
+                    registerRenderListener();
+                    return id;
+                }
+            });
+
+            // ui.removeDrawItem(id)
+            ScriptableObject.putProperty(uiObj, "removeDrawItem", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    if (args.length < 1) return Undefined.instance;
+                    int id = ((Number) args[0]).intValue();
+                    drawItems.remove(id);
+                    return Undefined.instance;
+                }
+            });
+
+            // ui.drawRect(id, x, y, w, h, color, alpha?)
+            ScriptableObject.putProperty(uiObj, "drawRect", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    if (args.length < 6) return -1;
+                    int id = args[0] instanceof Number n ? n.intValue() : drawIdCounter.incrementAndGet();
+                    int x = ((Number) args[1]).intValue();
+                    int y = ((Number) args[2]).intValue();
+                    int w = ((Number) args[3]).intValue();
+                    int h = ((Number) args[4]).intValue();
+                    int color = argbToInt(args[5]);
+                    int alpha = args.length > 6 && args[6] instanceof Number n
+                            ? Math.max(0, Math.min(255, n.intValue())) : 255;
+                    drawRects.put(id, new DrawRectEntry(x, y, w, h, color, alpha));
+                    registerRenderListener();
+                    return id;
+                }
+            });
+
+            // ui.removeDrawRect(id)
+            ScriptableObject.putProperty(uiObj, "removeDrawRect", new BaseFunction() {
+                @Override
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                    if (args.length < 1) return Undefined.instance;
+                    int id = ((Number) args[0]).intValue();
+                    drawRects.remove(id);
                     return Undefined.instance;
                 }
             });
@@ -921,6 +1075,14 @@ public class Box3JSClientEngine {
     // ── Tick dispatch ──
 
     private void fireTick() {
+        // Track mouse delta
+        double curX = Minecraft.getInstance().mouseHandler.xpos();
+        double curY = Minecraft.getInstance().mouseHandler.ypos();
+        mouseDeltaX = curX - prevMouseX;
+        mouseDeltaY = curY - prevMouseY;
+        prevMouseX = curX;
+        prevMouseY = curY;
+
         for (Runnable cb : tickCallbacks) {
             try {
                 cb.run();
@@ -1106,11 +1268,63 @@ public class Box3JSClientEngine {
         Minecraft.getInstance().execute(() -> {
             if (renderRegistered) return;
             NeoForge.EVENT_BUS.addListener(RenderGuiEvent.Post.class, event -> {
-                if (drawTexts.isEmpty()) return;
                 GuiGraphics gfx = event.getGuiGraphics();
-                var font = Minecraft.getInstance().font;
-                for (DrawTextEntry entry : drawTexts.values()) {
-                    gfx.drawString(font, entry.text(), entry.x(), entry.y(), entry.color());
+                float partialTick = event.getPartialTick().getGameTimeDeltaTicks();
+
+                // Fire render callbacks
+                for (Function fn : renderCallbacks) {
+                    Context cx = Context.enter();
+                    try {
+                        fn.call(cx, scope, scope, new Object[]{partialTick});
+                    } catch (Exception e) {
+                        LOGGER.error("Render callback error", e);
+                    } finally {
+                        Context.exit();
+                    }
+                }
+
+                // Draw texts
+                if (!drawTexts.isEmpty()) {
+                    var font = Minecraft.getInstance().font;
+                    for (DrawTextEntry entry : drawTexts.values()) {
+                        gfx.drawString(font, entry.text(), entry.x(), entry.y(), entry.color());
+                    }
+                }
+
+                // Draw rects
+                if (!drawRects.isEmpty()) {
+                    for (DrawRectEntry entry : drawRects.values()) {
+                        int a = entry.alpha();
+                        int c = entry.color();
+                        int argb = (a << 24) | (c & 0x00FFFFFF);
+                        gfx.fill(entry.x(), entry.y(),
+                                entry.x() + entry.w(), entry.y() + entry.h(),
+                                argb);
+                    }
+                }
+
+                // Draw items
+                if (!drawItems.isEmpty()) {
+                    for (DrawItemEntry entry : drawItems.values()) {
+                        var rl = net.minecraft.resources.ResourceLocation.tryParse(entry.itemId());
+                        if (rl == null) continue;
+                        var holder = net.minecraft.core.registries.BuiltInRegistries.ITEM.getHolder(rl);
+                        if (holder.isEmpty()) continue;
+                        var stack = new ItemStack(holder.get());
+                        int s = entry.scale();
+                        if (s != 16) {
+                            gfx.pose().pushPose();
+                            float scale = s / 16.0f;
+                            gfx.pose().translate(entry.x(), entry.y(), 0);
+                            gfx.pose().scale(scale, scale, 1);
+                            gfx.renderItem(stack, 0, 0);
+                            gfx.renderItemDecorations(Minecraft.getInstance().font, stack, 0, 0);
+                            gfx.pose().popPose();
+                        } else {
+                            gfx.renderItem(stack, entry.x(), entry.y());
+                            gfx.renderItemDecorations(Minecraft.getInstance().font, stack, entry.x(), entry.y());
+                        }
+                    }
                 }
             });
             renderRegistered = true;
@@ -1178,6 +1392,19 @@ public class Box3JSClientEngine {
     // ── Draw text entry ──
 
     private record DrawTextEntry(int x, int y, String text, int color) {}
+    private record DrawItemEntry(int x, int y, String itemId, int scale) {}
+    private record DrawRectEntry(int x, int y, int w, int h, int color, int alpha) {}
+
+    /** Parse a NativeObject { r, g, b } or { r, g, b, a } to ARGB int. */
+    private static int argbToInt(Object raw) {
+        if (raw instanceof NativeObject c) {
+            int r = c.containsKey("r") ? ((Number) c.get("r", c)).intValue() & 0xFF : 255;
+            int g = c.containsKey("g") ? ((Number) c.get("g", c)).intValue() & 0xFF : 255;
+            int b = c.containsKey("b") ? ((Number) c.get("b", c)).intValue() & 0xFF : 255;
+            return (r << 16) | (g << 8) | b;
+        }
+        return 0xFFFFFF;
+    }
 
     // ── Console backend ──
 

@@ -79,6 +79,10 @@ Fill a rectangular region with a block. Corner coordinates are auto-sorted (no n
 
 ⬆ GameVector3 overload.
 
+### voxels.fillVoxel(bounds, voxel)
+
+⬆ GameBounds3 overload.
+
 ```js
 // Fill a 5×1×5 platform
 voxels.fillVoxel(-2, 100, -2, 2, 100, 2, "minecraft:white_concrete");
@@ -95,6 +99,77 @@ voxels.fillVoxel(
   "minecraft:air",
 );
 ```
+
+### voxels.replace(x1, y1, z1, x2, y2, z2, fromBlock, toBlock)
+
+Replaces all occurrences of `fromBlock` with `toBlock` within the rectangular region.
+
+### voxels.replace(pos1, pos2, fromBlock, toBlock)
+
+⬆ GameVector3 overload.
+
+### voxels.replace(bounds, fromBlock, toBlock)
+
+⬆ GameBounds3 overload.
+
+```js
+// Remove all wool blocks
+voxels.replace(-10, 60, -10, 10, 80, 10, "minecraft:white_wool", "minecraft:air");
+voxels.replace(
+  new GameVector3(-10, 60, -10),
+  new GameVector3(10, 80, 10),
+  "minecraft:red_wool",
+  "minecraft:blue_wool",
+);
+```
+
+### voxels.clone(x1, y1, z1, x2, y2, z2, destX, destY, destZ)
+
+Copies all blocks from the source region to the destination (preserving block state and rotation).
+
+### voxels.clone(pos1, pos2, destPos)
+
+⬆ GameVector3 overload.
+
+### voxels.clone(bounds, destX, destY, destZ)
+
+⬆ GameBounds3 overload with raw destination coordinates.
+
+### voxels.clone(bounds, destPos)
+
+⬆ GameBounds3 overload with GameVector3 destination.
+
+```js
+// Copy a 5×5×5 structure to a new location
+voxels.clone(0, 100, 0, 5, 105, 5, 10, 100, 10);
+voxels.clone(
+  new GameVector3(0, 100, 0),
+  new GameVector3(5, 105, 5),
+  new GameVector3(10, 100, 10),
+);
+```
+
+### voxels.setVoxelState(x, y, z, voxel, state)
+
+Place a block with specific BlockState properties. `state` is a key-value object mapping property names to values.
+
+```js
+// Place an oak stair facing north, top half
+voxels.setVoxelState(0, 100, 0, "minecraft:oak_stairs", {
+  facing: "north",
+  half: "top",
+});
+
+// Place three lit candles
+voxels.setVoxelState(0, 100, 0, "minecraft:candle", {
+  candles: "3",
+  lit: "true",
+});
+```
+
+### voxels.setVoxelState(pos, voxel, state)
+
+⬆ GameVector3 overload.
 
 ## Reading Blocks
 
@@ -148,6 +223,10 @@ Count matching blocks in a region. `voxel` can be a string or numeric ID.
 ### voxels.countVoxel(pos1, pos2, voxel)
 
 ⬆ GameVector3 overload.
+
+### voxels.countVoxel(bounds, voxel)
+
+⬆ GameBounds3 overload.
 
 ```js
 // Count how many diamond blocks are in the region

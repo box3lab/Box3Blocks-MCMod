@@ -101,6 +101,14 @@ interface GameEntity {
   hurt(amount: number): void;
 
   /**
+   * @zh 对实体造成伤害 (带伤害来源, 用于击杀追踪)。
+   * @en Deals damage to the entity with a source entity (for kill tracking).
+   * @param amount - @zh 伤害值（半心） @en damage amount in half‑hearts
+   * @param source - @zh 伤害来源实体 @en the entity that dealt the damage
+   */
+  hurt(amount: number, source: GameEntity): void;
+
+  /**
    * @zh 治疗实体。
    * @en Heals the entity.
    * @param amount - @zh 治疗量（半心） @en healing amount in half‑hearts
@@ -252,6 +260,19 @@ interface GameEntity {
   setEquipment(slot: string, itemId: string): void;
 
   /**
+   * @zh 给生物设置带附魔的装备。
+   * @en Equips an enchanted item onto a mob's equipment slot.
+   * @param slot - @zh 槽位名称 (如 "mainhand", "head") @en slot name (e.g. "mainhand", "head")
+   * @param itemId - @zh 物品 ID @en item ID (e.g. "minecraft:diamond_sword")
+   * @param enchants - @zh 附魔对象 @en enchantment map (e.g. { "minecraft:sharpness": 5 })
+   */
+  setEquipmentWithEnchants(
+    slot: string,
+    itemId: string,
+    enchants: Record<string, number>,
+  ): void;
+
+  /**
    * @zh 设置装备掉落概率。
    * @en Sets the drop chance for an equipment slot.
    * @param slot - @zh 槽位名称 或 "all"（所有槽位） @en slot name or "all" for every slot
@@ -292,6 +313,21 @@ interface GameEntity {
    * @en Enables or disables the mob's AI (pathfinding, goals, etc.).
    */
   setAI(enabled: boolean): void;
+
+  /**
+   * @zh 立即从世界中移除实体 (不触发 destroy 回调)。
+   * @en Immediately removes the entity from the world (does not trigger the destroy callback).
+   */
+  remove(): void;
+
+  // ── @zh 传送 @en Teleport ──
+
+  /**
+   * @zh 将实体传送到指定坐标。
+   * @en Teleports the entity to the given coordinates.
+   */
+  teleportTo(x: number, y: number, z: number): void;
+  teleportTo(pos: GameVector3): void;
 
   // ── @zh 朝向 @en Look direction ──
 

@@ -45,6 +45,22 @@ Gets the current mouse Y position in screen pixels.
 var my = input.getMouseY();
 ```
 
+## input.getMouseDeltaX()
+
+Gets the mouse X delta since the last frame.
+
+```js
+var dx = input.getMouseDeltaX();
+```
+
+## input.getMouseDeltaY()
+
+Gets the mouse Y delta since the last frame.
+
+```js
+var dy = input.getMouseDeltaY();
+```
+
 ## input.onMouseClick(callback)
 
 Registers a mouse button callback. Returns `GameEventHandlerToken`; call `.cancel()` to unregister.

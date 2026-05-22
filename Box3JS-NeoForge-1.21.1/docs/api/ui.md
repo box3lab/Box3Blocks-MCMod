@@ -80,3 +80,59 @@ ui.removeDrawText(1);
 ```js
 ui.clearDrawTexts();
 ```
+
+## ui.drawItem(id, x, y, itemId, scale?)
+
+在屏幕上绘制物品图标（每帧持续绘制，直到调用 `removeDrawItem` 移除）。
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `id` | number | (必需) | 图标 ID，用于后续移除或更新 |
+| `x` | number | (必需) | X 坐标（GUI 缩放坐标系） |
+| `y` | number | (必需) | Y 坐标（GUI 缩放坐标系） |
+| `itemId` | string | (必需) | 物品 ID（如 `"minecraft:diamond"`） |
+| `scale` | number | `16` | 图标尺寸（像素） |
+
+返回图标 ID（与传入的 `id` 相同）。
+
+```js
+ui.drawItem(1, 10, 10, "minecraft:diamond");
+ui.drawItem(2, 30, 10, "minecraft:golden_apple", 24);
+```
+
+## ui.removeDrawItem(id)
+
+移除指定 ID 的绘制图标。
+
+```js
+ui.removeDrawItem(1);
+```
+
+## ui.drawRect(id, x, y, w, h, color, alpha?)
+
+在屏幕上绘制矩形（每帧持续绘制，直到调用 `removeDrawRect` 移除）。
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `id` | number | (必需) | 矩形 ID，用于后续移除或更新 |
+| `x` | number | (必需) | 左上角 X 坐标 |
+| `y` | number | (必需) | 左上角 Y 坐标 |
+| `w` | number | (必需) | 宽度（像素） |
+| `h` | number | (必需) | 高度（像素） |
+| `color` | GameRGBColor | (必需) | 填充颜色（RGB） |
+| `alpha` | number | `255` | 透明度 0–255 |
+
+返回矩形 ID（与传入的 `id` 相同）。
+
+```js
+var red = new GameRGBColor(1, 0, 0);
+ui.drawRect(1, 50, 50, 100, 60, red, 128); // 半透明红色矩形
+```
+
+## ui.removeDrawRect(id)
+
+移除指定 ID 的绘制矩形。
+
+```js
+ui.removeDrawRect(1);
+```

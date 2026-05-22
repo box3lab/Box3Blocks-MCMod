@@ -68,4 +68,18 @@ interface GameInput {
       y: number,
     ) => void,
   ): GameEventHandlerToken;
+
+  /**
+   * @zh 获取当前帧的鼠标 X 轴增量 (自上一帧的移动量)。
+   * @en Gets the mouse X delta since the last frame.
+   * @returns @zh 鼠标 X 位移量 @en mouse X displacement
+   */
+  getMouseDeltaX(): number;
+
+  /**
+   * @zh 获取当前帧的鼠标 Y 轴增量 (自上一帧的移动量)。
+   * @en Gets the mouse Y delta since the last frame.
+   * @returns @zh 鼠标 Y 位移量 @en mouse Y displacement
+   */
+  getMouseDeltaY(): number;
 }

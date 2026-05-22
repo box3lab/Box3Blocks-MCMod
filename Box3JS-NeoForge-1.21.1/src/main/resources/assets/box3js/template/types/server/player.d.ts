@@ -367,6 +367,15 @@ interface GamePlayer {
   /** @zh 清空背包 @en Clears the player's inventory. */
   clearInventory(): void;
 
+  /**
+   * @zh 从背包中移除指定数量的物品。
+   * @en Removes a specified count of the given item from the player's inventory.
+   * @param itemId - @zh 物品 ID @en item ID (e.g. "minecraft:diamond")
+   * @param count - @zh 要移除的数量 @en count to remove
+   * @returns @zh 实际移除的数量 @en actual number of items removed
+   */
+  removeItem(itemId: string, count: number): number;
+
   /** @zh 管理员权限等级 (0-4)。0=普通玩家, 4=最高权限 @en Server operator permission level (0–4). */
   opLevel: number;
 
@@ -415,6 +424,68 @@ interface GamePlayer {
       tick: number,
     ) => boolean | void,
   ): GameEventHandlerToken;
+
+  // ── @zh 快捷栏 @en Hotbar ──
+
+  /**
+   * @zh 设置玩家手持快捷栏槽位 (0‑8)。
+   * @en Sets the player's selected hotbar slot (0–8).
+   */
+  setHeldSlot(slot: number): void;
+
+  // ── @zh 物品栏查询 @en Inventory Query ──
+
+  /**
+   * @zh 背包空余槽位数 (0‑36, 只读)。
+   * @en Number of empty slots in the player's main inventory (0–36), readonly.
+   */
+  readonly inventoryFreeSlots: number;
+
+  /**
+   * @zh 检查背包中是否拥有某物品。
+   * @en Checks whether the player has at least one of the given item in inventory.
+   */
+  hasItem(itemId: string): boolean;
+
+  /**
+   * @zh 统计背包中某物品的数量。
+   * @en Counts the total number of the given item in the player's inventory.
+   */
+  getItemCount(itemId: string): number;
+
+  // ── @zh 药水 @en Potions ──
+
+  /**
+   * @zh 给予玩家指定类型的药水 (带有 PotionContents 组件, 适用于 1.21.1+)。
+   * @en Gives the player a potion with a PotionContents component (1.21.1+).
+   * @param itemId - @zh 药水物品 ID (如 "minecraft:potion") @en potion item ID (e.g. "minecraft:potion")
+   * @param potionType - @zh 药水效果 ID (如 "minecraft:healing") @en potion effect ID (e.g. "minecraft:healing")
+   * @param count - @zh 数量 @en count
+   */
+  givePotion(itemId: string, potionType: string, count: number): void;
+
+  // ── @zh Bossbar @en Bossbar ──
+
+  /**
+   * @zh 向该玩家显示一个独立的 Bossbar。
+   * @en Shows a per‑player bossbar (adds the player to a ServerBossEvent).
+   * @param name - @zh Bossbar 唯一标识名 @en unique bossbar identifier
+   * @param text - @zh 显示文字 @en display text
+   * @param progress - @zh 进度 (0‑1) @en progress (0–1)
+   * @param color - @zh 颜色 ("pink"/"blue"/"red"/"green"/"yellow"/"purple"/"white") @en bar color
+   */
+  showBossbar(
+    name: string,
+    text: string,
+    progress: number,
+    color: string,
+  ): void;
+
+  /**
+   * @zh 移除该玩家的一个 Bossbar。
+   * @en Removes a per‑player bossbar by name.
+   */
+  removeBossbar(name: string): void;
 
   // ── @zh 成就 @en Advancements ──
 

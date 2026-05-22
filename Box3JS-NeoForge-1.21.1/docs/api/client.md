@@ -157,6 +157,52 @@ client.setFogEndDistance(50);
 client.resetFog();
 ```
 
+## 相机控制 (Camera Control)
+
+### client.setCameraTarget(entityUuid)
+
+将相机切换到目标实体的视角（旁观模式效果）。
+
+```js
+// 切换到指定实体的视角
+client.setCameraTarget("550e8400-e29b-41d4-a716-446655440000");
+```
+
+### client.resetCamera()
+
+重置相机到本地玩家视角。
+
+```js
+client.resetCamera();
+```
+
+## 方块查询 (Block Query)
+
+### client.getBlockState(x, y, z)
+
+在客户端查询指定坐标的方块状态（从渲染区块缓存读取）。空气或未加载区块返回 `null`。
+
+```js
+var block = client.getBlockState(0, 100, 0);
+if (block) {
+  console.log("方块 ID: " + block.id);
+}
+```
+
+## 渲染回调 (Render Callback)
+
+### client.onRender(callback)
+
+注册每 Render 帧回调（仅在 HUD 渲染阶段触发）。回调接收 `partialTick`（0–1，帧间插值因子）。
+
+返回 `GameEventHandlerToken`，调用 `.cancel()` 取消。
+
+```js
+var token = client.onRender(function (partialTick) {
+  // 使用 partialTick 进行平滑自定义渲染
+});
+```
+
 ## 客户端完整示例
 
 ```js

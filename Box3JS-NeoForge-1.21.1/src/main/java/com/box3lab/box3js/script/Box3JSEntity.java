@@ -3,7 +3,9 @@ package com.box3lab.box3js.script;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
@@ -19,6 +21,7 @@ import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
 import com.mojang.logging.LogUtils;
 import org.mozilla.javascript.Function;
+import org.mozilla.javascript.NativeObject;
 import org.slf4j.Logger;
 
 import java.util.Map;
@@ -210,6 +213,16 @@ public class Box3JSEntity {
         if (le != null) le.hurt(le.damageSources().generic(), (float) amount);
     }
 
+    /** hurt with a source entity (for kill tracking) */
+    public void hurt(double amount, Box3JSEntity source) {
+        LivingEntity le = asLiving();
+        if (le != null && source != null && source.getEntity() instanceof LivingEntity sle) {
+            le.hurt(le.damageSources().mobAttack(sle), (float) amount);
+        } else {
+            hurt(amount);
+        }
+    }
+
     public void heal(double amount) {
         LivingEntity le = asLiving();
         if (le != null) le.heal((float) amount);
@@ -269,6 +282,16 @@ public class Box3JSEntity {
 
     public void clearFire() {
         entity.setRemainingFireTicks(0);
+    }
+
+    // ---- Teleport (MC extension) ----
+
+    public void teleportTo(double x, double y, double z) {
+        trackIfSandboxed();
+        entity.teleportTo(x, y, z);
+    }
+    public void teleportTo(GameVector3 pos) {
+        teleportTo(pos.x, pos.y, pos.z);
     }
 
     // ---- Look at (MC extension) ----
@@ -346,6 +369,31 @@ public class Box3JSEntity {
         Item item = Box3ScriptUtils.lookupItem(itemId);
         if (item == null) return;
         mob.setItemSlot(equipmentSlot, new ItemStack(item));
+    }
+
+    /** setEquipment with enchantments. enchants is a NativeObject like { "minecraft:sharpness": 5 } */
+    public void setEquipmentWithEnchants(String slot, String itemId, NativeObject enchants) {
+        trackIfSandboxed();
+        if (!(entity instanceof Mob mob)) return;
+        EquipmentSlot equipmentSlot = parseEquipmentSlot(slot);
+        if (equipmentSlot == null) return;
+        Item item = Box3ScriptUtils.lookupItem(itemId);
+        if (item == null) return;
+        ItemStack stack = new ItemStack(item);
+        if (enchants != null) {
+            var enchRegistry = entity.level().registryAccess().registryOrThrow(Registries.ENCHANTMENT);
+            for (Object key : enchants.keySet()) {
+                String enchId = key.toString();
+                int level = ((Number) enchants.get(key)).intValue();
+                ResourceLocation enchRl = ResourceLocation.tryParse(enchId);
+                if (enchRl == null) continue;
+                var holder = enchRegistry.getHolder(enchRl);
+                if (holder.isPresent()) {
+                    stack.enchant(holder.get(), level);
+                }
+            }
+        }
+        mob.setItemSlot(equipmentSlot, stack);
     }
 
     // ---- Drop chances (MC extension) ----
@@ -449,6 +497,11 @@ public class Box3JSEntity {
             var instance = le.getAttribute(holder);
             if (instance != null) instance.setBaseValue(value);
         }
+    }
+
+    /** Remove the entity from the world immediately. */
+    public void remove() {
+        entity.discard();
     }
 
     // ---- Lifecycle ----

@@ -94,7 +94,7 @@
       "dts": "src/main/resources/assets/box3js/template/types/server/player.d.ts",
       "iface": "GamePlayer",
       "ignoreJava": ["getPlayer"],
-      "accessorProperties": ["position", "velocity", "bounds", "onGround", "name", "userId", "opLevel", "invisible", "scale", "walkSpeed", "runSpeed", "jumpPower", "moveState", "walkState", "enableJump", "crouchSpeed", "swimSpeed", "canFly", "flying", "collision", "spectator", "flySpeed", "gameMode", "dimension", "disableFly", "cameraMode", "cameraEntity", "cameraPitch", "cameraYaw", "facingDirection", "cameraTarget", "dead", "spawnPoint", "hp", "maxHp", "xp", "food", "saturation"],
+      "accessorProperties": ["position", "velocity", "bounds", "onGround", "name", "userId", "opLevel", "invisible", "scale", "walkSpeed", "runSpeed", "jumpPower", "moveState", "walkState", "enableJump", "crouchSpeed", "swimSpeed", "canFly", "flying", "collision", "spectator", "flySpeed", "gameMode", "dimension", "disableFly", "cameraMode", "cameraEntity", "cameraPitch", "cameraYaw", "facingDirection", "cameraTarget", "dead", "spawnPoint", "hp", "maxHp", "xp", "food", "saturation", "inventoryFreeSlots"],
       "docs": ["docs/api/player.md", "docs/en/api/player.md"]
     },
     {

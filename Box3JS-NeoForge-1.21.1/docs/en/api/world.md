@@ -792,6 +792,10 @@ if (result.hit) {
 
 Returns all entities within the AABB defined by two corner positions.
 
+### world.entitiesInArea(bounds)
+
+⬆ GameBounds3 overload.
+
 ### world.entitiesInRadius(x, y, z, radius)
 
 Returns all entities within a spherical radius. Convenience wrapper around `entitiesInArea`.

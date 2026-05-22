@@ -556,6 +556,7 @@ public class Box3JSWorld {
     public Object raycast(GameVector3 origin, GameVector3 direction) { return query.raycast(origin, direction); }
     public Object raycast(GameVector3 origin, GameVector3 direction, double maxDistance) { return query.raycast(origin, direction, maxDistance); }
     public List<Box3JSEntity> entitiesInArea(GameVector3 pos1, GameVector3 pos2) { return query.entitiesInArea(pos1, pos2); }
+    public List<Box3JSEntity> entitiesInArea(GameBounds3 bounds) { return query.entitiesInArea(bounds.lo, bounds.hi); }
     public List<Box3JSEntity> entitiesInRadius(double x, double y, double z, double radius) { return query.entitiesInRadius(x, y, z, radius); }
     public List<Box3JSEntity> entitiesInRadius(GameVector3 pos, double radius) { return query.entitiesInRadius(pos, radius); }
     public String getBiome(int x, int y, int z) { return query.getBiome(x, y, z); }
