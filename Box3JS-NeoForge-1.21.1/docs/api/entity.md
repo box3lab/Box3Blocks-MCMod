@@ -355,6 +355,19 @@ entity.lookAt(0, 100, -10);
 entity.lookAt(target.position);
 ```
 
+## 粒子
+
+⬆ MC 扩展。
+
+### entity.spawnParticle(type, count, dx, dy, dz, speed)
+
+在实体中心位置生成粒子。
+
+```js
+entity.spawnParticle("minecraft:flame", 10, 0.5, 0.5, 0.5, 0.1);
+entity.spawnParticle("minecraft:cloud", 5, 0.2, 0, 0.2, 0);
+```
+
 ## 药水效果
 
 全部 ⬆ MC 扩展。

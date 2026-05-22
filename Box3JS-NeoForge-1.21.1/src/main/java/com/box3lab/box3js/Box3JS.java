@@ -81,7 +81,7 @@ public class Box3JS {
                             case 0 -> Box3JSGuiServerHandler.handleOpen(
                                 sp, payload.title(), payload.rows(), payload.slotsJson());
                             case 1 -> Box3JSGuiServerHandler.handleSetItem(
-                                sp, payload.slot(), payload.itemId(), payload.count());
+                                sp, payload.slot(), payload.itemId(), payload.count(), payload.loreJson(), payload.enchanted());
                             case 2 -> Box3JSGuiServerHandler.handleRegisterCallbacks(
                                 sp, payload.hasSlotClick(), payload.hasClose());
                             case 3 -> Box3JSGuiServerHandler.handleClose(sp);

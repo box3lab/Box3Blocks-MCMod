@@ -64,7 +64,7 @@ world.onChat((entity, message) => {
 });
 ```
 
-[Read full docs →](/en/guide/getting-started_en)
+[Read full docs →](/en/guide/getting-started)
 
 ## Version Info
 

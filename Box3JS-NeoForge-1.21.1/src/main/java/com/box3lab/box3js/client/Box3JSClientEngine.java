@@ -1010,7 +1010,7 @@ public class Box3JSClientEngine {
 
                     PacketDistributor.sendToServer(
                         new Box3JSNetwork.GUIServerboundPayload(0, title, rows, slotsJson,
-                            0, "", 0, false, false));
+                            0, "", 0, false, false, "", false));
 
                     return Context.javaToJS(proxy, scope);
                 }

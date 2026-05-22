@@ -320,6 +320,20 @@ interface GameEntity {
    */
   remove(): void;
 
+  // ── @zh 粒子 @en Particles ──
+
+  /**
+   * @zh 在实体中心位置生成粒子。
+   * @en Spawns particles at the entity's center position.
+   * @param type - @zh 粒子类型 ID (如 "minecraft:flame") @en Particle type ID (e.g. "minecraft:flame")
+   * @param count - @zh 数量 @en Number of particles
+   * @param dx - @zh X 扩散 @en X spread
+   * @param dy - @zh Y 扩散 @en Y spread
+   * @param dz - @zh Z 扩散 @en Z spread
+   * @param speed - @zh 速度 @en Particle speed
+   */
+  spawnParticle(type: string, count: number, dx: number, dy: number, dz: number, speed: number): void;
+
   // ── @zh 传送 @en Teleport ──
 
   /**

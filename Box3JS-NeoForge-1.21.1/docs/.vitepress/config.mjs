@@ -2,6 +2,7 @@ import { defineConfig } from "vitepress";
 
 const cnNav = [
   { text: "首页", link: "/" },
+  { text: "文档", link: "/overview" },
   { text: "指南", link: "/guide/README" },
   { text: "教程", link: "/tutorial/README" },
   { text: "API", link: "/api/README" },
@@ -9,6 +10,7 @@ const cnNav = [
 
 const enNav = [
   { text: "Home", link: "/en/" },
+  { text: "Docs", link: "/en/overview" },
   { text: "Guide", link: "/en/guide/README" },
   { text: "Tutorials", link: "/en/tutorial/README" },
   { text: "API", link: "/en/api/README" },
@@ -96,6 +98,7 @@ const enSidebar = [
     text: "Get Started",
     collapsed: false,
     items: [
+      { text: "Documentation Index", link: "/en/overview" },
       { text: "Overview", link: "/en/guide/README" },
       { text: "Getting Started", link: "/en/guide/getting-started" },
       { text: "Recipes", link: "/en/guide/recipes" },
@@ -181,9 +184,8 @@ export default defineConfig({
   description: "Minecraft 的 JavaScript/TypeScript 脚本引擎",
   lastUpdated: true,
   cleanUrls: true,
-  ignoreDeadLinks: true,
+  ignoreDeadLinks: false,
   base: "/box3js-mc/",
-  head: [["link", { rel: "icon", href: "/favicon.ico" }]],
   locales: {
     root: {
       label: "简体中文",
@@ -206,7 +208,7 @@ export default defineConfig({
           next: "下一页",
         },
         footer: {
-          message: "基于 MIT 许可证发布",
+          message: "基于 Apache License 2.0 发布",
         },
       },
     },
@@ -231,7 +233,7 @@ export default defineConfig({
           next: "Next page",
         },
         footer: {
-          message: "Released under the MIT License.",
+          message: "Released under the Apache License 2.0.",
         },
       },
     },

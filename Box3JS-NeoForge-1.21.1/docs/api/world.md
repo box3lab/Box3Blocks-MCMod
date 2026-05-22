@@ -660,6 +660,14 @@ world.spawnParticle(
 
 ⬆ GameVector3 重载。
 
+### world.spawnParticleLine(x1, y1, z1, x2, y2, z2, type, count)
+
+在两点之间均匀生成粒子线。⬆ MC 扩展。
+
+### world.spawnParticleLine(from, to, type, count)
+
+⬆ GameVector3 重载。
+
 ```js
 // 单点粒子
 world.spawnParticle("minecraft:flame", 0, 100, 0, 10, 0.5, 0.5, 0.5, 0.1);
@@ -671,6 +679,15 @@ world.spawnParticleCircle(
   new GameVector3(0, 100, 0),
   2.0,
   "minecraft:happy_villager",
+  20,
+);
+
+// 粒子线（两点之间）
+world.spawnParticleLine(0, 100, 0, 10, 100, 10, "minecraft:flame", 20);
+world.spawnParticleLine(
+  new GameVector3(0, 100, 0),
+  new GameVector3(10, 100, 10),
+  "minecraft:flame",
   20,
 );
 

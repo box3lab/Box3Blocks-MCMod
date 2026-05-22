@@ -358,6 +358,19 @@ entity.lookAt(0, 100, -10);
 entity.lookAt(target.position);
 ```
 
+## Particles
+
+⬆ MC Extension.
+
+### entity.spawnParticle(type, count, dx, dy, dz, speed)
+
+Spawns particles at the entity's center position.
+
+```js
+entity.spawnParticle("minecraft:flame", 10, 0.5, 0.5, 0.5, 0.1);
+entity.spawnParticle("minecraft:cloud", 5, 0.2, 0, 0.2, 0);
+```
+
 ## Status Effects
 
 All ⬆ MC Extension.

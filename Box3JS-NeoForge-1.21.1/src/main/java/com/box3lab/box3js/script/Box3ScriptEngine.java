@@ -18,8 +18,11 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
 
+import com.box3lab.box3js.Box3JS;
 import com.box3lab.box3js.standalone.Box3ScriptCompiler;
 import com.mojang.logging.LogUtils;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.neoforged.fml.ModList;
 import org.slf4j.Logger;
 
@@ -189,11 +192,18 @@ public class Box3ScriptEngine {
         }
     }
 
-    /** Report error to the current errorReporter (player), or just log if none. */
+    /** Report error to the current errorReporter (player), broadcast to Box3JS clients, and log. */
     void reportError(String msg) {
         LOGGER.error(msg);
         if (errorReporter != null)
             errorReporter.accept(msg);
+        if (server != null) {
+            for (ServerPlayer sp : server.getPlayerList().getPlayers()) {
+                if (Box3JS.clientsWithBox3JS.contains(sp.getUUID())) {
+                    sp.sendSystemMessage(Component.literal("[Box3JS] " + msg).withStyle(ChatFormatting.RED));
+                }
+            }
+        }
     }
 
     /**

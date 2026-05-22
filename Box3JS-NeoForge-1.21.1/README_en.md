@@ -1,14 +1,116 @@
 # Box3JS — Minecraft Scripting Engine
 
-> **Beta** — This project is in early beta. APIs may change. Feedback is welcome.
+> **v0.1.0** — First public beta release. APIs may change. Feedback is welcome.
 
 [简体中文](Readme.md) | [English](README_en.md)
 
 **No Java knowledge required. Build unlimited Minecraft gameplay with TypeScript.**
 
-Box3JS is a community-driven Minecraft mod (NeoForge 1.21.1) that embeds the Mozilla Rhino JavaScript engine in the server. Its API design is inspired by [Box3](https://box3.fun) (Shenzhen Qimengdao Technology Co., Ltd.) — bringing Box3's clean, efficient developer experience into Minecraft. Forget complex Java mod development: write TypeScript, hot-reload instantly, see changes live. PvP arenas, RPG dungeons, party games, world management, social tools — all achievable with scripts.
+Box3JS embeds the Mozilla Rhino JavaScript engine in a Minecraft mod. Its API design is inspired by [Box3](https://dao3.fun)  — bringing Box3's clean, efficient developer experience into Minecraft. No Gradle, no server restarts, no complex toolchains. PvP arenas, tower defense, RPG dungeons, party games — write TypeScript, load instantly, see changes live.
 
-> Curious about Box3JS's relationship with the Box3 platform? → [Box3JS & Box3](docs/guide/about-box3js_en.md)
+> Box3JS & the Box3 platform? → [About Box3JS](docs/en/guide/about-box3js.md)
+
+```ts
+// On player join: welcome dialog + particles + sound
+world.onPlayerJoin((player) => {
+  player.player.dialog({ content: "Welcome to the Box3JS server!" });
+  const pos = new GameVector3(player.position.x, player.position.y + 1.8, player.position.z);
+  world.spawnParticle("minecraft:happy_villager", pos, 10, 0.5, 0.5, 0.5, 0.1);
+  world.playSound("minecraft:entity.player.levelup", pos, 1.0, 1.0);
+});
+
+// Chat commands: !heal to restore HP, !firework to launch a firework
+world.onChat((player, message) => {
+  if (message === "!heal") {
+    player.hp = player.maxHp;
+    player.player.actionBar("Healed!");
+    return false; // cancel broadcast
+  }
+  if (message === "!firework") {
+    const pos = new GameVector3(player.position.x, player.position.y + 1, player.position.z);
+    world.launchFirework(pos, "green", "large_ball");
+    return false;
+  }
+});
+```
+
+<details>
+<summary>Versus: the same feature in a traditional Java mod</summary>
+
+```java
+// Java — ~60 lines, 3 classes for the same result
+@Mod.EventBusSubscriber(modid = "mymod")
+public class PlayerJoinListener {
+    @SubscribeEvent
+    public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
+        ServerPlayer player = (ServerPlayer) event.getEntity();
+        // Dialogs require client-side handling; server-side can only send chat
+        player.sendSystemMessage(
+            Component.literal("Welcome to the server!").withStyle(ChatFormatting.GREEN)
+        );
+        // Particles need ServerLevel and ParticleOptions
+        ServerLevel level = player.serverLevel();
+        Vec3 pos = player.position().add(0, 1.8, 0);
+        level.sendParticles(
+            ParticleTypes.HAPPY_VILLAGER,
+            pos.x, pos.y, pos.z,
+            10, 0.5, 0.5, 0.5, 0.1
+        );
+        // Same for sound
+        level.playSound(
+            null, player.blockPosition(),
+            SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS,
+            1.0f, 1.0f
+        );
+    }
+}
+
+@Mod.EventBusSubscriber(modid = "mymod")
+public class ChatListener {
+    @SubscribeEvent
+    public static void onChat(ServerChatEvent event) {
+        ServerPlayer player = event.getPlayer();
+        String message = event.getMessage().getString();
+        if ("!heal".equals(message)) {
+            player.setHealth(player.getMaxHealth());
+            player.displayClientMessage(
+                Component.literal("Healed!"), true
+            );
+            event.setCanceled(true);
+        }
+        if ("!firework".equals(message)) {
+            // Fireworks need manual entity construction
+            FireworkRocketEntity firework = new FireworkRocketEntity(
+                player.level(),
+                player.getX(), player.getY() + 1, player.getZ(),
+                createFireworkItem("green", FireworkRocketEntity.Shape.LARGE_BALL)
+            );
+            player.level().addFreshEntity(firework);
+            event.setCanceled(true);
+        }
+    }
+    // + ~20 lines for the firework item builder...
+}
+```
+</details>
+
+## Why Box3JS?
+
+**Zero barrier to entry** — If you know JS/TS, you can build mods. No Gradle, no IDE, no server restarts. `/box3script create` scaffolds a complete TypeScript project in one command.
+
+**Instant hot reload** — Edit → build → reload takes seconds. Enable `watch` mode and skip the build step too — save and it reloads automatically.
+
+**Box3-like, Minecraft-native** — The API design mirrors Box3's developer experience. Creators familiar with Box3 can transition seamlessly. Plus full access to Minecraft's native capabilities: mob AI, particles, structures, advancements, recipes.
+
+**Sandbox protection** — Enable sandbox to automatically track all script changes. Disable it to fully roll back. Test fearlessly — your map is always safe.
+
+**First-class TypeScript** — Complete `.d.ts` type declarations with bilingual JSDoc. Build pipeline: esbuild bundle → Babel transpile to ES5 → regex sanitize. Full IDE IntelliSense.
+
+**Dual-side scripting** — Server handles game logic, entity AI, block manipulation. Client handles keyboard input, screen UI, chat, audio. Bidirectional real-time communication via `remoteChannel`.
+
+**Built-in persistence** — JSON file storage and SQLite database for leaderboards, economies, player saves — all accessible from both server and client scripts.
+
+**Standalone distribution** — `/box3script compile` packages your scripts into a standalone JAR mod. Drop it into `mods/` like any other mod — no Box3JS required.
 
 ## Installation
 
@@ -16,170 +118,101 @@ Box3JS is a community-driven Minecraft mod (NeoForge 1.21.1) that embeds the Moz
 2. For SQLite database support (`db` API), also install [`minecraft-sqlite-jdbc`](https://modrinth.com/mod/minecraft-sqlite-jdbc)
 3. Start the server
 
-## 5-Minute Quick Start
+## Quick Start
 
-In-game (requires OP level ≥ 2):
+In chat (requires OP level ≥ 2):
 
 ```
-/box3script create mygame
+/box3script create mygame       # scaffold a TypeScript project
 ```
 
-This creates a TypeScript project:
-
-````
-config/box3/script/mygame/
-├── package.json          ← npm dependencies (esbuild, Babel, TypeScript)
-├── tsconfig.base.json     ← Shared TS compiler options
-├── tsconfig.server.json   ← Server-side TS config
-├── tsconfig.client.json   ← Client-side TS config
-├── build.mjs             ← build script (esbuild → Babel → Rhino)
-├── eslint.config.mjs
-├── types/
-│   ├── shared.d.ts       ← types shared by server & client
-│   ├── server/           ← server-only types (server/entity/player/world/voxels)
-│   └── client/           ← client-only types (client/audio/input/ui/chat)
-└── src/
-    ├── server/
-    │   └── app.ts        ← server entry (game logic)
-    └── client/
-        └── app.ts        ← client entry (UI/input/network)
-
-Build and start:
+Then build and start:
 
 ```bash
 cd config/box3/script/mygame
-npm install && npm run build
-````
-
-```
-/box3script sandbox mygame     # (recommended) enable sandbox for safe testing
-/box3script start mygame       # start the script
+npm install && npm run build     # install deps + build
 ```
 
-Edit `src/app.ts`, re-run `npm run build`, then `/box3script reload mygame` — changes take effect **without restarting the server**.
+```
+/box3script sandbox mygame       # enable sandbox (recommended)
+/box3script start mygame         # start the script
+```
 
-## Why Box3JS?
+Open `src/server/app.ts`, write game logic, `npm run build`, then `/box3script reload mygame` — **no server restart needed**. Enable `/box3script watch` and it auto-reloads on every save.
 
-| Feature               | Description                                                                                                           |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| **Zero barrier**      | Know JS/TS? You can build. No Gradle, no IDE, no restarts                                                             |
-| **Hot reload**        | Edit → build → reload in seconds. Enable `watch` for auto-reload                                                      |
-| **Sandbox**           | Toggle sandbox to track all script changes; disable to fully roll back                                                |
-| **TypeScript**        | Full `.d.ts` type declarations, esbuild + Babel pipeline, IDE IntelliSense                                            |
-| **20+ events**        | onTick, onPlayerJoin, onChat, onEntityDeath, onBlockActivate, onButtonPressed...                                      |
-| **Visual effects**    | 13+ particles, fireworks, lightning, explosions, sounds                                                               |
-| **Client API**        | Keyboard input, screen UI, chat interception, sound/music control, client storage, SQLite, HTTP, bidirectional events |
-| **Game systems**      | Scoreboards, BossBar, teams, world border, cross-script messaging                                                     |
-| **Custom registries** | JSON-configured blocks, items (food/tools/armor), sounds & creative tabs, compiled to standalone JAR                  |
-| **Data persistence**  | JSON storage + SQLite database (leaderboards, economy, player data)                                                   |
-| **Standalone JAR**    | `/box3script compile` packages scripts into a standalone JAR mod for distribution                                     |
+> [Full getting-started guide →](docs/en/guide/getting-started.md)
 
 ## Commands
 
-| Command                            | Description                              |
-| ---------------------------------- | ---------------------------------------- |
-| `/box3script`                      | Show project status overview             |
-| `/box3script create <name>`        | Create a new TypeScript project          |
-| `/box3script start [project\|all]` | Enable and load projects                 |
-| `/box3script stop [project\|all]`  | Disable and unload projects              |
-| `/box3script reload [project]`     | Reload scripts (for development)         |
-| `/box3script watch`                | Toggle file watching (auto hot-reload)   |
-| `/box3script sandbox <project>`    | Toggle sandbox (on=track / off=rollback) |
-| `/box3script compile <project>`    | Preflight + compile to standalone JAR    |
+| Command | Description |
+|---------|-------------|
+| `/box3script` | Show all project statuses |
+| `/box3script create <name>` | Scaffold a new TypeScript project |
+| `/box3script start [project\|all]` | Enable and load projects |
+| `/box3script stop [project\|all]` | Disable and unload projects |
+| `/box3script reload [project]` | Reload scripts (development) |
+| `/box3script watch` | Toggle file watching (auto hot-reload) |
+| `/box3script sandbox <project>` | Toggle sandbox (on=track / off=rollback) |
+| `/box3script compile <project>` | Compile to standalone JAR mod |
 
-All `<project>` arguments support **Tab completion**. [Full command reference →](docs/api/commands_en.md)
-
-> Runtime policy: if a matching script JAR is already loaded by NeoForge, `/box3script start/reload/watch` skips filesystem mode (jar-first) to avoid duplicate execution.
+All `<project>` arguments support **Tab completion**. [Full command reference →](docs/en/api/commands.md)
 
 ## API Overview
 
-| Global                                       | Purpose                                                                                              |
-| -------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `world`                                      | World state, events, particles, fireworks, lightning, sounds, scoreboards, BossBar, teams, border    |
-| `entity`                                     | Entity properties, AI pathfinding, equipment, potion effects, tags, navigation                       |
-| `player`                                     | Inventory, flight, game mode, teleport, messaging, XP, sounds                                        |
-| `voxels`                                     | Block read/write, region fill, spawner control                                                       |
-| `http`                                       | HTTP requests (sync + async, GET/POST/JSON)                                                          |
-| `remoteChannel`                              | Server ↔ client bidirectional event channel                                                          |
-| `registries`                                 | Custom blocks, items & sounds (compiled JAR mode), see [registries_en.md](docs/api/registries_en.md) |
-| `client` · `input` · `ui` · `chat` · `audio` | Client scripts: lifecycle, keyboard, screen text, chat, audio control                                |
-| `storage`                                    | JSON data persistence (server & client)                                                              |
-| `db`                                         | SQLite database (server & client)                                                                    |
-| `console`                                    | Console logging (`log`/`warn`/`error`/`debug`/`assert`/`clear`)                                      |
-| `GameVector3`                                | 3D vector (coordinate math)                                                                          |
-| `GameBounds3`                                | Bounding box                                                                                         |
-| `GameRGBColor` / `GameRGBAColor`             | RGB / RGBA color                                                                                     |
-| `GameQuaternion`                             | Quaternion (rotation math)                                                                           |
+| Global | Purpose |
+|--------|---------|
+| `world` | World events, entity queries, particles, fireworks, lightning, sounds, scoreboards, BossBar, teams, border |
+| `entity` | Entity properties, AI pathfinding/attack, equipment, potion effects, attribute modification |
+| `player` | Inventory, flight, game mode, teleport, messaging, XP |
+| `voxels` | Block read/write, region fill, replace, spawner control |
+| `remoteChannel` | Server ↔ client bidirectional event channel |
+| `client` · `input` · `ui` · `chat` · `audio` · `gui` | Client APIs: lifecycle, keyboard, screen text, chat, audio, custom containers |
+| `http` | HTTP requests (sync + async) |
+| `storage` · `db` | JSON persistence / SQLite database (server & client) |
+| `registries` | Custom blocks, items & sounds (compiled JAR mode) |
+| `GameVector3` · `GameBounds3` · `GameRGBColor` · `GameQuaternion` | Math types: vectors, bounding boxes, colors, quaternions |
 
-[Docs Home →](docs/README_en.md) · [API Overview →](docs/api/README_en.md) · [Find by Task →](docs/api/README_en.md#find-by-task--i-want-to)
+[API Overview →](docs/en/api/README.md) · [Find by Task →](docs/en/api/README.md#find-by-task--i-want-to) · [Full Docs →](docs/en/README.md)
 
 ## Tutorials
 
 From zero to full mini-games. Every example is TypeScript-compiled and ESLint-verified:
 
-| #   | Tutorial                                                 | Time   | What you'll learn                                                 |
-| --- | -------------------------------------------------------- | ------ | ----------------------------------------------------------------- |
-| 1   | [Getting Started](docs/tutorial/01-basics.md)            | 10 min | Project setup, first script, chat commands, timers                |
-| 2   | [Players & Items](docs/tutorial/02-player-items.md)      | 15 min | Teleport, flight, items, enchantments, potions                    |
-| 3   | [Events & Entities](docs/tutorial/03-events-entities.md) | 15 min | Event callbacks, entity spawning, AI, combat, patrols             |
-| 4   | [Advanced Systems](docs/tutorial/04-advanced-systems.md) | 15 min | Scoreboards, BossBar, teams, world border, cross-script messaging |
-| 5   | [Mini-Games](docs/tutorial/05-examples.md)               | 20 min | PvP arena, particles & fireworks, wave mobs, visual effects       |
+| # | Tutorial | Time | What you'll learn |
+|---|----------|------|-------------------|
+| 1 | [Getting Started](docs/en/tutorial/01-basics.md) | 10 min | Project setup, first script, chat commands, timers |
+| 2 | [Players & Items](docs/en/tutorial/02-player-items.md) | 15 min | Teleport, flight, items, enchantments, potion effects |
+| 3 | [Events & Entities](docs/en/tutorial/03-events-entities.md) | 15 min | All event callbacks, entity spawning, AI control, patrol guards |
+| 4 | [Advanced Systems](docs/en/tutorial/04-advanced-systems.md) | 15 min | Scoreboards, BossBar, teams, world border, cross-script messaging |
+| 5 | [Mini-Games](docs/en/tutorial/05-examples.md) | 20 min | PvP arena, particles & fireworks, wave mob spawning |
+| 6 | [Client Scripting](docs/en/tutorial/06-client-scripting.md) | 15 min | Keyboard input, screen UI, audio/music, local storage, remoteChannel |
 
-[Tutorial overview →](docs/tutorial/README.md)
+[Tutorial Overview →](docs/en/tutorial/README.md)
 
-## Documentation Structure
+## Example Projects
 
-```
-docs/
-├── guide/                  ← Getting Started
-│   ├── README.md           Guide overview
-│   ├── about-box3js.md     Box3JS & Box3 (origin, relationship, advantages)
-│   ├── getting-started.md  From zero (setup, first script, debug, deploy)
-│   ├── architecture.md     Internals (Rhino engine, scopes, build pipeline)
-│   └── js-vs-java.md       JS vs Java modding comparison
-├── api/                   ← API Reference
-│   ├── README.md          Overview + find by task
-│   ├── world.md           World API (events, particles, fireworks, scoreboards...)
-│   ├── entity.md          Entity API (properties, AI, equipment, effects...)
-│   ├── player.md          Player API (inventory, messaging, flight, teleport...)
-│   ├── voxels.md          Voxels API (read/write, fill, spawner)
-│   ├── storage.md         Storage API (JSON persistence)
-│   ├── database.md        Database API (SQLite)
-│   ├── http.md            HTTP request API
-│   ├── client.md           Client API (UI, input, chat, events)
-│   ├── registries.md        Custom blocks, items & sounds
-│   ├── math.md            Math API (Vector3, Color, Quaternion)
-│   └── commands.md        /box3script command reference
-├── tutorial/              ← Tutorials
-│   ├── README.md          Learning path overview
-│   ├── 01-basics.md       Getting started
-│   ├── 02-player-items.md Players & items
-│   ├── 03-events-entities.md Events & entities
-│   ├── 04-advanced-systems.md Advanced systems
-│   └── 05-examples.md     Mini-games
-└── BOX3_API_COMPARISON.md ← Box3 platform vs Box3JS API comparison
-```
+`run/config/box3/script/` contains multiple full game projects ready to run or study:
 
-## Example Project
+| Project | Genre | Highlights |
+|---------|-------|------------|
+| `patdef` | Tower Defense | 4 tower types (arrow/ice/fire/lightning), wave spawning, GUI shop, attack beam VFX |
+| `bedwar` | Team PvP | Two-team combat, resource generators, gear upgrades, traps, bed destruction |
+| `coredf` | Core Defense | Chinese-localized, multi-phase waves, economy system |
+| `az` | Multi-Phase | Complex state machine, phase transitions, mixed gameplay |
+| `colorzone` | Parkour + Demo | Bidirectional client-server communication, UI examples, 7 feature demos |
+| `mygame` | API Tests | Functional test cases covering every Box3JS API |
 
-`run/config/box3/script/colorzone/` contains a complete bidirectional communication game and 7 verified feature examples covering every tutorial scenario — from server logic to client UI.
+Each project has its own client `dist/client.js` and server `dist/server.js` — drop in and play.
 
 ## Dependencies
 
-| Feature            | Requirement                                                                            |
-| ------------------ | -------------------------------------------------------------------------------------- |
-| Script engine core | Rhino 1.9.1 bundled — no extra install needed                                          |
-| `db` API (SQLite)  | Requires [`minecraft-sqlite-jdbc`](https://modrinth.com/mod/minecraft-sqlite-jdbc) mod |
-| All other APIs     | No additional dependencies                                                             |
+| Feature | Requirement |
+|---------|-------------|
+| Script engine core | Rhino 1.9.1 bundled — no extra install needed |
+| `db` API (SQLite) | Requires [`minecraft-sqlite-jdbc`](https://modrinth.com/mod/minecraft-sqlite-jdbc) |
+| All other APIs | No additional dependencies |
 
-> Without `minecraft-sqlite-jdbc`, all APIs except `db` work normally. Only calling `db.sql()` triggers an error asking you to install it.
-
-## Tech Stack
-
-- **Runtime:** Mozilla Rhino 1.9.1 (embedded JS engine for JVM)
-- **Build tools:** esbuild bundle → Babel transpile (Rhino target) → regex sanitize
-- **Language:** TypeScript, compiled to ES5-compatible JS
-- **Platform:** NeoForge 1.21.1, Java 21
+> Without the SQLite mod, everything except `db` works normally. Only calling `db.sql()` triggers a reminder.
 
 ## License
 

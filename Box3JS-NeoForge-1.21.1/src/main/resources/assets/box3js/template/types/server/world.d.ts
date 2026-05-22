@@ -333,6 +333,13 @@ interface GameWorld {
   spawnParticleCircle(x: number, y: number, z: number, radius: number, type: string, count: number): void;
   spawnParticleCircle(pos: GameVector3, radius: number, type: string, count: number): void;
 
+  /**
+   * @zh 在两点之间生成粒子线。
+   * @en Spawns a line of particles evenly spaced between two points.
+   */
+  spawnParticleLine(x1: number, y1: number, z1: number, x2: number, y2: number, z2: number, type: string, count: number): void;
+  spawnParticleLine(from: GameVector3, to: GameVector3, type: string, count: number): void;
+
   // ── @zh 掉落物 @en Drop Item ──
 
   /** @zh 在指定坐标掉落物品。 @en Drops an item stack at the given position. */

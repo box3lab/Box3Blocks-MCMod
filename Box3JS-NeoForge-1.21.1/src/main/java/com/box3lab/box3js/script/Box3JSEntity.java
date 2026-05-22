@@ -7,6 +7,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -357,6 +358,17 @@ public class Box3JSEntity {
         Holder<MobEffect> effect = Box3ScriptUtils.lookupMobEffect(effectId);
         if (effect == null) return;
         le.addEffect(new MobEffectInstance(effect, duration, amplifier, false, !hideParticles, true));
+    }
+
+    // ---- Particles (MC extension) ----
+
+    /** Spawn particles at the entity's center position. */
+    public void spawnParticle(String type, int count, double dx, double dy, double dz, double speed) {
+        var particle = Box3ScriptUtils.lookupParticle(type);
+        if (particle == null) return;
+        if (entity.level() instanceof ServerLevel sl) {
+            sl.sendParticles(particle, entity.getX(), entity.getY() + entity.getBbHeight() / 2.0, entity.getZ(), count, dx, dy, dz, speed);
+        }
     }
 
     // ---- Equipment (MC extension) ----
