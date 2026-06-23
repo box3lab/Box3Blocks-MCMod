@@ -6,7 +6,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 Box3Blocks is a Minecraft mod that imports 372 decorative blocks from the Box3 platform into Minecraft, supporting terrain file import/export and model items. It also includes **Box3JS**, a server-side TypeScript/JavaScript scripting engine (Rhino) for creating custom gameplay, mini-games, and world interactions.
 
-The repository is a **multi-project monorepo** with 7 independent subprojects targeting different mod loaders and Minecraft versions. There is no root build system — each subproject has its own Gradle wrapper and `build.gradle`.
+The repository is a **multi-project monorepo** with 8 independent subprojects targeting different mod loaders and Minecraft versions. There is no root build system — each subproject has its own Gradle wrapper and `build.gradle`.
 
 ## Subprojects
 
@@ -16,11 +16,12 @@ The repository is a **multi-project monorepo** with 7 independent subprojects ta
 | `Fabric-1.21.1/`   | Fabric   | 1.21.1     | 21   | `fabric-loom-remap`                      |
 | `Fabric-1.21.11/`  | Fabric   | 1.21.11    | 21   | `fabric-loom-remap`                      |
 | `Fabric-26.1/`     | Fabric   | 26.1       | 25   | `fabric-loom`                            |
+| `Fabric-26.2/`     | Fabric   | 26.2       | 25   | `fabric-loom`                            |
 | `Forge-1.20.1/`    | Forge    | 1.20.1     | 17   | `net.minecraftforge.gradle` v6.x         |
 | `NeoForge-1.21.1/` | NeoForge | 1.21.1     | 21   | **Box3JS lives here** — NeoForge ModDevGradle |
 | `NeoForge-26.1/`   | NeoForge | 26.1       | 25   | NeoForge ModDevGradle                    |
 
-Only NeoForge-1.21.1 has the Box3JS scripting engine. The other 6 subprojects are purely the Box3Blocks decorative block mod.
+Only NeoForge-1.21.1 has the Box3JS scripting engine. The other 7 subprojects are purely the Box3Blocks decorative block mod.
 
 ## Build Commands
 
@@ -36,7 +37,7 @@ cd run/config/box3/script/colorzone
 npm install && npm run build       # esbuild → Babel → Rhino target
 ```
 
-**Important:** Forge-1.20.1 requires Java 17. All other subprojects use Java 21+. NeoForge-26.1 uses Java 25.
+**Important:** Forge-1.20.1 requires Java 17. Fabric-1.21.1 and Fabric-1.21.11 use Java 21. Fabric-26.1, Fabric-26.2, and NeoForge-26.1 use Java 25.
 
 There are no existing tests (`src/test` directories are empty).
 
@@ -45,7 +46,7 @@ There are no existing tests (`src/test` directories are empty).
 Shared resources are centralized to avoid ~20,000 duplicate asset files:
 
 - **`shared-resources/`** — used by ALL subprojects: block textures, models, blockstates, item models, worldgen data, `block-id.json`, `block-spec.json`
-- **`shared-resources-fabric/`** — used by all 4 Fabric subprojects: `models/item/` JSONs + lang files
+- **`shared-resources-fabric/`** — used by all 5 Fabric subprojects: `models/item/` JSONs + lang files
 - **`shared-resources-forge/`** — used by Forge + both NeoForge subprojects: `models/item/` JSONs + lang files
 
 ## Block Mod Architecture
@@ -125,10 +126,11 @@ Consumable/Cooldown/Enchantable/JukeboxPlayable components are NOT available in 
 
 ## Version Differences
 
-- `VoxelExport` only in Fabric-1.21.11, Fabric-26.1, and Forge/NeoForge variants
+- `VoxelExport` only in Fabric-1.21.11, Fabric-26.1, Fabric-26.2, and Forge/NeoForge variants
 - `VoxelFluidRenderHandler` only in Fabric-1.21.11
 - NeoForge-26.1 moved client code to `src/client/java`
-- Fabric-26.1 uses `fabric-loom` (not `fabric-loom-remap`) and Java 25
+- Fabric-26.1 and Fabric-26.2 use `fabric-loom` (not `fabric-loom-remap`) and Java 25
+- Fabric-26.2 uses `EntityTypes.ITEM_DISPLAY` (not `EntityType.ITEM_DISPLAY`) and `Vec3.atCenterOf()` (not `BlockPos.getCenter()`)
 
 ## Tools
 
